@@ -1,214 +1,68 @@
-# 🧠 LLM vs Encoder for Named Entity Recognition  
-### Comparative Study of Encoder-Based Transformers and Large Language Models
+# LLM vs Encoder for Named Entity Recognition
 
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.x-red)
-![Transformers](https://img.shields.io/badge/HuggingFace-Transformers-yellow)
-![PEFT](https://img.shields.io/badge/PEFT-LoRA-green)
-![GPU](https://img.shields.io/badge/GPU-Required-orange)
-![License](https://img.shields.io/badge/License-Academic-lightgrey)
+![Python](https://img.shields.io/badge/Python-3.11-blue) ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-red) ![HuggingFace Transformers](https://img.shields.io/badge/HuggingFace-Transformers-yellow) ![PEFT (LoRA)](https://img.shields.io/badge/PEFT-LoRA-green) ![GPU Required](https://img.shields.io/badge/GPU-Required-orange)
 
----
+## Abstract
 
-## 📌 Abstract
+In this thesis repository, I compare two NER paradigms on biomedical text: encoder-based token classification and decoder-only LLM extraction with LoRA fine-tuning. I run both approaches on aligned train/validation/test splits and evaluate them with one shared span-level protocol. The comparison emphasizes strict extraction correctness rather than approximate token overlap. I also track LLM output robustness through JSON and span-validity checks to make failure modes explicit.
 
-This repository contains the implementation for a Bachelor thesis investigating whether modern Large Language Models (LLMs), fine-tuned with parameter-efficient techniques such as LoRA, can achieve comparable performance to classical encoder-based transformer models (e.g., BERT) on Named Entity Recognition (NER) tasks.
+## Research Question
 
-The study focuses on:
+Can a LoRA-tuned decoder-only LLM match encoder-based BIO NER performance under strict span-level evaluation for biomedical entity extraction?
 
-- Quantitative comparison (Precision, Recall, F1-score)
-- Computational cost analysis
-- Training efficiency
-- Practical applicability in structured prediction tasks
+## Methods Summary
 
----
+- I train an encoder-based token classifier using BIO tagging.
+- I fine-tune a decoder-only LLM with PEFT LoRA for entity extraction.
+- I enforce structured JSON extraction and map outputs to span annotations for shared evaluation.
 
-# 🎯 Research Question
+## Datasets
 
-> Can fine-tuned Large Language Models achieve performance comparable to encoder-based transformer models (e.g., BERT) on structured Named Entity Recognition tasks?
-
-### Sub-questions
-
-- How does LoRA fine-tuning influence LLM performance?
-- What is the trade-off between performance and computational cost?
-- Are LLMs suitable for exact token-level labeling tasks?
-- Where are encoder models still superior?
-
----
-
-# 🧠 Model Architectures
-
----
-
-## 1️⃣ Encoder-Based Model (BERT-style)
-
-**Architecture Type:** Bidirectional Encoder Transformer  
-**Objective:** Token Classification  
-
-### Architecture Overview
-
-```
-Input Tokens
-     ↓
-Embedding Layer
-     ↓
-Transformer Encoder Blocks (xN)
-     ↓
-Token Classification Head
-     ↓
-Label per Token (BIO format)
-```
-
-### Characteristics
-
-- Bidirectional context
-- Optimized for structured prediction
-- Deterministic output
-- Efficient training
-- Low formatting risk
-
----
-
-## 2️⃣ Large Language Model (Decoder-only, e.g., Qwen / TinyLlama)
-
-**Architecture Type:** Autoregressive Transformer  
-**Objective:** Instruction-following Generation  
-
-### Architecture Overview
-
-```
-Instruction + Input Text
-           ↓
-Embedding Layer
-           ↓
-Decoder Transformer Blocks (xN)
-           ↓
-Autoregressive Generation
-           ↓
-JSON Output with Entity Spans
-```
-
-### Characteristics
-
-- Generative model
-- Instruction-based learning
-- LoRA fine-tuning (parameter-efficient)
-- Requires output parsing
-- Higher computational demand
-- Potential formatting errors
-
----
-
-# 🔧 Fine-Tuning Strategy
-
-## Encoder Model
-
-- Full fine-tuning
-- Cross-entropy token classification loss
-- BIO tagging scheme
-
-## LLM
-
-- LoRA (Low-Rank Adaptation)
-- Base model frozen
-- Only adapter weights updated
-- Instruction-based prompt format
-
----
-
-# 🗂 Dataset
-
-The dataset consists of annotated texts with labeled entities.
-
-### Example
-
-Text:
-```
-Aspirin reduces fever.
-```
-
-Entities:
-- Aspirin → Chemical
-- fever → Disease
-
----
-
-## Encoder Format (BIO Tagging)
-
-```
-Aspirin  B-CHEM
-reduces  O
-fever    B-DISEASE
-```
-
----
-
-## LLM Instruction Format
-
-Prompt structure:
-
-```
-### Instruction:
-Extract all entities from the text.
-
-### Input:
-Aspirin reduces fever.
-
-### Output:
-```
-
-Expected JSON output:
+I use biomedical NER data focused on disease and chemical entities.  
+I convert all splits to one canonical internal format:
 
 ```json
-[
-  {"start": 0, "end": 7, "label": "Chemical"},
-  {"start": 16, "end": 21, "label": "Disease"}
-]
+{ "id": "sample_id", "text": "raw text", "entities": [{ "start": 0, "end": 10, "label": "DISEASE" }] }
 ```
 
----
+Character offsets are the source of truth across preprocessing, training, and evaluation.
 
-# 📊 Evaluation Metrics
+## Evaluation
 
-Both approaches are evaluated using:
+### Primary Metric
 
-- Precision
-- Recall
-- F1-Score
+- Strict span-level micro Precision / Recall / F1
+- A prediction is correct only with exact `start`, `end`, and `label` match
 
-### Metric Definitions
+### LLM-Specific Robustness Metrics
 
+- JSON validity rate
+- Parse failure rate
+- Overlapping spans
+- Out-of-bound spans
+
+## Experimental Flow
+
+```mermaid
+flowchart LR
+  subgraph E[Encoder lane]
+    E1[Prepare BIO-formatted data] --> E2[Train encoder token classifier]
+    E2 --> E3[Predict spans on test set]
+  end
+
+  subgraph L[LLM lane]
+    L1[Prepare instruction-style data] --> L2[LoRA fine-tune decoder-only LLM]
+    L2 --> L3[Generate JSON entities on test set]
+  end
+
+  E3 --> S[Shared evaluation block]
+  L3 --> S
+  S --> R[Export metrics and plots]
 ```
-Precision = TP / (TP + FP)
-Recall    = TP / (TP + FN)
-F1        = 2 * (Precision * Recall) / (Precision + Recall)
-```
 
-Where:
+## Project Structure
 
-- TP = True Positives  
-- FP = False Positives  
-- FN = False Negatives  
-
----
-
-# 📈 Comparison Dimensions
-
-| Dimension | Encoder | LLM + LoRA |
-|------------|----------|-------------|
-| Task Alignment | Native | Prompt-based |
-| Structured Output | Yes | Generated |
-| Training Speed | Fast | Slower |
-| GPU Memory | Low | High |
-| Determinism | High | Medium |
-| Formatting Errors | None | Possible |
-| Span Precision | High | Sensitive |
-
----
-
-# 🏗 Project Structure
-
-```
+```text
 llm-vs-encoder-ner/
 │
 ├── data/
@@ -235,106 +89,47 @@ llm-vs-encoder-ner/
 └── README.md
 ```
 
----
-
-# ⚙️ Installation
-
-Create environment:
+## Installation
 
 ```bash
-conda create -n thesis python=3.11
-conda activate thesis
+pip install -r requirements.txt
 ```
 
-Install dependencies:
+Optional Conda environment:
 
 ```bash
-pip install torch transformers datasets peft accelerate scikit-learn matplotlib
+conda create -n llm-vs-encoder-ner python=3.11 -y
+conda activate llm-vs-encoder-ner
+pip install -r requirements.txt
 ```
 
----
-
-# 🚀 Running Experiments
-
-## Train Encoder
+## Running Experiments
 
 ```bash
 python scripts/01_train_encoder.py
-```
-
-## Evaluate Encoder
-
-```bash
 python scripts/02_eval_encoder.py
-```
-
-## Train LLM with LoRA
-
-```bash
 python scripts/10_train_llm_lora.py
-```
-
-## Evaluate LLM
-
-```bash
 python scripts/11_eval_llm.py
+python scripts/20_make_plots.py
 ```
 
----
+## Hardware
 
-# 💻 Hardware Requirements
+I run experiments on a CUDA-capable GPU. Encoder training is moderate in memory usage, while decoder-only LLM fine-tuning requires more VRAM; LoRA is used to reduce memory and make LLM adaptation feasible on limited hardware.
 
-| Model | Parameters | Approx. VRAM |
-|--------|-------------|---------------|
-| BERT-base | ~110M | 8GB |
-| Qwen-1.5B | ~1.5B | 12–16GB |
-| Qwen-7B | ~7B | 24GB+ |
+## Reproducibility Checklist
 
-LoRA significantly reduces trainable parameters and memory footprint.
+- Fixed random seeds
+- Explicit train/validation/test splits
+- Logged hyperparameters for all runs
+- Deterministic evaluation pipeline
+- Shared span-level evaluation across encoder and LLM outputs
 
----
-
-# 🔬 Expected Findings
-
-Encoder models are expected to:
-
-- Perform strongly on token-level NER
-- Show stable F1 performance
-- Require less computational cost
-
-LLMs may:
-
-- Struggle with exact span boundaries
-- Produce formatting inconsistencies
-- Excel in semantic reasoning tasks
-
----
-
-# 📚 Related Work
-
-- Devlin et al., 2019 — BERT  
-- Hu et al., 2021 — LoRA  
-- Instruction Tuning literature  
-- Comparative studies between encoder and decoder architectures  
-
----
-
-# 📌 Reproducibility
-
-- Fixed random seeds  
-- Explicit dataset splits  
-- Logged hyperparameters  
-- Modular training & evaluation scripts  
-
----
-
-# 👨‍🎓 Author
+## Author
 
 Luaj Osman  
-Bachelor Thesis – Transformer Model Comparison Study  
+Bachelor Thesis – Transformer Model Comparison Study
 
----
+## License
 
-# 📜 License
-
-This project is developed for academic research purposes.
+This repository is released for academic use (research and thesis reproduction).
