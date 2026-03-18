@@ -10,62 +10,68 @@ Dieses Projekt vergleicht zwei fundamentale Paradigmen für Named Entity Recogni
 
 ```mermaid
 graph TD
-    subgraph configs["⚙️ configs/"]
-        C1["bert_base.yaml"]
-        C2["deberta_base.yaml"]
-        C3["deberta_large.yaml"]
-        C4["qwen3_14b.yaml"]
-        C5["qwen35_27b.yaml"]
+    subgraph configs["⚙️ configs/  —  Hyperparameter für jedes Experiment, du änderst NUR hier"]
+        direction LR
+        C1["bert_base"]:::enc
+        C2["deberta_base"]:::enc
+        C3["deberta_large"]:::enc
+        C4["qwen3"]:::dec
+        C5["qwen3.5"]:::dec
     end
 
-    subgraph data["📦 src/data/ — Gemeinsame Daten-Pipeline"]
-        D1["load_wnut17.py<br/><i>WNUT-2017 von HuggingFace laden</i>"]
-        D2["preprocess_encoder.py<br/><i>Subword-Tokenisierung + BIO-Labels</i>"]
-        D3["preprocess_decoder.py<br/><i>Chat-Format + JSON-Output</i>"]
+    subgraph data["📦 src/data/  —  gemeinsam für beide Seiten"]
+        D1["load_wnut17.py  ·  Lädt den WNUT-2017 Datensatz von HuggingFace"]
+        D2["preprocess_encoder.py  ·  Subword-Tokenisierung + BIO-Label-Alignment"]:::enc
+        D3["preprocess_decoder.py  ·  Chat-Format + JSON-Output für LoRA-Training"]:::dec
     end
 
-    subgraph encoder["🟢 src/encoder/ — BERT / DeBERTa"]
-        E1["train.py<br/><i>Token-Klassifikation mit HF Trainer</i>"]
-        E2["inference.py<br/><i>Test-Evaluation + Latenz-Messung</i>"]
+    subgraph encoder["🟢 src/encoder/  =  BERT / DeBERTa Seite"]
+        E1["train.py  ·  Token-Klassifikation mit HF Trainer"]
+        E2["inference.py  ·  Test-Evaluation + Latenz-Messung"]
     end
 
-    subgraph decoder["🟣 src/decoder/ — Qwen3 / Qwen3.5 LLM"]
-        L1["train.py<br/><i>SFTTrainer + LoRA/QLoRA</i>"]
-        L2["inference.py<br/><i>model.generate() + JSON-Parsing</i>"]
-        L3["parse_output.py<br/><i>JSON → BIO-Tags Konvertierung</i>"]
+    subgraph decoder["🟣 src/decoder/  =  Qwen3 / Qwen3.5 Seite"]
+        L1["train.py  ·  SFTTrainer + LoRA"]
+        L2["inference.py  ·  model.generate() + JSON-Parsing"]
+        L3["parse_output.py  ·  JSON → BIO-Tags"]
     end
 
-    subgraph evaluate["📊 src/evaluate/ — Gemeinsamer Vergleich"]
-        V1["metrics.py — seqeval Entity-F1, P, R"]
-        V2["efficiency.py — VRAM, Trainingszeit, Latenz"]
-        V3["error_analysis.py — Encoder vs. LLM Fehler"]
-        V4["compare_all.py — Tabellen, Plots, LaTeX"]
+    subgraph evaluate["📊 src/evaluate/  —  gemeinsamer Vergleich"]
+        V1["metrics.py  ·  seqeval Entity-F1, Precision, Recall"]
+        V2["efficiency.py  ·  VRAM-Peak, Trainingszeit, Inferenz-Latenz"]
+        V3["error_analysis.py  ·  Fehlertypen: Encoder-Fehler vs. LLM-JSON-Fehler"]
+        V4["compare_all.py  ·  Tabellen, Plots, LaTeX-Export für die BA"]
     end
 
-    D1 --> D2
-    D1 --> D3
-    D2 --> E1
-    E1 --> E2
-    D3 --> L1
-    L1 --> L2
-    L2 --> L3
-    E2 --> V1
-    L3 --> V1
-    V1 --> V4
-    V2 --> V4
-    V3 --> V4
+    subgraph scripts["🖥️ scripts/  —  Ausführung"]
+        direction LR
+        S1["run_all.py  ·  Startet alles nacheinander"]
+        S2["run_encoder.sh"]:::enc
+        S3["run_decoder.sh"]:::dec
+    end
 
-    C1 -.-> E1
-    C2 -.-> E1
-    C3 -.-> E1
-    C4 -.-> L1
-    C5 -.-> L1
+    subgraph results["📁 results/"]
+        R1["Wird automatisch gefüllt: Checkpoints, Metriken, Plots"]
+    end
 
+    configs --> data
+    data --> encoder
+    data --> decoder
+    encoder --> evaluate
+    decoder --> evaluate
+    evaluate --> scripts
+    scripts --> results
+
+    classDef enc fill:#0F6E56,stroke:#1D9E75,color:#fff
+    classDef dec fill:#534AB7,stroke:#7F77DD,color:#fff
+
+    style configs fill:#4A1B0C,stroke:#993C1D,color:#fff
+    style data fill:#2C2C2A,stroke:#5F5E5A,color:#fff
     style encoder fill:#0F6E56,stroke:#1D9E75,color:#fff
     style decoder fill:#534AB7,stroke:#7F77DD,color:#fff
-    style data fill:#2C2C2A,stroke:#5F5E5A,color:#fff
     style evaluate fill:#2C2C2A,stroke:#5F5E5A,color:#fff
-    style configs fill:#4A1B0C,stroke:#993C1D,color:#fff
+    style scripts fill:#2C2C2A,stroke:#5F5E5A,color:#fff
+    style results fill:#2C2C2A,stroke:#5F5E5A,color:#fff
 ```
 
 ---
