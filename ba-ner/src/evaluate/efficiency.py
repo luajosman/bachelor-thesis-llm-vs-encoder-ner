@@ -1,11 +1,14 @@
 """
-Efficiency and resource tracking utilities.
+efficiency.py — Effizienz- und Ressourcenmessung für Modell-Experimente
 
-Covers:
-- Parameter counting (total + trainable)
-- VRAM peak tracking with CUDA
-- Inference latency measurement (with CUDA synchronization)
-- EfficiencyMetrics dataclass for structured reporting
+Misst die für die Bachelorarbeit relevanten Effizienzmetriken:
+  - Parameteranzahl (total und trainierbar)
+  - VRAM-Peak (GPU-Speicher in MB)
+  - Inferenz-Latenz pro Sample (in Millisekunden)
+
+Alle Latenz-Messungen verwenden cuda.synchronize() um sicherzustellen,
+dass asynchrone GPU-Operationen vollständig abgeschlossen sind, bevor
+die Zeit gestoppt wird.
 """
 
 from __future__ import annotations
@@ -19,41 +22,35 @@ import torch
 
 
 # ---------------------------------------------------------------------------
-# Dataclass
+# Datenklasse für Effizienz-Metriken
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class EfficiencyMetrics:
-    """Structured container for model efficiency measurements.
+    """Strukturierter Container für alle Effizienz-Messungen eines Modells.
 
-    Attributes
-    ----------
-    model_name:
-        Short name / experiment name.
-    total_params:
-        Total number of parameters.
-    trainable_params:
-        Number of trainable parameters.
-    train_time_seconds:
-        Wall-clock training time in seconds.
-    vram_peak_mb:
-        Peak GPU memory usage in megabytes.
-    inference_latency_ms:
-        Mean per-sample inference latency in milliseconds.
-    tokens_per_second:
-        Throughput in tokens per second (if applicable).
+    Wird von compare_all.py für den Vergleich zwischen Encoder- und
+    Decoder-Modellen genutzt.
+
+    Attributes:
+        model_name:            Experiment-Name (aus YAML-Config).
+        total_params:          Gesamtanzahl aller Parameter.
+        trainable_params:      Anzahl der trainierbaren Parameter (bei LoRA: nur Adapter).
+        train_time_seconds:    Trainingszeit in Sekunden (Wanduhrzeit).
+        vram_peak_mb:          Maximaler GPU-Speicherverbrauch in MB.
+        inference_latency_ms:  Mittlere Inferenz-Latenz pro Sample in ms.
+        tokens_per_second:     Durchsatz in Tokens/Sekunde (optional).
     """
-
-    model_name: str = ""
-    total_params: int = 0
-    trainable_params: int = 0
-    train_time_seconds: float = 0.0
-    vram_peak_mb: float = 0.0
+    model_name:           str   = ""
+    total_params:         int   = 0
+    trainable_params:     int   = 0
+    train_time_seconds:   float = 0.0
+    vram_peak_mb:         float = 0.0
     inference_latency_ms: float = 0.0
-    tokens_per_second: float = 0.0
+    tokens_per_second:    float = 0.0
 
     def to_dict(self):
+        """Konvertiert die Dataclass in ein normales Dict (für YAML-Export)."""
         return asdict(self)
 
     def __str__(self) -> str:
@@ -67,42 +64,38 @@ class EfficiencyMetrics:
 
 
 # ---------------------------------------------------------------------------
-# Parameter counting
+# Parameter zählen
 # ---------------------------------------------------------------------------
 
-
 def count_parameters(model) -> Tuple[int, int]:
-    """Count total and trainable parameters of a PyTorch model.
+    """Zählt die Gesamt- und trainierbaren Parameter eines PyTorch-Modells.
 
-    Parameters
-    ----------
-    model:
-        A ``torch.nn.Module`` (or PEFT wrapped model).
+    Bei PEFT/LoRA-Modellen ist trainable_params << total_params, da die
+    Basisgewichte eingefroren sind und nur der Adapter trainiert wird.
 
-    Returns
-    -------
-    Tuple[int, int]
-        ``(total_params, trainable_params)``
+    Args:
+        model: Ein torch.nn.Module (auch PEFT-wrapped).
+
+    Returns:
+        Tuple (total_params, trainable_params).
     """
-    total = sum(p.numel() for p in model.parameters())
+    total     = sum(p.numel() for p in model.parameters())
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return total, trainable
 
 
 # ---------------------------------------------------------------------------
-# VRAM tracking
+# VRAM-Tracking
 # ---------------------------------------------------------------------------
 
-
 def get_vram_peak_mb() -> float:
-    """Return the peak GPU memory allocation in megabytes.
+    """Gibt den maximalen GPU-Speicherverbrauch seit dem letzten Reset zurück.
 
-    Returns 0.0 if no CUDA device is available.
+    Nutzt torch.cuda.max_memory_allocated() — misst allokierten Speicher,
+    nicht den vom Betriebssystem reservierten (der ist typischerweise höher).
 
-    Returns
-    -------
-    float
-        Peak VRAM in MB.
+    Returns:
+        VRAM-Peak in MB, oder 0.0 wenn keine GPU verfügbar.
     """
     if not torch.cuda.is_available():
         return 0.0
@@ -110,10 +103,10 @@ def get_vram_peak_mb() -> float:
 
 
 def reset_vram_tracking() -> None:
-    """Reset peak VRAM tracking statistics.
+    """Setzt den VRAM-Peak-Zähler zurück.
 
-    Call this before a measurement block to get an accurate peak for that
-    block alone.
+    Muss vor einem Mess-Block aufgerufen werden, damit nur der VRAM
+    des gewünschten Blocks gemessen wird (nicht Vorheriges).
     """
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
@@ -121,62 +114,58 @@ def reset_vram_tracking() -> None:
 
 @contextmanager
 def track_vram() -> Generator[dict, None, None]:
-    """Context manager that measures VRAM used within the block.
+    """Context-Manager, der den VRAM-Verbrauch innerhalb eines Blocks misst.
 
-    Yields
-    ------
-    dict
-        Mutable dict; after the block exits it will contain:
-        ``{"vram_peak_mb": float, "vram_before_mb": float}``.
+    Yields:
+        Dict, das nach dem Block die Felder 'vram_peak_mb' und
+        'vram_before_mb' enthält.
 
-    Example
-    -------
-    >>> with track_vram() as vram_info:
-    ...     model(inputs)
-    >>> print(vram_info["vram_peak_mb"])
+    Beispiel:
+        >>> with track_vram() as info:
+        ...     model(inputs)
+        >>> print(f"VRAM: {info['vram_peak_mb']:.1f} MB")
     """
     info: dict = {"vram_peak_mb": 0.0, "vram_before_mb": 0.0}
+
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
+        # VRAM vor dem Block festhalten (z.B. bereits geladenes Modell)
         info["vram_before_mb"] = torch.cuda.memory_allocated() / (1024 ** 2)
+
     try:
         yield info
     finally:
+        # VRAM-Peak nach dem Block abfragen
         if torch.cuda.is_available():
             info["vram_peak_mb"] = torch.cuda.max_memory_allocated() / (1024 ** 2)
 
 
 # ---------------------------------------------------------------------------
-# Latency measurement
+# Latenz-Messung
 # ---------------------------------------------------------------------------
-
 
 def measure_inference_latency(
     fn,
-    n_runs: int = 20,
+    n_runs:   int = 20,
     n_warmup: int = 3,
 ) -> Tuple[float, float]:
-    """Measure inference latency of a callable with CUDA synchronization.
+    """Misst die Inferenz-Latenz einer Funktion mit CUDA-Synchronisierung.
 
-    Parameters
-    ----------
-    fn:
-        Zero-argument callable that performs one inference step.
-    n_runs:
-        Number of timed runs.
-    n_warmup:
-        Number of warmup runs (excluded from timing).
+    Warmup-Läufe werden nicht in die Messung einbezogen, da der erste
+    CUDA-Aufruf langsamer ist (JIT-Kompilierung, Cache-Aufbau).
 
-    Returns
-    -------
-    Tuple[float, float]
-        ``(mean_ms, std_ms)`` — mean and standard deviation of latency in ms.
+    Args:
+        fn:       Aufrufbare Funktion ohne Argumente (ein Inferenz-Schritt).
+        n_runs:   Anzahl gemessener Läufe.
+        n_warmup: Anzahl Warmup-Läufe vor der Messung.
 
-    Example
-    -------
-    >>> mean_ms, std_ms = measure_inference_latency(lambda: model(inputs))
+    Returns:
+        Tuple (mean_ms, std_ms) — Mittelwert und Standardabweichung in ms.
+
+    Beispiel:
+        >>> mean_ms, std_ms = measure_inference_latency(lambda: model(inputs))
     """
-    # Warmup
+    # Warmup-Läufe durchführen (werden nicht gemessen)
     for _ in range(n_warmup):
         fn()
         if torch.cuda.is_available():
@@ -184,16 +173,21 @@ def measure_inference_latency(
 
     latencies: List[float] = []
     for _ in range(n_runs):
+        # Vor der Messung: sicherstellen, dass GPU-Warteschlange leer ist
         if torch.cuda.is_available():
             torch.cuda.synchronize()
         t0 = time.perf_counter()
+
         fn()
+
+        # Nach der Ausführung: warten bis GPU fertig ist
         if torch.cuda.is_available():
             torch.cuda.synchronize()
         t1 = time.perf_counter()
-        latencies.append((t1 - t0) * 1000)
+
+        latencies.append((t1 - t0) * 1000)  # in Millisekunden
 
     import numpy as np
     mean_ms = float(np.mean(latencies))
-    std_ms = float(np.std(latencies))
+    std_ms  = float(np.std(latencies))
     return mean_ms, std_ms

@@ -1,11 +1,22 @@
 """
-Preprocessing for decoder-based NER (generative, JSON output format).
+preprocess_decoder.py — Vorverarbeitung für LLM-basierte NER (generativer Ansatz)
 
-The LLM receives a system prompt + user message (the raw sentence) and is
-expected to output a JSON list of entity dicts:
-    [{"entity": "Barack Obama", "type": "person"}, ...]
+Beim Decoder-Ansatz wird NER als Generierungsaufgabe formuliert:
+Das Modell erhält einen System-Prompt + den Eingabesatz und soll eine
+JSON-Liste der erkannten Entities ausgeben.
 
-Usage:
+Trainingsformat (ChatML, kompatibel mit Qwen):
+    <|im_start|>system
+    Du bist ein NER-System ...
+    <|im_start|>user
+    EU rejects German call ...
+    <|im_start|>assistant
+    [{"entity": "EU", "type": "corporation"}, ...]
+
+Der Assistent-Turn enthält die Gold-Entities als JSON-String.
+Bei der Inferenz wird das Modell nach dem User-Turn aufgefordert zu generieren.
+
+Verwendung:
     from src.data.preprocess_decoder import prepare_decoder_dataset
     dataset = prepare_decoder_dataset()
 """
@@ -20,9 +31,12 @@ from datasets import DatasetDict, Dataset
 from src.data.load_wnut17 import ID2LABEL, LABEL_LIST, load_wnut17
 
 # ---------------------------------------------------------------------------
-# System prompt
+# System-Prompt
 # ---------------------------------------------------------------------------
 
+# Der System-Prompt erklärt dem Modell seine Aufgabe und das erwartete
+# Ausgabeformat. Er wird bei jedem Sample wiederholt (kein separates
+# Fine-Tuning des System-Prompts — der bleibt eingefroren).
 SYSTEM_PROMPT: str = (
     "Du bist ein NER-System. Extrahiere alle Named Entities aus dem gegebenen Text.\n"
     "Gib das Ergebnis als JSON-Liste zurück. Jedes Element hat die Felder "
@@ -32,33 +46,30 @@ SYSTEM_PROMPT: str = (
     "Antworte NUR mit dem JSON, ohne zusätzlichen Text."
 )
 
-# ---------------------------------------------------------------------------
-# BIO → entity list conversion
-# ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# BIO-Tags → Entity-Liste
+# ---------------------------------------------------------------------------
 
 def extract_entities_from_bio(
     tokens: List[str],
     ner_tags: List[int],
 ) -> List[Dict[str, str]]:
-    """Convert BIO integer tags into a list of entity dicts.
+    """Konvertiert eine BIO-Tag-Sequenz in eine Liste von Entity-Dicts.
 
-    Parameters
-    ----------
-    tokens:
-        Word tokens of the sentence.
-    ner_tags:
-        Corresponding integer BIO tags (using ID2LABEL mapping).
+    Wird genutzt um die Gold-Labels aus dem WNUT-2017-Format in das
+    JSON-Format für den Assistent-Turn zu übersetzen.
 
-    Returns
-    -------
-    List[Dict[str, str]]
-        Each dict has keys ``entity`` (surface string) and ``type``.
+    Args:
+        tokens:   Wortliste des Satzes.
+        ner_tags: Integer-BIO-Tags (Index in ID2LABEL).
 
-    Examples
-    --------
-    >>> extract_entities_from_bio(["New", "York", "is", "great"], [7, 8, 0, 0])
-    [{"entity": "New York", "type": "location"}]
+    Returns:
+        Liste von Dicts: [{"entity": "New York", "type": "location"}, ...]
+
+    Beispiel:
+        >>> extract_entities_from_bio(["New", "York", "is", "great"], [7, 8, 0, 0])
+        [{"entity": "New York", "type": "location"}]
     """
     entities: List[Dict[str, str]] = []
     current_tokens: List[str] = []
@@ -66,19 +77,27 @@ def extract_entities_from_bio(
 
     for token, tag in zip(tokens, ner_tags):
         label = ID2LABEL[tag]
+
         if label.startswith("B-"):
+            # Offene Entity zuerst abschließen
             if current_type is not None:
                 entities.append({"entity": " ".join(current_tokens), "type": current_type})
+            # Neue Entity starten; "B-person" → type = "person"
             current_type = label[2:]
             current_tokens = [token]
+
         elif label.startswith("I-") and current_type is not None:
+            # Aktuelle Entity um das nächste Wort erweitern
             current_tokens.append(token)
+
         else:
+            # "O"-Tag: Entity abschließen und Zustand zurücksetzen
             if current_type is not None:
                 entities.append({"entity": " ".join(current_tokens), "type": current_type})
             current_type = None
             current_tokens = []
 
+    # Letzte Entity am Satzende abschließen
     if current_type is not None:
         entities.append({"entity": " ".join(current_tokens), "type": current_type})
 
@@ -86,37 +105,40 @@ def extract_entities_from_bio(
 
 
 # ---------------------------------------------------------------------------
-# Chat format builder
+# Chat-Format für SFT
 # ---------------------------------------------------------------------------
 
-
 def format_for_llm(sample: Dict) -> Dict:
-    """Convert a WNUT-17 sample into chat-format messages for SFT.
+    """Konvertiert ein WNUT-2017-Sample in das ChatML-Format für SFTTrainer.
 
-    Produces a ``messages`` field (list of role/content dicts) following the
-    ChatML convention (compatible with Qwen).  The assistant turn contains the
-    gold JSON.
+    Erzeugt ein 'messages'-Feld mit drei Turns:
+      - system: der NER-Instruktions-Prompt
+      - user:   der Eingabesatz (Wörter zu String zusammengesetzt)
+      - assistant: die Gold-Entities als JSON-String
 
-    Parameters
-    ----------
-    sample:
-        Dataset row with ``tokens`` and ``ner_tags`` fields.
+    Das SFT-Training optimiert nur auf dem Assistent-Turn,
+    die anderen Turns werden beim Loss maskiert.
 
-    Returns
-    -------
-    Dict
-        Original sample augmented with a ``messages`` key.
+    Args:
+        sample: Einzelne Zeile des WNUT-2017-Datensatzes.
+
+    Returns:
+        Dict mit Schlüssel 'messages' (Liste von role/content-Dicts).
     """
     tokens: List[str] = sample["tokens"]
     ner_tags: List[int] = sample["ner_tags"]
 
+    # Wörter zu einem einzigen String zusammensetzen
     sentence: str = " ".join(tokens)
+
+    # Gold-Entities aus BIO-Tags extrahieren und als JSON serialisieren
     entities: List[Dict[str, str]] = extract_entities_from_bio(tokens, ner_tags)
     assistant_answer: str = json.dumps(entities, ensure_ascii=False)
 
+    # ChatML-Struktur aufbauen
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": sentence},
+        {"role": "system",    "content": SYSTEM_PROMPT},
+        {"role": "user",      "content": sentence},
         {"role": "assistant", "content": assistant_answer},
     ]
 
@@ -124,21 +146,21 @@ def format_for_llm(sample: Dict) -> Dict:
 
 
 # ---------------------------------------------------------------------------
-# Dataset preparation
+# Datensatz-Vorbereitung für Training
 # ---------------------------------------------------------------------------
 
-
 def prepare_decoder_dataset() -> DatasetDict:
-    """Load WNUT-17 and convert all splits to chat-format for SFT.
+    """Lädt WNUT-2017 und konvertiert alle Splits in das ChatML-Format.
 
-    Returns
-    -------
-    DatasetDict
-        Dataset with splits train/validation/test, each containing a
-        ``messages`` column.
+    Jedes Sample bekommt ein 'messages'-Feld (system + user + assistant).
+    Die Original-Spalten 'tokens' und 'ner_tags' werden entfernt.
+
+    Returns:
+        DatasetDict mit Splits train/validation/test, jeweils mit 'messages'-Spalte.
     """
     raw: DatasetDict = load_wnut17()
 
+    # format_for_llm auf alle Splits anwenden
     formatted: DatasetDict = raw.map(
         format_for_llm,
         remove_columns=raw["train"].column_names,
@@ -147,30 +169,25 @@ def prepare_decoder_dataset() -> DatasetDict:
 
 
 # ---------------------------------------------------------------------------
-# Inference helpers
+# Inferenz-Hilfsfunktion
 # ---------------------------------------------------------------------------
-
 
 def prepare_test_inputs(
     dataset_split: Dataset,
 ) -> Tuple[List[List[Dict]], List[List[Dict[str, str]]]]:
-    """Build prompt-only messages (no assistant turn) and gold entities.
+    """Baut Prompt-Only-Nachrichten (ohne Assistent-Turn) für die Inferenz.
 
-    Used during inference: the model should predict the assistant turn.
+    Bei der Inferenz darf der Assistent-Turn nicht übergeben werden —
+    das Modell soll ihn selbst generieren. Diese Funktion gibt
+    Prompts (system + user) und Gold-Entities (Referenz) zurück.
 
-    Parameters
-    ----------
-    dataset_split:
-        A single split of the raw WNUT-17 dataset (with ``tokens`` and
-        ``ner_tags`` columns).
+    Args:
+        dataset_split: Ein einzelner WNUT-2017-Split (mit 'tokens' und 'ner_tags').
 
-    Returns
-    -------
-    Tuple[List[List[Dict]], List[List[Dict[str, str]]]]
-        ``(prompts, gold_entities)``
-
-        * ``prompts``: list of message lists [system, user] — no assistant
-        * ``gold_entities``: list of entity-dict lists (ground truth)
+    Returns:
+        Tuple aus:
+          - prompts:       Liste von [system, user]-Nachrichtenlisten
+          - gold_entities: Liste von Entity-Dicts pro Satz (Referenz für Evaluation)
     """
     prompts: List[List[Dict]] = []
     gold_entities: List[List[Dict[str, str]]] = []
@@ -180,11 +197,14 @@ def prepare_test_inputs(
         ner_tags: List[int] = sample["ner_tags"]
         sentence: str = " ".join(tokens)
 
+        # Nur System- und User-Turn — der Assistent-Turn fehlt bewusst
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": sentence},
+            {"role": "user",   "content": sentence},
         ]
         prompts.append(messages)
+
+        # Gold-Entities aus BIO-Tags für die spätere Evaluation extrahieren
         gold_entities.append(extract_entities_from_bio(tokens, ner_tags))
 
     return prompts, gold_entities
