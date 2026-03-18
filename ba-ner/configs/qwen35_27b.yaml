@@ -1,0 +1,25 @@
+experiment_name: qwen35-27b-lora
+model_name: Qwen/Qwen3.5-27B
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+use_qlora: false
+attn_impl: sdpa          # NICHT flash_attention_2 fuer Qwen3.5!
+learning_rate: 2e-4
+batch_size: 2
+grad_accum: 8
+epochs: 3
+max_seq_length: 512
+weight_decay: 0.01
+warmup_ratio: 0.1
+use_wandb: true
+seed: 42
+output_dir: results/qwen35-27b-lora

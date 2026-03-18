@@ -1,0 +1,13 @@
+experiment_name: deberta-v3-large
+model_name: microsoft/deberta-v3-large
+learning_rate: 2e-5
+batch_size: 16
+eval_batch_size: 32
+epochs: 10
+weight_decay: 0.01
+warmup_ratio: 0.1
+fp16: true
+use_wandb: true
+max_length: 128
+seed: 42
+output_dir: results/deberta-v3-large

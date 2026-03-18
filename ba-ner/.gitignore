@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.egg-info/
+results/*/best_model/
+results/*/lora_adapter/
+results/*/checkpoint-*/
+.venv/
+wandb/
+logs/
+*.env
+.DS_Store
+*.safetensors
+*.bin
+*.pt

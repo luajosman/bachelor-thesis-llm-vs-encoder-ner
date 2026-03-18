@@ -1,0 +1,13 @@
+experiment_name: bert-base-cased
+model_name: bert-base-cased
+learning_rate: 3e-5
+batch_size: 32
+eval_batch_size: 64
+epochs: 10
+weight_decay: 0.01
+warmup_ratio: 0.1
+fp16: true
+use_wandb: true
+max_length: 128
+seed: 42
+output_dir: results/bert-base-cased
