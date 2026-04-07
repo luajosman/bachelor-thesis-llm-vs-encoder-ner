@@ -260,6 +260,7 @@ def train_encoder(config_path: str, dataset_override: str | None = None) -> Dict
         "experiment_name":       cfg["experiment_name"],
         "model_name":            cfg["model_name"],
         "model_type":            "encoder",
+        "regime":                "encoder",  # Token-Klassifikation
         "dataset":               dataset_name,
         "test_f1":               float(test_f1),
         "test_precision":        float(test_precision),

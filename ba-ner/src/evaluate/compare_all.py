@@ -37,12 +37,52 @@ from src.data.dataset_loader import get_dataset_info
 
 console = Console()
 
-# Farben fuer Encoder (gruen) und Decoder (lila)
-ENCODER_COLOR = "#2ecc71"
-DECODER_COLOR = "#9b59b6"
+# Farben fuer die drei Regimes
+ENCODER_COLOR     = "#2ecc71"   # gruen — fine-tuned Token-Classifier
+LLM_LORA_COLOR    = "#9b59b6"   # lila  — fine-tuned LLM via LoRA/QLoRA
+LLM_ZEROSHOT_COLOR = "#3498db"  # blau  — Basismodell ohne Adapter
 
-# Bekannte Datensaetze
+# Bekannte Datensaetze (multinerd ist der einzige aktive; wnut_17 nur Legacy)
 KNOWN_DATASETS = {"multinerd", "wnut_17"}
+
+
+def _get_regime(r: Dict[str, Any]) -> str:
+    """Bestimmt das Regime eines Experiments aus den gespeicherten Metadaten.
+
+    Reihenfolge:
+      1. explizites 'regime'-Feld (von train.py / inference.py geschrieben)
+      2. Heuristik ueber 'experiment_name' (Suffix '-zeroshot' / '-qlora')
+      3. Fallback ueber 'model_type'
+    """
+    regime = r.get("regime")
+    if regime in ("encoder", "llm_lora", "llm_zeroshot"):
+        return regime
+
+    name = (r.get("experiment_name") or "").lower()
+    if "zeroshot" in name:
+        return "llm_zeroshot"
+    if "qlora" in name or "lora" in name:
+        return "llm_lora"
+
+    if r.get("model_type") == "encoder":
+        return "encoder"
+    return "llm_lora"  # konservativer Fallback
+
+
+def _regime_label(regime: str) -> str:
+    return {
+        "encoder":      "[green]Encoder[/green]",
+        "llm_lora":     "[magenta]LLM LoRA[/magenta]",
+        "llm_zeroshot": "[cyan]LLM Zero-Shot[/cyan]",
+    }.get(regime, regime)
+
+
+def _regime_color(regime: str) -> str:
+    return {
+        "encoder":      ENCODER_COLOR,
+        "llm_lora":     LLM_LORA_COLOR,
+        "llm_zeroshot": LLM_ZEROSHOT_COLOR,
+    }.get(regime, "#7f8c8d")
 
 
 # ---------------------------------------------------------------------------
@@ -141,7 +181,7 @@ def print_comparison_table(results: List[Dict[str, Any]]) -> None:
     table.add_column("Rank",        justify="right",  style="dim")
     table.add_column("Dataset",     justify="left")
     table.add_column("Model",       style="bold")
-    table.add_column("Type",        justify="center")
+    table.add_column("Regime",      justify="center")
     table.add_column("Params",      justify="right")
     table.add_column("Test F1",     justify="right",  style="bold green")
     table.add_column("Precision",   justify="right")
@@ -156,18 +196,18 @@ def print_comparison_table(results: List[Dict[str, Any]]) -> None:
     )
 
     for rank, r in enumerate(sorted_results, start=1):
-        model_type = r.get("model_type", "?")
-        type_label = (
-            "[green]Encoder[/green]"
-            if model_type == "encoder"
-            else "[magenta]Decoder[/magenta]"
-        )
+        regime = _get_regime(r)
+        regime_label = _regime_label(regime)
 
         total_params = r.get("total_params", 0)
         params_str = _format_params(total_params)
 
         train_secs = r.get("train_runtime_seconds", 0.0)
-        train_min = f"{train_secs / 60:.1f}" if train_secs else "-"
+        # Zero-Shot hat per Definition kein Training -> "-"
+        if regime == "llm_zeroshot" or not train_secs:
+            train_min = "-"
+        else:
+            train_min = f"{train_secs / 60:.1f}"
 
         vram_mb = r.get("vram_peak_mb", 0.0)
         vram_gb = f"{vram_mb / 1024:.1f}" if vram_mb else "-"
@@ -179,7 +219,7 @@ def print_comparison_table(results: List[Dict[str, Any]]) -> None:
             str(rank),
             r.get("dataset", "?"),
             r.get("experiment_name", r.get("model_name", "?")),
-            type_label,
+            regime_label,
             params_str,
             f"{r.get('test_f1', 0.0):.4f}",
             f"{r.get('test_precision', 0.0):.4f}",
@@ -213,20 +253,16 @@ def create_comparison_plot(
 ) -> None:
     """Erstellt ein horizontales Balkendiagramm der F1-Scores.
 
-    Modellnamen enthalten den Datensatz als Praefix, damit beide
-    Benchmarks im selben Plot unterscheidbar sind.
+    Faerbung folgt dem Regime: Encoder, LLM Zero-Shot, LLM LoRA.
     """
     sorted_results = sorted(results, key=lambda x: x.get("test_f1", 0.0))
 
     names = [
-        f"[{r.get('dataset', '?')}] {r.get('experiment_name', r.get('model_name', '?'))}"
+        r.get("experiment_name", r.get("model_name", "?"))
         for r in sorted_results
     ]
-    f1s = [r.get("test_f1", 0.0) for r in sorted_results]
-    colors = [
-        ENCODER_COLOR if r.get("model_type") == "encoder" else DECODER_COLOR
-        for r in sorted_results
-    ]
+    f1s    = [r.get("test_f1", 0.0) for r in sorted_results]
+    colors = [_regime_color(_get_regime(r)) for r in sorted_results]
 
     fig, ax = plt.subplots(figsize=(11, max(4, len(names) * 0.6)))
     bars = ax.barh(names, f1s, color=colors, edgecolor="white", height=0.6)
@@ -244,13 +280,14 @@ def create_comparison_plot(
     if f1s:
         ax.set_xlim(0, min(1.0, max(f1s) + 0.06))
     ax.set_xlabel("Entity-Level F1 Score (seqeval)", fontsize=11)
-    ax.set_title("NER Model Comparison", fontsize=13, fontweight="bold")
+    ax.set_title("NER Model Comparison (MultiNERD English)", fontsize=13, fontweight="bold")
     ax.axvline(0, color="black", linewidth=0.5)
     ax.grid(axis="x", alpha=0.3, linestyle="--")
 
     legend_patches = [
-        mpatches.Patch(color=ENCODER_COLOR, label="Encoder (Token Classification)"),
-        mpatches.Patch(color=DECODER_COLOR, label="Decoder (Generative + LoRA)"),
+        mpatches.Patch(color=ENCODER_COLOR,      label="Encoder (DeBERTa, fine-tuned)"),
+        mpatches.Patch(color=LLM_ZEROSHOT_COLOR, label="LLM Zero-Shot (Qwen3.5)"),
+        mpatches.Patch(color=LLM_LORA_COLOR,     label="LLM LoRA/QLoRA (Qwen3.5)"),
     ]
     ax.legend(handles=legend_patches, loc="lower right", fontsize=9)
 
@@ -401,21 +438,28 @@ def export_latex_table(
         key=lambda x: (x.get("dataset", ""), -x.get("test_f1", 0.0)),
     )
 
+    # Klartext-Labels fuer LaTeX (ohne Rich-Markup)
+    regime_text = {
+        "encoder":      "Encoder",
+        "llm_lora":     "LLM LoRA",
+        "llm_zeroshot": "LLM Zero-Shot",
+    }
+
     lines = [
         r"\begin{table}[ht]",
         r"  \centering",
-        r"  \caption{NER Model Comparison (MultiNERD \& WNUT-2017)}",
+        r"  \caption{NER Model Comparison on MultiNERD English: Encoder (DeBERTa) vs.\ LLM (Qwen3.5, Zero-Shot and LoRA/QLoRA)}",
         r"  \label{tab:ner-comparison}",
-        r"  \begin{tabular}{lllrrrr}",
+        r"  \begin{tabular}{llrrrr}",
         r"    \toprule",
-        r"    \textbf{Dataset} & \textbf{Model} & \textbf{Type} & \textbf{Params} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} \\",
+        r"    \textbf{Model} & \textbf{Regime} & \textbf{Params} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} \\",
         r"    \midrule",
     ]
 
     for r in sorted_results:
-        dataset = r.get("dataset", "?")
         name   = r.get("experiment_name", r.get("model_name", "?"))
-        mtype  = "Encoder" if r.get("model_type") == "encoder" else "Decoder"
+        regime = _get_regime(r)
+        rlabel = regime_text.get(regime, regime)
         params = _format_params(r.get("total_params", 0))
         f1     = f"{r.get('test_f1', 0.0):.4f}"
         prec   = f"{r.get('test_precision', 0.0):.4f}"
@@ -426,7 +470,7 @@ def export_latex_table(
             return s.replace("_", r"\_").replace("-", r"\text{-}")
 
         lines.append(
-            f"    {_esc(dataset)} & {_esc(name)} & {mtype} & {params} & {f1} & {prec} & {rec} \\\\"
+            f"    {_esc(name)} & {rlabel} & {params} & {f1} & {prec} & {rec} \\\\"
         )
 
     lines += [

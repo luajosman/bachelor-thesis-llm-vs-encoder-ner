@@ -1,6 +1,5 @@
 # DeBERTa-v3-large — Groesseres Encoder-Modell fuer NER
 # Hauptbenchmark: MultiNERD (englisch)
-# Zusatzbenchmark: python -m src.encoder.train configs/deberta_large.yaml --dataset wnut_17
 
 experiment_name: deberta-v3-large
 model_name: microsoft/deberta-v3-large

@@ -1,0 +1,24 @@
+# Qwen3.5-4B — Zero-Shot Baseline (kein Training)
+# Hauptbenchmark: MultiNERD (englisch)
+
+experiment_name: qwen35-4b-zeroshot
+model_name: Qwen/Qwen3.5-4B
+model_type: decoder
+mode: zeroshot
+
+# Datensatz
+dataset: multinerd
+dataset_language: en
+
+# 4-bit-Quantisierung spart VRAM auch im Zero-Shot Mode
+use_qlora: true
+attn_impl: sdpa
+
+# Generierung — greedy/deterministisch fuer Reproduzierbarkeit
+max_new_tokens: 256
+
+# Reproduzierbarkeit
+seed: 42
+
+# Ausgabe
+output_dir: results/multinerd/qwen35-4b-zeroshot

@@ -1,11 +1,12 @@
-# Qwen3.5-27B — Grosses LLM mit QLoRA fuer NER
+# Qwen3.5-0.8B — Kleinstes LLM mit QLoRA fuer NER
 # Hauptbenchmark: MultiNERD (englisch)
 #
-# Hinweis: Benoetig mindestens ~24 GB VRAM mit QLoRA.
-# Fuer bf16 LoRA (use_qlora: false) werden ~80 GB VRAM benoetigt (A100).
+# Motivation: kleines LLM, dessen Gesamtgroessenordnung (~0.8B Parameter)
+# in der Naehe von DeBERTa-v3-large (~435M Parameter) liegt. Erlaubt einen
+# fairen Vergleich "kleines LLM mit LoRA" vs. "grosses Encoder-Modell".
 
-experiment_name: qwen35-27b-qlora
-model_name: Qwen/Qwen3.5-27B
+experiment_name: qwen35-08b-qlora
+model_name: Qwen/Qwen3.5-0.8B
 model_type: decoder
 mode: lora
 
@@ -17,9 +18,9 @@ dataset_language: en
 use_qlora: true
 attn_impl: sdpa    # sdpa fuer Qwen3.5 (NICHT flash_attention_2)
 
-# LoRA-Konfiguration — hoeherer Rang fuer groesseres Modell
-lora_r: 32
-lora_alpha: 64
+# LoRA-Konfiguration — Standardrang fuer kleines Modell
+lora_r: 16
+lora_alpha: 32
 lora_dropout: 0.05
 target_modules:
   - q_proj
@@ -30,13 +31,14 @@ target_modules:
   - up_proj
   - down_proj
 
-# Training — konservativere Settings wegen Modellgroesse
-num_train_epochs: 2
-learning_rate: 1e-4
-per_device_train_batch_size: 1
-per_device_eval_batch_size: 1
-gradient_accumulation_steps: 16
-warmup_ratio: 0.03
+# Training — etwas hoehere LR und groessere Batches als 4B,
+# da das Modell deutlich kleiner ist
+num_train_epochs: 3
+learning_rate: 3e-4
+per_device_train_batch_size: 8
+per_device_eval_batch_size: 8
+gradient_accumulation_steps: 2
+warmup_ratio: 0.05
 lr_scheduler_type: cosine
 weight_decay: 0.01
 
@@ -61,4 +63,4 @@ use_wandb: false
 seed: 42
 
 # Ausgabe
-output_dir: results/multinerd/qwen35-27b-qlora
+output_dir: results/multinerd/qwen35-08b-qlora

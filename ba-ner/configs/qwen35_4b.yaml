@@ -1,10 +1,10 @@
-# Qwen3.5-4B — Kleineres LLM mit QLoRA fuer NER
+# Qwen3.5-4B — Mittelgrosses LLM mit QLoRA fuer NER
 # Hauptbenchmark: MultiNERD (englisch)
-# Zusatzbenchmark: python -m src.decoder.train configs/qwen35_4b.yaml --dataset wnut_17
 
 experiment_name: qwen35-4b-qlora
 model_name: Qwen/Qwen3.5-4B
 model_type: decoder
+mode: lora
 
 # Datensatz
 dataset: multinerd

@@ -1,0 +1,27 @@
+# Qwen3.5-27B — Zero-Shot Baseline (kein Training)
+# Hauptbenchmark: MultiNERD (englisch)
+#
+# Hinweis: Auch im Zero-Shot Mode benoetigt Qwen3.5-27B mit 4-bit
+# Quantisierung mindestens ~24 GB VRAM. Ohne Quantisierung deutlich mehr.
+
+experiment_name: qwen35-27b-zeroshot
+model_name: Qwen/Qwen3.5-27B
+model_type: decoder
+mode: zeroshot
+
+# Datensatz
+dataset: multinerd
+dataset_language: en
+
+# 4-bit-Quantisierung ist hier praktisch Pflicht
+use_qlora: true
+attn_impl: sdpa
+
+# Generierung
+max_new_tokens: 256
+
+# Reproduzierbarkeit
+seed: 42
+
+# Ausgabe
+output_dir: results/multinerd/qwen35-27b-zeroshot

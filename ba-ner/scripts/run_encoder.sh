@@ -26,7 +26,7 @@ fi
 mkdir -p logs
 
 # ==========================================================================
-# Hauptbenchmark: MultiNERD (englisch)
+# MultiNERD English — der einzige aktive Datensatz
 # ==========================================================================
 
 echo "--- Training DeBERTa-v3-base (MultiNERD) ---"
@@ -44,29 +44,6 @@ echo "--- Inference DeBERTa-v3-large (MultiNERD) ---"
 python -m src.encoder.inference \
     --model results/multinerd/deberta-v3-large/best_model \
     --config configs/deberta_large.yaml
-
-# ==========================================================================
-# Zusatzbenchmark: WNUT-2017
-# ==========================================================================
-
-echo "--- Training DeBERTa-v3-base (WNUT-17) ---"
-python -m src.encoder.train configs/deberta_base.yaml --dataset wnut_17
-
-echo "--- Inference DeBERTa-v3-base (WNUT-17) ---"
-python -m src.encoder.inference \
-    --model results/wnut_17/deberta-v3-base/best_model \
-    --config configs/deberta_base.yaml \
-    --dataset wnut_17
-
-# Optional: DeBERTa-v3-large auch auf WNUT-17 (wenn Zeit reicht)
-# echo "--- Training DeBERTa-v3-large (WNUT-17) ---"
-# python -m src.encoder.train configs/deberta_large.yaml --dataset wnut_17
-#
-# echo "--- Inference DeBERTa-v3-large (WNUT-17) ---"
-# python -m src.encoder.inference \
-#     --model results/wnut_17/deberta-v3-large/best_model \
-#     --config configs/deberta_large.yaml \
-#     --dataset wnut_17
 
 echo ""
 echo "=== Encoder pipeline done: $(date) ==="

@@ -1,12 +1,11 @@
 # DeBERTa-v3-base — Encoder-Baseline fuer NER
 # Hauptbenchmark: MultiNERD (englisch)
-# Zusatzbenchmark: python -m src.encoder.train configs/deberta_base.yaml --dataset wnut_17
 
 experiment_name: deberta-v3-base
 model_name: microsoft/deberta-v3-base
 model_type: encoder
 
-# Datensatz (ueberschreibbar via --dataset CLI-Argument)
+# Datensatz
 dataset: multinerd
 dataset_language: en
 

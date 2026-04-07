@@ -433,6 +433,7 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
         "experiment_name":       cfg["experiment_name"],
         "model_name":            model_name,
         "model_type":            "decoder",
+        "regime":                "llm_lora",  # LoRA/QLoRA Regime
         "dataset":               dataset_name,
         "use_qlora":             use_qlora,
         "lora_r":                cfg.get("lora_r", 16),
