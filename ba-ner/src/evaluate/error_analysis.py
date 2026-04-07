@@ -15,13 +15,14 @@ Decoder-Fehler (strukturelle Probleme im LLM-Output):
   - Incomplete JSON:      JSON abgeschnitten (max_new_tokens überschritten?)
   - Wrong Schema:         Valides JSON, aber kein Array
   - Missing Fields:       Kein 'entity'- oder 'type'-Feld
-  - Unknown Types:        Typ nicht in der WNUT-2017-Taxonomie
+  - Unknown Types:        Typ nicht in der erwarteten Datensatz-Taxonomie
   - Span Mismatches:      Entity-Text kommt im Satz nicht vor
 
 Verwendung:
     python -m src.evaluate.error_analysis \\
-        --encoder-preds results/deberta-v3-large/test_predictions.json \\
-        --decoder-preds results/qwen35-27b-lora/test_predictions.json
+        --encoder-preds results/multinerd/deberta-v3-large/test_predictions.json \\
+        --decoder-preds results/multinerd/qwen35-27b-qlora/test_predictions.json \\
+        --dataset multinerd
 """
 
 from __future__ import annotations
@@ -31,7 +32,7 @@ import json
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, FrozenSet, List, Optional
 
 from rich.console import Console
 from rich.table import Table
@@ -74,7 +75,7 @@ class DecoderErrorStats:
         incomplete_json:      JSON endet nicht mit ']' (wurde abgeschnitten).
         wrong_schema:         Valides JSON, aber kein Array (z.B. Dict).
         missing_fields:       Entities ohne 'entity'- oder 'type'-Feld.
-        unknown_entity_types: 'type'-Wert nicht in der WNUT-2017-Taxonomie.
+        unknown_entity_types: 'type'-Wert nicht in der Datensatz-Taxonomie.
         span_mismatches:      Entity-Text ist nicht im Eingabesatz enthalten.
         total_samples:        Gesamtanzahl analysierter Test-Samples.
         examples:             Gespeicherte Fehler-Beispiele.
@@ -237,17 +238,13 @@ def analyze_encoder_errors(
 # Decoder-Fehleranalyse
 # ---------------------------------------------------------------------------
 
-VALID_TYPES = frozenset(
-    ["person", "location", "corporation", "creative-work", "group", "product"]
-)
-
-
 def analyze_decoder_errors(
     gold_entities:  List[List[Dict]],
     pred_entities:  List[List[Dict]],
     raw_outputs:    List[str],
     parse_statuses: List[str],
     tokens_list:    List[List[str]],
+    valid_types:    Optional[FrozenSet[str]] = None,
     max_examples:   int = 10,
 ) -> DecoderErrorStats:
     """Analysiert strukturelle und inhaltliche Fehler im LLM-Output.
@@ -262,6 +259,8 @@ def analyze_decoder_errors(
         raw_outputs:    Roher LLM-Output pro Satz (für Debugging).
         parse_statuses: Parse-Ergebnis pro Satz ("ok", "failed", ...).
         tokens_list:    Token-Listen (für Span-Matching-Check).
+        valid_types:    Erlaubte Entity-Typen (datensatzabhaengig). Wenn None,
+                        wird der Unknown-Type-Check uebersprungen.
         max_examples:   Max. Anzahl gespeicherter Fehler-Beispiele.
 
     Returns:
@@ -323,8 +322,8 @@ def analyze_decoder_errors(
                 stats.missing_fields += 1
                 continue
 
-            if ent["type"] not in VALID_TYPES:
-                # Entity-Typ nicht in der WNUT-2017-Taxonomie
+            if valid_types is not None and ent["type"] not in valid_types:
+                # Entity-Typ nicht in der erwarteten Datensatz-Taxonomie
                 stats.unknown_entity_types += 1
                 if len([e for e in stats.examples if e.get("error") == "unknown_type"]) < max_examples:
                     stats.examples.append({
@@ -419,7 +418,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NER-Fehleranalyse (Encoder vs. Decoder)")
     parser.add_argument("--encoder-preds", help="Pfad zur Encoder test_predictions.json")
     parser.add_argument("--decoder-preds", help="Pfad zur Decoder test_predictions.json")
+    parser.add_argument(
+        "--dataset",
+        choices=["multinerd", "wnut_17"],
+        help="Datensatz fuer den Unknown-Type-Check (sonst wird er uebersprungen)",
+    )
     args = parser.parse_args()
+
+    # Erlaubte Entity-Typen aus der DatasetInfo laden, falls --dataset gesetzt ist
+    valid_types: Optional[FrozenSet[str]] = None
+    if args.dataset:
+        from src.data.dataset_loader import get_dataset_info
+        info = get_dataset_info(args.dataset)
+        valid_types = frozenset(info.entity_types)
+        console.print(f"[cyan]Erlaubte Entity-Typen ({args.dataset}): {sorted(valid_types)}[/cyan]")
 
     enc_stats = None
     dec_stats = None
@@ -440,7 +452,12 @@ if __name__ == "__main__":
         raw_outputs    = [s["raw_output"] for s in dec_data]
         parse_statuses = [s["parse_status"] for s in dec_data]
         dec_stats      = analyze_decoder_errors(
-            gold_entities, pred_entities, raw_outputs, parse_statuses, tokens_list_d
+            gold_entities,
+            pred_entities,
+            raw_outputs,
+            parse_statuses,
+            tokens_list_d,
+            valid_types=valid_types,
         )
         console.print(f"[green]Decoder: {len(dec_data)} Samples analysiert[/green]")
 

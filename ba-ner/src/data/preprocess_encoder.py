@@ -1,17 +1,20 @@
 """
-preprocess_encoder.py — Vorverarbeitung für Encoder-basierte NER
+preprocess_encoder.py — Vorverarbeitung fuer Encoder-basierte NER
 
-Für die Token-Klassifikation (BERT, DeBERTa) muss jedes Wort-Token
-in Subword-Tokens aufgeteilt und das BIO-Label korrekt übertragen werden.
+Fuer die Token-Klassifikation (DeBERTa) muss jedes Wort-Token
+in Subword-Tokens aufgeteilt und das BIO-Label korrekt uebertragen werden.
 
 Wichtige Designentscheidung:
-    - Nur das erste Subword-Token eines Wortes erhält das echte Label.
+    - Nur das erste Subword-Token eines Wortes erhaelt das echte Label.
     - Alle weiteren Subword-Tokens (und Sondertokens wie [CLS], [SEP])
       bekommen -100, damit sie vom Loss und von seqeval ignoriert werden.
 
 Verwendung:
     from src.data.preprocess_encoder import prepare_encoder_dataset
-    tokenized_ds, tokenizer, label_list = prepare_encoder_dataset("microsoft/deberta-v3-large")
+    tokenized_ds, tokenizer, info = prepare_encoder_dataset(
+        model_name="microsoft/deberta-v3-base",
+        dataset_name="multinerd",
+    )
 """
 
 from __future__ import annotations
@@ -21,19 +24,19 @@ from typing import Dict, List, Tuple
 from datasets import DatasetDict
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
-from src.data.load_wnut17 import LABEL_LIST, LABEL2ID, load_wnut17
+from src.data.dataset_loader import DatasetInfo, load_ner_dataset
 
 
 # ---------------------------------------------------------------------------
-# Label-Alignment: Subword-Tokens ↔ BIO-Labels
+# Label-Alignment: Subword-Tokens <-> BIO-Labels
 # ---------------------------------------------------------------------------
 
 def tokenize_and_align_labels(
     examples: Dict,
     tokenizer: PreTrainedTokenizerBase,
-    max_length: int = 128,
+    max_length: int = 256,
 ) -> Dict:
-    """Tokenisiert eine Batch von Sätzen und richtet die BIO-Labels aus.
+    """Tokenisiert eine Batch von Saetzen und richtet die BIO-Labels aus.
 
     Das Alignment ist der kritische Schritt beim Encoder-Preprocessing:
     Ein Wort wie "London" wird z.B. zu ["Lon", "##don"] aufgeteilt.
@@ -43,10 +46,10 @@ def tokenize_and_align_labels(
     label_id == -100 automatisch. Seqeval filtert sie ebenfalls heraus.
 
     Args:
-        examples:   Batch-Dict mit Schlüsseln 'tokens' und 'ner_tags'.
+        examples:   Batch-Dict mit Schluesseln 'tokens' und 'ner_tags'.
         tokenizer:  HuggingFace-Tokenizer (muss mit use_fast=True geladen sein,
-                    damit word_ids() verfügbar ist).
-        max_length: Maximale Sequenzlänge; längere Sätze werden abgeschnitten.
+                    damit word_ids() verfuegbar ist).
+        max_length: Maximale Sequenzlaenge; laengere Saetze werden abgeschnitten.
 
     Returns:
         Dict mit 'input_ids', 'attention_mask', 'labels' (und ggf. 'token_type_ids').
@@ -63,8 +66,8 @@ def tokenize_and_align_labels(
     all_labels: List[List[int]] = []
 
     for i, labels in enumerate(examples["ner_tags"]):
-        # word_ids() gibt für jedes Subword-Token den Index des
-        # ursprünglichen Wortes zurück; None steht für Sondertokens.
+        # word_ids() gibt fuer jedes Subword-Token den Index des
+        # urspruenglichen Wortes zurueck; None steht fuer Sondertokens.
         word_ids = tokenized_inputs.word_ids(batch_index=i)
         previous_word_idx: int | None = None
         label_ids: List[int] = []
@@ -84,7 +87,7 @@ def tokenize_and_align_labels(
 
         all_labels.append(label_ids)
 
-    # Labels dem tokenisierten Dict hinzufügen
+    # Labels dem tokenisierten Dict hinzufuegen
     tokenized_inputs["labels"] = all_labels
     return tokenized_inputs
 
@@ -95,32 +98,36 @@ def tokenize_and_align_labels(
 
 def prepare_encoder_dataset(
     model_name: str,
-    max_length: int = 128,
-) -> Tuple[DatasetDict, PreTrainedTokenizerBase, List[str]]:
-    """Lädt WNUT-2017, tokenisiert alle Splits und richtet Labels aus.
+    dataset_name: str = "multinerd",
+    dataset_language: str = "en",
+    max_length: int = 256,
+) -> Tuple[DatasetDict, PreTrainedTokenizerBase, DatasetInfo]:
+    """Laedt einen NER-Datensatz, tokenisiert alle Splits und richtet Labels aus.
 
-    Der Tokenizer wird mit add_prefix_space=True geladen, weil DeBERTa und
-    RoBERTa beim Verarbeiten von vorher tokenisierten Wörtern ein führendes
-    Leerzeichen erwarten. Für BERT ist die Option harmlos.
+    Der Tokenizer wird mit add_prefix_space=True geladen, weil DeBERTa
+    beim Verarbeiten von vorher tokenisierten Woertern ein fuehrendes
+    Leerzeichen erwartet.
 
     Args:
-        model_name: HuggingFace Model-ID (z.B. 'microsoft/deberta-v3-large').
-        max_length: Maximale Sequenzlänge für den Tokenizer.
+        model_name:       HuggingFace Model-ID (z.B. 'microsoft/deberta-v3-base').
+        dataset_name:     "multinerd" oder "wnut_17".
+        dataset_language: Sprachfilter fuer MultiNERD (Standard: "en").
+        max_length:       Maximale Sequenzlaenge fuer den Tokenizer.
 
     Returns:
-        Tuple aus (tokenized_dataset, tokenizer, LABEL_LIST).
+        Tuple aus (tokenized_dataset, tokenizer, DatasetInfo).
     """
-    # Rohen Datensatz von HuggingFace laden
-    dataset: DatasetDict = load_wnut17()
+    # Datensatz und Metadaten laden
+    dataset, info = load_ner_dataset(dataset_name, language=dataset_language)
 
-    # Tokenizer laden; add_prefix_space für DeBERTa/RoBERTa-Kompatibilität
+    # Tokenizer laden; add_prefix_space fuer DeBERTa-Kompatibilitaet
     tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
         model_name,
         add_prefix_space=True,
-        use_fast=True,  # use_fast=True wird für word_ids() benötigt
+        use_fast=True,  # use_fast=True wird fuer word_ids() benoetigt
     )
 
-    # Tokenisierung und Label-Alignment über alle Splits mappen
+    # Tokenisierung und Label-Alignment ueber alle Splits mappen
     # batched=True beschleunigt die Verarbeitung erheblich
     tokenized_dataset: DatasetDict = dataset.map(
         lambda examples: tokenize_and_align_labels(examples, tokenizer, max_length),
@@ -129,4 +136,4 @@ def prepare_encoder_dataset(
         remove_columns=dataset["train"].column_names,
     )
 
-    return tokenized_dataset, tokenizer, LABEL_LIST
+    return tokenized_dataset, tokenizer, info

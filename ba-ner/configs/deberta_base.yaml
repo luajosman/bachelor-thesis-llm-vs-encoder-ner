@@ -1,13 +1,48 @@
+# DeBERTa-v3-base — Encoder-Baseline fuer NER
+# Hauptbenchmark: MultiNERD (englisch)
+# Zusatzbenchmark: python -m src.encoder.train configs/deberta_base.yaml --dataset wnut_17
+
 experiment_name: deberta-v3-base
 model_name: microsoft/deberta-v3-base
+model_type: encoder
+
+# Datensatz (ueberschreibbar via --dataset CLI-Argument)
+dataset: multinerd
+dataset_language: en
+
+# Tokenisierung
+max_length: 256
+
+# Training
 learning_rate: 2e-5
-batch_size: 32
-eval_batch_size: 64
-epochs: 10
+num_train_epochs: 5
+per_device_train_batch_size: 16
+per_device_eval_batch_size: 32
+gradient_accumulation_steps: 1
 weight_decay: 0.01
 warmup_ratio: 0.1
+lr_scheduler_type: linear
+
+# Evaluation & Checkpointing
+eval_strategy: epoch
+save_strategy: epoch
+save_total_limit: 2
+load_best_model_at_end: true
+metric_for_best_model: f1
+greater_is_better: true
+
+# Mixed Precision (bf16 wird automatisch bevorzugt wenn verfuegbar)
 fp16: true
-use_wandb: true
-max_length: 128
+
+# Logging
+logging_steps: 50
+use_wandb: false
+
+# Early Stopping
+early_stopping_patience: 1
+
+# Reproduzierbarkeit
 seed: 42
-output_dir: results/deberta-v3-base
+
+# Ausgabe
+output_dir: results/multinerd/deberta-v3-base

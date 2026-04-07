@@ -1,21 +1,24 @@
 """
-train.py — Encoder-Training für NER (Token-Klassifikation mit BIO-Tagging)
+train.py — Encoder-Training fuer NER (Token-Klassifikation mit BIO-Tagging)
 
-Unterstützte Modelle: DeBERTa-v3-large, DeBERTa-v3-base, BERT-base-cased.
-Die Konfiguration (Lernrate, Batch-Größe, Epochen etc.) kommt aus einer YAML-Datei.
+Unterstuetzte Modelle: DeBERTa-v3-base, DeBERTa-v3-large.
+Unterstuetzte Datensaetze: MultiNERD (englisch), WNUT-2017.
+Die Konfiguration (Lernrate, Batch-Groesse, Epochen etc.) kommt aus einer YAML-Datei.
 
 Beim Encoder-Ansatz wird NER als Sequenz-Labeling formuliert: Jedes Token
-bekommt ein Label aus {O, B-person, I-person, B-location, ...}. Der
+bekommt ein Label aus {O, B-PER, I-PER, B-LOC, ...}. Der
 Klassifikationskopf (Linear-Schicht) sitzt auf dem letzten Hidden-State
 jedes Tokens.
 
 Verwendung:
+    python -m src.encoder.train configs/deberta_base.yaml
     python -m src.encoder.train configs/deberta_large.yaml
-    python -m src.encoder.train configs/bert_base.yaml
+    python -m src.encoder.train configs/deberta_base.yaml --dataset wnut_17
 """
 
 from __future__ import annotations
 
+import argparse
 import os
 import random
 import sys
@@ -36,7 +39,7 @@ from transformers import (
     set_seed,
 )
 
-from src.data.load_wnut17 import ID2LABEL, LABEL2ID, LABEL_LIST
+from src.data.dataset_loader import DatasetInfo, get_dataset_info
 from src.data.preprocess_encoder import prepare_encoder_dataset
 
 console = Console()
@@ -46,66 +49,70 @@ console = Console()
 # Evaluations-Metrik: Entity-Level F1 via seqeval
 # ---------------------------------------------------------------------------
 
-def compute_metrics(eval_pred: Tuple) -> Dict[str, float]:
-    """Berechnet entity-level Precision, Recall und F1 mit seqeval.
-
-    Wird vom HuggingFace Trainer nach jeder Evaluierungs-Epoche aufgerufen.
-    Tokens mit label_id == -100 (Subword-Fortsetzungen, Sondertokens) werden
-    herausgefiltert, da sie kein echtes Label tragen.
-
-    Wichtig: seqeval wertet auf Span-Ebene aus, nicht auf Token-Ebene.
-    Eine Entity gilt nur als korrekt, wenn Typ UND beide Grenzen stimmen.
+def build_compute_metrics(info: DatasetInfo):
+    """Baut eine compute_metrics-Funktion mit dem richtigen id2label-Mapping.
 
     Args:
-        eval_pred: Tuple (logits, labels) vom HuggingFace Trainer.
+        info: DatasetInfo mit id2label-Mapping fuer den aktiven Datensatz.
 
     Returns:
-        Dict mit 'precision', 'recall', 'f1' (alle Entity-Level).
+        Callable fuer den HuggingFace Trainer (eval_pred -> dict).
     """
-    from seqeval.metrics import (
-        classification_report,
-        f1_score,
-        precision_score,
-        recall_score,
-    )
+    id2label = info.id2label
 
-    logits, labels = eval_pred
-    # Aus Logits die wahrscheinlichste Klasse pro Token wählen
-    predictions = np.argmax(logits, axis=2)
+    def compute_metrics(eval_pred: Tuple) -> Dict[str, float]:
+        """Berechnet entity-level Precision, Recall und F1 mit seqeval.
 
-    true_labels: List[List[str]] = []
-    true_predictions: List[List[str]] = []
+        Tokens mit label_id == -100 (Subword-Fortsetzungen, Sondertokens) werden
+        herausgefiltert, da sie kein echtes Label tragen.
 
-    for prediction, label in zip(predictions, labels):
-        true_label_seq: List[str] = []
-        true_pred_seq: List[str] = []
-        for pred_id, label_id in zip(prediction, label):
-            # -100 bedeutet: Subword-Token oder Sondertoken → überspringen
-            if label_id == -100:
-                continue
-            # Integer-IDs in Label-Strings umwandeln (z.B. 9 → "B-person")
-            true_label_seq.append(ID2LABEL[label_id])
-            true_pred_seq.append(ID2LABEL[pred_id])
-        true_labels.append(true_label_seq)
-        true_predictions.append(true_pred_seq)
+        seqeval wertet auf Span-Ebene aus, nicht auf Token-Ebene.
+        Eine Entity gilt nur als korrekt, wenn Typ UND beide Grenzen stimmen.
+        """
+        from seqeval.metrics import (
+            classification_report,
+            f1_score,
+            precision_score,
+            recall_score,
+        )
 
-    # Vollständigen Classification-Report ausgeben (nur zur Information)
-    report = classification_report(true_labels, true_predictions, output_dict=False, zero_division=0)
-    console.print(f"\n[dim]{report}[/dim]")
+        logits, labels = eval_pred
+        predictions = np.argmax(logits, axis=2)
 
-    return {
-        "precision": precision_score(true_labels, true_predictions, zero_division=0),
-        "recall":    recall_score(true_labels, true_predictions, zero_division=0),
-        "f1":        f1_score(true_labels, true_predictions, zero_division=0),
-    }
+        true_labels: List[List[str]] = []
+        true_predictions: List[List[str]] = []
+
+        for prediction, label in zip(predictions, labels):
+            true_label_seq: List[str] = []
+            true_pred_seq: List[str] = []
+            for pred_id, label_id in zip(prediction, label):
+                if label_id == -100:
+                    continue
+                true_label_seq.append(id2label[label_id])
+                true_pred_seq.append(id2label[pred_id])
+            true_labels.append(true_label_seq)
+            true_predictions.append(true_pred_seq)
+
+        report = classification_report(
+            true_labels, true_predictions, output_dict=False, zero_division=0
+        )
+        console.print(f"\n[dim]{report}[/dim]")
+
+        return {
+            "precision": precision_score(true_labels, true_predictions, zero_division=0),
+            "recall":    recall_score(true_labels, true_predictions, zero_division=0),
+            "f1":        f1_score(true_labels, true_predictions, zero_division=0),
+        }
+
+    return compute_metrics
 
 
 # ---------------------------------------------------------------------------
 # Training
 # ---------------------------------------------------------------------------
 
-def train_encoder(config_path: str) -> Dict[str, Any]:
-    """Trainiert ein Encoder-Modell für NER auf Basis einer YAML-Config.
+def train_encoder(config_path: str, dataset_override: str | None = None) -> Dict[str, Any]:
+    """Trainiert ein Encoder-Modell fuer NER auf Basis einer YAML-Config.
 
     Ablauf:
       1. Config laden und Seeds setzen (Reproduzierbarkeit)
@@ -116,7 +123,8 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
       6. Test-Set auswerten und Ergebnisse als YAML speichern
 
     Args:
-        config_path: Pfad zur YAML-Konfigurationsdatei.
+        config_path:      Pfad zur YAML-Konfigurationsdatei.
+        dataset_override: Optionaler Datensatz-Override (z.B. "wnut_17").
 
     Returns:
         Dict mit test_f1, test_precision, test_recall, train_runtime_seconds.
@@ -125,72 +133,93 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
 
-    console.rule(f"[bold green]Training: {cfg['experiment_name']}[/bold green]")
+    # Datensatz bestimmen: CLI-Override > Config > Default
+    dataset_name = dataset_override or cfg.get("dataset", "multinerd")
+    dataset_language = cfg.get("dataset_language", "en")
+
+    console.rule(f"[bold green]Training: {cfg['experiment_name']} auf {dataset_name}[/bold green]")
 
     # --- Reproduzierbarkeit: alle Seeds auf denselben Wert setzen ---
     seed: int = cfg.get("seed", 42)
-    set_seed(seed)          # transformers-interner Seed
-    random.seed(seed)       # Python-Zufallsgenerator
-    np.random.seed(seed)    # NumPy
-    torch.manual_seed(seed) # PyTorch CPU
+    set_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
     if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)  # PyTorch GPU (alle Devices)
+        torch.cuda.manual_seed_all(seed)
 
     # --- Datensatz laden und tokenisieren ---
-    console.print("[cyan]Lade und tokenisiere WNUT-2017...[/cyan]")
-    tokenized_dataset, tokenizer, label_list = prepare_encoder_dataset(
+    max_length = cfg.get("max_length", 256)
+    console.print(f"[cyan]Lade und tokenisiere {dataset_name}...[/cyan]")
+    tokenized_dataset, tokenizer, info = prepare_encoder_dataset(
         model_name=cfg["model_name"],
-        max_length=cfg.get("max_length", 128),
+        dataset_name=dataset_name,
+        dataset_language=dataset_language,
+        max_length=max_length,
     )
 
     # --- Modell laden ---
-    # ignore_mismatched_sizes=True erlaubt es, einen vortrainierten
-    # Encoder mit einem neuen Klassifikationskopf (13 Klassen) zu laden.
     console.print(f"[cyan]Lade Modell: {cfg['model_name']}[/cyan]")
     model = AutoModelForTokenClassification.from_pretrained(
         cfg["model_name"],
-        num_labels=len(LABEL_LIST),   # 13 BIO-Labels für WNUT-2017
-        id2label=ID2LABEL,
-        label2id=LABEL2ID,
+        num_labels=info.num_labels,
+        id2label=info.id2label,
+        label2id=info.label2id,
         ignore_mismatched_sizes=True,
     )
 
     # --- Ausgabeverzeichnisse anlegen ---
-    output_dir = Path(cfg.get("output_dir", f"results/{cfg['experiment_name']}"))
+    # Bei Dataset-Override den Ausgabepfad anpassen
+    output_dir = Path(cfg.get("output_dir", f"results/{dataset_name}/{cfg['experiment_name']}"))
+    if dataset_override:
+        # Output-Pfad auf den Override-Datensatz umschreiben
+        output_dir = Path(f"results/{dataset_override}/{cfg['experiment_name']}")
     output_dir.mkdir(parents=True, exist_ok=True)
     best_model_dir = output_dir / "best_model"
 
     # --- TrainingArguments konfigurieren ---
+    # Hardware-Erkennung: bf16 bevorzugen wenn verfuegbar, sonst fp16
+    use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+    use_fp16 = torch.cuda.is_available() and not use_bf16
+
     training_args = TrainingArguments(
         output_dir=str(output_dir),
-        num_train_epochs=cfg.get("epochs", 10),
-        per_device_train_batch_size=cfg.get("batch_size", 16),
-        per_device_eval_batch_size=cfg.get("eval_batch_size", 32),
+        num_train_epochs=cfg.get("num_train_epochs", cfg.get("epochs", 5)),
+        per_device_train_batch_size=cfg.get("per_device_train_batch_size", cfg.get("batch_size", 16)),
+        per_device_eval_batch_size=cfg.get("per_device_eval_batch_size", cfg.get("eval_batch_size", 32)),
+        gradient_accumulation_steps=cfg.get("gradient_accumulation_steps", 1),
         learning_rate=float(cfg.get("learning_rate", 2e-5)),
         weight_decay=float(cfg.get("weight_decay", 0.01)),
         warmup_ratio=float(cfg.get("warmup_ratio", 0.1)),
+        lr_scheduler_type=cfg.get("lr_scheduler_type", "linear"),
         # Nach jeder Epoche evaluieren und Checkpoint speichern
-        eval_strategy="epoch",
-        save_strategy="epoch",
+        eval_strategy=cfg.get("eval_strategy", "epoch"),
+        save_strategy=cfg.get("save_strategy", "epoch"),
+        save_total_limit=cfg.get("save_total_limit", 2),
         # Am Ende wird das Modell mit dem besten Validation-F1 geladen
-        load_best_model_at_end=True,
-        metric_for_best_model="f1",
-        greater_is_better=True,
-        # fp16 nur aktivieren, wenn eine GPU verfügbar ist
-        fp16=cfg.get("fp16", True) and torch.cuda.is_available(),
+        load_best_model_at_end=cfg.get("load_best_model_at_end", True),
+        metric_for_best_model=cfg.get("metric_for_best_model", "f1"),
+        greater_is_better=cfg.get("greater_is_better", True),
+        # Mixed Precision
+        bf16=use_bf16,
+        fp16=use_fp16,
         seed=seed,
-        logging_steps=50,
+        logging_steps=cfg.get("logging_steps", 50),
         report_to="wandb" if cfg.get("use_wandb", False) else "none",
-        run_name=cfg.get("experiment_name"),
+        run_name=f"{cfg.get('experiment_name')}_{dataset_name}",
     )
 
     # --- DataCollator: dynamisches Padding pro Batch ---
-    # Statt alle Sätze auf max_length zu padden, wird nur bis zum
-    # längsten Satz im jeweiligen Batch gepaddet → weniger Rechenaufwand.
     data_collator = DataCollatorForTokenClassification(
         tokenizer=tokenizer,
         padding=True,
     )
+
+    # --- compute_metrics mit dem richtigen id2label bauen ---
+    compute_metrics = build_compute_metrics(info)
+
+    # --- Early Stopping Patience aus Config ---
+    early_stopping_patience = cfg.get("early_stopping_patience", 1)
 
     # --- Trainer zusammenbauen ---
     trainer = Trainer(
@@ -201,8 +230,7 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
         tokenizer=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
-        # Early Stopping: Training stoppt, wenn sich F1 3 Epochen nicht verbessert
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)],
     )
 
     # --- Training starten ---
@@ -227,16 +255,22 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
     console.print(f"Precision: {test_precision:.4f}  Recall: {test_recall:.4f}")
     console.print(f"Trainingszeit: {train_runtime:.1f}s")
 
-    # --- Ergebnisse als YAML speichern (für compare_all.py) ---
+    # --- Ergebnisse als YAML speichern (fuer compare_all.py) ---
     results: Dict[str, Any] = {
-        "experiment_name":      cfg["experiment_name"],
-        "model_name":           cfg["model_name"],
-        "model_type":           "encoder",
-        "test_f1":              float(test_f1),
-        "test_precision":       float(test_precision),
-        "test_recall":          float(test_recall),
+        "experiment_name":       cfg["experiment_name"],
+        "model_name":            cfg["model_name"],
+        "model_type":            "encoder",
+        "dataset":               dataset_name,
+        "test_f1":               float(test_f1),
+        "test_precision":        float(test_precision),
+        "test_recall":           float(test_recall),
         "train_runtime_seconds": float(train_runtime),
-        "best_model_dir":       str(best_model_dir),
+        "best_model_dir":        str(best_model_dir),
+        "seed":                  seed,
+        "num_train_epochs":      training_args.num_train_epochs,
+        "learning_rate":         training_args.learning_rate,
+        "per_device_train_batch_size": training_args.per_device_train_batch_size,
+        "max_length":            max_length,
     }
 
     results_file = output_dir / "results.yaml"
@@ -252,7 +286,12 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        console.print("[red]Verwendung: python -m src.encoder.train <config.yaml>[/red]")
-        sys.exit(1)
-    train_encoder(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Encoder-NER Training")
+    parser.add_argument("config", help="Pfad zur YAML-Config")
+    parser.add_argument(
+        "--dataset",
+        default=None,
+        help="Datensatz-Override (z.B. 'wnut_17'). Ueberschreibt den Wert aus der Config.",
+    )
+    args = parser.parse_args()
+    train_encoder(args.config, dataset_override=args.dataset)
