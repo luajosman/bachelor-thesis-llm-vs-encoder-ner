@@ -1,31 +1,54 @@
 # 1. Project Overview
 
-This repository contains the experimental code for a bachelor thesis project on Named Entity Recognition (NER). NER is the task of finding spans in text that refer to named entities and assigning each span an entity type. For example, a system may label "Berlin" as a location or "Qwen" as a product or organization depending on the dataset taxonomy.
+## 1.1 What This Repository Is
 
-The project compares two different paradigms for solving NER, and the LLM side is further split into two regimes so that the effect of fine-tuning can be isolated:
+This repository contains the experimental code for a bachelor thesis project that compares two paradigms for **Named Entity Recognition (NER)** on a single shared benchmark.
 
-| Paradigm | Regime | Implementation | Output form |
-| --- | --- | --- | --- |
-| Encoder token classification | Fine-tuned | DeBERTa with a token classification head | BIO tags, one label per input token |
-| Generative LLM | Zero-shot | Qwen3.5 base model, no training, prompt + parser | JSON entity list generated from the prompt |
-| Generative LLM | LoRA / QLoRA | Qwen3.5 base model + trained LoRA adapter | JSON entity list generated from the prompt |
+Named Entity Recognition is the task of finding spans in text that refer to named entities and assigning each span an entity type. For example, given the sentence
 
-The final supported model families are:
+```text
+Berlin is the capital of Germany.
+```
 
-| Family | Supported models | Regimes used in the final matrix |
+an NER system should produce entity spans such as `Berlin → LOC` and `Germany → LOC`.
+
+This project implements, trains, evaluates, and compares:
+
+| Paradigm | Regime | How it solves NER |
 | --- | --- | --- |
-| Encoder | `microsoft/deberta-v3-base`, `microsoft/deberta-v3-large` | fine-tuned only |
-| LLM / decoder | `Qwen/Qwen3.5-0.8B`, `Qwen/Qwen3.5-4B`, `Qwen/Qwen3.5-27B` | zero-shot **and** LoRA/QLoRA |
+| Encoder token classification | Fine-tuned | A DeBERTa model with a token classification head predicts one BIO label per subword token. |
+| Generative LLM | Zero-shot | A Qwen3.5 base model is prompted with instructions and a sentence, and generates a JSON list of entities. No training is performed. |
+| Generative LLM | LoRA / QLoRA | The same Qwen3.5 base model is first fine-tuned on the benchmark via LoRA/QLoRA and then used to generate the same JSON entity list. |
 
-The final supported dataset is:
+All three regimes are evaluated against the same MultiNERD English test split using identical entity-level metrics. The decoder pipeline (zero-shot and LoRA) uses the same prompt, the same parser, and the same output schema, so the only difference is whether a trained adapter is loaded on top of the base model.
 
-| Dataset | Role | Notes |
-| --- | --- | --- |
-| `Babelscape/multinerd` | Single active benchmark | English subset only, selected by `lang == "en"`, 15 entity types |
+## 1.2 Final Active Setup at a Glance
 
-WNUT-17 is no longer part of the active experiment matrix. See Section 15 for what was removed or kept as inactive legacy.
+The final active experimental matrix contains **eight experiments**:
 
-Most commands in this README assume that the working directory is `ba-ner/`:
+| # | Experiment | Paradigm | Regime | Base model |
+| --- | --- | --- | --- | --- |
+| 1 | `deberta-v3-base`      | Encoder | Fine-tuned  | `microsoft/deberta-v3-base` |
+| 2 | `deberta-v3-large`     | Encoder | Fine-tuned  | `microsoft/deberta-v3-large` |
+| 3 | `qwen35-08b-zeroshot`  | LLM     | Zero-shot   | `Qwen/Qwen3.5-0.8B` |
+| 4 | `qwen35-4b-zeroshot`   | LLM     | Zero-shot   | `Qwen/Qwen3.5-4B` |
+| 5 | `qwen35-27b-zeroshot`  | LLM     | Zero-shot   | `Qwen/Qwen3.5-27B` |
+| 6 | `qwen35-08b-qlora`     | LLM     | LoRA/QLoRA  | `Qwen/Qwen3.5-0.8B` |
+| 7 | `qwen35-4b-qlora`      | LLM     | LoRA/QLoRA  | `Qwen/Qwen3.5-4B` |
+| 8 | `qwen35-27b-qlora`     | LLM     | LoRA/QLoRA  | `Qwen/Qwen3.5-27B` |
+
+All eight experiments use **MultiNERD English** as the only active benchmark dataset.
+
+## 1.3 What the Repository Produces
+
+For each experiment, the repository produces:
+
+- A test-set predictions file (`test_predictions.json`).
+- A structured metrics file (`inference_metrics.yaml`) that records entity-level F1, precision, recall, latency, VRAM peak, parameter counts, parser statistics (for LLMs), and the `regime` field.
+- For trained models, training artifacts such as best checkpoints (`best_model/` for encoders, `best_lora_adapter/` for LoRA LLMs).
+- Cross-experiment comparison artifacts: a Rich terminal table, a bar plot of F1 scores, a per-entity-type heatmap, and a LaTeX table suitable for a thesis document.
+
+Most commands in this document assume that the working directory is `ba-ner/`:
 
 ```bash
 cd ba-ner
@@ -33,308 +56,372 @@ cd ba-ner
 
 # 2. Research Goal
 
-The research goal is to compare encoder-based NER and LLM-based generative NER under a shared experimental framework on one common benchmark (MultiNERD English).
+## 2.1 Why Compare Encoder NER and LLM-based NER
 
-Encoder models such as DeBERTa treat NER as token-level sequence labeling. The model receives tokenized text and predicts one label per token, usually in BIO format:
+Encoder-based NER (e.g., DeBERTa, BERT, RoBERTa) is the classical discriminative approach: a token-level classification head maps subword representations to BIO labels. It is strong, well understood, and inherits a fixed label space from the classification head.
 
-```text
-Berlin is cold
-B-LOC  O  O
-```
+Generative NER with a large language model (e.g., Qwen3.5) reformulates the task as structured text generation: the model is given an instruction and a sentence, and produces a JSON list of entities. This is more flexible, can in principle handle new entity types through prompting alone, and is closer to how LLMs are used in practice.
 
-Generative LLMs treat NER as structured text generation. The model receives an instruction plus an input sentence and generates a JSON list:
+This thesis compares both paradigms on identical data and identical evaluation metrics, so that the difference in measured F1 reflects the approach — not data leakage, not tokenizer differences, and not evaluation asymmetries.
 
-```json
-[{"entity": "Berlin", "type": "LOC"}]
-```
+## 2.2 Why Zero-Shot vs Fine-Tuned LLMs Both Matter
 
-LLMs are evaluated under two regimes:
+Comparing encoders to only one LLM regime would hide an important question: how much of the LLM's NER quality comes from the base model, and how much comes from fine-tuning on the target benchmark?
 
-| Regime | Training | Adapter at inference time | Purpose |
-| --- | --- | --- | --- |
-| Zero-shot | None | None | Baseline for an untrained LLM with only the prompt |
-| LoRA / QLoRA | Parameter-efficient fine-tuning on the MultiNERD train split | Trained LoRA adapter is loaded on top of the base model | Measures how far LoRA/QLoRA closes the gap to a fine-tuned encoder |
+To answer this, each Qwen3.5 base model is evaluated in two regimes:
 
-The project measures:
+- **Zero-shot** — the pre-trained base model is prompted directly. No training on the benchmark.
+- **LoRA / QLoRA** — the same base model is fine-tuned on MultiNERD via parameter-efficient fine-tuning, and then evaluated using the trained adapter.
+
+This gives three meaningful comparisons:
+
+1. Fine-tuned encoder vs. fine-tuned LLM at roughly matched scale (e.g., DeBERTa-v3-large ≈ 0.4B vs. Qwen3.5-0.8B).
+2. Fine-tuned LLM vs. zero-shot LLM (same base model) → measures the value added by LoRA/QLoRA.
+3. Zero-shot LLM at increasing scale (0.8B → 4B → 27B) → measures how far raw model scale alone carries NER quality on MultiNERD.
+
+## 2.3 Why Multiple Qwen Sizes
+
+Three Qwen3.5 sizes are included (0.8B, 4B, 27B) so that the scaling behavior of LLM-based NER can be observed. The 0.8B variant is particularly useful because its parameter count is in the same order of magnitude as `deberta-v3-large` (~435M), which enables a semi-fair comparison "small LLM with LoRA" vs. "large encoder fully fine-tuned".
+
+## 2.4 What Is Measured
 
 | Measurement | Why it matters |
 | --- | --- |
-| Entity-level precision, recall, and F1 | Core task quality; a span is correct only if boundaries and type match |
-| Per-entity-type F1 | Shows which entity categories are easy or difficult |
-| Training runtime | Important for experimental cost; zero-shot has no training time |
-| Inference latency | Important if the model must be used interactively or at scale |
-| VRAM peak | Determines hardware feasibility |
-| Trainable and total parameters | Highlights full fine-tuning vs. parameter-efficient LoRA vs. untrained zero-shot |
-| Parse failure rate (LLM only) | Measures output robustness of generative structured prediction |
+| Entity-level precision, recall, F1 (seqeval) | Core quality; a span counts only if boundaries and type match. |
+| Per-entity-type F1 | Shows which entity categories are easy or hard per model. |
+| Training runtime | Cost of fine-tuning; zero-shot has no training time. |
+| Inference latency (mean, p95) | Relevant for interactive or large-scale deployment. |
+| VRAM peak | Hardware feasibility. |
+| Trainable and total parameters | Distinguishes full fine-tuning, LoRA (small trainable), and zero-shot (none trainable). |
+| Parse failure rate (LLM only) | Robustness of generated structured output. |
 
-Output robustness and efficiency are central because LLM-based NER is not only a question of F1. A generated answer must also be parseable, use the expected schema and taxonomy, and refer to spans that actually occur in the input text.
+## 2.5 Why Parse Robustness Matters
+
+A generative LLM does not always produce the exact JSON schema that the evaluation expects. Answers can be wrapped in Markdown code fences, can be truncated, can contain Qwen3 `<think>...</think>` blocks, or can use unknown entity types. Parse failure rate is a first-class metric in this project: a model that produces 0.9 F1 on parseable output but fails to parse 40% of answers is not useful in practice. The decoder parser in `src/decoder/parse_output.py` uses a deterministic three-stage fallback and reports per-status counts so that this can be analyzed explicitly.
 
 # 3. Final Experimental Setup
 
-The final setup contains **8 experiments**, all run on MultiNERD English and all evaluated on the same test split.
+The final setup is intentionally narrow. Legacy experiments that predate this setup should not be treated as current.
 
 ## 3.1 Encoder Experiments (Fine-Tuned)
 
-| Config | Hugging Face model | Experiment name | Output directory |
+| Config | HF model | Experiment name | Output directory |
 | --- | --- | --- | --- |
-| `configs/deberta_base.yaml` | `microsoft/deberta-v3-base` | `deberta-v3-base` | `results/multinerd/deberta-v3-base/` |
+| `configs/deberta_base.yaml`  | `microsoft/deberta-v3-base`  | `deberta-v3-base`  | `results/multinerd/deberta-v3-base/`  |
 | `configs/deberta_large.yaml` | `microsoft/deberta-v3-large` | `deberta-v3-large` | `results/multinerd/deberta-v3-large/` |
+
+Both encoder configs are pure token classification. There is no encoder zero-shot regime — encoders are always fine-tuned in this project.
 
 ## 3.2 LLM Zero-Shot Experiments (No Training)
 
-| Config | Hugging Face model | Experiment name | Output directory |
+| Config | HF base model | Experiment name | Output directory |
 | --- | --- | --- | --- |
 | `configs/qwen35_08b_zeroshot.yaml` | `Qwen/Qwen3.5-0.8B` | `qwen35-08b-zeroshot` | `results/multinerd/qwen35-08b-zeroshot/` |
 | `configs/qwen35_4b_zeroshot.yaml`  | `Qwen/Qwen3.5-4B`   | `qwen35-4b-zeroshot`  | `results/multinerd/qwen35-4b-zeroshot/`  |
 | `configs/qwen35_27b_zeroshot.yaml` | `Qwen/Qwen3.5-27B`  | `qwen35-27b-zeroshot` | `results/multinerd/qwen35-27b-zeroshot/` |
 
-All three zero-shot configs set `mode: zeroshot`. They have no training hyperparameters and are used exclusively by `src.decoder.inference --zeroshot`.
+Each zero-shot config sets `mode: zeroshot`. These configs intentionally contain no training hyperparameters; they are used **only by `src.decoder.inference --zeroshot`**.
 
-## 3.3 LLM LoRA/QLoRA Experiments (Fine-Tuned)
+## 3.3 LLM LoRA / QLoRA Experiments (Fine-Tuned)
 
-| Config | Hugging Face model | Experiment name | Output directory |
+| Config | HF base model | Experiment name | Output directory |
 | --- | --- | --- | --- |
 | `configs/qwen35_08b.yaml` | `Qwen/Qwen3.5-0.8B` | `qwen35-08b-qlora` | `results/multinerd/qwen35-08b-qlora/` |
 | `configs/qwen35_4b.yaml`  | `Qwen/Qwen3.5-4B`   | `qwen35-4b-qlora`  | `results/multinerd/qwen35-4b-qlora/`  |
 | `configs/qwen35_27b.yaml` | `Qwen/Qwen3.5-27B`  | `qwen35-27b-qlora` | `results/multinerd/qwen35-27b-qlora/` |
 
-All three LoRA configs set `mode: lora`, `use_qlora: true`, `attn_impl: sdpa`, and target the same seven projection modules (`q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj`).
-
-## 3.4 Final Matrix
-
-The full comparison matrix that the final pipeline produces:
+All three LoRA configs set `mode: lora`, `use_qlora: true`, and `attn_impl: sdpa`. They target the same seven projection modules:
 
 ```text
-deberta-v3-base        (encoder,        fine-tuned)
-deberta-v3-large       (encoder,        fine-tuned)
-qwen35-08b-zeroshot    (LLM,  Qwen3.5-0.8B, zero-shot)
-qwen35-4b-zeroshot     (LLM,  Qwen3.5-4B,   zero-shot)
-qwen35-27b-zeroshot    (LLM,  Qwen3.5-27B,  zero-shot)
-qwen35-08b-qlora       (LLM,  Qwen3.5-0.8B, LoRA/QLoRA)
-qwen35-4b-qlora        (LLM,  Qwen3.5-4B,   LoRA/QLoRA)
-qwen35-27b-qlora       (LLM,  Qwen3.5-27B,  LoRA/QLoRA)
+q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj
 ```
 
-The inclusion of Qwen3.5-0.8B is intentional: at roughly 0.8B parameters, it is close in order of magnitude to `deberta-v3-large` (~435M) and gives the comparison a small-LLM counterpart to the small encoder.
+LoRA rank and training hyperparameters differ per size:
 
-The legacy configs for `bert-base-cased` and `Qwen/Qwen3-14B` are not present and should be considered removed.
+| Config | `lora_r` | `lora_alpha` | Per-device batch | Grad. acc. | Epochs | Learning rate |
+| --- | --- | --- | --- | --- | --- | --- |
+| `qwen35_08b.yaml` | 16 | 32 | 8 | 2  | 3 | 3e-4 |
+| `qwen35_4b.yaml`  | 16 | 32 | 4 | 4  | 3 | 2e-4 |
+| `qwen35_27b.yaml` | 32 | 64 | 1 | 16 | 2 | 1e-4 |
 
-# 4. Codebase Architecture
+## 3.4 Dataset and Splits
 
-The runnable package is under `ba-ner/`.
+The only active benchmark is **MultiNERD**, restricted to the English subset:
 
-```text
-ba-ner/
-  configs/          YAML experiment configs
-  scripts/          Pipeline orchestration and SLURM helper scripts
-  src/data/         Dataset loading and preprocessing
-  src/encoder/      DeBERTa token-classification training and inference
-  src/decoder/      Qwen3.5 training, inference, and output parsing (LoRA + Zero-Shot)
-  src/evaluate/     Metrics, efficiency utilities, comparison, and error analysis
-  results/          Runtime output directory
-  requirements.txt  Python dependency list
-  setup.py          Editable package setup
-```
+| Dataset | HF identifier | Filter | Entity types | BIO labels |
+| --- | --- | --- | --- | --- |
+| `multinerd` | `Babelscape/multinerd` | `lang == "en"` | 15 | 31 (including `O`) |
 
-The central architectural idea is that MultiNERD is exposed through one dataset abstraction in `src/data/dataset_loader.py`. The encoder and decoder pipelines use the same raw dataset interface but preprocess it differently:
-
-| Pipeline | Preprocessing target |
-| --- | --- |
-| Encoder | Tokenized features plus aligned BIO labels |
-| Decoder (LoRA and zero-shot) | Chat-style messages with a system prompt, user sentence, and JSON assistant answer |
-
-The decoder pipeline uses the **same prompt, same parser, same metrics, and same output layout** for zero-shot and LoRA/QLoRA. The only difference is whether a trained LoRA adapter is loaded on top of the base model.
-
-The current result layout is:
-
-```text
-results/<dataset>/<experiment>/
-```
-
-Examples:
-
-```text
-results/multinerd/deberta-v3-base/
-results/multinerd/deberta-v3-large/
-results/multinerd/qwen35-08b-zeroshot/
-results/multinerd/qwen35-08b-qlora/
-results/multinerd/qwen35-4b-zeroshot/
-results/multinerd/qwen35-4b-qlora/
-results/multinerd/qwen35-27b-zeroshot/
-results/multinerd/qwen35-27b-qlora/
-```
-
-## Information Flow
-
-```mermaid
-flowchart TD
-    A["YAML config"] --> B["dataset_loader.py (MultiNERD)"]
-    B --> C1["preprocess_encoder.py"]
-    B --> C2["preprocess_decoder.py"]
-    C1 --> D1["encoder/train.py"]
-    C2 --> D2["decoder/train.py (LoRA only)"]
-    D1 --> E1["Trainer dev F1 best model"]
-    D2 --> E2["Generative dev F1 best LoRA adapter"]
-    E1 --> F1["encoder/inference.py"]
-    E2 --> F2a["decoder/inference.py --adapter"]
-    B --> F2b["decoder/inference.py --zeroshot"]
-    F1 --> G["test_predictions.json and inference_metrics.yaml"]
-    F2a --> G
-    F2b --> G
-    G --> H["evaluate/compare_all.py"]
-    G --> I["evaluate/error_analysis.py"]
-```
-
-The important checkpoint-selection difference is:
-
-| Pipeline | Selection mechanism |
-| --- | --- |
-| Encoder | Hugging Face `Trainer` selects the best checkpoint by validation F1 with `load_best_model_at_end: true` |
-| Decoder / LLM LoRA | A custom generative dev evaluation callback generates entity lists, parses them, computes dev F1, and stores the best adapter in `best_lora_adapter/` |
-| Decoder / LLM Zero-Shot | No training, so no selection. The base model is used directly. |
-
-For the decoder, teacher-forced `eval_loss` is not used as the final best-model criterion. The implemented criterion is generated entity-level dev F1.
-
-# 5. Detailed File and Folder Reference
-
-## Repository Root
-
-| Path | Role |
-| --- | --- |
-| `README.md` | Project documentation |
-| `LICENSE` | Project license |
-| `.gitignore` | Top-level ignore rules |
-| `ba-ner/` | Python project root (training and evaluation commands are run from here) |
-
-## `configs/`
-
-The configs control model identity, dataset choice, hyperparameters, LoRA settings, checkpointing, and output paths. The `mode` field distinguishes the LLM regimes.
-
-| File | Model type | `mode` | Used by |
-| --- | --- | --- | --- |
-| `configs/deberta_base.yaml` | encoder | — | `src.encoder.train`, `src.encoder.inference` |
-| `configs/deberta_large.yaml` | encoder | — | `src.encoder.train`, `src.encoder.inference` |
-| `configs/qwen35_08b.yaml`   | decoder | `lora` | `src.decoder.train`, `src.decoder.inference` |
-| `configs/qwen35_4b.yaml`    | decoder | `lora` | `src.decoder.train`, `src.decoder.inference` |
-| `configs/qwen35_27b.yaml`   | decoder | `lora` | `src.decoder.train`, `src.decoder.inference` |
-| `configs/qwen35_08b_zeroshot.yaml` | decoder | `zeroshot` | `src.decoder.inference --zeroshot` only |
-| `configs/qwen35_4b_zeroshot.yaml`  | decoder | `zeroshot` | `src.decoder.inference --zeroshot` only |
-| `configs/qwen35_27b_zeroshot.yaml` | decoder | `zeroshot` | `src.decoder.inference --zeroshot` only |
-
-Zero-shot configs intentionally omit training hyperparameters. Trying to call `src.decoder.train` on a zero-shot config is not part of the workflow — use the LoRA configs for training.
-
-## `src/data/`
-
-| File | Role |
-| --- | --- |
-| `src/data/dataset_loader.py` | Central dataset entry point. Returns `(DatasetDict, DatasetInfo)` with `tokens`, `ner_tags`, label mappings, entity types, and label counts. |
-| `src/data/preprocess_encoder.py` | Tokenizes pre-split words and aligns BIO labels to subword tokens. |
-| `src/data/preprocess_decoder.py` | Converts BIO labels into entity dictionaries and builds chat-style messages for SFT and for inference prompts (shared by LoRA and zero-shot). |
-| `src/data/load_wnut17.py` | Legacy WNUT-17 inspection helper. Not part of the active pipeline. |
-
-`dataset_loader.py` still recognises `wnut_17` internally, because `get_dataset_info("wnut_17")` is needed by legacy code paths and by `error_analysis.py --dataset wnut_17`. It is kept as inactive legacy — no active config requests WNUT-17.
-
-## `src/encoder/`
-
-| File | Role |
-| --- | --- |
-| `src/encoder/train.py` | Trains a DeBERTa token classifier; writes `regime: encoder` into `results.yaml`. |
-| `src/encoder/inference.py` | Runs test-set inference for a saved encoder; writes `regime: encoder` into `inference_metrics.yaml`. |
-
-## `src/decoder/`
-
-| File | Role |
-| --- | --- |
-| `src/decoder/train.py` | LoRA/QLoRA fine-tuning via TRL `SFTTrainer`; writes `regime: llm_lora` into `results.yaml`. |
-| `src/decoder/inference.py` | Supports both LoRA (`--adapter`) and zero-shot (`--zeroshot`) on the same code path. Writes `regime: llm_lora` or `regime: llm_zeroshot` into `inference_metrics.yaml`. |
-| `src/decoder/parse_output.py` | Parses generated LLM output and converts entity lists to BIO tags. |
-
-The decoder path is deliberately shared across regimes: the prompt is built from the dataset's entity types by `preprocess_decoder.build_system_prompt()`, parsing goes through `parse_llm_output()`, and evaluation uses `evaluate_llm_predictions()`. The only regime-specific branch in `inference.py` is whether a `PeftModel` wraps the base model or not.
-
-## `src/evaluate/`
-
-| File | Role |
-| --- | --- |
-| `src/evaluate/metrics.py` | Shared seqeval-based NER metrics. |
-| `src/evaluate/efficiency.py` | Parameter counts, VRAM peak, latency helpers. |
-| `src/evaluate/error_analysis.py` | Qualitative error categorization; `--dataset {multinerd,wnut_17}` controls the valid-type set. |
-| `src/evaluate/compare_all.py` | Aggregates results and produces the terminal table, the F1 bar plot, the per-entity heatmap, and the LaTeX table. Regime-aware: distinguishes encoder / LLM Zero-Shot / LLM LoRA. |
-
-`compare_all.py` derives the regime for each experiment in this order:
-1. The explicit `regime` field written by `train.py` / `inference.py`.
-2. A heuristic on `experiment_name` (`*-zeroshot` → `llm_zeroshot`, `*-qlora` / `*-lora` → `llm_lora`).
-3. The `model_type` field as a fallback (`encoder` → `encoder`, else `llm_lora`).
-
-This keeps old result files readable and still routes new results through the explicit field.
-
-## `scripts/`
-
-| File | Role |
-| --- | --- |
-| `scripts/run_all.py` | Python orchestrator. Runs any subset of the 8-experiment matrix. Knows three groups: encoders, LLM LoRA, LLM zero-shot. |
-| `scripts/run_encoder.sh` | SLURM/local helper: trains and evaluates the two DeBERTa encoders on MultiNERD. |
-| `scripts/run_decoder.sh` | SLURM/local helper: runs the six LLM experiments on MultiNERD (3 zero-shot inferences + 3 LoRA trainings with inference). |
-
-## `results/`
-
-`results/` is the runtime output tree. It is mostly empty in a fresh checkout. Training and inference create subdirectories under `results/multinerd/<experiment>/`.
-
-## Package and Dependency Files
-
-| File | Role |
-| --- | --- |
-| `setup.py` | Minimal editable package setup. Python `>=3.10`. |
-| `requirements.txt` | Runtime dependency list (Torch, Transformers, Datasets, Accelerate, PEFT, TRL, bitsandbytes, seqeval, scikit-learn, Rich, Matplotlib, PyYAML, pandas, NumPy). |
-| `ba-ner/.gitignore` | Project-specific ignore rules. |
-
-# 6. Dataset Handling
-
-The central data loader is `src/data/dataset_loader.py`. It defines a `DatasetInfo` dataclass with:
-
-| Field | Meaning |
-| --- | --- |
-| `name` | Short dataset name (`multinerd`) |
-| `hf_name` | Hugging Face dataset identifier (`Babelscape/multinerd`) |
-| `label_list` | Ordered BIO label list |
-| `id2label`, `label2id` | Integer↔label mappings |
-| `entity_types` | Entity types without the `B-` / `I-` prefix |
-| `num_labels` | Number of labels for the encoder classification head |
-
-For MultiNERD, the loader calls `load_dataset("Babelscape/multinerd")`, filters `x["lang"] == language` (default `en`), and removes the `lang` column. The remaining splits contain `tokens` and `ner_tags`.
-
-The MultiNERD taxonomy used in this project contains 15 entity types, giving 31 BIO labels including `O`:
+The 15 MultiNERD entity types are:
 
 ```text
 PER, ORG, LOC, ANIM, BIO, CEL, DIS, EVE, FOOD, INST, MEDIA, MYTH, PLANT, TIME, VEHI
 ```
 
-For encoders, subword alignment uses the first subword of each word only. Special tokens and later subwords receive label ID `-100`, which PyTorch and seqeval-style filtering ignore.
+All eight experiments are trained or prompted against the same train/validation/test splits, as produced by `src.data.dataset_loader.load_ner_dataset("multinerd")`.
 
-For decoders (both regimes), the system prompt is built dynamically from `DatasetInfo.entity_types` in `preprocess_decoder.build_system_prompt()`, so zero-shot and LoRA always see a prompt aligned with the active taxonomy.
+**WNUT-17 is no longer part of the active benchmark.** The dataset loader still contains a `wnut_17` entry because earlier result directories and the `src.evaluate.error_analysis --dataset wnut_17` flag rely on it, but no active config, orchestration flag, or shell script runs on WNUT-17.
+
+# 4. Updated Codebase Architecture
+
+## 4.1 High-Level Layers
+
+```text
+ba-ner/
+├── configs/                  YAML experiment configurations
+├── scripts/                  Orchestration and SLURM helpers
+├── src/
+│   ├── data/                 Dataset loading and per-paradigm preprocessing
+│   ├── encoder/              DeBERTa token classification training and inference
+│   ├── decoder/              Qwen3.5 training, inference, and output parsing
+│   └── evaluate/             Metrics, efficiency measurement, comparison, error analysis
+├── results/                  Runtime output directory
+├── requirements.txt          Python runtime dependencies
+└── setup.py                  Editable package setup
+```
+
+## 4.2 Architectural Principles
+
+1. **Config-driven execution.** Every experiment is described by exactly one YAML file in `configs/`. Training and inference scripts read this file and derive model names, dataset, hyperparameters, and output paths from it. The experiment name in the config determines the output directory inside `results/<dataset>/`.
+2. **Single shared dataset layer.** `src/data/dataset_loader.py` exposes a `DatasetInfo` dataclass and a `load_ner_dataset()` function. Both the encoder and the decoder pipelines consume this same object, so taxonomy, label counts, and text columns come from one place.
+3. **One pipeline per paradigm, not per regime.** The encoder has a single pipeline. The decoder has a single pipeline that handles both the zero-shot and the LoRA/QLoRA regime through a shared `run_decoder_inference()` entry point. The regime is selected by a config field (`mode: lora` or `mode: zeroshot`) and by a CLI flag (`--zeroshot`).
+4. **Shared parser and evaluator for LLM outputs.** `src/decoder/parse_output.py` provides `parse_llm_output()`, `entities_to_bio()`, and `evaluate_llm_predictions()`, which are used by both zero-shot and LoRA inference. Zero-shot runs therefore go through exactly the same parsing and scoring logic as LoRA runs.
+5. **Regime-aware result files.** `src/encoder/train.py`, `src/encoder/inference.py`, `src/decoder/train.py`, and `src/decoder/inference.py` all write a `regime` field into their result files. The regime is one of `encoder`, `llm_lora`, or `llm_zeroshot`. The comparison module uses this field as the primary grouping key.
+6. **Comparison layer is regime-aware and MultiNERD-centric.** `src/evaluate/compare_all.py` groups and colours results by the three regimes. Zero-shot runs are recognised, displayed with `"-"` in the train-time column, and coloured separately from LoRA runs. All comparison artifacts produced by `scripts/run_all.py` are filtered to `dataset="multinerd"`.
+7. **Orchestration layer.** `scripts/run_all.py` knows three groups of experiments (encoders, LLM LoRA, LLM zero-shot) and composes them into the eight-experiment matrix. The shell scripts `run_encoder.sh` and `run_decoder.sh` wrap this for SLURM clusters.
+
+## 4.3 Information Flow
+
+```mermaid
+flowchart TD
+    A["YAML config"] --> B["src.data.dataset_loader (MultiNERD en)"]
+    B --> C1["preprocess_encoder.py"]
+    B --> C2["preprocess_decoder.py"]
+
+    C1 --> D1["src.encoder.train"]
+    C2 --> D2["src.decoder.train (LoRA only)"]
+
+    D1 --> E1["best_model/ (Trainer val F1)"]
+    D2 --> E2["best_lora_adapter/ (generative dev F1)"]
+
+    E1 --> F1["src.encoder.inference"]
+    E2 --> F2a["src.decoder.inference --adapter"]
+    B  --> F2b["src.decoder.inference --zeroshot"]
+
+    F1  --> G["test_predictions.json + inference_metrics.yaml (regime=encoder)"]
+    F2a --> G2["test_predictions.json + inference_metrics.yaml (regime=llm_lora)"]
+    F2b --> G3["test_predictions.json + inference_metrics.yaml (regime=llm_zeroshot)"]
+
+    G  --> H["src.evaluate.compare_all"]
+    G2 --> H
+    G3 --> H
+    G  --> I["src.evaluate.error_analysis"]
+    G2 --> I
+    G3 --> I
+```
+
+The important thing to note in the diagram is that the **zero-shot path is a direct edge from the dataset loader to `src.decoder.inference`** — it does not pass through `src.decoder.train`. The LoRA path uses training and checkpoint selection; the zero-shot path does not.
+
+## 4.4 Result Directory Convention
+
+The runtime output tree uses:
+
+```text
+results/<dataset>/<experiment_name>/
+```
+
+For the final matrix this means:
+
+```text
+results/multinerd/deberta-v3-base/
+results/multinerd/deberta-v3-large/
+results/multinerd/qwen35-08b-zeroshot/
+results/multinerd/qwen35-4b-zeroshot/
+results/multinerd/qwen35-27b-zeroshot/
+results/multinerd/qwen35-08b-qlora/
+results/multinerd/qwen35-4b-qlora/
+results/multinerd/qwen35-27b-qlora/
+```
+
+`compare_all.py` also understands an older one-level layout (`results/<experiment>/`) for legacy directories, but the active pipeline always uses the two-level layout above.
+
+# 5. Detailed File and Folder Reference
+
+## 5.1 Repository Root
+
+| Path | Role |
+| --- | --- |
+| `README.md` | This document. |
+| `LICENSE` | Project license. |
+| `.gitignore` | Top-level ignore rules. |
+| `ba-ner/` | Python project root. All commands in this README are run from inside this directory. |
+
+## 5.2 `configs/`
+
+Every active experiment is described by exactly one YAML file. The encoder configs do not have a `mode` field; the decoder configs set `mode: lora` or `mode: zeroshot`.
+
+| File | Model type | `mode` | Used by |
+| --- | --- | --- | --- |
+| `configs/deberta_base.yaml`  | encoder | — | `src.encoder.train`, `src.encoder.inference` |
+| `configs/deberta_large.yaml` | encoder | — | `src.encoder.train`, `src.encoder.inference` |
+| `configs/qwen35_08b.yaml`    | decoder | `lora` | `src.decoder.train`, `src.decoder.inference` |
+| `configs/qwen35_4b.yaml`     | decoder | `lora` | `src.decoder.train`, `src.decoder.inference` |
+| `configs/qwen35_27b.yaml`    | decoder | `lora` | `src.decoder.train`, `src.decoder.inference` |
+| `configs/qwen35_08b_zeroshot.yaml` | decoder | `zeroshot` | `src.decoder.inference --zeroshot` only |
+| `configs/qwen35_4b_zeroshot.yaml`  | decoder | `zeroshot` | `src.decoder.inference --zeroshot` only |
+| `configs/qwen35_27b_zeroshot.yaml` | decoder | `zeroshot` | `src.decoder.inference --zeroshot` only |
+
+Encoder configs define tokenization, mixed precision, epochs, learning rate, batch sizes, eval/save strategy, best-model selection, and early stopping. LoRA configs define base model, 4-bit loading, LoRA rank/alpha/dropout, target modules, SFT hyperparameters, gradient checkpointing, and generative dev evaluation sampling. Zero-shot configs contain only the base model, the `mode: zeroshot` flag, quantization settings, `max_new_tokens`, `seed`, and the output directory.
+
+## 5.3 `src/data/`
+
+| File | Role | Inputs | Outputs / connections |
+| --- | --- | --- | --- |
+| `src/data/dataset_loader.py` | Central dataset entry point. Defines the `DatasetInfo` dataclass and a registry keyed by short name (`multinerd`, `wnut_17`). `load_ner_dataset("multinerd", language="en")` loads MultiNERD, filters `lang == language`, removes the `lang` column, and returns `(DatasetDict, DatasetInfo)`. | Dataset short name, optional language filter. | Raw `DatasetDict` with `tokens` and `ner_tags`, plus full label mappings and `entity_types`. |
+| `src/data/preprocess_encoder.py` | Tokenizes word-level tokens with a fast tokenizer and aligns BIO labels to subword pieces. Only the first subword of each word receives the original label; later subwords and special tokens are set to `-100` so they are ignored by loss and seqeval. | Raw dataset, encoder tokenizer, `max_length`. | Tokenized `DatasetDict` with `input_ids`, `attention_mask`, aligned `labels`, and optional `token_type_ids`. |
+| `src/data/preprocess_decoder.py` | Converts BIO labels into entity dictionaries, builds a system prompt from `DatasetInfo.entity_types`, and produces chat-style `messages` datasets for SFT as well as test-time prompts and gold entity lists. | Raw dataset, `DatasetInfo`. | Train-time `messages` dataset for SFT; test-time list of prompts and gold entity lists for inference. |
+| `src/data/load_wnut17.py` | Legacy inspection helper for WNUT-17. Not used by any active experiment. | — | Prints WNUT-17 stats when run directly. |
+
+The `DatasetInfo` dataclass carries `name`, `hf_name`, `label_list`, `id2label`, `label2id`, `entity_types`, and `num_labels`. All downstream code uses this object and never hard-codes label names, so switching datasets requires no changes to encoder or decoder logic.
+
+## 5.4 `src/encoder/`
+
+| File | Role | Key behavior |
+| --- | --- | --- |
+| `src/encoder/train.py` | DeBERTa token classification training via HuggingFace `Trainer`. | Loads config, seeds everything, preprocesses MultiNERD, instantiates `AutoModelForTokenClassification` with dataset-specific `num_labels`/`id2label`/`label2id`, runs `Trainer`, selects best checkpoint by validation F1 with `load_best_model_at_end=true`, saves `best_model/` and `results.yaml` with `regime: encoder`. |
+| `src/encoder/inference.py` | Reloads a trained encoder and runs test-set inference. | Reloads tokenizer and model, preprocesses test data the same way as training, evaluates with seqeval, writes `test_predictions.json` and `inference_metrics.yaml` with `regime: encoder`. |
+
+## 5.5 `src/decoder/`
+
+| File | Role | Key behavior |
+| --- | --- | --- |
+| `src/decoder/train.py` | LoRA/QLoRA fine-tuning of Qwen3.5 via TRL `SFTTrainer`. | Loads config, optionally loads base model in 4-bit (QLoRA), attaches LoRA via `peft.get_peft_model`, trains with `SFTTrainer`. After each evaluation event, a custom `GenerativeDevEvalCallback` runs `model.generate()` on up to `gen_eval_max_samples` validation prompts, parses outputs, computes generated-entity F1, and saves the current adapter to `best_lora_adapter/` whenever this score improves. Writes `results.yaml` with `regime: llm_lora`. |
+| `src/decoder/inference.py` | Generative inference for Qwen3.5. Handles both regimes through the same function `run_decoder_inference(adapter_path, base_model_name, config_path, dataset_override=None, zeroshot=False)`. | Detects the regime via `zeroshot or cfg.get("mode") == "zeroshot"`. In zero-shot mode the tokenizer is loaded from the base model and no adapter is wrapped around it. In LoRA mode the tokenizer is loaded from the adapter directory and `PeftModel.from_pretrained(base_model, adapter_path)` is used. Both regimes share the same prompt, parser, evaluation, and output layout. Writes `regime: llm_zeroshot` or `regime: llm_lora` into `inference_metrics.yaml`. |
+| `src/decoder/parse_output.py` | Parses generated LLM outputs and converts entity lists to BIO. | Strips `<think>...</think>` blocks; tries direct JSON parsing; falls back to Markdown code-fence extraction; falls back to regex bracket extraction. Validates entity dictionaries, optionally filters unknown entity types, and returns a parse status of `ok`, `markdown_stripped`, `regex_fallback`, or `failed`. `entities_to_bio()` converts validated entity dictionaries back to BIO tags using exact whitespace-token matching. `evaluate_llm_predictions()` computes precision, recall, F1, and per-status parser counters. |
+
+## 5.6 `src/evaluate/`
+
+| File | Role |
+| --- | --- |
+| `src/evaluate/metrics.py` | Shared seqeval-based entity-level NER metrics: precision, recall, F1, classification reports, and per-type metrics. |
+| `src/evaluate/efficiency.py` | Parameter counts (`count_parameters`), VRAM peak measurement (`get_vram_peak_mb`, `reset_vram_tracking`), and latency measurement helpers. |
+| `src/evaluate/error_analysis.py` | Qualitative error categorization over saved `test_predictions.json` files. Accepts `--encoder-preds` and/or `--decoder-preds` and a `--dataset` flag (`multinerd` or `wnut_17`). Valid entity types are loaded from `DatasetInfo` rather than being hard-coded. |
+| `src/evaluate/compare_all.py` | Aggregates result files recursively from `results/` and produces the terminal table, the F1 bar plot, the per-entity-type heatmap, and the LaTeX table. Distinguishes three regimes (`encoder`, `llm_lora`, `llm_zeroshot`) via `_get_regime()`, which uses the explicit `regime` field first, then an experiment-name heuristic (`*-zeroshot`, `*-qlora`), and finally `model_type` as a fallback. |
+
+## 5.7 `scripts/`
+
+| File | Role |
+| --- | --- |
+| `scripts/run_all.py` | Python orchestrator. Defines three config groups: `ENCODER_CONFIGS`, `DECODER_LORA_CONFIGS`, `DECODER_ZEROSHOT_CONFIGS`. Provides a full-matrix default run as well as regime-filtered modes and single-model runs. Finishes by calling the comparison stage, which filters to MultiNERD. |
+| `scripts/run_encoder.sh` | SLURM/local helper for encoder runs. Trains and evaluates `deberta-v3-base` and `deberta-v3-large` on MultiNERD only. |
+| `scripts/run_decoder.sh` | SLURM/local helper for LLM runs. Executes three zero-shot inference runs and three LoRA train+inference runs sequentially on MultiNERD. Requests an A100 GPU and 24 hours of wall clock. |
+
+## 5.8 `results/`
+
+`results/` is the runtime output tree. It is mostly empty in a fresh checkout except for a `.gitkeep`. Training and inference create subdirectories under `results/multinerd/<experiment_name>/` with the artifacts described in Section 11.
+
+## 5.9 Package and Dependency Files
+
+| File | Role |
+| --- | --- |
+| `ba-ner/setup.py` | Minimal editable package setup. Package name `ba-ner`. Python `>=3.10`. Uses `find_packages()` so that `src.*` modules are importable as `src.*`. |
+| `ba-ner/requirements.txt` | Runtime dependencies: Torch, Transformers, Datasets, Accelerate, PEFT, TRL, bitsandbytes, seqeval, scikit-learn, PyYAML, Rich, Matplotlib, pandas, NumPy, and flash-attn. Note that the active Qwen configs explicitly use `attn_impl: sdpa`, so FlashAttention is not required at runtime. |
+| `ba-ner/.gitignore` | Project-specific ignore rules for logs, virtual environments, and large tensor file extensions. |
+
+# 6. Dataset Handling
+
+## 6.1 Loading MultiNERD
+
+The central loader is `src/data/dataset_loader.py`. The MultiNERD path is:
+
+```python
+from datasets import load_dataset
+
+raw = load_dataset("Babelscape/multinerd")
+raw = raw.filter(lambda x: x["lang"] == "en")
+raw = raw.remove_columns(["lang"])
+```
+
+After filtering, the downstream code expects splits with at least:
+
+```text
+tokens     : list of words
+ner_tags   : list of integer BIO label IDs
+```
+
+The loader validates this with an assertion on the train split's columns.
+
+## 6.2 The `DatasetInfo` Object
+
+`DatasetInfo` is constructed from a static label list and carries everything that downstream code needs to be dataset-agnostic:
+
+| Field | Meaning |
+| --- | --- |
+| `name` | Short dataset name (`multinerd`). |
+| `hf_name` | Hugging Face dataset identifier (`Babelscape/multinerd`). |
+| `label_list` | Ordered BIO label list (31 labels for MultiNERD). |
+| `id2label`, `label2id` | Integer ↔ label string mappings. |
+| `entity_types` | Entity types without the BIO prefix (15 types for MultiNERD). |
+| `num_labels` | Number of BIO labels (used by the encoder classification head). |
+
+Because both encoder and decoder pipelines consume the same `DatasetInfo`, the encoder classifier head size, the decoder system prompt, the parser validation set, and the error-analysis valid-type set all come from one place.
+
+## 6.3 How Labels Flow Into Each Pipeline
+
+| Pipeline | How labels are used |
+| --- | --- |
+| Encoder | `num_labels`, `id2label`, and `label2id` are passed to `AutoModelForTokenClassification`. `preprocess_encoder.py` aligns word-level BIO tags to subword tokens and writes label IDs into `labels`. |
+| Decoder (both regimes) | `entity_types` is injected into `preprocess_decoder.build_system_prompt()`, which produces the system prompt containing the allowed entity types. At parsing time, `parse_llm_output(..., valid_types=frozenset(info.entity_types))` drops entities whose type is not part of the taxonomy. |
+
+## 6.4 WNUT-17 Status
+
+WNUT-17 is supported by the dataset loader registry so that legacy result directories can still be loaded and `src.evaluate.error_analysis --dataset wnut_17` continues to work. It is **not** part of the active benchmark: no active config, shell script, or orchestration flag points to WNUT-17, and `scripts/run_all.py` unconditionally filters comparison artifacts to `multinerd`. When WNUT-17 is mentioned in this document, it is always as inactive legacy.
 
 # 7. Encoder Pipeline
 
-The encoder pipeline is implemented in `src/encoder/train.py` and `src/encoder/inference.py`.
+The encoder pipeline is implemented in `src/encoder/train.py` and `src/encoder/inference.py`. Encoders are always fine-tuned; there is no zero-shot encoder regime in this project.
 
-## Training
+## 7.1 Training Flow
+
+A typical command is:
 
 ```bash
 python -m src.encoder.train configs/deberta_base.yaml
 ```
 
-The flow is: load config → seed everything → preprocess MultiNERD → load `AutoModelForTokenClassification` with dataset-specific `num_labels` → run `Trainer` → load best checkpoint by val F1 → save `best_model/` → evaluate on test → write `results.yaml`.
+The steps are:
 
-Active encoder configs set:
+1. Load the YAML config.
+2. Seed Transformers, `random`, `numpy`, and PyTorch.
+3. Load MultiNERD via `load_ner_dataset("multinerd", language="en")`.
+4. Preprocess through `prepare_encoder_dataset()`, which tokenizes words and aligns BIO labels to subwords.
+5. Instantiate `AutoModelForTokenClassification` with dataset-specific `num_labels`, `id2label`, and `label2id`.
+6. Build `TrainingArguments` from the config (batch sizes, learning rate, warmup, scheduler, eval/save strategy, early stopping patience, mixed precision).
+7. Train with HuggingFace `Trainer`.
+8. At the end of training, load the best checkpoint based on validation F1 (`load_best_model_at_end: true`, `metric_for_best_model: f1`, `greater_is_better: true`).
+9. Save the best model and tokenizer under `best_model/`.
+10. Evaluate on the test split.
+11. Write `results.yaml` with `regime: encoder`, test metrics, runtime, and seed.
 
-```yaml
-load_best_model_at_end: true
-metric_for_best_model: f1
-greater_is_better: true
-```
+## 7.2 Subword Alignment
 
-Although the encoder configs contain `fp16: true`, the code picks bf16 on CUDA devices that support it and otherwise falls back to fp16.
+Raw MultiNERD data is already pre-tokenized into words. The encoder tokenizer may split each word into multiple subword pieces. The alignment rule used in `preprocess_encoder.py` is:
 
-## Inference
+| Token position | Label used for loss / evaluation |
+| --- | --- |
+| First subword of a word | Original BIO label |
+| Later subwords of the same word | `-100` |
+| Special tokens and padding | `-100` |
+
+This prevents double-counting a word in the cross-entropy loss and the seqeval metric.
+
+## 7.3 Precision Selection
+
+The encoder configs contain `fp16: true`, but the code prefers bf16 on CUDA devices that support it and falls back to fp16 otherwise. The selection happens at runtime and is based on hardware detection, not on the config flag alone.
+
+## 7.4 Inference
+
+A typical command is:
 
 ```bash
 python -m src.encoder.inference \
@@ -342,7 +429,7 @@ python -m src.encoder.inference \
   --config configs/deberta_base.yaml
 ```
 
-Inference reloads the saved model and tokenizer, preprocesses the test split in the same way as training, and writes:
+The inference script reloads the saved model and tokenizer, preprocesses the test split identically to training, runs the model with the evaluation batch size from the config, and writes:
 
 ```text
 results/multinerd/<experiment>/test_predictions.json
@@ -354,100 +441,122 @@ The encoder `test_predictions.json` schema is:
 ```json
 [
   {
-    "tokens": ["..."],
-    "gold": ["O", "B-LOC"],
-    "pred": ["O", "B-LOC"]
+    "tokens": ["Berlin", "is", "cold"],
+    "gold":   ["B-LOC", "O", "O"],
+    "pred":   ["B-LOC", "O", "O"]
   }
 ]
 ```
 
+`inference_metrics.yaml` records `regime: encoder`, test F1/precision/recall, latency mean/p95, VRAM peak, parameter count, `model_name`, and the experiment name.
+
 # 8. Decoder / LLM Pipeline
 
-The decoder pipeline is implemented in `src/decoder/train.py`, `src/decoder/inference.py`, and `src/decoder/parse_output.py`. The training script is only relevant for LoRA/QLoRA; zero-shot skips training entirely.
+The decoder pipeline is implemented in `src/decoder/train.py`, `src/decoder/inference.py`, and `src/decoder/parse_output.py`. The training script is only relevant for LoRA/QLoRA; zero-shot inference skips training entirely and uses `src/decoder/inference.py` directly.
 
-## Shared Training Format
+## 8.1 Zero-Shot LLM Inference
 
-NER is reformulated as chat-style structured generation. Each training sample becomes a `messages` list:
+### How zero-shot mode is activated
 
-```json
-[
-  {"role": "system",    "content": "You are a Named Entity Recognition (NER) system..."},
-  {"role": "user",      "content": "input sentence"},
-  {"role": "assistant", "content": "[{\"entity\": \"Berlin\", \"type\": \"LOC\"}]"}
-]
+Zero-shot mode in `src.decoder.inference` is activated whenever either of the following is true:
+
+1. The CLI flag `--zeroshot` is passed.
+2. The YAML config contains `mode: zeroshot`.
+
+The CLI flag wins over the config. Internally:
+
+```python
+cfg_mode    = str(cfg.get("mode", "lora")).lower()
+is_zeroshot = bool(zeroshot) or cfg_mode == "zeroshot"
+regime_label = "llm_zeroshot" if is_zeroshot else "llm_lora"
 ```
 
-The system prompt is generated from the active dataset's entity types. The assistant answer is created by converting the gold BIO sequence into entity dictionaries. The same prompt structure is reused for zero-shot inference.
+If neither `--adapter` nor `--zeroshot` is provided, the inference function raises a `ValueError`. This prevents silently running a zero-shot experiment when a LoRA adapter was actually intended.
 
-## LoRA / QLoRA Configuration
+### How no adapter is loaded
 
-All three active LoRA configs (`qwen35_08b.yaml`, `qwen35_4b.yaml`, `qwen35_27b.yaml`) set:
+In zero-shot mode:
 
-```yaml
-use_qlora: true
-attn_impl: sdpa
-```
+- The tokenizer is loaded from the base model path, not from an adapter directory:
+  ```python
+  tokenizer_source = base_model_name if is_zeroshot else adapter_path
+  tokenizer = AutoTokenizer.from_pretrained(tokenizer_source, trust_remote_code=True)
+  ```
+- The base model is instantiated normally (with 4-bit quantization if `use_qlora: true`).
+- No `PeftModel.from_pretrained(...)` call is made. The base model is used directly for generation.
 
-When `use_qlora` is true, the base model is loaded with a `BitsAndBytesConfig` using 4-bit NF4 quantization, double quantization, and bfloat16 compute dtype.
+### Files and configs used
 
-LoRA target modules:
+The zero-shot configs (`qwen35_08b_zeroshot.yaml`, `qwen35_4b_zeroshot.yaml`, `qwen35_27b_zeroshot.yaml`) contain only what is needed for inference: the base model name, `mode: zeroshot`, `use_qlora`, `attn_impl: sdpa`, `max_new_tokens`, `seed`, and the output directory.
+
+### Outputs produced
+
+A zero-shot run writes the exact same file layout as a LoRA run, minus the training artifacts:
 
 ```text
-q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj
+results/multinerd/qwen35-<size>-zeroshot/
+  test_predictions.json
+  inference_metrics.yaml
 ```
 
-| Config | `lora_r` | `lora_alpha` | Per-device batch | Grad acc | Epochs | LR |
-| --- | --- | --- | --- | --- | --- | --- |
-| `qwen35_08b.yaml` | 16 | 32 | 8 | 2  | 3 | 3e-4 |
-| `qwen35_4b.yaml`  | 16 | 32 | 4 | 4  | 3 | 2e-4 |
-| `qwen35_27b.yaml` | 32 | 64 | 1 | 16 | 2 | 1e-4 |
+`inference_metrics.yaml` contains `regime: llm_zeroshot`, F1/precision/recall, parse statistics, latency, VRAM peak, and parameter count. Zero-shot runs have no `best_lora_adapter/`, no `lora_adapter/`, no `checkpoint-*/`, and no `results.yaml`.
 
-The decoder training config uses TRL `SFTTrainer` with `load_best_model_at_end: false`. Best-model selection is handled by `GenerativeDevEvalCallback`, which runs `model.generate()` on up to `gen_eval_max_samples` validation prompts, parses the output, computes generated-entity F1, and saves the current LoRA adapter to `best_lora_adapter/` whenever that metric improves. The final (last-epoch) adapter is saved separately to `lora_adapter/`.
+## 8.2 LoRA / QLoRA Fine-Tuning
 
-## Zero-Shot Configuration
+### Training flow
 
-The three zero-shot configs (`qwen35_08b_zeroshot.yaml`, `qwen35_4b_zeroshot.yaml`, `qwen35_27b_zeroshot.yaml`) set:
+A typical training command is:
+
+```bash
+python -m src.decoder.train configs/qwen35_4b.yaml
+```
+
+The flow is:
+
+1. Load the YAML config and seed everything.
+2. Load MultiNERD via `load_ner_dataset("multinerd", language="en")`.
+3. Preprocess into chat-style `messages` via `prepare_decoder_dataset()`. The system prompt is built dynamically from `DatasetInfo.entity_types`.
+4. Load the base model. If `use_qlora: true`, `BitsAndBytesConfig` loads it in 4-bit NF4 with double quantization and bfloat16 compute dtype.
+5. Attach a LoRA adapter via `peft.get_peft_model()` using `lora_r`, `lora_alpha`, `lora_dropout`, and `target_modules` from the config.
+6. Configure `SFTConfig` (TRL) with `bf16=True`, `fp16=False`, gradient checkpointing, the configured batch and optimizer settings, and `load_best_model_at_end=False`.
+7. Train via TRL `SFTTrainer`.
+8. After each evaluation event, `GenerativeDevEvalCallback` runs generative dev evaluation (see Section 8.2 "Generative dev evaluation" below).
+9. At the end of training, the final adapter is saved to `lora_adapter/` and the training summary is written to `results.yaml` with `regime: llm_lora`.
+
+### LoRA / QLoRA setup
+
+All three LoRA configs share:
 
 ```yaml
-mode: zeroshot
 use_qlora: true
 attn_impl: sdpa
-max_new_tokens: 256
+lora_dropout: 0.05
+target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
 ```
 
-They contain no training hyperparameters. `src.decoder.inference` detects the zero-shot mode from either the CLI flag `--zeroshot` or the config field `mode: zeroshot` (the CLI flag wins). When zero-shot is active:
+Rank, alpha, batch size, gradient accumulation, epochs, and learning rate differ per size and are listed in Section 3.3.
 
-- The tokenizer is loaded from the base model, not from an adapter directory.
-- No `PeftModel` is wrapped around the base model.
-- `regime: llm_zeroshot` is written into `inference_metrics.yaml`.
-- The output directory is `results/multinerd/<experiment>/` where `<experiment>` ends in `-zeroshot`.
+### Generative dev evaluation
 
-If neither `--adapter` nor `--zeroshot` is provided, `run_decoder_inference()` raises a `ValueError`.
+Teacher-forced `eval_loss` is intentionally not used as the best-model criterion. Instead, `GenerativeDevEvalCallback` runs `model.generate()` on up to `gen_eval_max_samples` validation prompts after each evaluation event, decodes only the newly generated tokens, parses the output with `parse_llm_output()`, converts entities to BIO with `entities_to_bio()`, and computes entity-level precision, recall, and F1. Whenever this generative dev F1 improves, the current LoRA adapter is saved to `best_lora_adapter/`. The last-epoch adapter is always saved separately to `lora_adapter/` as a fallback.
 
-## Parser Behavior
+### Best adapter selection
 
-`src/decoder/parse_output.py` expects output like:
+After training:
 
-```json
-[{"entity": "Barack Obama", "type": "PER"}]
-```
+- `best_lora_adapter/` contains the adapter that achieved the best generative dev F1 during training. This is the recommended adapter for final inference.
+- `lora_adapter/` contains the last-epoch adapter. It is used as a fallback if for some reason no best adapter was produced.
 
-It applies these parsing strategies:
+### Final inference
 
-| Status | Meaning |
-| --- | --- |
-| `ok` | Direct JSON parsing succeeded |
-| `markdown_stripped` | JSON was parsed after removing a Markdown code fence |
-| `regex_fallback` | JSON array was parsed after extracting the first bracketed array |
-| `failed` | No valid JSON list could be parsed |
-
-Before parsing, the parser strips `<think>...</think>` blocks. It validates entity dictionaries and filters unknown entity types against the active `DatasetInfo.entity_types` set.
-
-The conversion from entity dictionaries back to BIO tags uses exact whitespace token matching. This is simple and transparent, but it means generated spans with different casing or punctuation spacing may fail to align to the original token list.
-
-## Decoder Inference
-
-LoRA/QLoRA:
+A typical LoRA inference command is:
 
 ```bash
 python -m src.decoder.inference \
@@ -456,73 +565,132 @@ python -m src.decoder.inference \
   --config configs/qwen35_4b.yaml
 ```
 
-Zero-shot:
+Internally:
 
-```bash
-python -m src.decoder.inference \
-  --zeroshot \
-  --base Qwen/Qwen3.5-4B \
-  --config configs/qwen35_4b_zeroshot.yaml
-```
+- The tokenizer is loaded from the adapter directory.
+- The base model is loaded (in 4-bit if `use_qlora: true`).
+- `PeftModel.from_pretrained(base_model, adapter_path)` wraps the adapter around the base model.
+- Test-set generation, parsing, and metrics all go through the same shared path described in Section 8.3.
+- The result files are written to `results/multinerd/<experiment>/` with `regime: llm_lora`.
 
-Both calls produce:
+## 8.3 Shared Decoder Logic
 
-```text
-results/multinerd/<experiment>/test_predictions.json
-results/multinerd/<experiment>/inference_metrics.yaml
-```
+### Prompt formatting
 
-The decoder `test_predictions.json` schema is shared:
+Both zero-shot and LoRA regimes build their test-time prompts via `preprocess_decoder.prepare_test_inputs()`, which calls `build_system_prompt()`. The system prompt lists the allowed entity types from `DatasetInfo.entity_types` and instructs the model to output a JSON list like:
 
 ```json
-[
-  {
-    "tokens": ["..."],
-    "gold_entities": [{"entity": "...", "type": "..."}],
-    "pred_entities": [{"entity": "...", "type": "..."}],
-    "raw_output": "[...]",
-    "parse_status": "ok",
-    "gold_bio": ["O", "B-LOC"],
-    "pred_bio": ["O", "B-LOC"]
-  }
-]
+[{"entity": "Barack Obama", "type": "PER"}]
 ```
+
+The prompt is applied via `tokenizer.apply_chat_template(messages, add_generation_prompt=True)`. Generation uses greedy decoding (`do_sample=False`) for reproducibility.
+
+### Parsing
+
+Generated text is passed through `parse_llm_output(output_text, valid_types=frozenset(info.entity_types))`. The parser:
+
+1. Strips `<think>...</think>` blocks, which Qwen3 may produce when thinking-mode is enabled.
+2. Tries a direct `json.loads`. If the result is a list, validation returns it with status `ok`.
+3. If direct parsing fails, looks for a Markdown code fence (` ```json ... ``` `) and tries again. Success returns status `markdown_stripped`.
+4. If that fails, uses a regex to extract the first bracketed array `[...]` in the text and tries once more. Success returns status `regex_fallback`.
+5. If all strategies fail, returns an empty list with status `failed`.
+
+Validation drops entity dictionaries that are missing `entity` or `type`, and filters out entities whose `type` is not in the allowed set.
+
+### BIO conversion
+
+`entities_to_bio(tokens, entities)` reconstructs a BIO sequence from the parsed entity list using exact whitespace-token matching against the original `tokens` list. This conversion is deliberately simple and transparent: if the generated entity text does not match the tokenization, the alignment fails and the span is not scored as a match. This is a known trade-off and is discussed in Section 13.
+
+### Entity evaluation
+
+`evaluate_llm_predictions(tokens_list, gold_entities, pred_entities, parse_statuses)` computes entity-level precision, recall, and F1 via seqeval using the BIO conversion, and additionally reports per-status parser counters:
+
+```text
+parse_ok
+parse_markdown_stripped
+parse_regex_fallback
+parse_failed
+parse_failure_rate   (parse_failed / total)
+```
+
+### Why both regimes share this logic
+
+Because zero-shot and LoRA use exactly the same prompt, parser, and evaluator, the difference between the two regimes in the final numbers is purely a difference in the generated text — there is no evaluation asymmetry. This is important when interpreting the comparison in Section 11.
 
 # 9. Configuration System
 
 Each experiment is controlled by one YAML file in `configs/`.
 
-## Common Fields
+## 9.1 Common Fields
 
 | Field | Used by | Meaning |
 | --- | --- | --- |
-| `experiment_name` | All | Directory name inside `results/<dataset>/` |
-| `model_name` | All | Hugging Face model ID |
-| `model_type` | All | `encoder` or `decoder` |
-| `mode` | Decoder only | `lora` or `zeroshot` |
-| `dataset` | All | Currently `multinerd` in all active configs |
-| `dataset_language` | Dataset loader | Language filter for MultiNERD, default `en` |
-| `seed` | Training / inference | Random seed |
-| `output_dir` | Training / inference | Default output path |
-| `use_wandb` | Training | Whether to report to W&B |
+| `experiment_name` | All | Directory name inside `results/<dataset>/`. |
+| `model_name` | All | Hugging Face model ID. |
+| `model_type` | All | `encoder` or `decoder`. |
+| `mode` | Decoder only | `lora` or `zeroshot`. Selects the decoder inference regime. |
+| `dataset` | All | Currently `multinerd` in all active configs. |
+| `dataset_language` | Dataset loader | Language filter for MultiNERD, default `en`. |
+| `seed` | Training / inference | Random seed. |
+| `output_dir` | Training / inference | Default output path. |
+| `use_wandb` | Training | Whether to report to Weights & Biases. |
 
-## Encoder Fields
+## 9.2 Encoder Fields
 
-`max_length`, `learning_rate`, `num_train_epochs`, `per_device_train_batch_size`, `per_device_eval_batch_size`, `gradient_accumulation_steps`, `weight_decay`, `warmup_ratio`, `lr_scheduler_type`, `eval_strategy`, `save_strategy`, `save_total_limit`, `load_best_model_at_end`, `metric_for_best_model`, `greater_is_better`, `early_stopping_patience`.
+| Field | Meaning |
+| --- | --- |
+| `max_length` | Maximum tokenizer sequence length. |
+| `learning_rate` | Optimizer learning rate. |
+| `num_train_epochs` | Number of training epochs. |
+| `per_device_train_batch_size` | Per-device train batch size. |
+| `per_device_eval_batch_size` | Per-device eval batch size. |
+| `gradient_accumulation_steps` | Accumulation steps before optimizer update. |
+| `weight_decay` | Weight decay. |
+| `warmup_ratio` | LR warmup fraction. |
+| `lr_scheduler_type` | Learning-rate scheduler. |
+| `eval_strategy`, `save_strategy` | Evaluation and checkpoint intervals. |
+| `save_total_limit` | Maximum number of checkpoints retained. |
+| `load_best_model_at_end` | Enables Trainer best-checkpoint loading. |
+| `metric_for_best_model` | Metric used for best-checkpoint selection. |
+| `greater_is_better` | Direction for the best metric. |
+| `early_stopping_patience` | Early stopping patience in evaluation events. |
 
-## Decoder LoRA Fields
+## 9.3 Decoder LoRA Fields
 
-`use_qlora`, `attn_impl`, `lora_r`, `lora_alpha`, `lora_dropout`, `target_modules`, `max_seq_length`, `packing`, `gradient_checkpointing`, `gen_eval_max_samples`, plus the standard training hyperparameters.
+| Field | Meaning |
+| --- | --- |
+| `use_qlora` | Load base model in 4-bit NF4 if true. |
+| `attn_impl` | Attention implementation passed to Transformers (`sdpa`). |
+| `lora_r`, `lora_alpha`, `lora_dropout` | LoRA hyperparameters. |
+| `target_modules` | Module names that receive LoRA adapters. |
+| `max_seq_length` | Maximum sequence length for SFT. |
+| `packing` | TRL SFT packing flag. |
+| `gradient_checkpointing` | Whether gradient checkpointing is enabled. |
+| `gen_eval_max_samples` | Max validation samples per generative dev evaluation. |
+| Standard training hyperparameters | Same names as encoder fields for LR, batch size, epochs, etc. |
 
-## Decoder Zero-Shot Fields
+## 9.4 Decoder Zero-Shot Fields
 
-Only `use_qlora`, `attn_impl`, `max_new_tokens`, `seed`, and I/O fields. No LoRA and no training hyperparameters.
+| Field | Meaning |
+| --- | --- |
+| `mode: zeroshot` | Marks the config as zero-shot. |
+| `use_qlora` | 4-bit loading is recommended even for zero-shot. |
+| `attn_impl` | `sdpa` (not `flash_attention_2`). |
+| `max_new_tokens` | Upper bound on generated tokens. |
+| `seed` | Random seed for reproducibility. |
+| `output_dir` | Default output directory. |
 
-# 10. How to Run the Final Experiments
+Zero-shot configs intentionally omit all training hyperparameters. Trying to call `src.decoder.train` on a zero-shot config is not part of the workflow.
 
-These commands are documentation examples and are not run automatically.
+## 9.5 Experiment Name to Output Directory Mapping
 
-## Environment Setup
+Output directories are derived automatically as `results/<dataset>/<experiment_name>/`. For the active matrix this yields the eight directories listed in Section 4.4.
+
+# 10. How to Run the Project
+
+Unless noted otherwise, all commands are executed from the `ba-ner/` directory.
+
+## 10.1 Environment Setup
 
 ```bash
 cd ba-ner
@@ -532,18 +700,24 @@ pip install -e .
 pip install -r requirements.txt
 ```
 
-The project requires Python `>=3.10`. On a cluster, the shell scripts assume a conda environment named `ba-ner`:
+The project requires Python `>=3.10`. On a cluster with conda, `run_encoder.sh` and `run_decoder.sh` assume an environment named `ba-ner`:
 
 ```bash
 source activate ba-ner
 ```
 
-## Run Encoder Training + Inference
+## 10.2 Encoder Training
 
 ```bash
 python -m src.encoder.train configs/deberta_base.yaml
 python -m src.encoder.train configs/deberta_large.yaml
+```
 
+Outputs land in `results/multinerd/deberta-v3-base/` and `results/multinerd/deberta-v3-large/`.
+
+## 10.3 Encoder Inference
+
+```bash
 python -m src.encoder.inference \
   --model results/multinerd/deberta-v3-base/best_model \
   --config configs/deberta_base.yaml
@@ -553,7 +727,9 @@ python -m src.encoder.inference \
   --config configs/deberta_large.yaml
 ```
 
-## Run LLM Zero-Shot Inference (No Training)
+## 10.4 Zero-Shot LLM Inference
+
+Zero-shot runs never call `src.decoder.train`. They run through `src.decoder.inference --zeroshot`:
 
 ```bash
 python -m src.decoder.inference \
@@ -572,67 +748,76 @@ python -m src.decoder.inference \
   --config configs/qwen35_27b_zeroshot.yaml
 ```
 
-## Run LLM LoRA Training + Inference
+Each command produces `test_predictions.json` and `inference_metrics.yaml` under `results/multinerd/qwen35-<size>-zeroshot/`.
+
+## 10.5 LoRA LLM Training
 
 ```bash
 python -m src.decoder.train configs/qwen35_08b.yaml
+python -m src.decoder.train configs/qwen35_4b.yaml
+python -m src.decoder.train configs/qwen35_27b.yaml
+```
+
+Training produces `checkpoint-*/`, `best_lora_adapter/`, `lora_adapter/`, and `results.yaml` in `results/multinerd/qwen35-<size>-qlora/`.
+
+## 10.6 LoRA LLM Inference
+
+```bash
 python -m src.decoder.inference \
   --adapter results/multinerd/qwen35-08b-qlora/best_lora_adapter \
   --base Qwen/Qwen3.5-0.8B \
   --config configs/qwen35_08b.yaml
 
-python -m src.decoder.train configs/qwen35_4b.yaml
 python -m src.decoder.inference \
   --adapter results/multinerd/qwen35-4b-qlora/best_lora_adapter \
   --base Qwen/Qwen3.5-4B \
   --config configs/qwen35_4b.yaml
 
-python -m src.decoder.train configs/qwen35_27b.yaml
 python -m src.decoder.inference \
   --adapter results/multinerd/qwen35-27b-qlora/best_lora_adapter \
   --base Qwen/Qwen3.5-27B \
   --config configs/qwen35_27b.yaml
 ```
 
-## Run the Full Pipeline
+## 10.7 Running the Full Matrix with `run_all.py`
 
-Full 8-experiment matrix:
+Run the complete 8-experiment matrix followed by the comparison stage:
 
 ```bash
 python scripts/run_all.py
 ```
 
-Only encoder experiments:
+Run only the encoder experiments:
 
 ```bash
 python scripts/run_all.py --encoder-only
 ```
 
-Only LLM experiments (both regimes):
+Run only the LLM experiments (both regimes):
 
 ```bash
 python scripts/run_all.py --decoder-only
 ```
 
-Only LLM zero-shot (all three sizes):
+Run only the three zero-shot LLM experiments:
 
 ```bash
 python scripts/run_all.py --zeroshot-only
 ```
 
-Only fine-tuned models (both DeBERTa + all three LoRA LLMs):
+Run only the fine-tuned experiments (both encoders plus all three LoRA LLMs):
 
 ```bash
 python scripts/run_all.py --finetuned-only
 ```
 
-Only comparison, assuming result files already exist:
+Run only the comparison stage, assuming result files already exist:
 
 ```bash
 python scripts/run_all.py --eval-only
 ```
 
-One model at a time (CLI short names):
+Run a single experiment through the orchestrator by short name:
 
 ```bash
 python scripts/run_all.py --model deberta_base
@@ -645,21 +830,29 @@ python scripts/run_all.py --model qwen35_4b_zs
 python scripts/run_all.py --model qwen35_27b_zs
 ```
 
-Skip training or inference steps:
+Skip the training phase (for example when reusing existing `best_model/` or `best_lora_adapter/` directories):
 
 ```bash
 python scripts/run_all.py --skip-train
+```
+
+Skip the inference phase (for example after training new adapters but before running evaluation):
+
+```bash
 python scripts/run_all.py --skip-inference
 ```
 
-## SLURM Usage
+`--zeroshot-only` and `--finetuned-only` act as exclusive filters across the three groups and can be combined with `--model` for single-experiment runs. The comparison stage at the end of the pipeline always filters by `dataset="multinerd"`.
+
+## 10.8 SLURM Usage
 
 ```bash
 sbatch scripts/run_encoder.sh
 sbatch scripts/run_decoder.sh
 ```
 
-The decoder SLURM script runs all six LLM experiments (3 zero-shot + 3 LoRA training+inference) sequentially. It requests one A100 GPU and 24 hours. Adjust the SBATCH header for your cluster if needed.
+- `run_encoder.sh` requests a single GPU and 32 GB of memory for four hours, activates conda env `ba-ner`, trains the two DeBERTa encoders and runs inference for both.
+- `run_decoder.sh` requests an A100 and 96 GB of memory for 24 hours, runs the three zero-shot LLM inferences in order (0.8B, 4B, 27B), then trains and runs inference for the three LoRA configs in order (0.8B, 4B, 27B).
 
 Logs are written to:
 
@@ -670,7 +863,7 @@ logs/decoder_<jobid>.log
 logs/decoder_<jobid>.err
 ```
 
-## Run Comparison
+## 10.9 Comparison
 
 ```bash
 python -m src.evaluate.compare_all
@@ -678,9 +871,14 @@ python -m src.evaluate.compare_all --dataset multinerd
 python -m src.evaluate.compare_all --results-dir results
 ```
 
-`compare_all.py` writes the terminal table, `results/comparison_f1.pdf`, `results/per_entity_heatmap_multinerd.pdf`, and `results/comparison_table.tex`. All artifacts distinguish the three regimes (Encoder / LLM Zero-Shot / LLM LoRA).
+Outputs:
 
-## Run Error Analysis
+- A sorted Rich comparison table printed to the terminal (columns: rank, dataset, model, regime, params, test F1/precision/recall, training minutes, VRAM, latency).
+- `results/comparison_f1.pdf`: horizontal bar plot, one bar per experiment, coloured by regime (Encoder, LLM Zero-Shot, LLM LoRA).
+- `results/per_entity_heatmap_multinerd.pdf`: F1 heatmap over entity types and models. This requires `test_predictions.json` to be present.
+- `results/comparison_table.tex`: LaTeX table with columns `Model`, `Regime`, `Params`, `F1`, `Precision`, `Recall`.
+
+## 10.10 Error Analysis
 
 ```bash
 python -m src.evaluate.error_analysis \
@@ -689,17 +887,17 @@ python -m src.evaluate.error_analysis \
   --dataset multinerd
 ```
 
-The current CLI prints a summary table and does not write an error-analysis file by default.
+The current CLI prints a Rich summary table and does not persist an error-analysis artifact by default. The `--dataset` flag is required because the valid entity type set is loaded from `DatasetInfo`.
 
 # 11. Output Structure and How to Interpret Results
 
-All current experiment artifacts use:
+All active artifacts live under:
 
 ```text
-results/multinerd/<experiment>/
+results/multinerd/<experiment_name>/
 ```
 
-## Encoder Artifacts
+## 11.1 Encoder Artifacts
 
 ```text
 results/multinerd/<deberta-experiment>/
@@ -710,9 +908,35 @@ results/multinerd/<deberta-experiment>/
   inference_metrics.yaml
 ```
 
-Encoder `results.yaml` includes `regime: encoder` plus the standard training summary fields (`experiment_name`, `model_name`, `model_type: encoder`, `dataset`, `test_f1`, `test_precision`, `test_recall`, `train_runtime_seconds`, `best_model_dir`, `seed`, `num_train_epochs`, `learning_rate`, `per_device_train_batch_size`, `max_length`).
+| Artifact | Produced by | Meaning |
+| --- | --- | --- |
+| `checkpoint-*/` | `Trainer` during training | Intermediate checkpoints retained according to `save_total_limit`. |
+| `best_model/` | `src.encoder.train` | Best-validation-F1 model selected by `Trainer` and saved for later inference. |
+| `results.yaml` | `src.encoder.train` | Training summary plus test metrics from the training-time test evaluation. Contains `regime: encoder`. |
+| `test_predictions.json` | `src.encoder.inference` | Token-level BIO gold / pred sequences for the test split. |
+| `inference_metrics.yaml` | `src.encoder.inference` | Test F1/precision/recall, latency mean/p95, VRAM peak, total parameter count, `model_name`, and `regime: encoder`. |
 
-## Decoder LoRA Artifacts
+Encoder `results.yaml` typically contains:
+
+```text
+regime: encoder
+experiment_name
+model_name
+model_type: encoder
+dataset
+test_f1
+test_precision
+test_recall
+train_runtime_seconds
+best_model_dir
+seed
+num_train_epochs
+learning_rate
+per_device_train_batch_size
+max_length
+```
+
+## 11.2 LoRA LLM Artifacts
 
 ```text
 results/multinerd/<qwen-experiment>-qlora/
@@ -724,9 +948,38 @@ results/multinerd/<qwen-experiment>-qlora/
   inference_metrics.yaml
 ```
 
-`results.yaml` includes `regime: llm_lora`, `use_qlora`, LoRA rank/alpha, `train_runtime_seconds`, `trainable_params`, `total_params`, `best_dev_f1`, `best_epoch`, `epoch_results`, `best_adapter_dir`, `last_adapter_dir`.
+| Artifact | Produced by | Meaning |
+| --- | --- | --- |
+| `checkpoint-*/` | `SFTTrainer` | Intermediate training checkpoints. |
+| `best_lora_adapter/` | `GenerativeDevEvalCallback` | Adapter that achieved the best generative dev F1. Recommended for final inference. |
+| `lora_adapter/` | End of `src.decoder.train` | Adapter from the last training epoch. Fallback. |
+| `results.yaml` | `src.decoder.train` | Training summary, best generative dev F1, best epoch, and adapter paths. Contains `regime: llm_lora`. |
+| `test_predictions.json` | `src.decoder.inference` | Generated raw outputs, parse statuses, entity lists, and BIO conversions. |
+| `inference_metrics.yaml` | `src.decoder.inference` | Test F1/precision/recall, parse statistics, latency, VRAM peak, total parameter count. Contains `regime: llm_lora`. |
 
-## Decoder Zero-Shot Artifacts
+LoRA `results.yaml` typically contains:
+
+```text
+regime: llm_lora
+experiment_name
+model_name
+model_type: decoder
+dataset
+use_qlora
+lora_r
+lora_alpha
+train_runtime_seconds
+trainable_params
+total_params
+best_dev_f1
+best_epoch
+epoch_results
+best_adapter_dir
+last_adapter_dir
+seed
+```
+
+## 11.3 Zero-Shot LLM Artifacts
 
 ```text
 results/multinerd/<qwen-experiment>-zeroshot/
@@ -734,14 +987,39 @@ results/multinerd/<qwen-experiment>-zeroshot/
   inference_metrics.yaml
 ```
 
-Zero-shot experiments have no training checkpoints and no adapter directories. `inference_metrics.yaml` includes `regime: llm_zeroshot` and is otherwise shaped identically to the LoRA case (same `test_f1`, `test_precision`, `test_recall`, `latency_*`, `vram_peak_mb`, `total_params`, plus parser fields).
+Zero-shot runs have **no** `checkpoint-*/`, **no** `best_lora_adapter/`, **no** `lora_adapter/`, and **no** `results.yaml`. They only produce the two inference output files.
 
-## Metrics Files
+`inference_metrics.yaml` for zero-shot runs contains the same fields as for LoRA inference, with `regime: llm_zeroshot`. This makes zero-shot and LoRA runs directly comparable in the evaluation layer, even though one of them has no training time.
 
-`inference_metrics.yaml` is the main file for final test-set comparison. For encoders it contains:
+## 11.4 Decoder Prediction File Schema
+
+Both decoder regimes write the same schema:
+
+```json
+[
+  {
+    "tokens": ["Berlin", "is", "cold"],
+    "gold_entities": [{"entity": "Berlin", "type": "LOC"}],
+    "pred_entities": [{"entity": "Berlin", "type": "LOC"}],
+    "raw_output": "[{\"entity\": \"Berlin\", \"type\": \"LOC\"}]",
+    "parse_status": "ok",
+    "gold_bio": ["B-LOC", "O", "O"],
+    "pred_bio": ["B-LOC", "O", "O"]
+  }
+]
+```
+
+Use `raw_output` and `parse_status` to diagnose generative formatting problems. Use `gold_bio` and `pred_bio` to compare decoder outputs through the same seqeval metric family as encoder outputs.
+
+## 11.5 Metrics Files
+
+`inference_metrics.yaml` is the primary file for final test-set comparison. Common fields for all regimes:
 
 ```text
-regime: encoder
+regime:        encoder | llm_lora | llm_zeroshot
+experiment_name
+model_name
+dataset
 test_f1
 test_precision
 test_recall
@@ -751,10 +1029,9 @@ vram_peak_mb
 total_params
 ```
 
-For decoders (both regimes) it additionally contains parser stats:
+Additional fields for decoder regimes:
 
 ```text
-regime: llm_lora | llm_zeroshot
 parse_failure_rate
 parse_ok
 parse_markdown_stripped
@@ -762,62 +1039,87 @@ parse_regex_fallback
 parse_failed
 ```
 
-## Comparison Artifacts
+## 11.6 Comparison Artifacts
 
 `src.evaluate.compare_all` writes:
 
 | Artifact | Meaning |
 | --- | --- |
-| `results/comparison_f1.pdf` | Horizontal bar plot of entity-level F1 scores, coloured per regime (Encoder / LLM Zero-Shot / LLM LoRA) |
-| `results/per_entity_heatmap_multinerd.pdf` | Per-entity-type F1 heatmap for MultiNERD |
-| `results/comparison_table.tex` | LaTeX table with columns `Model`, `Regime`, `Params`, `F1`, `Precision`, `Recall` |
-| Terminal Rich table | Human-readable sorted comparison table with a `Regime` column |
+| Terminal Rich table | Ranked comparison with a `Regime` column. Zero-shot rows show `-` in the "Train (min)" column because no training happened. |
+| `results/comparison_f1.pdf` | Horizontal bar plot of entity-level F1 scores, coloured per regime. Three-entry legend: Encoder, LLM Zero-Shot, LLM LoRA. |
+| `results/per_entity_heatmap_multinerd.pdf` | F1 per entity type and model for MultiNERD. Requires `test_predictions.json` per experiment. |
+| `results/comparison_table.tex` | LaTeX table with columns `Model`, `Regime`, `Params`, `F1`, `Precision`, `Recall`. Caption is MultiNERD-only. |
 
-Zero-shot rows show `-` in the `Train (min)` column because they have no training time.
+The `regime` field is the primary grouping key. If a legacy result file lacks this field, `_get_regime()` falls back to an experiment-name heuristic (`*-zeroshot` → `llm_zeroshot`, `*-qlora` or `*-lora` → `llm_lora`) and finally to `model_type`.
+
+## 11.7 Logs
+
+Local Python commands print progress and metrics to the console via Rich. SLURM runs write stdout and stderr to `logs/encoder_<jobid>.log`/`.err` and `logs/decoder_<jobid>.log`/`.err` as configured in the SBATCH headers.
 
 # 12. Typical End-to-End Workflow
 
-A practical workflow for the main benchmark:
+A practical workflow using the final MultiNERD-only setup:
 
-1. Choose a config.
-2. Train (or skip training for zero-shot).
-3. Run inference.
-4. Inspect `inference_metrics.yaml`.
-5. Compare all experiments.
-6. Inspect errors.
+1. **Pick a regime and a model size.**
 
-For a single-model run through the orchestrator, use e.g.:
+   | Goal | Command (single-model entry point) |
+   | --- | --- |
+   | Small encoder baseline | `python scripts/run_all.py --model deberta_base` |
+   | Large encoder baseline | `python scripts/run_all.py --model deberta_large` |
+   | Small LLM zero-shot    | `python scripts/run_all.py --model qwen35_08b_zs` |
+   | Small LLM LoRA         | `python scripts/run_all.py --model qwen35_08b` |
+   | Mid-size LLM zero-shot | `python scripts/run_all.py --model qwen35_4b_zs` |
+   | Mid-size LLM LoRA      | `python scripts/run_all.py --model qwen35_4b` |
+   | Large LLM zero-shot    | `python scripts/run_all.py --model qwen35_27b_zs` |
+   | Large LLM LoRA         | `python scripts/run_all.py --model qwen35_27b` |
 
-```bash
-python scripts/run_all.py --model qwen35_08b
-python scripts/run_all.py --model qwen35_08b_zs
-```
+2. **For encoders and LoRA LLMs:** the orchestrator runs training, saves the best checkpoint/adapter, then runs inference on the test split. For zero-shot LLMs, it runs inference only.
+3. **Inspect the selected best checkpoint or adapter** if relevant:
+   - Encoders: `results/multinerd/<experiment>/best_model/`
+   - LoRA LLMs: `results/multinerd/<experiment>/best_lora_adapter/`
+4. **Read the final test metrics** from `results/multinerd/<experiment>/inference_metrics.yaml`.
+5. **Compare all completed experiments:**
+   ```bash
+   python -m src.evaluate.compare_all --dataset multinerd
+   ```
+6. **Dig into errors** where F1 is lower than expected:
+   ```bash
+   python -m src.evaluate.error_analysis \
+     --encoder-preds results/multinerd/deberta-v3-large/test_predictions.json \
+     --decoder-preds results/multinerd/qwen35-27b-qlora/test_predictions.json \
+     --dataset multinerd
+   ```
 
-For the complete comparison:
+For a complete matrix run, the single command is:
 
 ```bash
 python scripts/run_all.py
 ```
 
+Followed automatically by the comparison stage.
+
 # 13. Technical Notes and Caveats
 
 | Caveat | Explanation |
 | --- | --- |
-| Qwen model IDs may need upstream verification | Active configs use `Qwen/Qwen3.5-0.8B`, `Qwen/Qwen3.5-4B`, and `Qwen/Qwen3.5-27B`. If model loading fails with a Hugging Face "not found" error, verify the current upstream IDs and access requirements. |
-| Qwen3.5-27B is resource-heavy | Even in 4-bit QLoRA, the 27B model needs roughly 24 GB VRAM; this applies to both zero-shot and LoRA inference. |
-| Generative dev evaluation costs extra time | LoRA training runs `model.generate()` on up to `gen_eval_max_samples` validation samples after each evaluation event. This is slower than teacher-forced `eval_loss` but better matches final inference behavior. |
-| `load_best_model_at_end=False` is intentional for decoder training | The decoder best adapter is selected by generated dev F1 in `GenerativeDevEvalCallback`, not by Trainer loss. |
-| Active Qwen configs use SDPA | Qwen3.5 is trained and evaluated with `attn_impl: sdpa`, not `flash_attention_2`. |
-| Encoder precision is hardware-dependent | Encoder training prefers bf16 on CUDA devices that support it, otherwise fp16. |
-| Decoder training uses bf16 | TRL `SFTConfig` sets `bf16=True`, `fp16=False`. GPU-oriented. |
-| MultiNERD filtering is simple | The loader filters `lang == "en"` and removes the `lang` column. No extra balancing or custom split logic. |
-| Zero-shot configs cannot be trained | `src.decoder.train` is only designed for LoRA configs. The zero-shot configs intentionally omit training fields. |
-| Decoder span matching is exact | `entities_to_bio()` matches generated entity text against whitespace-split tokens. Formatting differences can reduce measured F1 even when the generated text is semantically close. |
-| WNUT-17 is legacy, not active | `dataset_loader.py` still recognises `wnut_17` so that older result directories and the `error_analysis.py --dataset wnut_17` path remain usable, but no active config, script, or orchestrator option points to it. |
+| Qwen model IDs may need upstream verification | The configs use `Qwen/Qwen3.5-0.8B`, `Qwen/Qwen3.5-4B`, and `Qwen/Qwen3.5-27B`. If Hugging Face returns a model-not-found error, verify the current upstream IDs and access requirements and adjust only the `model_name` field in the affected configs. |
+| Qwen3.5-27B is resource-heavy | Even in 4-bit QLoRA, 27B typically requires around 24 GB of VRAM for both zero-shot and LoRA inference. The LoRA config comments note that running without QLoRA (`use_qlora: false`) requires roughly 80 GB. The SLURM decoder script assumes an A100. |
+| Zero-shot may have higher parse failure rates | A base model that has not been fine-tuned on this prompt format is more likely to produce non-parseable output, truncate, or leak `<think>` content. This is part of the measurement and is recorded through `parse_failure_rate` and the per-status counters. For LoRA runs the same metric is typically much lower. |
+| Generative dev evaluation is intentionally slower than `eval_loss` | `GenerativeDevEvalCallback` runs `model.generate()` on validation prompts and computes generated-entity F1. This is slower than teacher-forced `eval_loss`, but it matches the final inference behavior and is the criterion used for `best_lora_adapter/`. Teacher-forced `eval_loss` is not used for selection. |
+| `load_best_model_at_end=False` for decoder training is intentional | Setting `load_best_model_at_end=True` would require a metric from `Trainer`'s own evaluation loop, which would select by `eval_loss`. That is the wrong criterion for generative NER. `best_lora_adapter/` is written by the callback instead. |
+| Exact whitespace span matching can penalize semantically close outputs | `entities_to_bio()` matches generated entity text against whitespace-split tokens exactly. A semantically correct entity with different casing, punctuation, or spacing may fail to align and thus lower the measured F1. This is a deliberate simplicity/transparency trade-off. |
+| `src.decoder.train` is not designed for zero-shot configs | Zero-shot configs omit training hyperparameters and should never be passed to `src.decoder.train`. `scripts/run_all.py` keeps the zero-shot group separate, so the orchestrator does not make this mistake. |
+| `run_decoder.sh` is long-running | It runs six sequential experiments (three zero-shot inferences plus three LoRA trainings and inferences) and requests 24 hours of SLURM wall clock. Adjust as needed for your cluster. |
+| Active Qwen configs use SDPA, not FlashAttention | `attn_impl: sdpa` is set explicitly. FlashAttention is not required; `flash-attn` is listed in `requirements.txt` only for completeness and can fail to install on some systems without affecting the pipeline. |
+| Encoder precision is hardware-dependent | The encoder configs contain `fp16: true`, but the training script prefers bf16 on CUDA devices that support it and falls back to fp16 otherwise. This is selected at runtime. |
+| Decoder training assumes bf16 | TRL `SFTConfig` is constructed with `bf16=True` and `fp16=False`. This is a GPU-oriented setup and is not intended for CPU training. |
+| MultiNERD filtering is simple | The loader filters `lang == "en"` and removes the `lang` column. It does not implement extra balancing or custom split logic. |
+| WNUT-17 is legacy only | `dataset_loader.py` still knows `wnut_17`, and `error_analysis.py --dataset wnut_17` still works, so that older result directories and manual inspection remain usable. WNUT-17 is not part of the active benchmark. |
+| Zero-shot greedy decoding is not an upper bound | All decoder generation uses `do_sample=False`, which is correct for reproducibility but may underestimate what a zero-shot model can do with sampling or tuned decoding parameters. |
 
 # 14. Minimal Command Reference
 
-From repository root:
+From the repository root:
 
 ```bash
 cd ba-ner
@@ -832,14 +1134,14 @@ pip install -e .
 pip install -r requirements.txt
 ```
 
-Train encoders on MultiNERD:
+Train encoders:
 
 ```bash
 python -m src.encoder.train configs/deberta_base.yaml
 python -m src.encoder.train configs/deberta_large.yaml
 ```
 
-Train LoRA LLMs on MultiNERD:
+Train LoRA LLMs:
 
 ```bash
 python -m src.decoder.train configs/qwen35_08b.yaml
@@ -847,7 +1149,14 @@ python -m src.decoder.train configs/qwen35_4b.yaml
 python -m src.decoder.train configs/qwen35_27b.yaml
 ```
 
-Run LLM zero-shot (no training):
+Encoder inference:
+
+```bash
+python -m src.encoder.inference --model results/multinerd/deberta-v3-base/best_model  --config configs/deberta_base.yaml
+python -m src.encoder.inference --model results/multinerd/deberta-v3-large/best_model --config configs/deberta_large.yaml
+```
+
+Zero-shot LLM inference:
 
 ```bash
 python -m src.decoder.inference --zeroshot --base Qwen/Qwen3.5-0.8B --config configs/qwen35_08b_zeroshot.yaml
@@ -855,38 +1164,63 @@ python -m src.decoder.inference --zeroshot --base Qwen/Qwen3.5-4B   --config con
 python -m src.decoder.inference --zeroshot --base Qwen/Qwen3.5-27B  --config configs/qwen35_27b_zeroshot.yaml
 ```
 
-Run full MultiNERD pipeline (all 8 experiments + comparison):
+LoRA LLM inference:
+
+```bash
+python -m src.decoder.inference \
+  --adapter results/multinerd/qwen35-08b-qlora/best_lora_adapter \
+  --base Qwen/Qwen3.5-0.8B \
+  --config configs/qwen35_08b.yaml
+
+python -m src.decoder.inference \
+  --adapter results/multinerd/qwen35-4b-qlora/best_lora_adapter \
+  --base Qwen/Qwen3.5-4B \
+  --config configs/qwen35_4b.yaml
+
+python -m src.decoder.inference \
+  --adapter results/multinerd/qwen35-27b-qlora/best_lora_adapter \
+  --base Qwen/Qwen3.5-27B \
+  --config configs/qwen35_27b.yaml
+```
+
+Full pipeline:
 
 ```bash
 python scripts/run_all.py
+python scripts/run_all.py --encoder-only
+python scripts/run_all.py --decoder-only
+python scripts/run_all.py --zeroshot-only
+python scripts/run_all.py --finetuned-only
+python scripts/run_all.py --eval-only
+python scripts/run_all.py --skip-train
+python scripts/run_all.py --skip-inference
 ```
 
-Run comparison only:
+Comparison:
 
 ```bash
 python -m src.evaluate.compare_all --dataset multinerd
 ```
 
-Submit SLURM scripts:
+Error analysis:
+
+```bash
+python -m src.evaluate.error_analysis \
+  --encoder-preds results/multinerd/deberta-v3-large/test_predictions.json \
+  --decoder-preds results/multinerd/qwen35-27b-qlora/test_predictions.json \
+  --dataset multinerd
+```
+
+SLURM:
 
 ```bash
 sbatch scripts/run_encoder.sh
 sbatch scripts/run_decoder.sh
 ```
 
-# 15. What Was Removed or Deprecated
+# 15. Troubleshooting
 
-| Item | Status | Details |
-| --- | --- | --- |
-| `configs/bert_base.yaml` | Removed | Not present in the config directory. |
-| `configs/qwen3_14b.yaml` | Removed | Replaced by the `Qwen/Qwen3.5-*` family. |
-| WNUT-17 active benchmark | Removed from the active matrix | No active config uses `dataset: wnut_17`. `scripts/run_all.py` has no `--wnut17` flag. `scripts/run_encoder.sh` and `scripts/run_decoder.sh` no longer mention WNUT. |
-| WNUT-17 dataset loader code | Kept as inactive legacy | `dataset_loader.py` and `load_wnut17.py` still know about `wnut_17` so that legacy result directories and `error_analysis.py --dataset wnut_17` stay functional. They are not referenced by any active experiment. |
-| Zero-shot encoders | Never implemented | Encoder models are always fine-tuned. Only LLMs have a zero-shot regime in this project. |
-
-# 16. Troubleshooting
-
-## `ModuleNotFoundError: No module named 'src'`
+## 15.1 `ModuleNotFoundError: No module named 'src'`
 
 Run commands from `ba-ner/` and install the editable package:
 
@@ -895,9 +1229,9 @@ cd ba-ner
 pip install -e .
 ```
 
-## Wrong Config Path
+## 15.2 Wrong Config Path
 
-If you see a file-not-found error for `configs/...`, check that your working directory is `ba-ner/` and that the config is one of:
+If you see a file-not-found error for `configs/...`, check that your working directory is `ba-ner/` and that the config is one of the eight active files:
 
 ```text
 configs/deberta_base.yaml
@@ -910,31 +1244,68 @@ configs/qwen35_4b_zeroshot.yaml
 configs/qwen35_27b_zeroshot.yaml
 ```
 
-## Missing Dependencies
+## 15.3 Missing Dependencies
 
 ```bash
 pip install -e .
 pip install -r requirements.txt
 ```
 
-If `flash-attn` fails to install, note that the active Qwen configs use `attn_impl: sdpa` and do not request FlashAttention.
+If `flash-attn` fails to install, note that the active Qwen configs explicitly set `attn_impl: sdpa`. The dependency is still listed in `requirements.txt`, but the final configs do not request FlashAttention.
 
-## Model Loading Issues
+## 15.4 Qwen Model Loading Issues
 
 | Symptom | Likely cause |
 | --- | --- |
-| Model-not-found / 404 | Verify the upstream Hugging Face model ID still matches the config |
-| Access denied | Check whether the model requires authentication or license acceptance |
-| CUDA out of memory | Use a smaller Qwen size (0.8B, 4B), reduce batch size, or move to a larger GPU |
-| bitsandbytes error | Check CUDA, PyTorch, and bitsandbytes compatibility |
+| Model-not-found or 404 | Verify the upstream Hugging Face model ID still matches the config. |
+| Access denied / gated repository | Check whether the model requires authentication (`huggingface-cli login`) or license acceptance. |
+| CUDA out of memory at load time | Use a smaller Qwen size (0.8B or 4B), enable `use_qlora: true`, reduce `per_device_*_batch_size`, increase `gradient_accumulation_steps`, or move to a larger GPU. |
+| `bitsandbytes` error | Check CUDA / PyTorch / bitsandbytes version compatibility. |
 
-## Zero-Shot vs. LoRA Mix-Ups
+## 15.5 Zero-Shot Invocation Errors
 
-`src.decoder.inference` requires either `--adapter <path>` **or** `--zeroshot`. If neither is provided, it raises `ValueError`. If you mistakenly point `--adapter` at a LoRA config while using a zero-shot experiment name, the output directory will be wrong — use the matching zero-shot config file in that case.
+If `src.decoder.inference` raises a `ValueError` complaining that neither `--adapter` nor `--zeroshot` was provided, one of the two is missing. For zero-shot:
 
-## Parser Issues in Decoder Outputs
+```bash
+python -m src.decoder.inference --zeroshot --base <model> --config <zeroshot-config>
+```
 
-Check `test_predictions.json`:
+For LoRA:
+
+```bash
+python -m src.decoder.inference --adapter <path> --base <model> --config <lora-config>
+```
+
+If you accidentally pass a LoRA config with `--zeroshot`, the run will produce a zero-shot result but will be written into the LoRA experiment's output directory, which is confusing. Use the matching config file for the regime you intend to run.
+
+## 15.6 Missing Adapter Path in LoRA Mode
+
+```text
+FileNotFoundError: results/multinerd/qwen35-<size>-qlora/best_lora_adapter
+```
+
+The LoRA inference step expects `best_lora_adapter/` to exist. If the training script has not been run yet, run it first:
+
+```bash
+python -m src.decoder.train configs/qwen35_<size>.yaml
+```
+
+Alternatively, fall back to `lora_adapter/` (the last-epoch adapter) if `best_lora_adapter/` is missing for some reason.
+
+## 15.7 VRAM Issues
+
+| Model | Practical note |
+| --- | --- |
+| `Qwen/Qwen3.5-0.8B`  | Smallest LLM; runs on a single smaller GPU. |
+| `Qwen/Qwen3.5-4B`    | Mid-size; QLoRA is enabled by default. |
+| `Qwen/Qwen3.5-27B`   | Large; ≈24 GB VRAM minimum with 4-bit quantization for both zero-shot and LoRA. |
+| `microsoft/deberta-v3-large` | Moderate memory footprint; more demanding than the base variant. |
+
+If CUDA runs out of memory, prefer a smaller model size, reduce batch size, increase `gradient_accumulation_steps`, or run on a larger GPU.
+
+## 15.8 Parser Issues in Decoder Outputs
+
+Inspect `test_predictions.json` for:
 
 ```text
 raw_output
@@ -943,35 +1314,44 @@ pred_entities
 pred_bio
 ```
 
-High parse failure rates for LoRA runs usually indicate generation truncation, a wrong adapter, or that the model is not following the prompt format. For zero-shot runs, high parse failures are expected behavior — they are one of the main findings the experiment is designed to measure.
+The parser statuses mean:
 
-## Hardware and VRAM Issues
-
-| Model | Practical note |
+| Status | Interpretation |
 | --- | --- |
-| `Qwen/Qwen3.5-0.8B` | Smallest LLM; fits on small GPUs even without QLoRA |
-| `Qwen/Qwen3.5-4B` | Mid-sized; QLoRA is enabled by default |
-| `Qwen/Qwen3.5-27B` | Much larger; ~24 GB VRAM minimum with 4-bit quantization |
+| `ok` | Direct JSON parse worked. |
+| `markdown_stripped` | Model wrapped JSON in a Markdown code fence; parser recovered it. |
+| `regex_fallback` | Parser extracted the first bracketed JSON-like array via regex. |
+| `failed` | No valid entity list was recovered. |
 
-If CUDA runs out of memory, use a smaller model, reduce batch size, increase gradient accumulation, or run on a larger GPU.
+High `parse_failed` rates in LoRA runs usually indicate that generation was truncated, the wrong adapter was loaded, or the prompt format does not match the one the model was trained on. High `parse_failed` rates in zero-shot runs are expected and are part of the experimental finding.
 
-## Missing Result Folders
+## 15.9 Missing Result Folders
 
-Inference expects training artifacts for LoRA:
+Inference expects training artifacts for encoders and LoRA LLMs:
 
 ```text
-Encoder:  results/multinerd/<experiment>/best_model/
-LLM LoRA: results/multinerd/<experiment>/best_lora_adapter/
+Encoder:   results/multinerd/<experiment>/best_model/
+LLM LoRA:  results/multinerd/<experiment>/best_lora_adapter/
 ```
 
-Zero-shot runs need nothing from a previous training step, so `--skip-train` is safe for them.
+Zero-shot runs need nothing from a previous training step, so `--skip-train` is safe for them. If the expected directories are missing for encoders or LoRA LLMs, run the corresponding training step first.
 
-## Confusion About Dev-Best vs. Final Test Evaluation
+## 15.10 Confusion About Zero-Shot vs. LoRA vs. Encoder Outputs
 
-For encoders: dev best = Trainer validation F1; test metrics = computed after training and again by `src.encoder.inference`.
+Use the `regime` field as the source of truth:
 
-For LoRA LLMs: dev best = generative validation F1 saved to `best_lora_adapter/`; test metrics = computed only by `src.decoder.inference`.
+| Regime | Where it is written | Meaning |
+| --- | --- | --- |
+| `encoder` | `results.yaml` and `inference_metrics.yaml` from the encoder pipeline | Fully fine-tuned token classifier. |
+| `llm_lora` | `results.yaml` (from training) and `inference_metrics.yaml` (from LoRA inference) | LoRA/QLoRA fine-tuned LLM. `best_lora_adapter/` must exist. |
+| `llm_zeroshot` | `inference_metrics.yaml` only | Base LLM without adapter. No training artifacts exist for this run. |
 
-For zero-shot LLMs: no dev selection happens. Test metrics are what `src.decoder.inference --zeroshot` reports.
+The comparison module uses this field to group and colour experiments. When inspecting results manually, looking at `inference_metrics.yaml` for `regime` is the fastest way to confirm which regime a given directory represents.
 
-Do not interpret decoder `eval_loss` as the final model-selection criterion.
+For encoders: dev best is selected by Trainer validation F1; final test metrics come from `src.encoder.inference`.
+
+For LoRA LLMs: dev best is selected by generative validation F1 and saved to `best_lora_adapter/`; final test metrics come from `src.decoder.inference`.
+
+For zero-shot LLMs: there is no dev selection at all; final test metrics come directly from `src.decoder.inference --zeroshot`.
+
+Do not interpret decoder `eval_loss` as the final model-selection criterion. The implemented criterion is generated entity-level dev F1.
