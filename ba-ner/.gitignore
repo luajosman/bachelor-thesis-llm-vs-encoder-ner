@@ -5,6 +5,7 @@ results/*/best_model/
 results/*/lora_adapter/
 results/*/checkpoint-*/
 .venv/
+node_modules/
 wandb/
 logs/
 *.env
