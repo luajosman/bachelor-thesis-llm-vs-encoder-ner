@@ -201,8 +201,44 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-# Node
+# =========================
+# Frontend / Node
+# =========================
 node_modules/
+**/node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Python / Backend project artifacts
+# =========================
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+
+# =========================
+# Logs / Results / Generated outputs
+# =========================
+logs/
+results/
+*.log
+
+# =========================
+# IDE / OS
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
 # Marimo
 marimo/_static/
