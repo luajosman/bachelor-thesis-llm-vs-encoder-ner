@@ -19,13 +19,11 @@ Verwendung:
     # LoRA-Mode
     python -m src.decoder.inference \
         --adapter results/multinerd/qwen35-4b-qlora/best_lora_adapter \
-        --base Qwen/Qwen3.5-4B \
         --config configs/qwen35_4b.yaml
 
     # Zero-Shot Mode
     python -m src.decoder.inference \
         --zeroshot \
-        --base Qwen/Qwen3.5-4B \
         --config configs/qwen35_4b_zeroshot.yaml
 """
 
@@ -35,24 +33,25 @@ import argparse
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 import torch
 import yaml
-from peft import PeftModel
 from rich.console import Console
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn, TimeElapsedColumn
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, set_seed
 
+from src.config import DATASET_LANGUAGE, DATASET_NAME, load_experiment_config, output_dir_from_config
 from src.data.dataset_loader import load_ner_dataset
-from src.data.preprocess_decoder import build_system_prompt, extract_entities_from_bio, prepare_test_inputs
+from src.data.preprocess_decoder import prepare_test_inputs
 from src.decoder.parse_output import (
     entities_to_bio,
     evaluate_llm_predictions,
-    parse_llm_output,
+    parse_llm_output_with_diagnostics,
 )
 from src.evaluate.efficiency import count_parameters, get_vram_peak_mb, reset_vram_tracking
+from src.run_metadata import collect_run_metadata
 
 console = Console()
 
@@ -63,9 +62,8 @@ console = Console()
 
 def run_decoder_inference(
     adapter_path:    str | None,
-    base_model_name: str,
+    base_model_name: str | None,
     config_path:     str,
-    dataset_override: str | None = None,
     zeroshot:        bool = False,
 ) -> Dict[str, Any]:
     """Fuehrt NER-Inferenz mit einem LLM auf dem Test-Set durch.
@@ -83,35 +81,43 @@ def run_decoder_inference(
 
     Args:
         adapter_path:     Pfad zum LoRA-Adapter (None bei Zero-Shot).
-        base_model_name:  HuggingFace Model-ID des Basismodells.
+        base_model_name:  Optionaler HuggingFace Model-ID Override; muss zur Config passen.
         config_path:      Pfad zur YAML-Config.
-        dataset_override: Optionaler Datensatz-Override.
         zeroshot:         True = ohne Adapter laufen lassen.
 
     Returns:
         Dict mit f1, precision, recall, parse_failure_rate, latency, vram, regime.
     """
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
+    cfg = load_experiment_config(config_path, expected_model_type="decoder")
 
     # --- Modus aus Config oder CLI bestimmen ---
-    # Config-Feld 'mode: zeroshot' wird respektiert; CLI-Flag --zeroshot hat Vorrang
     cfg_mode = str(cfg.get("mode", "lora")).lower()
-    is_zeroshot = bool(zeroshot) or cfg_mode == "zeroshot"
+    is_zeroshot = cfg_mode == "zeroshot"
     regime_label = "llm_zeroshot" if is_zeroshot else "llm_lora"
 
+    if zeroshot and not is_zeroshot:
+        raise ValueError("--zeroshot can only be used with a config that sets mode: zeroshot.")
+    if is_zeroshot and adapter_path:
+        raise ValueError("Zero-shot inference must not receive --adapter.")
     if not is_zeroshot and not adapter_path:
         raise ValueError(
             "LoRA/QLoRA-Inferenz benoetigt --adapter. "
-            "Fuer Zero-Shot bitte --zeroshot setzen oder mode: zeroshot in der Config."
+            "Fuer Zero-Shot bitte eine mode: zeroshot Config verwenden."
         )
 
-    dataset_name = dataset_override or cfg.get("dataset", "multinerd")
-    dataset_language = cfg.get("dataset_language", "en")
+    configured_model_name = str(cfg["model_name"])
+    if base_model_name is not None and base_model_name != configured_model_name:
+        raise ValueError(
+            f"--base {base_model_name!r} does not match config model_name {configured_model_name!r}."
+        )
+    base_model_name = configured_model_name
+
+    seed = int(cfg.get("seed", 42))
+    set_seed(seed)
 
     mode_str = "Zero-Shot" if is_zeroshot else "LoRA/QLoRA"
     console.rule(
-        f"[bold cyan]Decoder-Inferenz ({mode_str}): {cfg['experiment_name']} auf {dataset_name}[/bold cyan]"
+        f"[bold cyan]Decoder-Inferenz ({mode_str}): {cfg['experiment_name']} on MultiNERD English[/bold cyan]"
     )
 
     use_qlora:      bool = cfg.get("use_qlora", True)
@@ -140,6 +146,7 @@ def run_decoder_inference(
             base_model_name,
             quantization_config=bnb_config,
             attn_implementation=attn_impl,
+            device_map="auto",
             trust_remote_code=True,
         )
     else:
@@ -156,6 +163,8 @@ def run_decoder_inference(
         console.print("[cyan]Zero-Shot Mode: kein Adapter wird geladen.[/cyan]")
         model = base_model
     else:
+        from peft import PeftModel
+
         console.print(f"[cyan]Lade LoRA-Adapter von {adapter_path}...[/cyan]")
         model = PeftModel.from_pretrained(base_model, adapter_path)
     model.eval()
@@ -166,8 +175,8 @@ def run_decoder_inference(
     device = next(model.parameters()).device
 
     # --- Test-Daten laden ---
-    console.print(f"[cyan]Lade {dataset_name} Test-Split...[/cyan]")
-    raw_dataset, info = load_ner_dataset(dataset_name, language=dataset_language)
+    console.print("[cyan]Loading MultiNERD English test split...[/cyan]")
+    raw_dataset, info = load_ner_dataset()
     raw_test = raw_dataset["test"]
     prompts, gold_entities = prepare_test_inputs(raw_test, info)
     tokens_list: List[List[str]] = [s["tokens"] for s in raw_test]
@@ -180,6 +189,7 @@ def run_decoder_inference(
     # --- Inferenz-Schleife ---
     pred_entities:  List[List[Dict]] = []
     parse_statuses: List[str]        = []
+    parse_diagnostics: List[Dict[str, int]] = []
     raw_outputs:    List[str]        = []
     latencies_ms:   List[float]      = []
 
@@ -227,9 +237,13 @@ def run_decoder_inference(
 
             raw_outputs.append(generated_text)
 
-            entities, status = parse_llm_output(generated_text, valid_types)
+            entities, status, diagnostics = parse_llm_output_with_diagnostics(
+                generated_text,
+                valid_types,
+            )
             pred_entities.append(entities)
             parse_statuses.append(status)
+            parse_diagnostics.append(diagnostics)
 
             progress.advance(task)
 
@@ -241,6 +255,7 @@ def run_decoder_inference(
         gold_entities=gold_entities,
         pred_entities=pred_entities,
         parse_statuses=parse_statuses,
+        parse_diagnostics=parse_diagnostics,
     )
 
     latency_mean = float(np.mean(latencies_ms))
@@ -257,9 +272,8 @@ def run_decoder_inference(
     console.print(f"VRAM-Peak: {vram_peak:.1f} MB")
 
     # --- Ausgaben speichern ---
-    output_dir = Path(cfg.get("output_dir", f"results/{dataset_name}/{cfg['experiment_name']}"))
-    if dataset_override:
-        output_dir = Path(f"results/{dataset_override}/{cfg['experiment_name']}")
+    output_dir = output_dir_from_config(cfg)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     saved_samples = [
         {
@@ -268,11 +282,12 @@ def run_decoder_inference(
             "pred_entities": pred,
             "raw_output":    raw,
             "parse_status":  status,
+            "parse_diagnostics": diagnostics,
             "gold_bio":      entities_to_bio(tokens, gold),
             "pred_bio":      entities_to_bio(tokens, pred),
         }
-        for tokens, gold, pred, raw, status in zip(
-            tokens_list, gold_entities, pred_entities, raw_outputs, parse_statuses
+        for tokens, gold, pred, raw, status, diagnostics in zip(
+            tokens_list, gold_entities, pred_entities, raw_outputs, parse_statuses, parse_diagnostics
         )
     ]
     pred_file = output_dir / "test_predictions.json"
@@ -285,7 +300,8 @@ def run_decoder_inference(
         "model_name":      base_model_name,
         "model_type":      "decoder",
         "regime":          regime_label,  # llm_zeroshot oder llm_lora
-        "dataset":         dataset_name,
+        "dataset":         DATASET_NAME,
+        "dataset_language": DATASET_LANGUAGE,
         # seqeval-Metriken sind in der Tabelle als test_f1 etc. erwartet
         "test_f1":         metrics["f1"],
         "test_precision":  metrics["precision"],
@@ -295,6 +311,9 @@ def run_decoder_inference(
         "latency_ms_p95":  latency_p95,
         "vram_peak_mb":    vram_peak,
         "total_params":    total_params,
+        "seed":            seed,
+        "max_new_tokens":  max_new_tokens,
+        "run_metadata":    collect_run_metadata(cfg),
     }
     inf_file = output_dir / "inference_metrics.yaml"
     with open(inf_file, "w") as f:
@@ -336,9 +355,8 @@ def _warmup(model, tokenizer, sample_messages: List[Dict], device, max_new_token
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Decoder-NER Inferenz (LoRA oder Zero-Shot)")
     parser.add_argument("--adapter",  default=None,  help="Pfad zum LoRA-Adapter (entfaellt bei --zeroshot)")
-    parser.add_argument("--base",     required=True, help="Basismodell-Name oder -Pfad")
+    parser.add_argument("--base",     default=None, help="Optionaler Basismodell-Name; muss zur Config passen")
     parser.add_argument("--config",   required=True, help="Pfad zur YAML-Config")
-    parser.add_argument("--dataset",  default=None,  help="Datensatz-Override (Standard: aus Config)")
     parser.add_argument(
         "--zeroshot",
         action="store_true",
@@ -350,6 +368,5 @@ if __name__ == "__main__":
         adapter_path=args.adapter,
         base_model_name=args.base,
         config_path=args.config,
-        dataset_override=args.dataset,
         zeroshot=args.zeroshot,
     )

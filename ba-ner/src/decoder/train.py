@@ -14,14 +14,12 @@ Zentrale Neuerung gegenueber reinem eval_loss:
 Verwendung:
     python -m src.decoder.train configs/qwen35_4b.yaml
     python -m src.decoder.train configs/qwen35_27b.yaml
-    python -m src.decoder.train configs/qwen35_4b.yaml --dataset wnut_17
 """
 
 from __future__ import annotations
 
 import argparse
 import random
-import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -30,7 +28,6 @@ import numpy as np
 import torch
 import yaml
 from rich.console import Console
-from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn, TimeElapsedColumn
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -38,16 +35,19 @@ from transformers import (
     TrainerCallback,
     set_seed,
 )
-from peft import LoraConfig, TaskType, get_peft_model
-from trl import SFTConfig, SFTTrainer
 
-from src.data.dataset_loader import DatasetInfo, load_ner_dataset
+from src.config import DATASET_LANGUAGE, DATASET_NAME, load_experiment_config, output_dir_from_config
+from src.data.dataset_loader import load_ner_dataset
 from src.data.preprocess_decoder import (
     build_system_prompt,
     extract_entities_from_bio,
     prepare_decoder_dataset,
 )
-from src.decoder.parse_output import evaluate_llm_predictions, parse_llm_output
+from src.decoder.parse_output import (
+    evaluate_llm_predictions,
+    parse_llm_output_with_diagnostics,
+)
+from src.run_metadata import collect_run_metadata
 
 console = Console()
 
@@ -91,6 +91,7 @@ def _run_generative_eval(
 
     pred_entities: List[List[Dict]] = []
     parse_statuses: List[str] = []
+    parse_diagnostics: List[Dict[str, int]] = []
 
     for i in range(n):
         input_ids = tokenizer.apply_chat_template(
@@ -114,15 +115,17 @@ def _run_generative_eval(
         new_token_ids = output_ids[0][prompt_len:]
         generated_text = tokenizer.decode(new_token_ids, skip_special_tokens=True)
 
-        entities, status = parse_llm_output(generated_text, valid_types)
+        entities, status, diagnostics = parse_llm_output_with_diagnostics(generated_text, valid_types)
         pred_entities.append(entities)
         parse_statuses.append(status)
+        parse_diagnostics.append(diagnostics)
 
     metrics = evaluate_llm_predictions(
         tokens_list=tokens_list[:n],
         gold_entities=gold_entities[:n],
         pred_entities=pred_entities,
         parse_statuses=parse_statuses,
+        parse_diagnostics=parse_diagnostics,
     )
 
     model.train()
@@ -222,7 +225,7 @@ class GenerativeDevEvalCallback(TrainerCallback):
 # Training
 # ---------------------------------------------------------------------------
 
-def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict[str, Any]:
+def train_decoder(config_path: str) -> Dict[str, Any]:
     """Fine-tuned ein kausales LM fuer NER via LoRA (oder QLoRA) mit SFTTrainer.
 
     Ablauf:
@@ -236,20 +239,18 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
       8. Besten LoRA-Adapter und Ergebnisse speichern
 
     Args:
-        config_path:      Pfad zur YAML-Konfigurationsdatei.
-        dataset_override: Optionaler Datensatz-Override.
+        config_path: Pfad zur YAML-Konfigurationsdatei.
 
     Returns:
         Dict mit train_runtime_seconds, trainable_params, best_dev_f1 etc.
     """
     config_path = Path(config_path)
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
+    cfg = load_experiment_config(config_path, expected_model_type="decoder", expected_regime="llm_lora")
 
-    dataset_name = dataset_override or cfg.get("dataset", "multinerd")
-    dataset_language = cfg.get("dataset_language", "en")
+    console.rule(f"[bold green]Decoder-Training: {cfg['experiment_name']} on MultiNERD English[/bold green]")
 
-    console.rule(f"[bold green]Decoder-Training: {cfg['experiment_name']} auf {dataset_name}[/bold green]")
+    from peft import LoraConfig, TaskType, get_peft_model
+    from trl import SFTConfig, SFTTrainer
 
     # --- Reproduzierbarkeit ---
     seed: int = cfg.get("seed", 42)
@@ -261,9 +262,7 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
         torch.cuda.manual_seed_all(seed)
 
     # --- Ausgabeverzeichnisse ---
-    output_dir = Path(cfg.get("output_dir", f"results/{dataset_name}/{cfg['experiment_name']}"))
-    if dataset_override:
-        output_dir = Path(f"results/{dataset_override}/{cfg['experiment_name']}")
+    output_dir = output_dir_from_config(cfg)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     model_name:     str  = cfg["model_name"]
@@ -291,6 +290,7 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
             model_name,
             quantization_config=bnb_config,
             attn_implementation=attn_impl,
+            device_map="auto",
             trust_remote_code=True,
         )
     else:
@@ -328,11 +328,11 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
 
     # --- Datensatz im ChatML-Format laden (fuer SFT-Training) ---
     console.print("[cyan]Bereite Decoder-Datensatz vor...[/cyan]")
-    dataset, info = prepare_decoder_dataset(dataset_name, dataset_language)
+    dataset, info = prepare_decoder_dataset()
 
     # --- Rohen Dev-Split fuer generative Evaluation laden ---
     console.print("[cyan]Bereite Dev-Daten fuer generative Evaluation vor...[/cyan]")
-    raw_dataset, _ = load_ner_dataset(dataset_name, language=dataset_language)
+    raw_dataset, _ = load_ner_dataset()
     raw_dev = raw_dataset["validation"]
 
     system_prompt = build_system_prompt(info.entity_types)
@@ -365,7 +365,7 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
         dev_tokens=dev_tokens,
         valid_types=valid_types,
         output_dir=output_dir,
-        max_new_tokens=256,
+        max_new_tokens=int(cfg.get("max_new_tokens", 256)),
         max_eval_samples=gen_eval_max_samples,
     )
 
@@ -393,7 +393,7 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
         max_seq_length=max_seq_length,
         seed=seed,
         report_to="wandb" if cfg.get("use_wandb", False) else "none",
-        run_name=f"{cfg.get('experiment_name')}_{dataset_name}",
+        run_name=f"{cfg.get('experiment_name')}_{DATASET_NAME}",
         dataset_text_field=None,
     )
 
@@ -434,7 +434,8 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
         "model_name":            model_name,
         "model_type":            "decoder",
         "regime":                "llm_lora",  # LoRA/QLoRA Regime
-        "dataset":               dataset_name,
+        "dataset":               DATASET_NAME,
+        "dataset_language":      DATASET_LANGUAGE,
         "use_qlora":             use_qlora,
         "lora_r":                cfg.get("lora_r", 16),
         "lora_alpha":            cfg.get("lora_alpha", 32),
@@ -447,6 +448,7 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
         "best_adapter_dir":      str(best_adapter_dir),
         "last_adapter_dir":      str(last_adapter_dir),
         "seed":                  seed,
+        "run_metadata":          collect_run_metadata(cfg),
     }
 
     results_file = output_dir / "results.yaml"
@@ -467,10 +469,5 @@ def train_decoder(config_path: str, dataset_override: str | None = None) -> Dict
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Decoder-NER Training mit LoRA/QLoRA")
     parser.add_argument("config", help="Pfad zur YAML-Config")
-    parser.add_argument(
-        "--dataset",
-        default=None,
-        help="Datensatz-Override (z.B. 'wnut_17'). Ueberschreibt den Wert aus der Config.",
-    )
     args = parser.parse_args()
-    train_decoder(args.config, dataset_override=args.dataset)
+    train_decoder(args.config)

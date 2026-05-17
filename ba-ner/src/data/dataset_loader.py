@@ -1,189 +1,151 @@
 """
-dataset_loader.py — Einheitlicher Datensatz-Loader fuer NER-Experimente
+MultiNERD English dataset loader for the final NER experiments.
 
-Unterstuetzte Datensaetze:
-  - multinerd:  Babelscape/multinerd (englische Teilmenge, 15 Entity-Typen)
-  - wnut_17:    WNUT-2017 (Social-Media-Texte, 6 Entity-Typen)
-
-Jeder Datensatz wird ueber eine DatasetInfo-Instanz beschrieben, die Label-Listen,
-Mappings und Metadaten enthaelt. So koennen alle nachgelagerten Module
-(Preprocessing, Training, Evaluation) datensatzunabhaengig arbeiten.
-
-Verwendung:
-    from src.data.dataset_loader import load_ner_dataset
-    dataset, info = load_ner_dataset("multinerd")
-    dataset, info = load_ner_dataset("wnut_17")
+The repository intentionally supports only:
+  - Hugging Face dataset: Babelscape/multinerd
+  - Language subset: English (lang == "en")
+  - Label schema: 15 MultiNERD entity types, 31 BIO labels including "O"
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
-from datasets import DatasetDict, load_dataset
 from rich.console import Console
+
+from src.config import DATASET_LANGUAGE, DATASET_NAME
 
 console = Console()
 
+MULTINERD_HF_NAME = "Babelscape/multinerd"
 
-# ---------------------------------------------------------------------------
-# DatasetInfo: Alles was nachgelagerte Module ueber einen Datensatz wissen muessen
-# ---------------------------------------------------------------------------
+MULTINERD_LABEL_LIST: List[str] = [
+    "O",
+    "B-PER", "I-PER",
+    "B-ORG", "I-ORG",
+    "B-LOC", "I-LOC",
+    "B-ANIM", "I-ANIM",
+    "B-BIO", "I-BIO",
+    "B-CEL", "I-CEL",
+    "B-DIS", "I-DIS",
+    "B-EVE", "I-EVE",
+    "B-FOOD", "I-FOOD",
+    "B-INST", "I-INST",
+    "B-MEDIA", "I-MEDIA",
+    "B-MYTH", "I-MYTH",
+    "B-PLANT", "I-PLANT",
+    "B-TIME", "I-TIME",
+    "B-VEHI", "I-VEHI",
+]
+
 
 @dataclass
 class DatasetInfo:
-    """Beschreibt einen NER-Datensatz vollstaendig.
+    """Static metadata for the MultiNERD English NER task."""
 
-    Wird von Preprocessing, Training und Evaluation genutzt, um
-    datensatzunabhaengig zu arbeiten.
+    name: str
+    hf_name: str
+    label_list: List[str]
+    language: str = DATASET_LANGUAGE
+    id2label: Dict[int, str] = field(default_factory=dict)
+    label2id: Dict[str, int] = field(default_factory=dict)
+    entity_types: List[str] = field(default_factory=list)
+    num_labels: int = 0
 
-    Attributes:
-        name:         Kurzname ("multinerd" oder "wnut_17").
-        hf_name:      HuggingFace Dataset-ID.
-        label_list:   Vollstaendige BIO-Label-Liste in korrekter Reihenfolge.
-        id2label:     Integer-ID → Label-String.
-        label2id:     Label-String → Integer-ID.
-        entity_types: Reine Entity-Typen ohne BIO-Praefix.
-        num_labels:   Anzahl der Labels (len(label_list)).
-    """
-    name:         str
-    hf_name:      str
-    label_list:   List[str]
-    id2label:     Dict[int, str] = field(default_factory=dict)
-    label2id:     Dict[str, int] = field(default_factory=dict)
-    entity_types: List[str]      = field(default_factory=list)
-    num_labels:   int            = 0
-
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.id2label:
-            self.id2label = {i: l for i, l in enumerate(self.label_list)}
+            self.id2label = {i: label for i, label in enumerate(self.label_list)}
         if not self.label2id:
-            self.label2id = {l: i for i, l in enumerate(self.label_list)}
+            self.label2id = {label: i for i, label in enumerate(self.label_list)}
         if not self.entity_types:
-            # Entity-Typen aus B-Tags extrahieren (ohne "O")
-            self.entity_types = [
-                l[2:] for l in self.label_list if l.startswith("B-")
-            ]
+            self.entity_types = [label[2:] for label in self.label_list if label.startswith("B-")]
         if self.num_labels == 0:
             self.num_labels = len(self.label_list)
 
 
-# ---------------------------------------------------------------------------
-# Datensatz-Definitionen
-# ---------------------------------------------------------------------------
-
-# WNUT-2017: 6 Entity-Typen, 13 BIO-Labels
-WNUT17_LABEL_LIST: List[str] = [
-    "O",
-    "B-corporation",  "I-corporation",
-    "B-creative-work", "I-creative-work",
-    "B-group",         "I-group",
-    "B-location",      "I-location",
-    "B-person",        "I-person",
-    "B-product",       "I-product",
-]
-
-# MultiNERD: 15 Entity-Typen, 31 BIO-Labels
-MULTINERD_LABEL_LIST: List[str] = [
-    "O",
-    "B-PER",   "I-PER",
-    "B-ORG",   "I-ORG",
-    "B-LOC",   "I-LOC",
-    "B-ANIM",  "I-ANIM",
-    "B-BIO",   "I-BIO",
-    "B-CEL",   "I-CEL",
-    "B-DIS",   "I-DIS",
-    "B-EVE",   "I-EVE",
-    "B-FOOD",  "I-FOOD",
-    "B-INST",  "I-INST",
-    "B-MEDIA", "I-MEDIA",
-    "B-MYTH",  "I-MYTH",
-    "B-PLANT", "I-PLANT",
-    "B-TIME",  "I-TIME",
-    "B-VEHI",  "I-VEHI",
-]
+MULTINERD_INFO = DatasetInfo(
+    name=DATASET_NAME,
+    hf_name=MULTINERD_HF_NAME,
+    label_list=MULTINERD_LABEL_LIST,
+)
 
 
-def _build_info(name: str, hf_name: str, label_list: List[str]) -> DatasetInfo:
-    """Baut eine DatasetInfo-Instanz aus Name und Label-Liste."""
-    return DatasetInfo(name=name, hf_name=hf_name, label_list=label_list)
-
-
-# Registry: Kurzname → DatasetInfo
-_DATASET_REGISTRY: Dict[str, DatasetInfo] = {
-    "wnut_17":   _build_info("wnut_17",   "wnut_17",            WNUT17_LABEL_LIST),
-    "multinerd": _build_info("multinerd", "Babelscape/multinerd", MULTINERD_LABEL_LIST),
-}
-
-
-# ---------------------------------------------------------------------------
-# Oeffentliche API
-# ---------------------------------------------------------------------------
-
-def get_dataset_info(dataset_name: str) -> DatasetInfo:
-    """Gibt die DatasetInfo fuer einen Datensatz zurueck (ohne Daten zu laden).
-
-    Args:
-        dataset_name: "multinerd" oder "wnut_17".
-
-    Returns:
-        DatasetInfo mit allen Label-Mappings und Metadaten.
-
-    Raises:
-        ValueError: Wenn der Datensatzname unbekannt ist.
-    """
-    if dataset_name not in _DATASET_REGISTRY:
-        available = ", ".join(_DATASET_REGISTRY.keys())
-        raise ValueError(
-            f"Unbekannter Datensatz: '{dataset_name}'. "
-            f"Verfuegbar: {available}"
-        )
-    return _DATASET_REGISTRY[dataset_name]
+def get_dataset_info(dataset_name: str = DATASET_NAME) -> DatasetInfo:
+    """Return static metadata for MultiNERD English."""
+    _ensure_multinerd(dataset_name)
+    return MULTINERD_INFO
 
 
 def load_ner_dataset(
-    dataset_name: str,
-    language: str = "en",
-) -> Tuple[DatasetDict, DatasetInfo]:
-    """Laedt einen NER-Datensatz und gibt ihn mit Metadaten zurueck.
+    dataset_name: str = DATASET_NAME,
+    language: str = DATASET_LANGUAGE,
+) -> Tuple[Any, DatasetInfo]:
+    """Load MultiNERD, filter the English subset, and validate the schema."""
+    _ensure_multinerd(dataset_name)
+    _ensure_english(language)
 
-    Fuer MultiNERD wird standardmaessig die englische Teilmenge gefiltert.
-    WNUT-2017 hat keine Sprachfilterung (nur Englisch vorhanden).
+    from datasets import DatasetDict, load_dataset
 
-    Args:
-        dataset_name: "multinerd" oder "wnut_17".
-        language:     Sprachfilter fuer MultiNERD (Standard: "en").
+    console.print(f"[cyan]Loading dataset: {MULTINERD_HF_NAME}[/cyan]")
+    raw: DatasetDict = load_dataset(MULTINERD_HF_NAME)
+    _validate_raw_schema(raw)
 
-    Returns:
-        Tuple (DatasetDict, DatasetInfo).
-        DatasetDict enthaelt 'train', 'validation', 'test' mit
-        Spalten 'tokens' (List[str]) und 'ner_tags' (List[int]).
-    """
-    info = get_dataset_info(dataset_name)
+    console.print("[cyan]Filtering language: en[/cyan]")
+    filtered = raw.filter(lambda x: x["lang"] == DATASET_LANGUAGE)
+    if "lang" in filtered["train"].column_names:
+        filtered = filtered.remove_columns(["lang"])
 
-    console.print(f"[cyan]Lade Datensatz: {info.hf_name}...[/cyan]")
-    raw: DatasetDict = load_dataset(info.hf_name)
+    _validate_processed_schema(filtered)
 
-    if dataset_name == "multinerd":
-        # Englische Teilmenge filtern und Sprach-Spalte entfernen
-        console.print(f"[cyan]Filtere Sprache: {language}...[/cyan]")
-        raw = raw.filter(lambda x: x["lang"] == language)
-        # 'lang'-Spalte ist nach dem Filtern nicht mehr noetig
-        raw = raw.remove_columns(["lang"])
+    for split_name in ("train", "validation", "test"):
+        console.print(f"  {split_name}: {len(filtered[split_name]):,} sentences")
 
-    # Sicherstellen, dass die erwarteten Spalten vorhanden sind
-    expected_cols = {"tokens", "ner_tags"}
-    actual_cols = set(raw["train"].column_names)
-    if not expected_cols.issubset(actual_cols):
+    return filtered, MULTINERD_INFO
+
+
+def _ensure_multinerd(dataset_name: str) -> None:
+    if dataset_name != DATASET_NAME:
+        raise ValueError(f"Unsupported dataset {dataset_name!r}; only {DATASET_NAME!r} is supported.")
+
+
+def _ensure_english(language: str) -> None:
+    if language != DATASET_LANGUAGE:
+        raise ValueError(f"Unsupported language {language!r}; only {DATASET_LANGUAGE!r} is supported.")
+
+
+def _validate_raw_schema(raw: Any) -> None:
+    expected_splits = {"train", "validation", "test"}
+    actual_splits = set(raw.keys())
+    if not expected_splits.issubset(actual_splits):
+        raise ValueError(f"MultiNERD is missing required splits: {expected_splits - actual_splits}")
+
+    train_columns = set(raw["train"].column_names)
+    expected_columns = {"tokens", "ner_tags", "lang"}
+    if not expected_columns.issubset(train_columns):
+        raise ValueError(f"MultiNERD train split has columns {train_columns}; expected {expected_columns}")
+
+    labels = _extract_label_names(raw["train"].features.get("ner_tags"))
+    if labels is not None and labels != MULTINERD_LABEL_LIST:
         raise ValueError(
-            f"Datensatz {dataset_name} hat unerwartete Spalten: "
-            f"{actual_cols}. Erwartet mindestens: {expected_cols}"
+            "MultiNERD label schema does not match the expected final label list. "
+            f"Expected {MULTINERD_LABEL_LIST}, got {labels}."
         )
 
-    # Statistik ausgeben
-    for split_name in ["train", "validation", "test"]:
-        if split_name in raw:
-            n = len(raw[split_name])
-            console.print(f"  {split_name}: {n:,} Saetze")
 
-    return raw, info
+def _validate_processed_schema(dataset: Any) -> None:
+    expected_columns = {"tokens", "ner_tags"}
+    for split_name in ("train", "validation", "test"):
+        columns = set(dataset[split_name].column_names)
+        if not expected_columns.issubset(columns):
+            raise ValueError(f"{split_name} split has columns {columns}; expected {expected_columns}")
+        if "lang" in columns:
+            raise ValueError(f"{split_name} split still contains a lang column after English filtering")
+
+
+def _extract_label_names(feature: Any) -> List[str] | None:
+    if feature is None:
+        return None
+    nested = getattr(feature, "feature", None)
+    names = getattr(nested, "names", None)
+    return list(names) if names else None

@@ -1,34 +1,14 @@
-"""
-preprocess_decoder.py — Vorverarbeitung fuer LLM-basierte NER (generativer Ansatz)
-
-Beim Decoder-Ansatz wird NER als Generierungsaufgabe formuliert:
-Das Modell erhaelt einen System-Prompt + den Eingabesatz und soll eine
-JSON-Liste der erkannten Entities ausgeben.
-
-Trainingsformat (ChatML, kompatibel mit Qwen):
-    <|im_start|>system
-    Du bist ein NER-System ...
-    <|im_start|>user
-    EU rejects German call ...
-    <|im_start|>assistant
-    [{"entity": "EU", "type": "ORG"}, ...]
-
-Der System-Prompt wird dynamisch aus den Entity-Typen des jeweiligen
-Datensatzes generiert (MultiNERD oder WNUT-2017).
-
-Verwendung:
-    from src.data.preprocess_decoder import prepare_decoder_dataset
-    dataset, info = prepare_decoder_dataset("multinerd")
-"""
+"""Decoder preprocessing for generative NER on MultiNERD English."""
 
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Tuple
-
-from datasets import Dataset, DatasetDict
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 from src.data.dataset_loader import DatasetInfo, load_ner_dataset
+
+if TYPE_CHECKING:
+    from datasets import Dataset, DatasetDict
 
 
 # ---------------------------------------------------------------------------
@@ -159,28 +139,19 @@ def format_for_llm(
 # ---------------------------------------------------------------------------
 
 def prepare_decoder_dataset(
-    dataset_name: str = "multinerd",
-    dataset_language: str = "en",
-) -> Tuple[DatasetDict, DatasetInfo]:
-    """Laedt einen NER-Datensatz und konvertiert alle Splits in das ChatML-Format.
+) -> Tuple["DatasetDict", DatasetInfo]:
+    """Load MultiNERD English and convert all splits to chat messages.
 
     Jedes Sample bekommt ein 'messages'-Feld (system + user + assistant).
     Die Original-Spalten 'tokens' und 'ner_tags' werden entfernt.
-
-    Args:
-        dataset_name:     "multinerd" oder "wnut_17".
-        dataset_language: Sprachfilter fuer MultiNERD (Standard: "en").
-
-    Returns:
-        Tuple (DatasetDict mit 'messages'-Spalte, DatasetInfo).
     """
-    raw, info = load_ner_dataset(dataset_name, language=dataset_language)
+    raw, info = load_ner_dataset()
 
     system_prompt = build_system_prompt(info.entity_types)
     id2label = info.id2label
 
     # format_for_llm auf alle Splits anwenden
-    formatted: DatasetDict = raw.map(
+    formatted: "DatasetDict" = raw.map(
         lambda sample: format_for_llm(sample, system_prompt, id2label),
         remove_columns=raw["train"].column_names,
     )
@@ -192,7 +163,7 @@ def prepare_decoder_dataset(
 # ---------------------------------------------------------------------------
 
 def prepare_test_inputs(
-    dataset_split: Dataset,
+    dataset_split: "Dataset",
     info: DatasetInfo,
 ) -> Tuple[List[List[Dict]], List[List[Dict[str, str]]]]:
     """Baut Prompt-Only-Nachrichten (ohne Assistent-Turn) fuer die Inferenz.

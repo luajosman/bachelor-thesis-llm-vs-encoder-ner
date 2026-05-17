@@ -1,20 +1,4 @@
-"""
-inference.py — Encoder-Inferenz auf dem Test-Set
-
-Laedt das gespeicherte beste Modell, laesst es ueber alle Test-Saetze laufen,
-misst dabei Inferenz-Latenz (mit CUDA-Synchronisierung) und VRAM-Peak.
-Alle Vorhersagen werden als JSON gespeichert (fuer die Fehleranalyse).
-
-Verwendung:
-    python -m src.encoder.inference \
-        --model results/multinerd/deberta-v3-base/best_model \
-        --config configs/deberta_base.yaml
-
-    python -m src.encoder.inference \
-        --model results/wnut_17/deberta-v3-base/best_model \
-        --config configs/deberta_base.yaml \
-        --dataset wnut_17
-"""
+"""Encoder inference on the MultiNERD English test split."""
 
 from __future__ import annotations
 
@@ -29,10 +13,14 @@ import torch
 import yaml
 from rich.console import Console
 from transformers import AutoModelForTokenClassification, AutoTokenizer
+from transformers import set_seed
 
-from src.data.dataset_loader import DatasetInfo, load_ner_dataset
+from src.config import DATASET_LANGUAGE, DATASET_NAME, load_experiment_config, output_dir_from_config
+from src.data.dataset_loader import load_ner_dataset
 from src.data.preprocess_encoder import prepare_encoder_dataset
 from src.evaluate.efficiency import count_parameters, reset_vram_tracking, get_vram_peak_mb
+from src.evaluate.metrics import compute_ner_metrics
+from src.run_metadata import collect_run_metadata
 
 console = Console()
 
@@ -81,7 +69,6 @@ def _decode_predictions(
 def run_encoder_inference(
     model_path: str,
     config_path: str,
-    dataset_override: str | None = None,
 ) -> Dict[str, Any]:
     """Fuehrt Inferenz mit einem trainierten Encoder-Modell auf dem Test-Set durch.
 
@@ -91,20 +78,14 @@ def run_encoder_inference(
     Args:
         model_path:       Pfad zum gespeicherten best_model/-Verzeichnis.
         config_path:      Pfad zur YAML-Config.
-        dataset_override: Optionaler Datensatz-Override.
-
     Returns:
         Dict mit f1, precision, recall, latency_ms_mean, vram_peak_mb.
     """
-    from seqeval.metrics import f1_score, precision_score, recall_score
+    cfg = load_experiment_config(config_path, expected_model_type="encoder", expected_regime="encoder")
+    seed = int(cfg.get("seed", 42))
+    set_seed(seed)
 
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
-
-    dataset_name = dataset_override or cfg.get("dataset", "multinerd")
-    dataset_language = cfg.get("dataset_language", "en")
-
-    console.rule(f"[bold cyan]Inferenz: {cfg['experiment_name']} auf {dataset_name}[/bold cyan]")
+    console.rule(f"[bold cyan]Inferenz: {cfg['experiment_name']} on MultiNERD English[/bold cyan]")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     console.print(f"Geraet: {device}")
@@ -121,15 +102,13 @@ def run_encoder_inference(
     # --- Tokenisierten Datensatz laden ---
     tokenized_dataset, _, info = prepare_encoder_dataset(
         model_name=model_path,
-        dataset_name=dataset_name,
-        dataset_language=dataset_language,
         max_length=cfg.get("max_length", 256),
     )
     test_split = tokenized_dataset["test"]
     id2label = info.id2label
 
     # Rohe Token-Strings fuer die Fehleranalyse-Ausgabe aufbewahren
-    raw_dataset, _ = load_ner_dataset(dataset_name, language=dataset_language)
+    raw_dataset, _ = load_ner_dataset()
     raw_test = raw_dataset["test"]
 
     # --- Warmup-Lauf (CUDA-Caches aufwaermen) ---
@@ -186,9 +165,10 @@ def run_encoder_inference(
     vram_peak = get_vram_peak_mb()
 
     # --- Metriken berechnen ---
-    f1        = f1_score(all_true, all_preds, zero_division=0)
-    precision = precision_score(all_true, all_preds, zero_division=0)
-    recall    = recall_score(all_true, all_preds, zero_division=0)
+    ner_metrics = compute_ner_metrics(all_true, all_preds)
+    f1 = ner_metrics["f1"]
+    precision = ner_metrics["precision"]
+    recall = ner_metrics["recall"]
 
     latency_mean = float(np.mean(latencies_ms))
     latency_p95  = float(np.percentile(latencies_ms, 95))
@@ -199,9 +179,8 @@ def run_encoder_inference(
     console.print(f"VRAM-Peak: {vram_peak:.1f} MB")
 
     # --- Vorhersagen speichern ---
-    output_dir = Path(cfg.get("output_dir", f"results/{dataset_name}/{cfg['experiment_name']}"))
-    if dataset_override:
-        output_dir = Path(f"results/{dataset_override}/{cfg['experiment_name']}")
+    output_dir = output_dir_from_config(cfg)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     pred_file = output_dir / "test_predictions.json"
     with open(pred_file, "w", encoding="utf-8") as f:
@@ -214,7 +193,8 @@ def run_encoder_inference(
         "model_name":        cfg["model_name"],
         "model_type":        "encoder",
         "regime":            "encoder",
-        "dataset":           dataset_name,
+        "dataset":           DATASET_NAME,
+        "dataset_language":  DATASET_LANGUAGE,
         "test_f1":           float(f1),
         "test_precision":    float(precision),
         "test_recall":       float(recall),
@@ -222,6 +202,8 @@ def run_encoder_inference(
         "latency_ms_p95":    latency_p95,
         "vram_peak_mb":      vram_peak,
         "total_params":      total_params,
+        "seed":              seed,
+        "run_metadata":      collect_run_metadata(cfg),
     }
 
     inf_file = output_dir / "inference_metrics.yaml"
@@ -240,11 +222,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Encoder-NER Inferenz")
     parser.add_argument("--model",   required=True, help="Pfad zum gespeicherten Modell-Verzeichnis")
     parser.add_argument("--config",  required=True, help="Pfad zur YAML-Config")
-    parser.add_argument("--dataset", default=None,  help="Datensatz-Override (z.B. 'wnut_17')")
     args = parser.parse_args()
 
     run_encoder_inference(
         model_path=args.model,
         config_path=args.config,
-        dataset_override=args.dataset,
     )

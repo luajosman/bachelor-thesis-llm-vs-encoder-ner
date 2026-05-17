@@ -37,13 +37,14 @@ import argparse
 import sys
 import time
 from pathlib import Path
-from typing import List, Optional
 
 from rich.console import Console
 from rich.panel import Panel
 
 # Projektwurzel zum Python-Pfad hinzufuegen
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from src.config import FINAL_EXPERIMENTS, final_config_paths, load_experiment_config, output_dir_from_config
 
 console = Console()
 
@@ -52,39 +53,16 @@ console = Console()
 # ---------------------------------------------------------------------------
 
 # Encoder-Konfigurationen (fine-tuned, Token-Klassifikation)
-ENCODER_CONFIGS = [
-    "configs/deberta_base.yaml",
-    "configs/deberta_large.yaml",
-]
+ENCODER_CONFIGS = final_config_paths(model_type="encoder")
 
 # LLM Zero-Shot Konfigurationen (kein Training)
-DECODER_ZEROSHOT_CONFIGS = [
-    "configs/qwen35_08b_zeroshot.yaml",
-    "configs/qwen35_4b_zeroshot.yaml",
-    "configs/qwen35_27b_zeroshot.yaml",
-]
+DECODER_ZEROSHOT_CONFIGS = final_config_paths(regime="llm_zeroshot")
 
 # LLM LoRA/QLoRA Konfigurationen (fine-tuned)
-DECODER_LORA_CONFIGS = [
-    "configs/qwen35_08b.yaml",
-    "configs/qwen35_4b.yaml",
-    "configs/qwen35_27b.yaml",
-]
+DECODER_LORA_CONFIGS = final_config_paths(regime="llm_lora")
 
 # Mapping: CLI-Kurzname -> Config-Pfad
-MODEL_NAME_MAP = {
-    # Encoder
-    "deberta_base":      "configs/deberta_base.yaml",
-    "deberta_large":     "configs/deberta_large.yaml",
-    # LLM LoRA
-    "qwen35_08b":        "configs/qwen35_08b.yaml",
-    "qwen35_4b":         "configs/qwen35_4b.yaml",
-    "qwen35_27b":        "configs/qwen35_27b.yaml",
-    # LLM Zero-Shot
-    "qwen35_08b_zs":     "configs/qwen35_08b_zeroshot.yaml",
-    "qwen35_4b_zs":      "configs/qwen35_4b_zeroshot.yaml",
-    "qwen35_27b_zs":     "configs/qwen35_27b_zeroshot.yaml",
-}
+MODEL_NAME_MAP = {key: spec.config_path for key, spec in FINAL_EXPERIMENTS.items()}
 
 
 # ---------------------------------------------------------------------------
@@ -92,27 +70,19 @@ MODEL_NAME_MAP = {
 # ---------------------------------------------------------------------------
 
 def _load_cfg(config_path: str) -> dict:
-    import yaml
-    with open(config_path) as f:
-        return yaml.safe_load(f)
+    return load_experiment_config(config_path)
 
 
 def _get_encoder_model_path(config_path: str) -> str:
     """Pfad zum gespeicherten Encoder-Modell aus der Config ableiten."""
     cfg = _load_cfg(config_path)
-    return f"results/multinerd/{cfg['experiment_name']}/best_model"
+    return str(output_dir_from_config(cfg) / "best_model")
 
 
 def _get_decoder_adapter_path(config_path: str) -> str:
     """Pfad zum besten LoRA-Adapter aus der Config ableiten."""
     cfg = _load_cfg(config_path)
-    return f"results/multinerd/{cfg['experiment_name']}/best_lora_adapter"
-
-
-def _get_base_model(config_path: str) -> str:
-    """Liest den Basismodell-Namen aus der Config."""
-    cfg = _load_cfg(config_path)
-    return cfg["model_name"]
+    return str(output_dir_from_config(cfg) / "best_lora_adapter")
 
 
 def _is_zeroshot(config_path: str) -> bool:
@@ -175,23 +145,23 @@ def stage_train_decoder(config_path: str):
     train_decoder(config_path)
 
 
-def stage_infer_decoder_lora(adapter_path: str, base_model: str, config_path: str):
+def stage_infer_decoder_lora(adapter_path: str, config_path: str):
     """Stufe 3b: Decoder-Inferenz mit trainiertem LoRA-Adapter."""
     from src.decoder.inference import run_decoder_inference
     run_decoder_inference(
         adapter_path=adapter_path,
-        base_model_name=base_model,
+        base_model_name=None,
         config_path=config_path,
         zeroshot=False,
     )
 
 
-def stage_infer_decoder_zeroshot(base_model: str, config_path: str):
+def stage_infer_decoder_zeroshot(config_path: str):
     """Stufe 3c: Decoder-Inferenz im Zero-Shot Mode (kein Adapter)."""
     from src.decoder.inference import run_decoder_inference
     run_decoder_inference(
         adapter_path=None,
-        base_model_name=base_model,
+        base_model_name=None,
         config_path=config_path,
         zeroshot=True,
     )
@@ -206,13 +176,16 @@ def stage_compare(results_dir: str = "results"):
         load_all_results,
         print_comparison_table,
     )
-    results = load_all_results(results_dir, dataset_filter="multinerd")
+    results = load_all_results(results_dir)
     if not results:
         console.print("[yellow]Keine Ergebnisse gefunden.[/yellow]")
         return
     print_comparison_table(results)
     create_comparison_plot(results, output_path=f"{results_dir}/comparison_f1.pdf")
-    create_per_entity_heatmap(results_dir=results_dir, dataset_filter="multinerd")
+    create_per_entity_heatmap(
+        results_dir=results_dir,
+        output_path=f"{results_dir}/per_entity_heatmap.pdf",
+    )
     export_latex_table(results, output_path=f"{results_dir}/comparison_table.tex")
 
 
@@ -267,15 +240,13 @@ def main():
                 model_path = _get_encoder_model_path(config_path)
                 _run_step(f"Inferenz {args.model}", stage_infer_encoder, model_path, config_path)
             elif is_zs:
-                base = _get_base_model(config_path)
-                _run_step(f"Inferenz {args.model}", stage_infer_decoder_zeroshot, base, config_path)
+                _run_step(f"Inferenz {args.model}", stage_infer_decoder_zeroshot, config_path)
             else:
                 adapter = _get_decoder_adapter_path(config_path)
-                base = _get_base_model(config_path)
                 _run_step(
                     f"Inferenz {args.model}",
                     stage_infer_decoder_lora,
-                    adapter, base, config_path,
+                    adapter, config_path,
                 )
 
         _run_step("Vergleich & Plots", stage_compare, args.results_dir)
@@ -307,21 +278,19 @@ def main():
     if run_dec_lora and not args.skip_inference:
         for cfg in DECODER_LORA_CONFIGS:
             adapter = _get_decoder_adapter_path(cfg)
-            base = _get_base_model(cfg)
             _run_step(
                 f"Inferenz LLM LoRA: {cfg}",
                 stage_infer_decoder_lora,
-                adapter, base, cfg,
+                adapter, cfg,
             )
 
     # --- LLM Zero-Shot Inferenz (kein Training) ---
     if run_dec_zs and not args.skip_inference:
         for cfg in DECODER_ZEROSHOT_CONFIGS:
-            base = _get_base_model(cfg)
             _run_step(
                 f"Inferenz LLM Zero-Shot: {cfg}",
                 stage_infer_decoder_zeroshot,
-                base, cfg,
+                cfg,
             )
 
     # --- Vergleich ---

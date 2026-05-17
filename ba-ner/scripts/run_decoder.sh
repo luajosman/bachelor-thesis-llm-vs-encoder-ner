@@ -40,19 +40,16 @@ mkdir -p logs
 echo "--- Zero-Shot Qwen3.5-0.8B (MultiNERD) ---"
 python -m src.decoder.inference \
     --zeroshot \
-    --base Qwen/Qwen3.5-0.8B \
     --config configs/qwen35_08b_zeroshot.yaml
 
 echo "--- Zero-Shot Qwen3.5-4B (MultiNERD) ---"
 python -m src.decoder.inference \
     --zeroshot \
-    --base Qwen/Qwen3.5-4B \
     --config configs/qwen35_4b_zeroshot.yaml
 
 echo "--- Zero-Shot Qwen3.5-27B (MultiNERD) ---"
 python -m src.decoder.inference \
     --zeroshot \
-    --base Qwen/Qwen3.5-27B \
     --config configs/qwen35_27b_zeroshot.yaml
 
 # --------------------------------------------------------------------------
@@ -65,7 +62,6 @@ python -m src.decoder.train configs/qwen35_08b.yaml
 echo "--- Inference Qwen3.5-0.8B LoRA (MultiNERD) ---"
 python -m src.decoder.inference \
     --adapter results/multinerd/qwen35-08b-qlora/best_lora_adapter \
-    --base Qwen/Qwen3.5-0.8B \
     --config configs/qwen35_08b.yaml
 
 echo "--- Training Qwen3.5-4B QLoRA (MultiNERD) ---"
@@ -74,7 +70,6 @@ python -m src.decoder.train configs/qwen35_4b.yaml
 echo "--- Inference Qwen3.5-4B LoRA (MultiNERD) ---"
 python -m src.decoder.inference \
     --adapter results/multinerd/qwen35-4b-qlora/best_lora_adapter \
-    --base Qwen/Qwen3.5-4B \
     --config configs/qwen35_4b.yaml
 
 echo "--- Training Qwen3.5-27B QLoRA (MultiNERD) ---"
@@ -83,7 +78,6 @@ python -m src.decoder.train configs/qwen35_27b.yaml
 echo "--- Inference Qwen3.5-27B LoRA (MultiNERD) ---"
 python -m src.decoder.inference \
     --adapter results/multinerd/qwen35-27b-qlora/best_lora_adapter \
-    --base Qwen/Qwen3.5-27B \
     --config configs/qwen35_27b.yaml
 
 echo ""

@@ -1,28 +1,15 @@
-"""
-compare_all.py — Aggregation und Visualisierung aller Experiment-Ergebnisse
-
-Liest die YAML-Ergebnisdateien aller Experimente ein und erstellt:
-  - Eine Rich-Tabelle fuer den Terminal-Vergleich
-  - Ein horizontales Balkendiagramm (F1-Scores)
-  - Eine Heatmap der F1-Scores pro Entitaetstyp
-  - Eine LaTeX-Tabelle fuer die Bachelorarbeit
-
-Erkennt automatisch die Verzeichnisstruktur:
-  - Neu: results/<dataset>/<experiment>/...  (Multi-Dataset)
-  - Alt: results/<experiment>/...            (Legacy)
-
-Verwendung:
-    python -m src.evaluate.compare_all
-    python -m src.evaluate.compare_all --results-dir results/
-    python -m src.evaluate.compare_all --dataset multinerd
-"""
+"""Aggregate final MultiNERD English experiment results."""
 
 from __future__ import annotations
 
 import argparse
+import os
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import tempfile
+from typing import Any, Dict, List
+
+os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "ba-ner-matplotlib"))
 
 import matplotlib
 matplotlib.use("Agg")
@@ -33,6 +20,7 @@ import yaml
 from rich.console import Console
 from rich.table import Table
 
+from src.config import DATASET_NAME
 from src.data.dataset_loader import get_dataset_info
 
 console = Console()
@@ -41,10 +29,6 @@ console = Console()
 ENCODER_COLOR     = "#2ecc71"   # gruen — fine-tuned Token-Classifier
 LLM_LORA_COLOR    = "#9b59b6"   # lila  — fine-tuned LLM via LoRA/QLoRA
 LLM_ZEROSHOT_COLOR = "#3498db"  # blau  — Basismodell ohne Adapter
-
-# Bekannte Datensaetze (multinerd ist der einzige aktive; wnut_17 nur Legacy)
-KNOWN_DATASETS = {"multinerd", "wnut_17"}
-
 
 def _get_regime(r: Dict[str, Any]) -> str:
     """Bestimmt das Regime eines Experiments aus den gespeicherten Metadaten.
@@ -117,49 +101,20 @@ def _load_experiment_dir(exp_dir: Path) -> Dict[str, Any] | None:
 
 def load_all_results(
     results_dir: str = "results",
-    dataset_filter: str | None = None,
 ) -> List[Dict[str, Any]]:
-    """Laedt alle Experiment-Ergebnisse rekursiv aus dem Ergebnisverzeichnis.
-
-    Erkennt automatisch zwei Strukturen:
-      - results/<dataset>/<experiment>/results.yaml  (Multi-Dataset)
-      - results/<experiment>/results.yaml            (Legacy)
-
-    Args:
-        results_dir:    Wurzelverzeichnis.
-        dataset_filter: Nur Ergebnisse dieses Datensatzes laden.
-
-    Returns:
-        Liste von Ergebnis-Dicts.
-    """
+    """Load final experiment results from results/multinerd/<experiment>/."""
     results: List[Dict[str, Any]] = []
-    root = Path(results_dir)
+    root = Path(results_dir) / DATASET_NAME
     if not root.exists():
         return results
 
-    for entry in sorted(root.iterdir()):
-        if not entry.is_dir():
+    for exp_dir in sorted(root.iterdir()):
+        if not exp_dir.is_dir():
             continue
-
-        # Heuristik: ist das ein Datensatz-Ordner?
-        if entry.name in KNOWN_DATASETS:
-            dataset_name = entry.name
-            if dataset_filter and dataset_name != dataset_filter:
-                continue
-            for exp_dir in sorted(entry.iterdir()):
-                if not exp_dir.is_dir():
-                    continue
-                data = _load_experiment_dir(exp_dir)
-                if data:
-                    data.setdefault("dataset", dataset_name)
-                    results.append(data)
-        else:
-            # Legacy-Struktur: direkt unter results/
-            data = _load_experiment_dir(entry)
-            if data:
-                if dataset_filter and data.get("dataset") != dataset_filter:
-                    continue
-                results.append(data)
+        data = _load_experiment_dir(exp_dir)
+        if data:
+            data.setdefault("dataset", DATASET_NAME)
+            results.append(data)
 
     return results
 
@@ -306,24 +261,17 @@ def create_comparison_plot(
 def create_per_entity_heatmap(
     results_dir: str = "results",
     output_path: str = "results/per_entity_heatmap.pdf",
-    dataset_filter: str | None = None,
 ) -> None:
-    """Erstellt eine Heatmap der F1-Scores je Entitaetstyp und Modell.
-
-    Erstellt eine separate Heatmap pro Datensatz, da die Entity-Typen
-    sich zwischen MultiNERD (15 Typen) und WNUT-17 (6 Typen) unterscheiden.
-    """
+    """Create a MultiNERD English F1 heatmap by entity type and model."""
     from src.evaluate.metrics import compute_per_entity_metrics
 
-    root = Path(results_dir)
+    root = Path(results_dir) / DATASET_NAME
     if not root.exists():
         return
 
-    # Per-Datensatz gruppierte Datenstruktur:
-    # {dataset_name: {model_name: {entity_type: f1}}}
-    per_dataset: Dict[str, Dict[str, Dict[str, float]]] = {}
+    models_dict: Dict[str, Dict[str, float]] = {}
 
-    def _collect_from_exp(exp_dir: Path, dataset_name: str):
+    def _collect_from_exp(exp_dir: Path):
         pred_file = exp_dir / "test_predictions.json"
         if not pred_file.exists():
             return
@@ -342,83 +290,54 @@ def create_per_entity_heatmap(
 
         per_entity = compute_per_entity_metrics(gold_tags, pred_tags)
 
-        try:
-            info = get_dataset_info(dataset_name)
-            entity_types = info.entity_types
-        except ValueError:
-            # Fallback: entity types aus per_entity ableiten
-            entity_types = sorted(per_entity.keys())
+        info = get_dataset_info()
+        entity_types = info.entity_types
 
-        per_dataset.setdefault(dataset_name, {})[exp_dir.name] = {
+        models_dict[exp_dir.name] = {
             etype: per_entity.get(etype, {}).get("f1", 0.0)
             for etype in entity_types
         }
 
-    # Iteriere ueber Multi-Dataset- und Legacy-Strukturen
-    for entry in sorted(root.iterdir()):
-        if not entry.is_dir():
-            continue
-        if entry.name in KNOWN_DATASETS:
-            if dataset_filter and entry.name != dataset_filter:
-                continue
-            for exp_dir in sorted(entry.iterdir()):
-                if exp_dir.is_dir():
-                    _collect_from_exp(exp_dir, entry.name)
-        else:
-            # Legacy-Struktur: Datensatz aus results.yaml ableiten
-            data = _load_experiment_dir(entry)
-            if data:
-                ds = data.get("dataset", "unknown")
-                if dataset_filter and ds != dataset_filter:
-                    continue
-                _collect_from_exp(entry, ds)
+    for exp_dir in sorted(root.iterdir()):
+        if exp_dir.is_dir():
+            _collect_from_exp(exp_dir)
 
-    if not per_dataset:
+    if not models_dict:
         console.print("[yellow]Keine test_predictions.json gefunden.[/yellow]")
         return
 
-    # Eine Heatmap pro Datensatz
     out_base = Path(output_path)
-    for dataset_name, models_dict in per_dataset.items():
-        if not models_dict:
-            continue
+    info = get_dataset_info()
+    entity_types = info.entity_types
+    model_names = list(models_dict.keys())
+    matrix = np.array(
+        [[models_dict[m].get(et, 0.0) for et in entity_types] for m in model_names]
+    )
 
-        try:
-            info = get_dataset_info(dataset_name)
-            entity_types = info.entity_types
-        except ValueError:
-            entity_types = sorted({et for m in models_dict.values() for et in m.keys()})
+    fig, ax = plt.subplots(figsize=(max(8, len(entity_types) * 0.7),
+                                     max(3, len(model_names) * 0.8)))
+    im = ax.imshow(matrix, cmap="YlGn", vmin=0.0, vmax=1.0, aspect="auto")
 
-        model_names = list(models_dict.keys())
-        matrix = np.array(
-            [[models_dict[m].get(et, 0.0) for et in entity_types] for m in model_names]
-        )
+    ax.set_xticks(range(len(entity_types)))
+    ax.set_xticklabels(entity_types, rotation=30, ha="right", fontsize=9)
+    ax.set_yticks(range(len(model_names)))
+    ax.set_yticklabels(model_names, fontsize=9)
+    ax.set_title("F1 per Entity Type - MultiNERD English", fontsize=13, fontweight="bold")
 
-        fig, ax = plt.subplots(figsize=(max(8, len(entity_types) * 0.7),
-                                         max(3, len(model_names) * 0.8)))
-        im = ax.imshow(matrix, cmap="YlGn", vmin=0.0, vmax=1.0, aspect="auto")
+    for i in range(len(model_names)):
+        for j in range(len(entity_types)):
+            val = matrix[i, j]
+            color = "white" if val > 0.6 else "black"
+            ax.text(j, i, f"{val:.2f}", ha="center", va="center", fontsize=8, color=color)
 
-        ax.set_xticks(range(len(entity_types)))
-        ax.set_xticklabels(entity_types, rotation=30, ha="right", fontsize=9)
-        ax.set_yticks(range(len(model_names)))
-        ax.set_yticklabels(model_names, fontsize=9)
-        ax.set_title(f"F1 per Entity Type — {dataset_name}", fontsize=13, fontweight="bold")
+    plt.colorbar(im, ax=ax, label="F1 Score")
+    plt.tight_layout()
 
-        for i in range(len(model_names)):
-            for j in range(len(entity_types)):
-                val = matrix[i, j]
-                color = "white" if val > 0.6 else "black"
-                ax.text(j, i, f"{val:.2f}", ha="center", va="center", fontsize=8, color=color)
-
-        plt.colorbar(im, ax=ax, label="F1 Score")
-        plt.tight_layout()
-
-        # Pfad pro Datensatz: heatmap.pdf -> heatmap_multinerd.pdf
-        ds_out = out_base.parent / f"{out_base.stem}_{dataset_name}{out_base.suffix}"
-        ds_out.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(str(ds_out), dpi=150, bbox_inches="tight")
-        plt.close()
-        console.print(f"[green]Heatmap gespeichert: {ds_out}[/green]")
+    ds_out = out_base.parent / f"{out_base.stem}_{DATASET_NAME}{out_base.suffix}"
+    ds_out.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(str(ds_out), dpi=150, bbox_inches="tight")
+    plt.close()
+    console.print(f"[green]Heatmap gespeichert: {ds_out}[/green]")
 
 
 # ---------------------------------------------------------------------------
@@ -497,14 +416,9 @@ if __name__ == "__main__":
         default="results",
         help="Wurzelverzeichnis (Standard: results/)",
     )
-    parser.add_argument(
-        "--dataset",
-        default=None,
-        help="Optional: Nur Ergebnisse fuer einen bestimmten Datensatz",
-    )
     args = parser.parse_args()
 
-    results = load_all_results(args.results_dir, dataset_filter=args.dataset)
+    results = load_all_results(args.results_dir)
 
     if not results:
         console.print(f"[yellow]Keine Ergebnisse in '{args.results_dir}' gefunden.[/yellow]")
@@ -515,6 +429,5 @@ if __name__ == "__main__":
         create_per_entity_heatmap(
             results_dir=args.results_dir,
             output_path=f"{args.results_dir}/per_entity_heatmap.pdf",
-            dataset_filter=args.dataset,
         )
         export_latex_table(results, output_path=f"{args.results_dir}/comparison_table.tex")

@@ -1,30 +1,15 @@
-"""
-preprocess_encoder.py — Vorverarbeitung fuer Encoder-basierte NER
-
-Fuer die Token-Klassifikation (DeBERTa) muss jedes Wort-Token
-in Subword-Tokens aufgeteilt und das BIO-Label korrekt uebertragen werden.
-
-Wichtige Designentscheidung:
-    - Nur das erste Subword-Token eines Wortes erhaelt das echte Label.
-    - Alle weiteren Subword-Tokens (und Sondertokens wie [CLS], [SEP])
-      bekommen -100, damit sie vom Loss und von seqeval ignoriert werden.
-
-Verwendung:
-    from src.data.preprocess_encoder import prepare_encoder_dataset
-    tokenized_ds, tokenizer, info = prepare_encoder_dataset(
-        model_name="microsoft/deberta-v3-base",
-        dataset_name="multinerd",
-    )
-"""
+"""Encoder preprocessing for MultiNERD English token classification."""
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from datasets import DatasetDict
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
 from src.data.dataset_loader import DatasetInfo, load_ner_dataset
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
 
 
 # ---------------------------------------------------------------------------
@@ -98,41 +83,24 @@ def tokenize_and_align_labels(
 
 def prepare_encoder_dataset(
     model_name: str,
-    dataset_name: str = "multinerd",
-    dataset_language: str = "en",
     max_length: int = 256,
-) -> Tuple[DatasetDict, PreTrainedTokenizerBase, DatasetInfo]:
-    """Laedt einen NER-Datensatz, tokenisiert alle Splits und richtet Labels aus.
+) -> Tuple["DatasetDict", PreTrainedTokenizerBase, DatasetInfo]:
+    """Load MultiNERD English, tokenize all splits, and align word-level labels.
 
-    Der Tokenizer wird mit add_prefix_space=True geladen, weil DeBERTa
-    beim Verarbeiten von vorher tokenisierten Woertern ein fuehrendes
-    Leerzeichen erwartet.
-
-    Args:
-        model_name:       HuggingFace Model-ID (z.B. 'microsoft/deberta-v3-base').
-        dataset_name:     "multinerd" oder "wnut_17".
-        dataset_language: Sprachfilter fuer MultiNERD (Standard: "en").
-        max_length:       Maximale Sequenzlaenge fuer den Tokenizer.
-
-    Returns:
-        Tuple aus (tokenized_dataset, tokenizer, DatasetInfo).
+    Only the first subword of each original word receives the BIO label.
+    Continuation subwords and special tokens are set to -100.
     """
-    # Datensatz und Metadaten laden
-    dataset, info = load_ner_dataset(dataset_name, language=dataset_language)
+    dataset, info = load_ner_dataset()
 
-    # Tokenizer laden; add_prefix_space fuer DeBERTa-Kompatibilitaet
     tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
         model_name,
         add_prefix_space=True,
-        use_fast=True,  # use_fast=True wird fuer word_ids() benoetigt
+        use_fast=True,
     )
 
-    # Tokenisierung und Label-Alignment ueber alle Splits mappen
-    # batched=True beschleunigt die Verarbeitung erheblich
-    tokenized_dataset: DatasetDict = dataset.map(
+    tokenized_dataset: "DatasetDict" = dataset.map(
         lambda examples: tokenize_and_align_labels(examples, tokenizer, max_length),
         batched=True,
-        # Originalspalten entfernen, da sie durch Tokenisierung ersetzt werden
         remove_columns=dataset["train"].column_names,
     )
 

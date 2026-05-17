@@ -1,41 +1,40 @@
 """
-error_analysis.py — Qualitative Fehleranalyse für Encoder- und Decoder-NER
+Qualitative error analysis for MultiNERD English encoder and decoder NER.
 
-Analysiert die gespeicherten test_predictions.json-Dateien und kategorisiert
-Fehler getrennt für die beiden Paradigmen:
+Analyzes saved test_predictions.json files and categorizes errors for the two
+final paradigms:
 
-Encoder-Fehler (aus BIO-Tag-Sequenzen):
-  - Boundary Errors:      Falsche Span-Grenzen (B-/I- Verwechslung)
-  - Type Errors:          Richtige Span, aber falscher Entity-Typ
-  - Missed Entities:      Gold-Entity nicht erkannt
-  - Hallucinations:       Vorhergesagte Entity ohne Gold-Entsprechung
+Encoder errors from BIO tag sequences:
+  - Boundary Errors:      wrong span boundaries
+  - Type Errors:          correct span with wrong entity type
+  - Missed Entities:      gold entity not predicted
+  - Hallucinations:       predicted entity without a gold overlap
 
-Decoder-Fehler (strukturelle Probleme im LLM-Output):
-  - JSON Parse Failures:  Kein valides JSON generiert
-  - Incomplete JSON:      JSON abgeschnitten (max_new_tokens überschritten?)
-  - Wrong Schema:         Valides JSON, aber kein Array
-  - Missing Fields:       Kein 'entity'- oder 'type'-Feld
-  - Unknown Types:        Typ nicht in der erwarteten Datensatz-Taxonomie
-  - Span Mismatches:      Entity-Text kommt im Satz nicht vor
+Decoder structural errors from LLM output:
+  - JSON Parse Failures:  no valid JSON array extracted
+  - Incomplete JSON:      output likely truncated
+  - Wrong Schema:         valid JSON with the wrong top-level shape
+  - Missing Fields:       missing entity/type fields
+  - Unknown Types:        type outside the MultiNERD taxonomy
+  - Span Mismatches:      generated entity text not found in the sentence
 
-Verwendung:
+Usage:
     python -m src.evaluate.error_analysis \\
         --encoder-preds results/multinerd/deberta-v3-large/test_predictions.json \\
-        --decoder-preds results/multinerd/qwen35-27b-qlora/test_predictions.json \\
-        --dataset multinerd
+        --decoder-preds results/multinerd/qwen35-27b-qlora/test_predictions.json
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-from collections import Counter
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Dict, FrozenSet, List, Optional
 
 from rich.console import Console
 from rich.table import Table
+
+from src.data.dataset_loader import get_dataset_info
 
 console = Console()
 
@@ -76,6 +75,7 @@ class DecoderErrorStats:
         wrong_schema:         Valides JSON, aber kein Array (z.B. Dict).
         missing_fields:       Entities ohne 'entity'- oder 'type'-Feld.
         unknown_entity_types: 'type'-Wert nicht in der Datensatz-Taxonomie.
+        invalid_items:        Nicht-Dict-Eintraege im JSON-Array.
         span_mismatches:      Entity-Text ist nicht im Eingabesatz enthalten.
         total_samples:        Gesamtanzahl analysierter Test-Samples.
         examples:             Gespeicherte Fehler-Beispiele.
@@ -85,6 +85,7 @@ class DecoderErrorStats:
     wrong_schema:         int       = 0
     missing_fields:       int       = 0
     unknown_entity_types: int       = 0
+    invalid_items:        int       = 0
     span_mismatches:      int       = 0
     total_samples:        int       = 0
     examples:             List[Dict] = field(default_factory=list)
@@ -245,6 +246,7 @@ def analyze_decoder_errors(
     parse_statuses: List[str],
     tokens_list:    List[List[str]],
     valid_types:    Optional[FrozenSet[str]] = None,
+    parse_diagnostics: Optional[List[Dict[str, int]]] = None,
     max_examples:   int = 10,
 ) -> DecoderErrorStats:
     """Analysiert strukturelle und inhaltliche Fehler im LLM-Output.
@@ -272,8 +274,17 @@ def analyze_decoder_errors(
     stats = DecoderErrorStats()
     stats.total_samples = len(raw_outputs)
 
-    for i, (raw, status, tokens) in enumerate(zip(raw_outputs, parse_statuses, tokens_list)):
+    diagnostics_list = parse_diagnostics or [{} for _ in raw_outputs]
+
+    for i, (raw, status, tokens, diagnostics) in enumerate(
+        zip(raw_outputs, parse_statuses, tokens_list, diagnostics_list)
+    ):
         sentence = " ".join(tokens)
+
+        stats.wrong_schema += int(diagnostics.get("wrong_schema", 0))
+        stats.missing_fields += int(diagnostics.get("missing_fields", 0))
+        stats.unknown_entity_types += int(diagnostics.get("unknown_types", 0))
+        stats.invalid_items += int(diagnostics.get("invalid_items", 0))
 
         # --- Parse-Fehler-Kategorien ---
         if status == "failed":
@@ -296,24 +307,31 @@ def analyze_decoder_errors(
                 })
             continue  # Kein valides JSON → Inhalts-Checks überspringen
 
-        # --- Schema-Fehler: valides JSON, aber kein Array ---
-        # Thinking-Blöcke herausfiltern für direkten JSON-Check
-        text_clean = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
-        fence_match = re.search(r"```(?:json)?\s*(.*?)\s*```", text_clean, re.DOTALL)
-        candidate = fence_match.group(1).strip() if fence_match else text_clean
-        try:
-            parsed_raw = _json.loads(candidate)
-            if not isinstance(parsed_raw, list):
-                # JSON ist z.B. ein Dict statt einer Liste
-                stats.wrong_schema += 1
-                if len([e for e in stats.examples if e.get("error") == "wrong_schema"]) < max_examples:
-                    stats.examples.append({
-                        "error":      "wrong_schema",
-                        "raw_output": raw[:200],
-                        "sentence":   sentence[:100],
-                    })
-        except Exception:
-            pass
+        if not diagnostics:
+            # Backward-compatible best effort for prediction files without
+            # parser diagnostics.
+            text_clean = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+            fence_match = re.search(r"```(?:json)?\s*(.*?)\s*```", text_clean, re.DOTALL)
+            candidate = fence_match.group(1).strip() if fence_match else text_clean
+            try:
+                parsed_raw = _json.loads(candidate)
+                if not isinstance(parsed_raw, list):
+                    stats.wrong_schema += 1
+                    if len([e for e in stats.examples if e.get("error") == "wrong_schema"]) < max_examples:
+                        stats.examples.append({
+                            "error":      "wrong_schema",
+                            "raw_output": raw[:200],
+                            "sentence":   sentence[:100],
+                        })
+            except Exception:
+                pass
+        elif diagnostics.get("wrong_schema", 0):
+            if len([e for e in stats.examples if e.get("error") == "wrong_schema"]) < max_examples:
+                stats.examples.append({
+                    "error":      "wrong_schema",
+                    "raw_output": raw[:200],
+                    "sentence":   sentence[:100],
+                })
 
         # --- Inhalts-Fehler: einzelne Entity-Einträge prüfen ---
         for ent in pred_entities[i]:
@@ -399,6 +417,7 @@ def print_error_summary(
     _row("Wrong Schema",             "-",  decoder_stats.wrong_schema if decoder_stats else "-")
     _row("Missing Fields",           "-",  decoder_stats.missing_fields if decoder_stats else "-")
     _row("Unknown Entity Types",     "-",  decoder_stats.unknown_entity_types if decoder_stats else "-")
+    _row("Invalid JSON Items",       "-",  decoder_stats.invalid_items if decoder_stats else "-")
     _row("Span Mismatches",          "-",  decoder_stats.span_mismatches if decoder_stats else "-")
 
     console.print(table)
@@ -418,20 +437,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NER-Fehleranalyse (Encoder vs. Decoder)")
     parser.add_argument("--encoder-preds", help="Pfad zur Encoder test_predictions.json")
     parser.add_argument("--decoder-preds", help="Pfad zur Decoder test_predictions.json")
-    parser.add_argument(
-        "--dataset",
-        choices=["multinerd", "wnut_17"],
-        help="Datensatz fuer den Unknown-Type-Check (sonst wird er uebersprungen)",
-    )
     args = parser.parse_args()
 
-    # Erlaubte Entity-Typen aus der DatasetInfo laden, falls --dataset gesetzt ist
-    valid_types: Optional[FrozenSet[str]] = None
-    if args.dataset:
-        from src.data.dataset_loader import get_dataset_info
-        info = get_dataset_info(args.dataset)
-        valid_types = frozenset(info.entity_types)
-        console.print(f"[cyan]Erlaubte Entity-Typen ({args.dataset}): {sorted(valid_types)}[/cyan]")
+    info = get_dataset_info()
+    valid_types: FrozenSet[str] = frozenset(info.entity_types)
+    console.print(f"[cyan]Valid MultiNERD entity types: {sorted(valid_types)}[/cyan]")
 
     enc_stats = None
     dec_stats = None
@@ -451,6 +461,7 @@ if __name__ == "__main__":
         pred_entities  = [s["pred_entities"] for s in dec_data]
         raw_outputs    = [s["raw_output"] for s in dec_data]
         parse_statuses = [s["parse_status"] for s in dec_data]
+        parse_diagnostics = [s.get("parse_diagnostics", {}) for s in dec_data]
         dec_stats      = analyze_decoder_errors(
             gold_entities,
             pred_entities,
@@ -458,6 +469,7 @@ if __name__ == "__main__":
             parse_statuses,
             tokens_list_d,
             valid_types=valid_types,
+            parse_diagnostics=parse_diagnostics,
         )
         console.print(f"[green]Decoder: {len(dec_data)} Samples analysiert[/green]")
 
