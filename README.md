@@ -1,51 +1,137 @@
-# Bachelor Thesis NER Experiments
+# Encoder vs. LLMs for Named Entity Recognition
 
-This repository compares encoder-based token classification against decoder-only
-LLM-based NER on one benchmark:
+Bachelor thesis repository comparing encoder token classification with
+decoder-only LLM structured extraction for Named Entity Recognition (NER).
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.4%2B-red)
+![Transformers](https://img.shields.io/badge/Transformers-4.48%2B-yellow)
+![PEFT](https://img.shields.io/badge/PEFT-LoRA%2FQLoRA-purple)
+![Dataset](https://img.shields.io/badge/Dataset-MultiNERD%20English-green)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
+## Project Overview
+
+This project supports the Bachelor thesis **"Comparison of Encoder-Based Models
+and Large Language Models with Fine-Tuning for Named Entity Recognition."** It
+compares supervised DeBERTa token-classification models with Qwen3.5
+decoder-only LLMs that perform structured NER extraction. The benchmark is the
+English subset of `Babelscape/multinerd`, so all models are evaluated on the
+same task and language setting. The LLM side includes both zero-shot evaluation
+and LoRA/QLoRA fine-tuning.
+
+## Research Question
+
+How do fine-tuned encoder models compare with decoder-only LLMs, both zero-shot
+and LoRA-fine-tuned, for English NER in terms of entity-level quality,
+computational efficiency, structured-output robustness, and implementation
+complexity?
+
+## Experimental Scope
+
+The implemented experiment registry in `ba-ner/src/config.py` defines exactly
+eight runs.
+
+| Model family | Hugging Face model ID | Implemented mode |
+| --- | --- | --- |
+| DeBERTa-v3-base | `microsoft/deberta-v3-base` | fine-tuned encoder token classification |
+| DeBERTa-v3-large | `microsoft/deberta-v3-large` | fine-tuned encoder token classification |
+| Qwen3.5-0.8B | `Qwen/Qwen3.5-0.8B` | zero-shot decoder inference; LoRA/QLoRA fine-tuning |
+| Qwen3.5-4B | `Qwen/Qwen3.5-4B` | zero-shot decoder inference; LoRA/QLoRA fine-tuning |
+| Qwen3.5-27B | `Qwen/Qwen3.5-27B` | zero-shot decoder inference; LoRA/QLoRA fine-tuning |
+
+There are no zero-shot encoder experiments in the active study design.
+
+## Core Architecture
+
+The encoder pipeline uses MultiNERD word-level tokens and BIO labels, aligns
+labels to tokenizer subwords, and trains Hugging Face token-classification
+models. Continuation subwords and special tokens are assigned `-100` so they are
+ignored by the loss and evaluation.
+
+The decoder pipeline presents each example as a numbered token list and asks
+the LLM to generate a machine-readable JSON array of entity spans. Outputs are
+parsed, validated, converted back to BIO tags, and evaluated with the same
+strict entity-level metric code as the encoders.
+
+LoRA/QLoRA fine-tuning is implemented through PEFT and TRL. The Qwen base
+weights remain frozen while adapter parameters are trained; the best adapter is
+selected using generative validation F1.
+
+## Dataset and Representation
+
+The repository intentionally supports one dataset setup:
 
 - Dataset: `Babelscape/multinerd`
-- Subset: English only, selected by `lang == "en"`
-- Evaluation: strict span/entity-level seqeval metrics over the same MultiNERD
-  English test split
+- Language: English only, filtered with `lang == "en"`
+- Splits: `train`, `validation`, `test`
+- Entity types: `PER`, `ORG`, `LOC`, `ANIM`, `BIO`, `CEL`, `DIS`, `EVE`,
+  `FOOD`, `INST`, `MEDIA`, `MYTH`, `PLANT`, `TIME`, `VEHI`
 
-The active experiment scope is intentionally fixed to eight runs.
+Encoder models consume BIO labels directly. Decoder models use a token-offset
+JSON schema:
 
-## Experiment Matrix
+```json
+[
+  {
+    "start_token": 0,
+    "end_token": 2,
+    "text": "Barack Obama",
+    "type": "PER"
+  }
+]
+```
 
-| Key | Config | Model | Regime |
-| --- | --- | --- | --- |
-| `deberta_base` | `ba-ner/configs/deberta_base.yaml` | `microsoft/deberta-v3-base` | encoder fine-tuning |
-| `deberta_large` | `ba-ner/configs/deberta_large.yaml` | `microsoft/deberta-v3-large` | encoder fine-tuning |
-| `qwen35_08b_zs` | `ba-ner/configs/qwen35_08b_zeroshot.yaml` | `Qwen/Qwen3.5-0.8B` | LLM zero-shot |
-| `qwen35_4b_zs` | `ba-ner/configs/qwen35_4b_zeroshot.yaml` | `Qwen/Qwen3.5-4B` | LLM zero-shot |
-| `qwen35_27b_zs` | `ba-ner/configs/qwen35_27b_zeroshot.yaml` | `Qwen/Qwen3.5-27B` | LLM zero-shot |
-| `qwen35_08b` | `ba-ner/configs/qwen35_08b.yaml` | `Qwen/Qwen3.5-0.8B` | LLM LoRA/QLoRA fine-tuning |
-| `qwen35_4b` | `ba-ner/configs/qwen35_4b.yaml` | `Qwen/Qwen3.5-4B` | LLM LoRA/QLoRA fine-tuning |
-| `qwen35_27b` | `ba-ner/configs/qwen35_27b.yaml` | `Qwen/Qwen3.5-27B` | LLM LoRA/QLoRA fine-tuning |
+`start_token` is inclusive and `end_token` is exclusive. Both indices refer to
+the numbered MultiNERD token list shown in the prompt, not to character
+offsets. The `text` field is retained for readability and validation, but BIO
+reconstruction uses the token offsets as the source of truth. If no entity is
+present, the expected decoder output is exactly `[]`.
 
-The central registry is `ba-ner/src/config.py`. Runtime entry points validate
-that configs match the final model IDs, dataset name, language, regime, and
-output directory.
+## Evaluation Strategy
 
-## Repository Layout
+The primary comparison uses strict entity-level metrics through `seqeval`:
+
+- Precision
+- Recall
+- F1-score
+
+Encoder predictions are evaluated directly from BIO tags. Decoder predictions
+are validated as JSON spans and then converted deterministically to BIO tags.
+This keeps the final metric contract shared across model families.
+
+Decoder-specific robustness diagnostics include:
+
+- parse failure rate
+- wrong top-level schema
+- invalid list items or missing fields
+- unknown entity types
+- invalid token offsets
+- text/token mismatches
+- overlapping spans
+
+Efficiency-related outputs include training runtime where applicable, mean and
+p95 inference latency, peak VRAM usage, and total/trainable parameter counts.
+
+## Repository Structure
 
 ```text
 ba-ner/
   configs/              # eight final experiment configs
-  scripts/              # orchestration and local helper scripts
-  scripts/cluster/      # SLURM jobs, preflight checks, submit orchestration
-  src/config.py         # final experiment registry and config validation
+  scripts/              # local orchestration scripts
+  scripts/cluster/      # SLURM preflight, jobs, and dependency submission
+  src/config.py         # experiment registry and config validation
   src/data/             # MultiNERD English loading and preprocessing
   src/encoder/          # DeBERTa training and inference
-  src/decoder/          # Qwen zero-shot, LoRA/QLoRA training, parsing
-  src/evaluate/         # shared metrics, comparison, error analysis
+  src/decoder/          # Qwen zero-shot, LoRA/QLoRA, parsing, inference
+  src/evaluate/         # shared metrics, comparison, error analysis, efficiency
   tests/                # focused regression tests
   results/              # generated experiment artifacts
 ```
 
 ## Setup
 
-From the repository root:
+Python `>=3.10` is required. From the repository root:
 
 ```bash
 cd ba-ner
@@ -54,71 +140,12 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-For QLoRA runs, use a CUDA environment compatible with `torch`,
-`bitsandbytes`, and the selected Qwen model size.
-
-## GPU Cluster Setup
-
-The repository is prepared for SLURM without requiring local training or
-inference. All cluster scripts assume a Conda environment named `ba-ner`.
-
-On the cluster, create and populate the environment once:
-
-```bash
-cd ba-ner
-conda create -n ba-ner python=3.11 -y
-conda activate ba-ner
-pip install -r requirements.txt
-```
-
-Run the preflight check before submitting experiments. It validates package
-availability, configs, CLI entry points, CUDA visibility, and tests; it does
-not load the dataset or any model.
-
-```bash
-mkdir -p logs
-sbatch scripts/cluster/preflight.sh
-```
-
-To submit the full eight-experiment matrix as separate SLURM jobs with
-dependencies:
-
-```bash
-mkdir -p logs
-scripts/cluster/submit_all.sh
-```
-
-The submit script uses `sbatch --parsable` and wires dependencies as follows:
-
-- encoder inference waits for the corresponding encoder training job
-- LoRA inference waits for the corresponding LoRA training job
-- zero-shot jobs start directly
-- final comparison waits for all eight inference jobs
-
-Resource defaults are editable through environment variables before calling
-`submit_all.sh`, for example:
-
-```bash
-GPU_QWEN=gpu:a100:1 MEM_QWEN_27B=160G TIME_QWEN_27B_TRAIN=48:00:00 \
-  scripts/cluster/submit_all.sh
-```
-
-Individual job scripts are also available:
-
-```bash
-sbatch scripts/cluster/job_encoder_train.sh configs/deberta_base.yaml
-sbatch scripts/cluster/job_encoder_infer.sh \
-  configs/deberta_base.yaml results/multinerd/deberta-v3-base/best_model
-sbatch scripts/cluster/job_decoder_zeroshot.sh configs/qwen35_4b_zeroshot.yaml
-sbatch scripts/cluster/job_decoder_lora_train.sh configs/qwen35_4b.yaml
-sbatch scripts/cluster/job_decoder_lora_infer.sh \
-  configs/qwen35_4b.yaml results/multinerd/qwen35-4b-qlora/best_lora_adapter
-sbatch scripts/cluster/job_compare.sh results
-```
+For Qwen and QLoRA runs, use a CUDA environment compatible with `torch`,
+`bitsandbytes`, and the selected model size.
 
 ## Running Experiments
 
-Run the full matrix:
+Run the full local orchestration pipeline:
 
 ```bash
 cd ba-ner
@@ -136,7 +163,7 @@ python scripts/run_all.py --model qwen35_4b_zs
 python scripts/run_all.py --eval-only
 ```
 
-Encoder commands:
+Encoder training and inference:
 
 ```bash
 python -m src.encoder.train configs/deberta_base.yaml
@@ -145,7 +172,7 @@ python -m src.encoder.inference \
   --config configs/deberta_base.yaml
 ```
 
-Decoder zero-shot command:
+LLM zero-shot inference:
 
 ```bash
 python -m src.decoder.inference \
@@ -153,7 +180,7 @@ python -m src.decoder.inference \
   --config configs/qwen35_4b_zeroshot.yaml
 ```
 
-Decoder LoRA/QLoRA commands:
+LLM LoRA/QLoRA fine-tuning and inference:
 
 ```bash
 python -m src.decoder.train configs/qwen35_4b.yaml
@@ -162,58 +189,7 @@ python -m src.decoder.inference \
   --config configs/qwen35_4b.yaml
 ```
 
-The optional `--base` argument in decoder inference is only a validation
-override. If provided, it must match the `model_name` in the config.
-
-## Outputs
-
-All active outputs use this structure:
-
-```text
-ba-ner/results/multinerd/<experiment_name>/
-  results.yaml              # training summary, where applicable
-  inference_metrics.yaml    # final test metrics
-  test_predictions.json     # per-sample predictions
-  best_model/               # encoder checkpoints
-  best_lora_adapter/        # decoder LoRA adapters
-```
-
-Training writes validation metrics only. Final test metrics are written by the
-inference scripts so all eight experiments are evaluated through the same final
-test-stage contract.
-
-## Evaluation
-
-Shared strict span-level metrics live in `ba-ner/src/evaluate/metrics.py`.
-Encoder predictions are evaluated from BIO tags. LLM predictions are parsed
-from JSON entities with token-based offsets, converted back to BIO tags directly
-from those offsets, and then evaluated with the same seqeval wrapper.
-
-LLM outputs must be JSON arrays:
-
-```json
-[
-  {
-    "start_token": 0,
-    "end_token": 2,
-    "text": "Barack Obama",
-    "type": "PER"
-  }
-]
-```
-
-`start_token` is inclusive and `end_token` is exclusive. Both indices refer to
-the numbered MultiNERD token list shown in the prompt, not to character offsets.
-The `text` field is kept for readability and validation, but BIO reconstruction
-uses `start_token` and `end_token` as the source of truth. If no entity is
-present, the decoder must return exactly `[]`.
-
-The parser handles direct JSON, fenced JSON blocks, extracted JSON arrays, and
-Qwen-style `<think>...</think>` blocks. Parser diagnostics count failed parses,
-wrong top-level schemas, invalid list items, missing fields, unknown entity
-types, invalid token offsets, text/token mismatches, and overlapping spans.
-
-Aggregate reports:
+Aggregate comparison and qualitative error analysis:
 
 ```bash
 python -m src.evaluate.compare_all
@@ -222,27 +198,78 @@ python -m src.evaluate.error_analysis \
   --decoder-preds results/multinerd/qwen35-27b-qlora/test_predictions.json
 ```
 
-`compare_all.py` produces a console table, F1 plot, per-entity heatmap, and
-LaTeX table from `results/multinerd/`.
+## GPU Cluster
+
+The repository includes SLURM scripts for running the matrix on a GPU cluster.
+They assume a Conda environment named `ba-ner`.
+
+```bash
+cd ba-ner
+conda create -n ba-ner python=3.11 -y
+conda activate ba-ner
+pip install -r requirements.txt
+```
+
+Preflight validates imports, configs, CLI entry points, CUDA visibility, and
+tests without loading datasets or models:
+
+```bash
+mkdir -p logs
+sbatch scripts/cluster/preflight.sh
+```
+
+Submit the full eight-experiment matrix with train-to-inference dependencies:
+
+```bash
+mkdir -p logs
+scripts/cluster/submit_all.sh
+```
+
+Resource defaults can be adjusted through environment variables before calling
+`submit_all.sh`.
+
+## Outputs and Reproducibility
+
+Experiment artifacts are written below:
+
+```text
+results/multinerd/<experiment_name>/
+  results.yaml              # training summary, where applicable
+  inference_metrics.yaml    # final test metrics
+  test_predictions.json     # per-sample predictions
+  best_model/               # encoder checkpoints
+  best_lora_adapter/        # decoder LoRA adapters
+```
+
+The codebase uses config-validated runs, fixed seeds where supported, and
+greedy decoding for LLM inference. Result metadata records the experiment name,
+model ID, dataset, language, regime, seed, metrics, git state, Python/platform
+details, package versions, CUDA visibility, and GPU names.
+
+The repository provides scripts and configs for the final study. Completed
+experimental results are only present after running the relevant training and
+inference jobs.
 
 ## Tests
 
-Run the focused regression tests from `ba-ner/`:
+Run the regression tests from `ba-ner/`:
 
 ```bash
 python -m pytest
 ```
 
-The tests cover final config validation, the MultiNERD dataset contract, LLM
-JSON parsing diagnostics, BIO conversion, shared metrics, and result
-aggregation.
+The tests cover config validation, the MultiNERD dataset contract, decoder
+prompt formatting, token-offset JSON parsing, BIO conversion, result
+aggregation, and reproducibility metadata collection.
 
-## Reproducibility Notes
+## Author and Thesis Context
 
-- Configs set deterministic seeds where supported.
-- Inference uses greedy decoding for LLMs.
-- Dataset and model IDs are centralized in `src/config.py`.
-- Result files include experiment name, model ID, dataset, language, regime,
-  seed, final metrics, and `run_metadata`.
-- `run_metadata` records git state, Python/platform details, package versions,
-  CUDA visibility, and GPU names when the run executes.
+Author: **Luaj Osman**
+
+Bachelor thesis project: **Comparison of Encoder-Based Models and Large
+Language Models with Fine-Tuning for Named Entity Recognition**
+
+## License and Academic Use
+
+This repository is released under the MIT License. It is intended for academic
+research and reproducible experimentation in the context of the Bachelor thesis.
