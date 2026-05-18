@@ -14,9 +14,11 @@ Decoder structural errors from LLM output:
   - JSON Parse Failures:  no valid JSON array extracted
   - Incomplete JSON:      output likely truncated
   - Wrong Schema:         valid JSON with the wrong top-level shape
-  - Missing Fields:       missing entity/type fields
+  - Missing Fields:       missing start_token/end_token/text/type fields
   - Unknown Types:        type outside the MultiNERD taxonomy
-  - Span Mismatches:      generated entity text not found in the sentence
+  - Invalid Offsets:      token offsets outside the presented token list
+  - Text Mismatches:      text does not match the referenced token span
+  - Overlapping Spans:    output contains spans that overlap in BIO space
 
 Usage:
     python -m src.evaluate.error_analysis \\
@@ -73,10 +75,12 @@ class DecoderErrorStats:
         json_parse_failures:  Kein valides JSON im generierten Text gefunden.
         incomplete_json:      JSON endet nicht mit ']' (wurde abgeschnitten).
         wrong_schema:         Valides JSON, aber kein Array (z.B. Dict).
-        missing_fields:       Entities ohne 'entity'- oder 'type'-Feld.
+        missing_fields:       Entities ohne start_token/end_token/text/type-Felder.
         unknown_entity_types: 'type'-Wert nicht in der Datensatz-Taxonomie.
         invalid_items:        Nicht-Dict-Eintraege im JSON-Array.
-        span_mismatches:      Entity-Text ist nicht im Eingabesatz enthalten.
+        invalid_offsets:      Ungueltige tokenbasierte Offsets.
+        text_mismatches:      Text stimmt nicht zur referenzierten Tokenrange.
+        overlapping_spans:    Ueberlappende Spans, die nicht in BIO darstellbar sind.
         total_samples:        Gesamtanzahl analysierter Test-Samples.
         examples:             Gespeicherte Fehler-Beispiele.
     """
@@ -86,7 +90,9 @@ class DecoderErrorStats:
     missing_fields:       int       = 0
     unknown_entity_types: int       = 0
     invalid_items:        int       = 0
-    span_mismatches:      int       = 0
+    invalid_offsets:      int       = 0
+    text_mismatches:      int       = 0
+    overlapping_spans:    int       = 0
     total_samples:        int       = 0
     examples:             List[Dict] = field(default_factory=list)
 
@@ -260,7 +266,7 @@ def analyze_decoder_errors(
         pred_entities:  Vorhergesagte Entity-Dicts pro Satz (bereits geparst).
         raw_outputs:    Roher LLM-Output pro Satz (für Debugging).
         parse_statuses: Parse-Ergebnis pro Satz ("ok", "failed", ...).
-        tokens_list:    Token-Listen (für Span-Matching-Check).
+        tokens_list:    Token-Listen fuer Offset- und Textkonsistenz-Checks.
         valid_types:    Erlaubte Entity-Typen (datensatzabhaengig). Wenn None,
                         wird der Unknown-Type-Check uebersprungen.
         max_examples:   Max. Anzahl gespeicherter Fehler-Beispiele.
@@ -285,6 +291,9 @@ def analyze_decoder_errors(
         stats.missing_fields += int(diagnostics.get("missing_fields", 0))
         stats.unknown_entity_types += int(diagnostics.get("unknown_types", 0))
         stats.invalid_items += int(diagnostics.get("invalid_items", 0))
+        stats.invalid_offsets += int(diagnostics.get("invalid_offsets", 0))
+        stats.text_mismatches += int(diagnostics.get("text_mismatches", 0))
+        stats.overlapping_spans += int(diagnostics.get("overlaps", 0))
 
         # --- Parse-Fehler-Kategorien ---
         if status == "failed":
@@ -333,34 +342,54 @@ def analyze_decoder_errors(
                     "sentence":   sentence[:100],
                 })
 
-        # --- Inhalts-Fehler: einzelne Entity-Einträge prüfen ---
-        for ent in pred_entities[i]:
-            if "entity" not in ent or "type" not in ent:
-                # Pflichtfelder fehlen
-                stats.missing_fields += 1
-                continue
+        for key, label in (
+            ("invalid_offsets", "invalid_offsets"),
+            ("text_mismatches", "text_mismatch"),
+            ("overlaps", "overlap"),
+            ("unknown_types", "unknown_type"),
+            ("missing_fields", "missing_fields"),
+            ("invalid_items", "invalid_item"),
+        ):
+            if (
+                diagnostics.get(key, 0)
+                and len([e for e in stats.examples if e.get("error") == label]) < max_examples
+            ):
+                stats.examples.append({
+                    "error":      label,
+                    "count":      int(diagnostics.get(key, 0)),
+                    "raw_output": raw[:200],
+                    "sentence":   sentence[:100],
+                })
 
-            if valid_types is not None and ent["type"] not in valid_types:
-                # Entity-Typ nicht in der erwarteten Datensatz-Taxonomie
-                stats.unknown_entity_types += 1
-                if len([e for e in stats.examples if e.get("error") == "unknown_type"]) < max_examples:
-                    stats.examples.append({
-                        "error":    "unknown_type",
-                        "entity":   ent.get("entity"),
-                        "type":     ent.get("type"),
-                        "sentence": sentence[:100],
-                    })
-
-            # Span-Mismatch: Entity-Text kommt nicht im Eingabesatz vor
-            if ent.get("entity", "") and ent["entity"] not in sentence:
-                stats.span_mismatches += 1
-                if len([e for e in stats.examples if e.get("error") == "span_mismatch"]) < max_examples:
-                    stats.examples.append({
-                        "error":    "span_mismatch",
-                        "entity":   ent.get("entity"),
-                        "type":     ent.get("type"),
-                        "sentence": sentence[:100],
-                    })
+        if not diagnostics:
+            # Backward-compatible best effort for prediction files without
+            # parser diagnostics. Active decoder outputs are validated by the
+            # parser before they reach pred_entities.
+            occupied = [False] * len(tokens)
+            required = {"start_token", "end_token", "text", "type"}
+            for ent in pred_entities[i]:
+                if not isinstance(ent, dict) or any(field not in ent for field in required):
+                    stats.missing_fields += 1
+                    continue
+                start = ent.get("start_token")
+                end = ent.get("end_token")
+                etype = ent.get("type")
+                if valid_types is not None and etype not in valid_types:
+                    stats.unknown_entity_types += 1
+                if (
+                    type(start) is not int
+                    or type(end) is not int
+                    or not (0 <= start < end <= len(tokens))
+                ):
+                    stats.invalid_offsets += 1
+                    continue
+                if ent.get("text") != " ".join(tokens[start:end]):
+                    stats.text_mismatches += 1
+                if any(occupied[start:end]):
+                    stats.overlapping_spans += 1
+                    continue
+                for pos in range(start, end):
+                    occupied[pos] = True
 
     return stats
 
@@ -418,7 +447,9 @@ def print_error_summary(
     _row("Missing Fields",           "-",  decoder_stats.missing_fields if decoder_stats else "-")
     _row("Unknown Entity Types",     "-",  decoder_stats.unknown_entity_types if decoder_stats else "-")
     _row("Invalid JSON Items",       "-",  decoder_stats.invalid_items if decoder_stats else "-")
-    _row("Span Mismatches",          "-",  decoder_stats.span_mismatches if decoder_stats else "-")
+    _row("Invalid Token Offsets",    "-",  decoder_stats.invalid_offsets if decoder_stats else "-")
+    _row("Text/Token Mismatches",    "-",  decoder_stats.text_mismatches if decoder_stats else "-")
+    _row("Overlapping Spans",        "-",  decoder_stats.overlapping_spans if decoder_stats else "-")
 
     console.print(table)
 

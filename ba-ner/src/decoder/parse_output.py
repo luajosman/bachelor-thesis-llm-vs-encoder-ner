@@ -1,14 +1,14 @@
 """
 parse_output.py — JSON-Parsing und Evaluation fuer LLM-generierte NER-Ausgaben
 
-Das LLM soll Ausgaben im Format produzieren:
-    [{"entity": "Barack Obama", "type": "PER"}, ...]
+Das LLM soll Ausgaben im tokenbasierten Offset-Format produzieren:
+    [{"start_token": 0, "end_token": 2, "text": "Barack Obama", "type": "PER"}, ...]
 
 In der Praxis weichen generative Modelle manchmal von diesem Format ab:
   - Markdown-Code-Bloecke (```json ... ```)
   - Denk-Bloecke von Qwen3 (<think>...</think>)
   - Abgeschnittene oder invalide JSON-Strings
-  - Falsche Entity-Typen, fehlende Felder
+  - Falsche Entity-Typen, fehlende Felder, ungueltige Offsets
 
 Dieses Modul implementiert einen dreistufigen Fallback-Parser und
 konvertiert die geparsten Entities fuer die seqeval-Evaluation in BIO-Tags.
@@ -34,9 +34,10 @@ console = Console()
 
 def parse_llm_output(
     output_text: str,
+    tokens: List[str],
     valid_types: Optional[FrozenSet[str]] = None,
-) -> Tuple[List[Dict[str, str]], str]:
-    """Parst den JSON-Entity-Output des LLMs mit drei Fallback-Strategien.
+) -> Tuple[List[Dict[str, Any]], str]:
+    """Parst den tokenbasierten JSON-Entity-Output des LLMs.
 
     Strategie 1: Direktes json.loads() nach Strip des Textes.
     Strategie 2: Markdown-Code-Fence entfernen (```json ... ```) und parsen.
@@ -48,6 +49,8 @@ def parse_llm_output(
 
     Args:
         output_text: Roher Text, den das LLM generiert hat.
+        tokens: Tokenliste des Samples. Die Offsets im JSON beziehen sich auf
+                genau diese Liste.
         valid_types: Erlaubte Entity-Typen (frozenset). Wenn None, wird
                      keine Typ-Validierung durchgefuehrt.
 
@@ -56,14 +59,15 @@ def parse_llm_output(
           - entities:     Liste von Entity-Dicts (leer bei Versagen).
           - parse_status: "ok", "markdown_stripped", "regex_fallback" oder "failed".
     """
-    entities, status, _ = parse_llm_output_with_diagnostics(output_text, valid_types)
+    entities, status, _ = parse_llm_output_with_diagnostics(output_text, tokens, valid_types)
     return entities, status
 
 
 def parse_llm_output_with_diagnostics(
     output_text: str,
+    tokens: List[str],
     valid_types: Optional[FrozenSet[str]] = None,
-) -> Tuple[List[Dict[str, str]], str, Dict[str, int]]:
+) -> Tuple[List[Dict[str, Any]], str, Dict[str, int]]:
     """Parse an LLM output and return parser diagnostics.
 
     Diagnostics count discarded or malformed structures before validation drops
@@ -80,7 +84,7 @@ def parse_llm_output_with_diagnostics(
     try:
         result = json.loads(text)
         if isinstance(result, list):
-            entities, validation = _validate_entities(result, valid_types)
+            entities, validation = _validate_entities(result, tokens, valid_types)
             _merge_diagnostics(diagnostics, validation)
             return entities, "ok", diagnostics
         diagnostics["wrong_schema"] += 1
@@ -95,7 +99,7 @@ def parse_llm_output_with_diagnostics(
         try:
             result = json.loads(inner)
             if isinstance(result, list):
-                entities, validation = _validate_entities(result, valid_types)
+                entities, validation = _validate_entities(result, tokens, valid_types)
                 _merge_diagnostics(diagnostics, validation)
                 return entities, "markdown_stripped", diagnostics
             diagnostics["wrong_schema"] += 1
@@ -109,7 +113,7 @@ def parse_llm_output_with_diagnostics(
         try:
             result = json.loads(array_match.group(0))
             if isinstance(result, list):
-                entities, validation = _validate_entities(result, valid_types)
+                entities, validation = _validate_entities(result, tokens, valid_types)
                 _merge_diagnostics(diagnostics, validation)
                 return entities, "regex_fallback", diagnostics
             diagnostics["wrong_schema"] += 1
@@ -122,18 +126,20 @@ def parse_llm_output_with_diagnostics(
 
 def _validate_entities(
     raw: List,
+    tokens: List[str],
     valid_types: Optional[FrozenSet[str]] = None,
-) -> Tuple[List[Dict[str, str]], Dict[str, int]]:
-    """Filtert eine geparste JSON-Liste auf valide Entity-Dicts.
+) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
+    """Filtert eine geparste JSON-Liste auf valide tokenbasierte Entity-Dicts.
 
-    Entfernt Eintraege ohne 'entity'- oder 'type'-Feld und solche mit
-    unbekannten Entity-Typen (falls valid_types angegeben).
+    Entfernt Eintraege ohne Pflichtfelder, mit unbekannten Entity-Typen,
+    ungueltigen Offsets, Text/Token-Mismatches oder ueberlappenden Spans.
 
     Die Typ-Validierung ist case-insensitive: das LLM-Output wird
     gegen die lowercase-Versionen der valid_types geprueft.
 
     Args:
         raw:         Geparste JSON-Liste (kann Dicts oder ungueltige Eintraege enthalten).
+        tokens:      Tokenliste, auf die start_token/end_token referenzieren.
         valid_types: Erlaubte Entity-Typen (frozenset). None = keine Validierung.
 
     Returns:
@@ -147,22 +153,39 @@ def _validate_entities(
         valid_lower = {t.lower() for t in valid_types}
         lower_to_original = {t.lower(): t for t in valid_types}
 
-    valid: List[Dict[str, str]] = []
+    candidates: List[Dict[str, Any]] = []
     diagnostics = _empty_diagnostics()
-    for item in raw:
+    required_fields = {"start_token", "end_token", "text", "type"}
+
+    for original_order, item in enumerate(raw):
         if not isinstance(item, dict):
             diagnostics["invalid_items"] += 1
-            continue  # Kein Dict → ueberspringen
+            continue  # Kein Dict -> ueberspringen
 
-        entity = item.get("entity", "")
+        if any(field not in item for field in required_fields):
+            diagnostics["missing_fields"] += 1
+            continue
+
+        start_token = item.get("start_token")
+        end_token = item.get("end_token")
+        text = item.get("text", "")
         etype = item.get("type", "")
 
-        # Beide Felder muessen nicht-leere Strings sein
-        if not isinstance(entity, str) or not entity.strip():
+        # Text und Typ muessen Strings sein.
+        if not isinstance(text, str) or not text.strip():
             diagnostics["missing_fields"] += 1
             continue
         if not isinstance(etype, str) or not etype.strip():
             diagnostics["missing_fields"] += 1
+            continue
+
+        # bool ist eine int-Subclass in Python, wird hier aber nicht als
+        # gueltiger Tokenindex akzeptiert.
+        if type(start_token) is not int or type(end_token) is not int:
+            diagnostics["invalid_offsets"] += 1
+            continue
+        if not (0 <= start_token < end_token <= len(tokens)):
+            diagnostics["invalid_offsets"] += 1
             continue
 
         etype_clean = etype.strip()
@@ -175,7 +198,38 @@ def _validate_entities(
             # Typ auf die kanonische Schreibweise normalisieren
             etype_clean = lower_to_original[etype_clean.lower()]
 
-        valid.append({"entity": entity.strip(), "type": etype_clean})
+        expected_text = " ".join(tokens[start_token:end_token])
+        if text.strip() != expected_text:
+            diagnostics["text_mismatches"] += 1
+            continue
+
+        candidates.append({
+            "start_token": start_token,
+            "end_token": end_token,
+            "text": expected_text,
+            "type": etype_clean,
+            "_original_order": original_order,
+        })
+
+    valid: List[Dict[str, Any]] = []
+    occupied = [False] * len(tokens)
+    for item in sorted(
+        candidates,
+        key=lambda ent: (ent["start_token"], ent["end_token"], ent["_original_order"]),
+    ):
+        start = item["start_token"]
+        end = item["end_token"]
+        if any(occupied[start:end]):
+            diagnostics["overlaps"] += 1
+            continue
+        for i in range(start, end):
+            occupied[i] = True
+        valid.append({
+            "start_token": start,
+            "end_token": end,
+            "text": item["text"],
+            "type": item["type"],
+        })
     return valid, diagnostics
 
 
@@ -185,6 +239,9 @@ def _empty_diagnostics() -> Dict[str, int]:
         "missing_fields": 0,
         "unknown_types": 0,
         "wrong_schema": 0,
+        "invalid_offsets": 0,
+        "text_mismatches": 0,
+        "overlaps": 0,
     }
 
 
@@ -199,14 +256,13 @@ def _merge_diagnostics(target: Dict[str, int], source: Dict[str, int]) -> None:
 
 def entities_to_bio(
     tokens: List[str],
-    entities: List[Dict[str, str]],
+    entities: List[Dict[str, Any]],
 ) -> List[str]:
-    """Konvertiert Entity-Dicts in eine BIO-Tag-Sequenz fuer seqeval.
+    """Konvertiert tokenbasierte Entity-Dicts in eine BIO-Tag-Sequenz.
 
-    Verwendet einfaches String-Matching: Die Woerter der Entity werden
-    im Token-Fenster gesucht. Beim ersten Treffer werden B-/I-Tags gesetzt.
-    Ueberlappungen werden vermieden (bereits getaggte Positionen werden
-    nicht ueberschrieben).
+    Die Rueckabbildung nutzt ausschliesslich start_token/end_token. Es findet
+    kein String-Matching statt, damit wiederholte gleiche Textspans eindeutig
+    bleiben.
 
     Args:
         tokens:   Woerter des Satzes.
@@ -216,27 +272,22 @@ def entities_to_bio(
         BIO-Tag-Liste gleicher Laenge wie tokens,
         z.B. ["O", "B-PER", "I-PER", "O"].
     """
-    # Alle Positionen zunaechst mit "O" initialisieren
     bio_tags = ["O"] * len(tokens)
 
     for ent in entities:
-        ent_text = ent["entity"]
-        etype = ent["type"]
+        start = ent.get("start_token")
+        end = ent.get("end_token")
+        etype = ent.get("type")
+        if type(start) is not int or type(end) is not int or not isinstance(etype, str):
+            continue
+        if not (0 <= start < end <= len(tokens)):
+            continue
+        if any(tag != "O" for tag in bio_tags[start:end]):
+            continue
 
-        # Entity-Text auf Leerzeichen aufteilen (konsistent mit Tokenisierung)
-        ent_tokens = ent_text.split()
-        n = len(ent_tokens)
-
-        # Sliding-Window-Suche: jeden moeglichen Startpunkt pruefen
-        for start in range(len(tokens) - n + 1):
-            window = tokens[start : start + n]
-            if window == ent_tokens:
-                # Ueberlappungs-Check: nur taggen, wenn alle Positionen noch "O" sind
-                if all(bio_tags[start + j] == "O" for j in range(n)):
-                    bio_tags[start] = f"B-{etype}"              # Beginn der Entity
-                    for j in range(1, n):
-                        bio_tags[start + j] = f"I-{etype}"     # Fortsetzung
-                break  # Ersten Treffer nutzen, keine weiteren Matches suchen
+        bio_tags[start] = f"B-{etype}"
+        for i in range(start + 1, end):
+            bio_tags[i] = f"I-{etype}"
 
     return bio_tags
 
@@ -247,8 +298,8 @@ def entities_to_bio(
 
 def evaluate_llm_predictions(
     tokens_list:    List[List[str]],
-    gold_entities:  List[List[Dict[str, str]]],
-    pred_entities:  List[List[Dict[str, str]]],
+    gold_entities:  List[List[Dict[str, Any]]],
+    pred_entities:  List[List[Dict[str, Any]]],
     parse_statuses: List[str],
     parse_diagnostics: Optional[List[Dict[str, int]]] = None,
 ) -> Dict[str, Any]:
@@ -298,6 +349,9 @@ def evaluate_llm_predictions(
         "parse_missing_fields":    _sum_diagnostics(diagnostics, "missing_fields"),
         "parse_unknown_types":     _sum_diagnostics(diagnostics, "unknown_types"),
         "parse_wrong_schema":      _sum_diagnostics(diagnostics, "wrong_schema"),
+        "parse_invalid_offsets":   _sum_diagnostics(diagnostics, "invalid_offsets"),
+        "parse_text_mismatches":   _sum_diagnostics(diagnostics, "text_mismatches"),
+        "parse_overlaps":          _sum_diagnostics(diagnostics, "overlaps"),
     }
 
 

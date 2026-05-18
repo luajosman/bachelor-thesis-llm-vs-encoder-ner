@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from src.data.dataset_loader import DatasetInfo, load_ner_dataset
 
@@ -27,12 +27,23 @@ def build_system_prompt(entity_types: List[str]) -> str:
     types_str = ", ".join(entity_types)
     return (
         "You are a Named Entity Recognition (NER) system. "
-        "Extract all named entities from the given text.\n"
-        "Return the result as a JSON list. Each element has the fields "
-        f"\"entity\" (the text span) and \"type\" (one of: {types_str}).\n"
-        "If no entities are present, return an empty list [].\n"
-        "Respond ONLY with the JSON, without any additional text."
+        "Extract all named entities from the numbered token list.\n"
+        "Return ONLY a JSON array. Do not use Markdown code blocks and do not "
+        "add explanations.\n"
+        "Each entity object must have exactly these fields: "
+        "\"start_token\" (integer, inclusive), "
+        "\"end_token\" (integer, exclusive), "
+        "\"text\" (the exact text covered by the token span), and "
+        f"\"type\" (one of: {types_str}).\n"
+        "Token indices must refer exactly to the numbered token list shown by "
+        "the user. If no entities are present, return exactly []."
     )
+
+
+def format_numbered_tokens(tokens: List[str]) -> str:
+    """Format tokens as the numbered list used in decoder prompts."""
+    token_lines = [f"{i}: {token}" for i, token in enumerate(tokens)]
+    return "Tokens:\n" + "\n".join(token_lines)
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +54,7 @@ def extract_entities_from_bio(
     tokens: List[str],
     ner_tags: List[int],
     id2label: Dict[int, str],
-) -> List[Dict[str, str]]:
+) -> List[Dict[str, Any]]:
     """Konvertiert eine BIO-Tag-Sequenz in eine Liste von Entity-Dicts.
 
     Wird genutzt um die Gold-Labels aus dem BIO-Format in das
@@ -55,22 +66,30 @@ def extract_entities_from_bio(
         id2label: Mapping von Integer-ID zu Label-String.
 
     Returns:
-        Liste von Dicts: [{"entity": "New York", "type": "LOC"}, ...]
+        Liste von Dicts:
+        [{"start_token": 0, "end_token": 2, "text": "New York", "type": "LOC"}, ...]
     """
-    entities: List[Dict[str, str]] = []
+    entities: List[Dict[str, Any]] = []
     current_tokens: List[str] = []
     current_type: str | None = None
+    current_start: int | None = None
 
-    for token, tag in zip(tokens, ner_tags):
+    for i, (token, tag) in enumerate(zip(tokens, ner_tags)):
         label = id2label[tag]
 
         if label.startswith("B-"):
             # Offene Entity zuerst abschliessen
-            if current_type is not None:
-                entities.append({"entity": " ".join(current_tokens), "type": current_type})
-            # Neue Entity starten; "B-PER" → type = "PER"
+            if current_type is not None and current_start is not None:
+                entities.append({
+                    "start_token": current_start,
+                    "end_token": i,
+                    "text": " ".join(current_tokens),
+                    "type": current_type,
+                })
+            # Neue Entity starten; "B-PER" -> type = "PER"
             current_type = label[2:]
             current_tokens = [token]
+            current_start = i
 
         elif label.startswith("I-") and current_type is not None:
             # Aktuelle Entity um das naechste Wort erweitern
@@ -78,14 +97,25 @@ def extract_entities_from_bio(
 
         else:
             # "O"-Tag: Entity abschliessen und Zustand zuruecksetzen
-            if current_type is not None:
-                entities.append({"entity": " ".join(current_tokens), "type": current_type})
+            if current_type is not None and current_start is not None:
+                entities.append({
+                    "start_token": current_start,
+                    "end_token": i,
+                    "text": " ".join(current_tokens),
+                    "type": current_type,
+                })
             current_type = None
             current_tokens = []
+            current_start = None
 
     # Letzte Entity am Satzende abschliessen
-    if current_type is not None:
-        entities.append({"entity": " ".join(current_tokens), "type": current_type})
+    if current_type is not None and current_start is not None:
+        entities.append({
+            "start_token": current_start,
+            "end_token": len(tokens),
+            "text": " ".join(current_tokens),
+            "type": current_type,
+        })
 
     return entities
 
@@ -103,8 +133,8 @@ def format_for_llm(
 
     Erzeugt ein 'messages'-Feld mit drei Turns:
       - system: der NER-Instruktions-Prompt
-      - user:   der Eingabesatz (Woerter zu String zusammengesetzt)
-      - assistant: die Gold-Entities als JSON-String
+      - user:   die nummerierte Tokenliste
+      - assistant: die Gold-Entities mit tokenbasierten Offsets als JSON-String
 
     Args:
         sample:        Einzelne Zeile des Datensatzes.
@@ -117,17 +147,14 @@ def format_for_llm(
     tokens: List[str] = sample["tokens"]
     ner_tags: List[int] = sample["ner_tags"]
 
-    # Woerter zu einem einzigen String zusammensetzen
-    sentence: str = " ".join(tokens)
-
     # Gold-Entities aus BIO-Tags extrahieren und als JSON serialisieren
-    entities: List[Dict[str, str]] = extract_entities_from_bio(tokens, ner_tags, id2label)
+    entities: List[Dict[str, Any]] = extract_entities_from_bio(tokens, ner_tags, id2label)
     assistant_answer: str = json.dumps(entities, ensure_ascii=False)
 
     # ChatML-Struktur aufbauen
     messages = [
         {"role": "system",    "content": system_prompt},
-        {"role": "user",      "content": sentence},
+        {"role": "user",      "content": format_numbered_tokens(tokens)},
         {"role": "assistant", "content": assistant_answer},
     ]
 
@@ -165,7 +192,7 @@ def prepare_decoder_dataset(
 def prepare_test_inputs(
     dataset_split: "Dataset",
     info: DatasetInfo,
-) -> Tuple[List[List[Dict]], List[List[Dict[str, str]]]]:
+) -> Tuple[List[List[Dict]], List[List[Dict[str, Any]]]]:
     """Baut Prompt-Only-Nachrichten (ohne Assistent-Turn) fuer die Inferenz.
 
     Bei der Inferenz darf der Assistent-Turn nicht uebergeben werden —
@@ -185,17 +212,16 @@ def prepare_test_inputs(
     id2label = info.id2label
 
     prompts: List[List[Dict]] = []
-    gold_entities: List[List[Dict[str, str]]] = []
+    gold_entities: List[List[Dict[str, Any]]] = []
 
     for sample in dataset_split:
         tokens: List[str] = sample["tokens"]
         ner_tags: List[int] = sample["ner_tags"]
-        sentence: str = " ".join(tokens)
 
         # Nur System- und User-Turn — der Assistent-Turn fehlt bewusst
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": sentence},
+            {"role": "user",   "content": format_numbered_tokens(tokens)},
         ]
         prompts.append(messages)
 

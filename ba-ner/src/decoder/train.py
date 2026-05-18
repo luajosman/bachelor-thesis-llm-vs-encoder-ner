@@ -41,6 +41,7 @@ from src.data.dataset_loader import load_ner_dataset
 from src.data.preprocess_decoder import (
     build_system_prompt,
     extract_entities_from_bio,
+    format_numbered_tokens,
     prepare_decoder_dataset,
 )
 from src.decoder.parse_output import (
@@ -60,7 +61,7 @@ def _run_generative_eval(
     model,
     tokenizer,
     prompts: List[List[Dict]],
-    gold_entities: List[List[Dict[str, str]]],
+    gold_entities: List[List[Dict[str, Any]]],
     tokens_list: List[List[str]],
     valid_types: frozenset,
     max_new_tokens: int = 256,
@@ -115,7 +116,11 @@ def _run_generative_eval(
         new_token_ids = output_ids[0][prompt_len:]
         generated_text = tokenizer.decode(new_token_ids, skip_special_tokens=True)
 
-        entities, status, diagnostics = parse_llm_output_with_diagnostics(generated_text, valid_types)
+        entities, status, diagnostics = parse_llm_output_with_diagnostics(
+            generated_text,
+            tokens_list[i],
+            valid_types,
+        )
         pred_entities.append(entities)
         parse_statuses.append(status)
         parse_diagnostics.append(diagnostics)
@@ -146,7 +151,7 @@ class GenerativeDevEvalCallback(TrainerCallback):
         self,
         tokenizer,
         dev_prompts: List[List[Dict]],
-        dev_gold_entities: List[List[Dict[str, str]]],
+        dev_gold_entities: List[List[Dict[str, Any]]],
         dev_tokens: List[List[str]],
         valid_types: frozenset,
         output_dir: Path,
@@ -340,16 +345,15 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
 
     # Dev-Prompts und Gold-Entities fuer generative Eval vorbereiten
     dev_prompts: List[List[Dict]] = []
-    dev_gold_entities: List[List[Dict[str, str]]] = []
+    dev_gold_entities: List[List[Dict[str, Any]]] = []
     dev_tokens: List[List[str]] = []
 
     for sample in raw_dev:
         tokens = sample["tokens"]
         ner_tags = sample["ner_tags"]
-        sentence = " ".join(tokens)
         dev_prompts.append([
             {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": sentence},
+            {"role": "user",   "content": format_numbered_tokens(tokens)},
         ])
         dev_gold_entities.append(
             extract_entities_from_bio(tokens, ner_tags, info.id2label)

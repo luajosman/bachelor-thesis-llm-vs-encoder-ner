@@ -186,21 +186,32 @@ test-stage contract.
 
 Shared strict span-level metrics live in `ba-ner/src/evaluate/metrics.py`.
 Encoder predictions are evaluated from BIO tags. LLM predictions are parsed
-from JSON entities, converted back to BIO tags by exact token-window matching,
-and then evaluated with the same seqeval wrapper.
+from JSON entities with token-based offsets, converted back to BIO tags directly
+from those offsets, and then evaluated with the same seqeval wrapper.
 
 LLM outputs must be JSON arrays:
 
 ```json
 [
-  {"entity": "Barack Obama", "type": "PER"}
+  {
+    "start_token": 0,
+    "end_token": 2,
+    "text": "Barack Obama",
+    "type": "PER"
+  }
 ]
 ```
 
+`start_token` is inclusive and `end_token` is exclusive. Both indices refer to
+the numbered MultiNERD token list shown in the prompt, not to character offsets.
+The `text` field is kept for readability and validation, but BIO reconstruction
+uses `start_token` and `end_token` as the source of truth. If no entity is
+present, the decoder must return exactly `[]`.
+
 The parser handles direct JSON, fenced JSON blocks, extracted JSON arrays, and
 Qwen-style `<think>...</think>` blocks. Parser diagnostics count failed parses,
-wrong top-level schemas, invalid list items, missing fields, and unknown entity
-types.
+wrong top-level schemas, invalid list items, missing fields, unknown entity
+types, invalid token offsets, text/token mismatches, and overlapping spans.
 
 Aggregate reports:
 

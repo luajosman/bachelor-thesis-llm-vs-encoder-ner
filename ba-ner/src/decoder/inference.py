@@ -239,6 +239,7 @@ def run_decoder_inference(
 
             entities, status, diagnostics = parse_llm_output_with_diagnostics(
                 generated_text,
+                tokens,
                 valid_types,
             )
             pred_entities.append(entities)
