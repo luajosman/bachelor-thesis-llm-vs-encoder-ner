@@ -88,6 +88,78 @@ offsets. The `text` field is retained for readability and validation, but BIO
 reconstruction uses the token offsets as the source of truth. If no entity is
 present, the expected decoder output is exactly `[]`.
 
+### LLM Output Format Rationale
+
+The LLM pipeline is generative, but the final evaluation requires entity spans
+that can be mapped back to the original MultiNERD token sequence without
+ambiguity. For that reason, each decoder prompt presents the sentence as a
+numbered token list:
+
+```text
+Tokens:
+0: Barack
+1: Obama
+2: visited
+3: Berlin
+4: .
+```
+
+For this input, the expected LLM output is:
+
+```json
+[
+  {
+    "start_token": 0,
+    "end_token": 2,
+    "text": "Barack Obama",
+    "type": "PER"
+  },
+  {
+    "start_token": 3,
+    "end_token": 4,
+    "text": "Berlin",
+    "type": "LOC"
+  }
+]
+```
+
+The fields have the following meaning:
+
+- `start_token`: inclusive start index in the numbered token list.
+- `end_token`: exclusive end index in the numbered token list.
+- `text`: human-readable entity span, used for consistency checks.
+- `type`: one of the allowed MultiNERD entity types.
+
+This representation was chosen instead of a flatter format such as
+`{"entity": "Berlin", "type": "LOC"}` because the entity text alone is not
+always enough to identify the intended span. If the same surface form appears
+multiple times in one sentence, string matching cannot reliably determine which
+occurrence the model predicted. Token offsets make the prediction explicit:
+the span points directly to `tokens[start_token:end_token]`.
+
+The `text` field is therefore not the primary alignment source. It is kept so
+the JSON remains readable and so the parser can detect inconsistent outputs,
+for example offsets that point to `Barack Obama` while the generated `text`
+claims only `Obama`. The actual BIO reconstruction is deterministic:
+
+```text
+start_token = 0, end_token = 2, type = PER  ->  B-PER I-PER
+start_token = 3, end_token = 4, type = LOC  ->  B-LOC
+```
+
+For the example above, the resulting BIO sequence is:
+
+```text
+B-PER I-PER O B-LOC O
+```
+
+This design avoids ambiguous string matching, makes repeated entities
+distinguishable, reduces punctuation and tokenization alignment errors, and
+makes malformed LLM outputs measurable through parser diagnostics. It also
+keeps the comparison with encoder models methodologically clean: both model
+families are ultimately evaluated as BIO tag sequences with the same strict
+entity-level `seqeval` metrics.
+
 ## Evaluation Strategy
 
 The primary comparison uses strict entity-level metrics through `seqeval`:
