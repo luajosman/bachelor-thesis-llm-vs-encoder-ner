@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
 import pytest
 
 from src.evaluate.monitor_training import (
+    _encoder_validation_metrics,
     JobState,
+    MonitorConfig,
     ModelSnapshot,
     ModelSpec,
     Progress,
     choose_job,
     estimate_remaining,
+    load_config,
     parse_progress,
     parse_train_metrics,
     render_html,
@@ -85,6 +89,39 @@ def test_estimate_remaining_includes_pending_evals_and_restart_buffer() -> None:
     assert estimate_remaining(snapshot) == (520.0, 670.0)
 
 
+def test_encoder_validation_metrics_recovers_best_checkpoint_row(tmp_path) -> None:
+    state_path = tmp_path / "checkpoint-200" / "trainer_state.json"
+    state_path.parent.mkdir()
+    state_path.write_text(
+        json.dumps({
+            "log_history": [
+                {
+                    "epoch": 1.0,
+                    "eval_precision": 0.85,
+                    "eval_recall": 0.90,
+                    "eval_f1": 0.874,
+                },
+                {
+                    "epoch": 2.0,
+                    "eval_precision": 0.92,
+                    "eval_recall": 0.94,
+                    "eval_f1": 0.9299,
+                },
+            ],
+        }),
+        encoding="utf-8",
+    )
+
+    metrics = _encoder_validation_metrics(tmp_path, best_validation_f1=0.93)
+
+    assert metrics == {
+        "best_f1": 0.9299,
+        "best_precision": 0.92,
+        "best_recall": 0.94,
+        "best_epoch": 2.0,
+    }
+
+
 def test_render_markdown_contains_requested_live_sections() -> None:
     snapshot = ModelSnapshot(
         spec=_decoder_spec(),
@@ -121,7 +158,8 @@ def test_render_markdown_contains_requested_live_sections() -> None:
         summary_job=JobState(99, "PENDING"),
     )
 
-    assert "**Refresh:** every 5 minutes" in rendered
+    assert "**Data refresh:** every 5 minutes" in rendered
+    assert "**Page refresh:** every 15 seconds" in rendered
     assert "## Live Estimate" in rendered
     assert "## Live Training Metrics" in rendered
     assert "## Validation Results" in rendered
@@ -130,6 +168,42 @@ def test_render_markdown_contains_requested_live_sections() -> None:
     assert "**All models** | Parallel" in rendered
     assert "90.00%" in rendered
     assert "Final summary job: `99` (PENDING)" in rendered
+
+
+def test_render_markdown_includes_encoder_validation_details() -> None:
+    spec = ModelSpec(
+        key="deberta-test",
+        label="DeBERTa test",
+        kind="encoder",
+        job_ids=(20,),
+    )
+    snapshot = ModelSnapshot(
+        spec=spec,
+        job=JobState(20, "COMPLETED"),
+        progress=None,
+        train_metrics={},
+        dev_metrics={
+            "best_f1": 0.9263,
+            "best_precision": 0.9199,
+            "best_recall": 0.9328,
+            "best_epoch": 5.0,
+        },
+        checkpoint_step=100,
+        checkpoint_time=None,
+        results={"best_validation_f1": 0.9263, "num_train_epochs": 5},
+        alert=None,
+        eta_low_seconds=0.0,
+        eta_high_seconds=0.0,
+    )
+
+    rendered = render_markdown(
+        [snapshot],
+        datetime.now().astimezone(),
+        refresh_seconds=300,
+        summary_job=None,
+    )
+
+    assert "| DeBERTa test | 92.63% | 91.99% | 93.28% | 5 | N/A |" in rendered
 
 
 def test_render_html_auto_refreshes_and_renders_dashboard_tables() -> None:
@@ -153,6 +227,38 @@ def test_render_html_auto_refreshes_and_renders_dashboard_tables() -> None:
     assert "<table>" in rendered
     assert "<strong>RUNNING</strong>" in rendered
     assert "Qwen &lt;test&gt;" in rendered
+
+
+def test_load_config_supports_separate_refresh_intervals(tmp_path) -> None:
+    config = tmp_path / "monitor.yaml"
+    config.write_text(
+        "\n".join([
+            "refresh_seconds: 30",
+            "scheduler_refresh_seconds: 60",
+            "browser_refresh_seconds: 15",
+            "models:",
+            "  - key: test",
+            "    label: Test",
+            "    kind: decoder",
+            "    job_ids: [1]",
+        ]),
+        encoding="utf-8",
+    )
+
+    settings = load_config(config)
+
+    assert settings == MonitorConfig(
+        specs=(ModelSpec(
+            key="test",
+            label="Test",
+            kind="decoder",
+            job_ids=(1,),
+        ),),
+        refresh_seconds=30,
+        scheduler_refresh_seconds=60,
+        browser_refresh_seconds=15,
+        summary_job_id=None,
+    )
 
 
 def test_write_atomic_makes_dashboard_browser_readable(tmp_path) -> None:

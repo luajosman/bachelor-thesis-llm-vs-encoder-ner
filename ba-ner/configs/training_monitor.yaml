@@ -1,4 +1,6 @@
-refresh_seconds: 300
+refresh_seconds: 30
+scheduler_refresh_seconds: 60
+browser_refresh_seconds: 15
 summary_job_id: 3219835
 
 models:

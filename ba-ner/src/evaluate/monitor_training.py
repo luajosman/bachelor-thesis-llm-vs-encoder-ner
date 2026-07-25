@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ast
 import html
+import json
 import math
 import os
 import re
@@ -12,7 +13,7 @@ import statistics
 import subprocess
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable, Optional
@@ -23,7 +24,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "training_monitor.yaml"
 DEFAULT_OUTPUT = PROJECT_ROOT / "results" / "training_monitor.md"
-DEFAULT_BROWSER_REFRESH_SECONDS = 30
+DEFAULT_BROWSER_REFRESH_SECONDS = 15
 ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 PROGRESS_RE = re.compile(
     r"(?P<percent>\d+)%\|[^\r\n]*?\|\s*"
@@ -48,6 +49,15 @@ class ModelSpec:
     eval_seconds_low: float = 0.0
     eval_seconds_high: float = 0.0
     restart_buffer_seconds: float = 0.0
+
+
+@dataclass(frozen=True)
+class MonitorConfig:
+    specs: tuple[ModelSpec, ...]
+    refresh_seconds: int
+    scheduler_refresh_seconds: int
+    browser_refresh_seconds: int
+    summary_job_id: Optional[int]
 
 
 @dataclass(frozen=True)
@@ -238,13 +248,57 @@ def _checkpoint_metrics(result_dir: Path, step: Optional[int]) -> dict[str, Any]
         return {}
     path = result_dir / f"checkpoint-{step}" / "trainer_state.json"
     try:
-        state = __import__("json").loads(path.read_text(encoding="utf-8"))
+        state = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, ValueError):
         return {}
     for row in reversed(state.get("log_history", [])):
         if isinstance(row, dict) and "loss" in row:
             return row
     return {}
+
+
+def _encoder_validation_metrics(
+    result_dir: Path,
+    best_validation_f1: Any,
+) -> dict[str, Any]:
+    target_f1 = _finite_number(best_validation_f1)
+    checkpoints: list[tuple[int, Path]] = []
+    for path in result_dir.glob("checkpoint-*/trainer_state.json"):
+        try:
+            step = int(path.parent.name.removeprefix("checkpoint-"))
+        except ValueError:
+            continue
+        checkpoints.append((step, path))
+
+    rows: list[dict[str, Any]] = []
+    for _, path in sorted(checkpoints, reverse=True):
+        try:
+            state = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, ValueError):
+            continue
+        rows = [
+            row
+            for row in state.get("log_history", [])
+            if isinstance(row, dict) and _finite_number(row.get("eval_f1")) is not None
+        ]
+        if rows:
+            break
+    if not rows:
+        return {}
+
+    if target_f1 is None:
+        best_row = max(rows, key=lambda row: _finite_number(row["eval_f1"]) or 0.0)
+    else:
+        best_row = min(
+            rows,
+            key=lambda row: abs((_finite_number(row["eval_f1"]) or 0.0) - target_f1),
+        )
+    return {
+        "best_f1": best_row.get("eval_f1"),
+        "best_precision": best_row.get("eval_precision"),
+        "best_recall": best_row.get("eval_recall"),
+        "best_epoch": best_row.get("epoch"),
+    }
 
 
 def _finite_number(value: Any) -> Optional[float]:
@@ -290,8 +344,14 @@ def collect_snapshot(
     metrics = parse_train_metrics(stdout_text)
     if not metrics:
         metrics = _checkpoint_metrics(result_dir, checkpoint_step)
-    dev_metrics = _load_yaml(result_dir / "generative_eval_state.yaml")
     results = _load_yaml(result_dir / "results.yaml")
+    if spec.kind == "encoder":
+        dev_metrics = _encoder_validation_metrics(
+            result_dir,
+            results.get("best_validation_f1"),
+        )
+    else:
+        dev_metrics = _load_yaml(result_dir / "generative_eval_state.yaml")
 
     alert = None
     if job.state in {"FAILED", "OUT_OF_MEMORY", "TIMEOUT", "CANCELLED"}:
@@ -324,6 +384,22 @@ def _format_percent(value: Any) -> str:
 def _format_metric(value: Any, digits: int = 4) -> str:
     number = _finite_number(value)
     return "-" if number is None else f"{number:.{digits}f}"
+
+
+def _format_interval(seconds: int) -> str:
+    if seconds < 60:
+        return f"{seconds} seconds"
+    if seconds % 60 == 0:
+        minutes = seconds // 60
+        return f"{minutes} minute{'s' if minutes != 1 else ''}"
+    return f"{seconds} seconds"
+
+
+def _format_epoch(value: Any) -> str:
+    number = _finite_number(value)
+    if number is None:
+        return "-"
+    return str(int(number)) if number.is_integer() else f"{number:g}"
 
 
 def _format_duration(seconds: Optional[float]) -> str:
@@ -387,13 +463,15 @@ def render_markdown(
     now: datetime,
     refresh_seconds: int,
     summary_job: Optional[JobState],
+    browser_refresh_seconds: int = DEFAULT_BROWSER_REFRESH_SECONDS,
 ) -> str:
     decoder_snapshots = [s for s in snapshots if s.spec.kind == "decoder"]
     lines = [
         "# Training Live Monitor",
         "",
         f"**Updated:** {now:%Y-%m-%d %H:%M:%S %Z}  ",
-        f"**Refresh:** every {refresh_seconds // 60} minutes  ",
+        f"**Data refresh:** every {_format_interval(refresh_seconds)}  ",
+        f"**Page refresh:** every {_format_interval(browser_refresh_seconds)}  ",
         f"**Next update:** {(now + timedelta(seconds=refresh_seconds)):%H:%M:%S %Z}",
         "",
         "## Live Estimate",
@@ -481,8 +559,11 @@ def render_markdown(
         if snapshot.spec.kind == "encoder":
             lines.append(
                 f"| {snapshot.spec.label} | "
-                f"{_format_percent(snapshot.results.get('best_validation_f1'))} | "
-                "- | - | - | - |"
+                f"{_format_percent(snapshot.results.get('best_validation_f1') or snapshot.dev_metrics.get('best_f1'))} | "
+                f"{_format_percent(snapshot.dev_metrics.get('best_precision'))} | "
+                f"{_format_percent(snapshot.dev_metrics.get('best_recall'))} | "
+                f"{_format_epoch(snapshot.dev_metrics.get('best_epoch'))} | "
+                "N/A |"
             )
             continue
         epoch_results = snapshot.dev_metrics.get("epoch_results", [])
@@ -500,7 +581,7 @@ def render_markdown(
             f"{_format_percent(snapshot.dev_metrics.get('best_f1'))} | "
             f"{_format_percent(best_row.get('dev_precision'))} | "
             f"{_format_percent(best_row.get('dev_recall'))} | "
-            f"{best_epoch if best_epoch is not None else '-'} | "
+            f"{_format_epoch(best_epoch)} | "
             f"{_format_percent(best_row.get('parse_failure_rate'))} |"
         )
 
@@ -704,11 +785,19 @@ def render_html(
 """
 
 
-def load_config(path: Path) -> tuple[list[ModelSpec], int, Optional[int]]:
+def load_config(path: Path) -> MonitorConfig:
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     refresh_seconds = int(raw.get("refresh_seconds", 300))
     if refresh_seconds <= 0:
         raise ValueError("refresh_seconds must be positive")
+    scheduler_refresh_seconds = int(raw.get("scheduler_refresh_seconds", 60))
+    if scheduler_refresh_seconds <= 0:
+        raise ValueError("scheduler_refresh_seconds must be positive")
+    browser_refresh_seconds = int(
+        raw.get("browser_refresh_seconds", DEFAULT_BROWSER_REFRESH_SECONDS)
+    )
+    if browser_refresh_seconds <= 0:
+        raise ValueError("browser_refresh_seconds must be positive")
     specs = []
     for item in raw["models"]:
         specs.append(ModelSpec(
@@ -723,7 +812,13 @@ def load_config(path: Path) -> tuple[list[ModelSpec], int, Optional[int]]:
             restart_buffer_seconds=float(item.get("restart_buffer_seconds", 0)),
         ))
     summary_job_id = raw.get("summary_job_id")
-    return specs, refresh_seconds, int(summary_job_id) if summary_job_id else None
+    return MonitorConfig(
+        specs=tuple(specs),
+        refresh_seconds=refresh_seconds,
+        scheduler_refresh_seconds=scheduler_refresh_seconds,
+        browser_refresh_seconds=browser_refresh_seconds,
+        summary_job_id=int(summary_job_id) if summary_job_id else None,
+    )
 
 
 def resolve_results_root() -> Path:
@@ -762,20 +857,44 @@ def update_dashboard(
     config_path: Path,
     output_path: Path,
     html_output_path: Optional[Path] = None,
+    *,
+    settings: Optional[MonitorConfig] = None,
+    jobs: Optional[dict[int, JobState]] = None,
 ) -> str:
-    specs, refresh_seconds, summary_job_id = load_config(config_path)
-    all_job_ids = [job_id for spec in specs for job_id in spec.job_ids]
-    if summary_job_id:
-        all_job_ids.append(summary_job_id)
-    jobs = query_jobs(all_job_ids)
+    settings = settings or load_config(config_path)
+    if jobs is None:
+        all_job_ids = [
+            job_id
+            for spec in settings.specs
+            for job_id in spec.job_ids
+        ]
+        if settings.summary_job_id:
+            all_job_ids.append(settings.summary_job_id)
+        jobs = query_jobs(all_job_ids)
     results_root = resolve_results_root()
-    snapshots = [collect_snapshot(spec, jobs, results_root) for spec in specs]
+    snapshots = [
+        collect_snapshot(spec, jobs, results_root)
+        for spec in settings.specs
+    ]
     now = datetime.now().astimezone()
-    summary_job = jobs.get(summary_job_id) if summary_job_id else None
-    rendered = render_markdown(snapshots, now, refresh_seconds, summary_job)
+    summary_job = (
+        jobs.get(settings.summary_job_id)
+        if settings.summary_job_id
+        else None
+    )
+    rendered = render_markdown(
+        snapshots,
+        now,
+        settings.refresh_seconds,
+        summary_job,
+        settings.browser_refresh_seconds,
+    )
     write_atomic(output_path, rendered)
     if html_output_path is not None:
-        write_atomic(html_output_path, render_html(rendered))
+        write_atomic(
+            html_output_path,
+            render_html(rendered, settings.browser_refresh_seconds),
+        )
     return rendered
 
 
@@ -793,12 +912,37 @@ def main() -> None:
     parser.add_argument("--stdout", action="store_true", help="Print each rendered snapshot")
     args = parser.parse_args()
 
-    _, configured_interval, _ = load_config(args.config)
-    interval = args.interval or configured_interval
+    settings = load_config(args.config)
+    interval = args.interval or settings.refresh_seconds
+    settings = replace(settings, refresh_seconds=interval)
     html_output = args.html_output or args.output.with_suffix(".html")
+    cached_jobs: Optional[dict[int, JobState]] = None
+    last_scheduler_refresh: Optional[float] = None
+    all_job_ids = [
+        job_id
+        for spec in settings.specs
+        for job_id in spec.job_ids
+    ]
+    if settings.summary_job_id:
+        all_job_ids.append(settings.summary_job_id)
     while True:
         try:
-            rendered = update_dashboard(args.config, args.output, html_output)
+            monotonic_now = time.monotonic()
+            if (
+                cached_jobs is None
+                or last_scheduler_refresh is None
+                or monotonic_now - last_scheduler_refresh
+                >= settings.scheduler_refresh_seconds
+            ):
+                cached_jobs = query_jobs(all_job_ids)
+                last_scheduler_refresh = monotonic_now
+            rendered = update_dashboard(
+                args.config,
+                args.output,
+                html_output,
+                settings=settings,
+                jobs=cached_jobs,
+            )
             if args.stdout:
                 print(rendered, flush=True)
             else:
