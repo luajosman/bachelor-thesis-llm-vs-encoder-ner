@@ -10,13 +10,32 @@ mkdir -p logs results
 
 export PYTHONPATH="${PROJECT_DIR}:${PYTHONPATH:-}"
 export TOKENIZERS_PARALLELISM="${TOKENIZERS_PARALLELISM:-false}"
-export HF_HOME="${HF_HOME:-${PROJECT_DIR}/.hf_cache}"
+if [ -n "${BA_NER_SCRATCH:-}" ]; then
+    mkdir -p "${BA_NER_SCRATCH}/hf-cache" "${BA_NER_SCRATCH}/results" "${BA_NER_SCRATCH}/tmp"
+    export HF_HOME="${HF_HOME:-${BA_NER_SCRATCH}/hf-cache}"
+    export BA_NER_RESULTS_ROOT="${BA_NER_RESULTS_ROOT:-${BA_NER_SCRATCH}/results}"
+    export TMPDIR="${TMPDIR:-${BA_NER_SCRATCH}/tmp}"
+    export TEMP="${TEMP:-${TMPDIR}}"
+    export TMP="${TMP:-${TMPDIR}}"
+else
+    export HF_HOME="${HF_HOME:-${PROJECT_DIR}/.hf_cache}"
+fi
 export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-${HF_HOME}/datasets}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-${HF_HOME}/transformers}"
-mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}" "${TRANSFORMERS_CACHE}"
+# Xet's parallel reconstruction is unreliable on the cluster's shared filesystem.
+export HF_HUB_DISABLE_XET="${HF_HUB_DISABLE_XET:-1}"
+export HF_HUB_DOWNLOAD_TIMEOUT="${HF_HUB_DOWNLOAD_TIMEOUT:-3600}"
+mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}" "${TRANSFORMERS_CACHE}" "${BA_NER_RESULTS_ROOT:-results}"
 
 activate_ba_ner_env() {
     local env_name="${BA_NER_CONDA_ENV:-ba-ner}"
+    local venv_path="${BA_NER_VENV:-${PROJECT_DIR}/.venv}"
+
+    if [ -x "${venv_path}/bin/python" ]; then
+        # shellcheck source=/dev/null
+        source "${venv_path}/bin/activate"
+        return
+    fi
 
     if command -v conda >/dev/null 2>&1; then
         eval "$(conda shell.bash hook)"
@@ -44,7 +63,8 @@ activate_ba_ner_env() {
         return
     fi
 
-    echo "Could not initialize conda. Set BA_NER_CONDA_ENV or load conda first." >&2
+    echo "Could not activate ${venv_path} or initialize conda." >&2
+    echo "Set BA_NER_VENV, set BA_NER_CONDA_ENV, or load conda first." >&2
     exit 1
 }
 

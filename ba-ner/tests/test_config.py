@@ -27,7 +27,8 @@ def test_final_registry_contains_exactly_eight_experiments() -> None:
     assert len(final_config_paths(regime="llm_lora")) == 3
 
 
-def test_all_final_configs_validate_against_registry() -> None:
+def test_all_final_configs_validate_against_registry(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("BA_NER_RESULTS_ROOT", raising=False)
     seen_output_dirs = set()
     for spec in FINAL_EXPERIMENTS.values():
         cfg = load_experiment_config(PROJECT_ROOT / spec.config_path)
@@ -39,6 +40,17 @@ def test_all_final_configs_validate_against_registry() -> None:
         seen_output_dirs.add(cfg["output_dir"])
 
     assert len(seen_output_dirs) == 8
+
+
+def test_output_dir_can_be_relocated_to_scratch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = load_experiment_config(PROJECT_ROOT / "configs/deberta_base.yaml")
+    monkeypatch.setenv("BA_NER_RESULTS_ROOT", "/netscratch/user/ba-ner/results")
+
+    assert output_dir_from_config(cfg) == Path(
+        "/netscratch/user/ba-ner/results/multinerd/deberta-v3-base"
+    )
 
 
 def test_decoder_training_rejects_zero_shot_config() -> None:

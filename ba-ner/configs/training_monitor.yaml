@@ -1,0 +1,41 @@
+refresh_seconds: 300
+summary_job_id: 3219835
+
+models:
+  - key: deberta-v3-base
+    label: DeBERTa v3 base
+    kind: encoder
+    job_ids: [3219783]
+
+  - key: deberta-v3-large
+    label: DeBERTa v3 large
+    kind: encoder
+    job_ids: [3219785]
+
+  - key: qwen35-08b-qlora
+    label: Qwen 0.8B
+    kind: decoder
+    job_ids: [3219769, 3220278]
+    total_steps: 24615
+    epochs: 3
+    eval_seconds_low: 650
+    eval_seconds_high: 900
+
+  - key: qwen35-4b-qlora
+    label: Qwen 4B
+    kind: decoder
+    job_ids: [3219770]
+    total_steps: 24615
+    epochs: 3
+    eval_seconds_low: 3000
+    eval_seconds_high: 5400
+
+  - key: qwen35-27b-qlora
+    label: Qwen 27B
+    kind: decoder
+    job_ids: [3219771, 3219803, 3219804, 3219805]
+    total_steps: 16410
+    epochs: 2
+    eval_seconds_low: 14400
+    eval_seconds_high: 21600
+    restart_buffer_seconds: 36000

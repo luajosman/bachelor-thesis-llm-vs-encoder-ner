@@ -19,7 +19,11 @@ Verwendung:
 from __future__ import annotations
 
 import argparse
+import inspect
+import math
+import os
 import random
+import tempfile
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -35,6 +39,7 @@ from transformers import (
     TrainerCallback,
     set_seed,
 )
+from transformers.trainer_utils import get_last_checkpoint
 
 from src.config import DATASET_LANGUAGE, DATASET_NAME, load_experiment_config, output_dir_from_config
 from src.data.dataset_loader import load_ner_dataset
@@ -51,6 +56,9 @@ from src.decoder.parse_output import (
 from src.run_metadata import collect_run_metadata
 
 console = Console()
+
+GENERATIVE_EVAL_STATE_FILENAME = "generative_eval_state.yaml"
+GENERATIVE_EVAL_STATE_VERSION = 1
 
 
 # ---------------------------------------------------------------------------
@@ -95,15 +103,16 @@ def _run_generative_eval(
     parse_diagnostics: List[Dict[str, int]] = []
 
     for i in range(n):
-        input_ids = tokenizer.apply_chat_template(
+        model_inputs = tokenizer.apply_chat_template(
             prompts[i],
             add_generation_prompt=True,
             return_tensors="pt",
+            return_dict=True,
         ).to(device)
 
         with torch.no_grad():
             output_ids = model.generate(
-                input_ids,
+                **model_inputs,
                 max_new_tokens=max_new_tokens,
                 do_sample=False,
                 temperature=None,
@@ -112,7 +121,7 @@ def _run_generative_eval(
                 pad_token_id=tokenizer.pad_token_id,
             )
 
-        prompt_len = input_ids.shape[1]
+        prompt_len = model_inputs["input_ids"].shape[1]
         new_token_ids = output_ids[0][prompt_len:]
         generated_text = tokenizer.decode(new_token_ids, skip_special_tokens=True)
 
@@ -170,10 +179,156 @@ class GenerativeDevEvalCallback(TrainerCallback):
         self.best_epoch = -1
         self.epoch_results: List[Dict] = []
         self._trainer = None
+        self._load_state()
 
     def set_trainer(self, trainer):
         """Muss nach Trainer-Erstellung aufgerufen werden."""
         self._trainer = trainer
+
+    @property
+    def state_file(self) -> Path:
+        return self.output_dir / GENERATIVE_EVAL_STATE_FILENAME
+
+    @staticmethod
+    def _metric(value: Any, field_name: str) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{field_name} muss numerisch sein")
+        metric = float(value)
+        if not math.isfinite(metric) or not 0.0 <= metric <= 1.0:
+            raise ValueError(f"{field_name} muss endlich und zwischen 0 und 1 sein")
+        return metric
+
+    @classmethod
+    def _validated_state(cls, raw_state: Any) -> Dict[str, Any]:
+        if not isinstance(raw_state, dict):
+            raise ValueError("State muss ein Mapping sein")
+        if raw_state.get("version") != GENERATIVE_EVAL_STATE_VERSION:
+            raise ValueError("Unbekannte State-Version")
+
+        raw_results = raw_state.get("epoch_results")
+        if not isinstance(raw_results, list) or not raw_results:
+            raise ValueError("epoch_results muss eine nicht-leere Liste sein")
+
+        epoch_results: List[Dict[str, Any]] = []
+        seen_epochs = set()
+        for index, raw_result in enumerate(raw_results):
+            if not isinstance(raw_result, dict):
+                raise ValueError(f"epoch_results[{index}] muss ein Mapping sein")
+            epoch = raw_result.get("epoch")
+            if isinstance(epoch, bool) or not isinstance(epoch, int) or epoch < 0:
+                raise ValueError(f"epoch_results[{index}].epoch ist ungueltig")
+            if epoch in seen_epochs:
+                raise ValueError(f"Epoche {epoch} ist doppelt vorhanden")
+            seen_epochs.add(epoch)
+            epoch_results.append({
+                "epoch": epoch,
+                "dev_f1": cls._metric(
+                    raw_result.get("dev_f1"),
+                    f"epoch_results[{index}].dev_f1",
+                ),
+                "dev_precision": cls._metric(
+                    raw_result.get("dev_precision"),
+                    f"epoch_results[{index}].dev_precision",
+                ),
+                "dev_recall": cls._metric(
+                    raw_result.get("dev_recall"),
+                    f"epoch_results[{index}].dev_recall",
+                ),
+                "parse_failure_rate": cls._metric(
+                    raw_result.get("parse_failure_rate"),
+                    f"epoch_results[{index}].parse_failure_rate",
+                ),
+            })
+
+        best_f1 = cls._metric(raw_state.get("best_f1"), "best_f1")
+        best_epoch = raw_state.get("best_epoch")
+        if (
+            isinstance(best_epoch, bool)
+            or not isinstance(best_epoch, int)
+            or best_epoch not in seen_epochs
+        ):
+            raise ValueError("best_epoch ist ungueltig")
+
+        matching_best = any(
+            result["epoch"] == best_epoch
+            and math.isclose(
+                result["dev_f1"],
+                best_f1,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            for result in epoch_results
+        )
+        max_f1 = max(result["dev_f1"] for result in epoch_results)
+        if not matching_best or not math.isclose(
+            best_f1,
+            max_f1,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
+            raise ValueError("Best-Werte passen nicht zu epoch_results")
+
+        return {
+            "best_f1": best_f1,
+            "best_epoch": best_epoch,
+            "epoch_results": epoch_results,
+        }
+
+    def _load_state(self) -> None:
+        if not self.state_file.exists():
+            return
+        try:
+            with self.state_file.open("r", encoding="utf-8") as handle:
+                state = self._validated_state(yaml.safe_load(handle))
+        except (
+            OSError,
+            UnicodeError,
+            TypeError,
+            ValueError,
+            yaml.YAMLError,
+        ) as exc:
+            console.print(
+                f"[yellow]Warnung: Generative-Eval-State in {self.state_file} "
+                f"ist ungueltig und wird ignoriert ({exc}).[/yellow]"
+            )
+            return
+
+        self.best_f1 = state["best_f1"]
+        self.best_epoch = state["best_epoch"]
+        self.epoch_results = state["epoch_results"]
+        console.print(
+            f"[cyan]Generative-Eval-State geladen: Best-F1 "
+            f"{self.best_f1:.4f} (Epoche {self.best_epoch})[/cyan]"
+        )
+
+    def _save_state(self) -> None:
+        state = {
+            "version": GENERATIVE_EVAL_STATE_VERSION,
+            "best_f1": float(self.best_f1),
+            "best_epoch": int(self.best_epoch),
+            "epoch_results": self.epoch_results,
+        }
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        temp_path: Optional[Path] = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=self.output_dir,
+                prefix=f".{self.state_file.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as handle:
+                temp_path = Path(handle.name)
+                yaml.safe_dump(state, handle, default_flow_style=False, sort_keys=False)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temp_path, self.state_file)
+        except Exception:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
+            raise
 
     def on_evaluate(self, args, state, control, **kwargs):
         """Wird nach jeder Evaluation (= nach jeder Epoche) aufgerufen."""
@@ -182,6 +337,12 @@ class GenerativeDevEvalCallback(TrainerCallback):
 
         model = self._trainer.model
         epoch = int(state.epoch) if state.epoch else 0
+        if any(result["epoch"] == epoch for result in self.epoch_results):
+            console.print(
+                f"[cyan]Generative Dev-Evaluation fuer Epoche {epoch} bereits "
+                f"gespeichert; ueberspringe Wiederholung.[/cyan]"
+            )
+            return
 
         console.print(f"\n[cyan]Generative Dev-Evaluation (Epoche {epoch})...[/cyan]")
         console.print(f"  Evaluiere {self.max_eval_samples or len(self.dev_prompts)} Samples...")
@@ -224,6 +385,8 @@ class GenerativeDevEvalCallback(TrainerCallback):
             console.print(f"  [green]Neuer Best-F1! Adapter gespeichert: {best_dir}[/green]")
         else:
             console.print(f"  [dim]Kein Improvement (Best: {self.best_f1:.4f} bei Epoche {self.best_epoch})[/dim]")
+
+        self._save_state()
 
 
 # ---------------------------------------------------------------------------
@@ -374,7 +537,7 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
     )
 
     # --- SFT-Konfiguration ---
-    sft_config = SFTConfig(
+    sft_config_kwargs = dict(
         output_dir=str(output_dir),
         num_train_epochs=cfg.get("num_train_epochs", cfg.get("epochs", 3)),
         per_device_train_batch_size=cfg.get("per_device_train_batch_size", cfg.get("batch_size", 4)),
@@ -389,17 +552,24 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
         logging_steps=cfg.get("logging_steps", 25),
         eval_strategy=cfg.get("eval_strategy", "epoch"),
         save_strategy=cfg.get("save_strategy", "epoch"),
+        save_steps=cfg.get("save_steps", 500),
         save_total_limit=cfg.get("save_total_limit", 2),
         load_best_model_at_end=False,  # Best-Model wird ueber generative Eval gewaehlt
         gradient_checkpointing=cfg.get("gradient_checkpointing", True),
         gradient_checkpointing_kwargs={"use_reentrant": False},
         packing=cfg.get("packing", False),
-        max_seq_length=max_seq_length,
         seed=seed,
         report_to="wandb" if cfg.get("use_wandb", False) else "none",
         run_name=f"{cfg.get('experiment_name')}_{DATASET_NAME}",
         dataset_text_field=None,
     )
+    length_arg = (
+        "max_length"
+        if "max_length" in inspect.signature(SFTConfig).parameters
+        else "max_seq_length"
+    )
+    sft_config_kwargs[length_arg] = max_seq_length
+    sft_config = SFTConfig(**sft_config_kwargs)
 
     # --- SFTTrainer zusammenbauen ---
     trainer = SFTTrainer(
@@ -416,8 +586,14 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
 
     # --- Training starten ---
     console.print("[bold yellow]Starte LoRA-Finetuning...[/bold yellow]")
+    last_checkpoint = get_last_checkpoint(str(output_dir))
+    if last_checkpoint:
+        console.print(
+            f"[yellow]Setze Training vom letzten Checkpoint fort: "
+            f"{last_checkpoint}[/yellow]"
+        )
     train_start = time.perf_counter()
-    trainer.train()
+    trainer.train(resume_from_checkpoint=last_checkpoint)
     train_runtime = time.perf_counter() - train_start
 
     # --- Letzten Adapter speichern (als Fallback) ---

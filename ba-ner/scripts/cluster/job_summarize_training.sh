@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=ner-compare
-#SBATCH --mem=8G
-#SBATCH --time=00:30:00
+#SBATCH --job-name=ner-train-summary
+#SBATCH --mem=4G
+#SBATCH --time=00:10:00
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
 
 set -euo pipefail
 
-RESULTS_DIR="${1:-results}"
 if [ -n "${SLURM_SUBMIT_DIR:-}" ]; then
     SCRIPT_DIR="${SLURM_SUBMIT_DIR}/scripts/cluster"
 else
@@ -19,4 +18,5 @@ source "${SCRIPT_DIR}/common.sh"
 activate_ba_ner_env
 print_runtime_info
 
-python -m src.evaluate.compare_all --results-dir "${RESULTS_DIR}"
+python -m src.evaluate.summarize_training \
+    --results-dir "${BA_NER_RESULTS_ROOT:-results}"

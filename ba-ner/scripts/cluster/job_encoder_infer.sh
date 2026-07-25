@@ -15,7 +15,11 @@ fi
 
 CONFIG="$1"
 MODEL_DIR="$2"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -n "${SLURM_SUBMIT_DIR:-}" ]; then
+    SCRIPT_DIR="${SLURM_SUBMIT_DIR}/scripts/cluster"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 # shellcheck source=common.sh
 source "${SCRIPT_DIR}/common.sh"
 

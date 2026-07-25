@@ -3,7 +3,11 @@ from __future__ import annotations
 import pytest
 
 from src.config import DATASET_LANGUAGE, DATASET_NAME
-from src.data.dataset_loader import MULTINERD_LABEL_LIST, get_dataset_info
+from src.data.dataset_loader import (
+    MULTINERD_ENGLISH_SPLIT_SIZES,
+    MULTINERD_LABEL_LIST,
+    get_dataset_info,
+)
 
 
 def test_multinerd_english_static_metadata() -> None:
@@ -13,6 +17,11 @@ def test_multinerd_english_static_metadata() -> None:
     assert info.num_labels == 31
     assert info.label_list == MULTINERD_LABEL_LIST
     assert info.label_list[0] == "O"
+    assert MULTINERD_ENGLISH_SPLIT_SIZES == {
+        "train": 131_280,
+        "validation": 16_410,
+        "test": 16_454,
+    }
     assert info.entity_types == [
         "PER",
         "ORG",

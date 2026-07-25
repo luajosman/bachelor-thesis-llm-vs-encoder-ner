@@ -19,6 +19,11 @@ from src.config import DATASET_LANGUAGE, DATASET_NAME
 console = Console()
 
 MULTINERD_HF_NAME = "Babelscape/multinerd"
+MULTINERD_ENGLISH_SPLIT_SIZES = {
+    "train": 131_280,
+    "validation": 16_410,
+    "test": 16_454,
+}
 
 MULTINERD_LABEL_LIST: List[str] = [
     "O",
@@ -88,7 +93,12 @@ def load_ner_dataset(
     from datasets import DatasetDict, load_dataset
 
     console.print(f"[cyan]Loading dataset: {MULTINERD_HF_NAME}[/cyan]")
-    raw: DatasetDict = load_dataset(MULTINERD_HF_NAME)
+    # The upstream Hub metadata expects every source row twice, while the
+    # repository files match the 164.1K English sentences reported in the paper.
+    raw: DatasetDict = load_dataset(
+        MULTINERD_HF_NAME,
+        verification_mode="no_checks",
+    )
     _validate_raw_schema(raw)
 
     console.print("[cyan]Filtering language: en[/cyan]")
@@ -97,6 +107,7 @@ def load_ner_dataset(
         filtered = filtered.remove_columns(["lang"])
 
     _validate_processed_schema(filtered)
+    _validate_english_split_sizes(filtered)
 
     for split_name in ("train", "validation", "test"):
         console.print(f"  {split_name}: {len(filtered[split_name]):,} sentences")
@@ -141,6 +152,15 @@ def _validate_processed_schema(dataset: Any) -> None:
             raise ValueError(f"{split_name} split has columns {columns}; expected {expected_columns}")
         if "lang" in columns:
             raise ValueError(f"{split_name} split still contains a lang column after English filtering")
+
+
+def _validate_english_split_sizes(dataset: Any) -> None:
+    actual = {split: len(dataset[split]) for split in MULTINERD_ENGLISH_SPLIT_SIZES}
+    if actual != MULTINERD_ENGLISH_SPLIT_SIZES:
+        raise ValueError(
+            "MultiNERD English split sizes do not match the source release. "
+            f"Expected {MULTINERD_ENGLISH_SPLIT_SIZES}, got {actual}."
+        )
 
 
 def _extract_label_names(feature: Any) -> List[str] | None:

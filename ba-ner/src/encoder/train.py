@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import inspect
 import random
 import time
 from pathlib import Path
@@ -79,17 +80,25 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
         num_labels=info.num_labels,
         id2label=info.id2label,
         label2id=info.label2id,
+        torch_dtype=torch.float32,
         ignore_mismatched_sizes=True,
     )
+    parameter_dtypes = {parameter.dtype for parameter in model.parameters()}
+    if parameter_dtypes != {torch.float32}:
+        raise RuntimeError(
+            f"Encoder parameters must load as float32, got: {parameter_dtypes}"
+        )
 
     output_dir = output_dir_from_config(cfg)
     output_dir.mkdir(parents=True, exist_ok=True)
     best_model_dir = output_dir / "best_model"
 
     # --- TrainingArguments konfigurieren ---
-    # Hardware-Erkennung: bf16 bevorzugen wenn verfuegbar, sonst fp16
-    use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
-    use_fp16 = torch.cuda.is_available() and not use_bf16
+    # Mixed precision can be disabled per experiment when a model is unstable.
+    cuda_available = torch.cuda.is_available()
+    bf16_supported = cuda_available and torch.cuda.is_bf16_supported()
+    use_bf16 = bf16_supported and bool(cfg.get("bf16", True))
+    use_fp16 = cuda_available and not use_bf16 and bool(cfg.get("fp16", True))
 
     training_args = TrainingArguments(
         output_dir=str(output_dir),
@@ -114,6 +123,7 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
         fp16=use_fp16,
         seed=seed,
         logging_steps=cfg.get("logging_steps", 50),
+        logging_nan_inf_filter=False,
         report_to="wandb" if cfg.get("use_wandb", False) else "none",
         run_name=f"{cfg.get('experiment_name')}_{DATASET_NAME}",
     )
@@ -130,16 +140,22 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
     early_stopping_patience = cfg.get("early_stopping_patience", 1)
 
     # --- Trainer zusammenbauen ---
-    trainer = Trainer(
+    trainer_kwargs = dict(
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset["train"],
         eval_dataset=tokenized_dataset["validation"],
-        tokenizer=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         callbacks=[EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)],
     )
+    tokenizer_arg = (
+        "processing_class"
+        if "processing_class" in inspect.signature(Trainer).parameters
+        else "tokenizer"
+    )
+    trainer_kwargs[tokenizer_arg] = tokenizer
+    trainer = Trainer(**trainer_kwargs)
 
     # --- Training starten ---
     console.print("[bold yellow]Starte Training...[/bold yellow]")

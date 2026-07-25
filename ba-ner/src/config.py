@@ -8,6 +8,7 @@ and three Qwen3.5 LoRA/QLoRA runs.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
@@ -202,7 +203,11 @@ def validate_experiment_config(
 
 def output_dir_from_config(cfg: Dict[str, Any]) -> Path:
     validate_experiment_config(cfg)
-    return Path(str(cfg["output_dir"]))
+    configured_output = Path(str(cfg["output_dir"]))
+    results_root = os.environ.get("BA_NER_RESULTS_ROOT")
+    if not results_root:
+        return configured_output
+    return Path(results_root) / configured_output.relative_to(RESULTS_ROOT)
 
 
 def _experiment_by_name(experiment_name: str) -> ExperimentSpec:
