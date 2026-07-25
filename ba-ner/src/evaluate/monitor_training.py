@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import html
 import math
 import os
 import re
@@ -22,6 +23,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "training_monitor.yaml"
 DEFAULT_OUTPUT = PROJECT_ROOT / "results" / "training_monitor.md"
+DEFAULT_BROWSER_REFRESH_SECONDS = 30
 ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 PROGRESS_RE = re.compile(
     r"(?P<percent>\d+)%\|[^\r\n]*?\|\s*"
@@ -539,6 +541,169 @@ def render_markdown(
     return "\n".join(lines)
 
 
+def _inline_markdown(value: str) -> str:
+    rendered = html.escape(value.rstrip())
+    rendered = re.sub(r"`([^`]+)`", r"<code>\1</code>", rendered)
+    rendered = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", rendered)
+    rendered = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", rendered)
+    return rendered
+
+
+def _markdown_body(markdown: str) -> str:
+    """Render the small, controlled Markdown subset used by this dashboard."""
+    lines = markdown.splitlines()
+    rendered: list[str] = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if not line.strip():
+            index += 1
+            continue
+        if line.startswith("# "):
+            rendered.append(f"<h1>{_inline_markdown(line[2:])}</h1>")
+            index += 1
+            continue
+        if line.startswith("## "):
+            rendered.append(f"<h2>{_inline_markdown(line[3:])}</h2>")
+            index += 1
+            continue
+        if (
+            line.startswith("|")
+            and index + 1 < len(lines)
+            and re.fullmatch(r"\|[\s:|-]+\|", lines[index + 1])
+        ):
+            headers = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            index += 2
+            rows: list[list[str]] = []
+            while index < len(lines) and lines[index].startswith("|"):
+                rows.append([
+                    cell.strip()
+                    for cell in lines[index].strip().strip("|").split("|")
+                ])
+                index += 1
+            table = ["<div class=\"table-wrap\"><table><thead><tr>"]
+            table.extend(f"<th>{_inline_markdown(cell)}</th>" for cell in headers)
+            table.append("</tr></thead><tbody>")
+            for row in rows:
+                table.append("<tr>")
+                table.extend(f"<td>{_inline_markdown(cell)}</td>" for cell in row)
+                table.append("</tr>")
+            table.append("</tbody></table></div>")
+            rendered.append("".join(table))
+            continue
+        rendered.append(f"<p>{_inline_markdown(line)}</p>")
+        index += 1
+    return "\n".join(rendered)
+
+
+def render_html(
+    markdown: str,
+    browser_refresh_seconds: int = DEFAULT_BROWSER_REFRESH_SECONDS,
+) -> str:
+    if browser_refresh_seconds <= 0:
+        raise ValueError("browser_refresh_seconds must be positive")
+    body = _markdown_body(markdown)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="{browser_refresh_seconds}">
+  <title>Training Live Monitor</title>
+  <style>
+    :root {{
+      color-scheme: light dark;
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --border: #d8dee9;
+      --accent: #2563eb;
+      --stripe: #f8fafc;
+    }}
+    @media (prefers-color-scheme: dark) {{
+      :root {{
+        --bg: #0f172a;
+        --panel: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #374151;
+        --accent: #60a5fa;
+        --stripe: #172033;
+      }}
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }}
+    main {{
+      width: min(1440px, calc(100% - 32px));
+      margin: 24px auto;
+      padding: 28px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgb(15 23 42 / 8%);
+    }}
+    h1 {{ margin: 0 0 8px; font-size: clamp(1.65rem, 4vw, 2.25rem); }}
+    h2 {{
+      margin: 32px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.2rem;
+    }}
+    p {{ margin: 5px 0; }}
+    code {{
+      padding: 2px 5px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--stripe);
+    }}
+    .table-wrap {{ overflow-x: auto; }}
+    table {{ width: 100%; border-collapse: collapse; white-space: nowrap; }}
+    th, td {{
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+    }}
+    th {{ background: color-mix(in srgb, var(--accent) 12%, var(--panel)); }}
+    tbody tr:nth-child(even) {{ background: var(--stripe); }}
+    .reload {{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      padding: 7px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      box-shadow: 0 4px 14px rgb(15 23 42 / 12%);
+      font-size: 12px;
+    }}
+  </style>
+</head>
+<body>
+  <main>{body}</main>
+  <div class="reload" aria-live="polite">
+    Page reload in <span id="reload-countdown">{browser_refresh_seconds}</span>s
+  </div>
+  <script>
+    const refreshSeconds = {browser_refresh_seconds};
+    const loadedAt = Date.now();
+    const countdown = document.getElementById("reload-countdown");
+    window.setInterval(() => {{
+      const elapsed = Math.floor((Date.now() - loadedAt) / 1000);
+      countdown.textContent = String(Math.max(refreshSeconds - elapsed, 0));
+    }}, 1000);
+  </script>
+</body>
+</html>
+"""
+
+
 def load_config(path: Path) -> tuple[list[ModelSpec], int, Optional[int]]:
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     refresh_seconds = int(raw.get("refresh_seconds", 300))
@@ -585,6 +750,7 @@ def write_atomic(path: Path, content: str) -> None:
             handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
+        temp_path.chmod(0o644)
         os.replace(temp_path, path)
     except Exception:
         if temp_path is not None:
@@ -592,7 +758,11 @@ def write_atomic(path: Path, content: str) -> None:
         raise
 
 
-def update_dashboard(config_path: Path, output_path: Path) -> str:
+def update_dashboard(
+    config_path: Path,
+    output_path: Path,
+    html_output_path: Optional[Path] = None,
+) -> str:
     specs, refresh_seconds, summary_job_id = load_config(config_path)
     all_job_ids = [job_id for spec in specs for job_id in spec.job_ids]
     if summary_job_id:
@@ -604,6 +774,8 @@ def update_dashboard(config_path: Path, output_path: Path) -> str:
     summary_job = jobs.get(summary_job_id) if summary_job_id else None
     rendered = render_markdown(snapshots, now, refresh_seconds, summary_job)
     write_atomic(output_path, rendered)
+    if html_output_path is not None:
+        write_atomic(html_output_path, render_html(rendered))
     return rendered
 
 
@@ -611,6 +783,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--html-output",
+        type=Path,
+        help="Auto-refreshing HTML output (defaults next to --output)",
+    )
     parser.add_argument("--interval", type=int, help="Override refresh interval in seconds")
     parser.add_argument("--once", action="store_true", help="Write one snapshot and exit")
     parser.add_argument("--stdout", action="store_true", help="Print each rendered snapshot")
@@ -618,15 +795,16 @@ def main() -> None:
 
     _, configured_interval, _ = load_config(args.config)
     interval = args.interval or configured_interval
+    html_output = args.html_output or args.output.with_suffix(".html")
     while True:
         try:
-            rendered = update_dashboard(args.config, args.output)
+            rendered = update_dashboard(args.config, args.output, html_output)
             if args.stdout:
                 print(rendered, flush=True)
             else:
                 print(
                     f"{datetime.now().astimezone():%Y-%m-%d %H:%M:%S %Z}: "
-                    f"updated {args.output}",
+                    f"updated {args.output} and {html_output}",
                     flush=True,
                 )
         except Exception as exc:

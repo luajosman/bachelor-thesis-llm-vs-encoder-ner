@@ -13,7 +13,9 @@ from src.evaluate.monitor_training import (
     estimate_remaining,
     parse_progress,
     parse_train_metrics,
+    render_html,
     render_markdown,
+    write_atomic,
 )
 
 
@@ -128,3 +130,35 @@ def test_render_markdown_contains_requested_live_sections() -> None:
     assert "**All models** | Parallel" in rendered
     assert "90.00%" in rendered
     assert "Final summary job: `99` (PENDING)" in rendered
+
+
+def test_render_html_auto_refreshes_and_renders_dashboard_tables() -> None:
+    markdown = "\n".join([
+        "# Training Live Monitor",
+        "",
+        "**Updated:** 2026-07-25 19:00:00 CEST",
+        "",
+        "## Live Estimate",
+        "",
+        "| Model | Status |",
+        "|---|---|",
+        "| Qwen <test> | **RUNNING** |",
+    ])
+
+    rendered = render_html(markdown, browser_refresh_seconds=30)
+
+    assert '<meta http-equiv="refresh" content="30">' in rendered
+    assert 'id="reload-countdown">30</span>' in rendered
+    assert "<h1>Training Live Monitor</h1>" in rendered
+    assert "<table>" in rendered
+    assert "<strong>RUNNING</strong>" in rendered
+    assert "Qwen &lt;test&gt;" in rendered
+
+
+def test_write_atomic_makes_dashboard_browser_readable(tmp_path) -> None:
+    output = tmp_path / "training_monitor.html"
+
+    write_atomic(output, "<p>live</p>")
+
+    assert output.read_text(encoding="utf-8") == "<p>live</p>"
+    assert output.stat().st_mode & 0o777 == 0o644
