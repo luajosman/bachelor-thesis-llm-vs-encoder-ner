@@ -126,6 +126,7 @@ def run_encoder_inference(
     saved_samples: List[Dict]      = []
 
     console.print(f"[cyan]Inferenz auf {len(test_split)} Test-Samples...[/cyan]")
+    inference_started = time.perf_counter()
 
     for i, sample in enumerate(test_split):
         input_ids      = torch.tensor([sample["input_ids"]]).to(device)
@@ -161,6 +162,13 @@ def run_encoder_inference(
             "gold":   true_labels,
             "pred":   pred_labels,
         })
+        completed = i + 1
+        if completed % 100 == 0 or completed == len(test_split):
+            inference_elapsed = time.perf_counter() - inference_started
+            console.print(
+                f"INFERENCE_PROGRESS {completed}/{len(test_split)} "
+                f"elapsed={inference_elapsed:.3f}s"
+            )
 
     vram_peak = get_vram_peak_mb()
 

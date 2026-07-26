@@ -194,6 +194,7 @@ def run_decoder_inference(
     latencies_ms:   List[float]      = []
 
     console.print(f"\n[cyan]Generiere fuer {len(prompts)} Test-Samples...[/cyan]")
+    inference_started = time.perf_counter()
 
     with Progress(
         TextColumn("[progress.description]{task.description}"),
@@ -247,6 +248,13 @@ def run_decoder_inference(
             parse_statuses.append(status)
             parse_diagnostics.append(diagnostics)
 
+            completed = i + 1
+            if completed % 100 == 0 or completed == len(prompts):
+                inference_elapsed = time.perf_counter() - inference_started
+                console.print(
+                    f"INFERENCE_PROGRESS {completed}/{len(prompts)} "
+                    f"elapsed={inference_elapsed:.3f}s"
+                )
             progress.advance(task)
 
     vram_peak = get_vram_peak_mb()

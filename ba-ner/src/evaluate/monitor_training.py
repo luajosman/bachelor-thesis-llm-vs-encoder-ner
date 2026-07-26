@@ -20,6 +20,8 @@ from typing import Any, Iterable, Optional
 
 import yaml
 
+from src.config import FINAL_EXPERIMENTS
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "training_monitor.yaml"
@@ -30,6 +32,11 @@ PROGRESS_RE = re.compile(
     r"(?P<percent>\d+)%\|[^\r\n]*?\|\s*"
     r"(?P<step>\d+)/(?P<total>\d+)\s*\[[^\]]*?"
     r"(?P<rate>\d+(?:\.\d+)?)(?P<unit>s/it|it/s)\]"
+)
+INFERENCE_PROGRESS_RE = re.compile(
+    r"INFERENCE_PROGRESS\s+"
+    r"(?P<completed>\d+)/(?P<total>\d+)\s+"
+    r"elapsed=(?P<elapsed>\d+(?:\.\d+)?)s"
 )
 ERROR_RE = re.compile(
     r"Traceback|OutOfMemoryError|out of memory|CUDA error|RuntimeError|Exception",
@@ -58,6 +65,8 @@ class MonitorConfig:
     scheduler_refresh_seconds: int
     browser_refresh_seconds: int
     summary_job_id: Optional[int]
+    result_job_ids: dict[str, tuple[int, ...]]
+    result_time_limits_seconds: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -95,6 +104,35 @@ class ModelSnapshot:
     eta_high_seconds: Optional[float] = None
 
 
+@dataclass(frozen=True)
+class FinalResultSnapshot:
+    experiment_name: str
+    regime: str
+    status: str
+    metrics: dict[str, Any]
+    job: Optional[JobState] = None
+    inference_progress: Optional[InferenceProgress] = None
+    time_limit_seconds: Optional[float] = None
+
+
+@dataclass(frozen=True)
+class InferenceProgress:
+    completed: int
+    total: int
+    elapsed_seconds: float
+
+    @property
+    def percent(self) -> float:
+        return 100.0 * self.completed / self.total if self.total else 0.0
+
+    @property
+    def remaining_seconds(self) -> Optional[float]:
+        if self.completed <= 0:
+            return None
+        seconds_per_sample = self.elapsed_seconds / self.completed
+        return max(self.total - self.completed, 0) * seconds_per_sample
+
+
 def _read_tail(path: Path, max_bytes: int = 4_000_000) -> str:
     if not path.is_file():
         return ""
@@ -120,6 +158,19 @@ def parse_progress(text: str) -> Optional[Progress]:
         total=int(match.group("total")),
         seconds_per_step=statistics.median(recent_rates),
     )
+
+
+def parse_inference_progress(text: str) -> Optional[InferenceProgress]:
+    matches = list(INFERENCE_PROGRESS_RE.finditer(ANSI_RE.sub("", text)))
+    if not matches:
+        return None
+    match = matches[-1]
+    completed = int(match.group("completed"))
+    total = int(match.group("total"))
+    elapsed_seconds = float(match.group("elapsed"))
+    if completed < 0 or total <= 0 or completed > total or elapsed_seconds < 0:
+        return None
+    return InferenceProgress(completed, total, elapsed_seconds)
 
 
 def parse_train_metrics(text: str) -> dict[str, Any]:
@@ -376,6 +427,99 @@ def collect_snapshot(
     return snapshot
 
 
+def _choose_result_job(
+    job_ids: tuple[int, ...],
+    jobs: dict[int, JobState],
+) -> Optional[JobState]:
+    candidates = [jobs[job_id] for job_id in job_ids if job_id in jobs]
+    if not candidates:
+        return JobState(job_ids[-1], "UNKNOWN") if job_ids else None
+    priority = {
+        "RUNNING": 0,
+        "COMPLETING": 1,
+        "CONFIGURING": 2,
+        "PENDING": 3,
+    }
+    return min(
+        candidates,
+        key=lambda job: (
+            priority.get(job.state, 10),
+            -job_ids.index(job.job_id),
+        ),
+    )
+
+
+def _result_status(
+    *,
+    inference_complete: bool,
+    job: Optional[JobState],
+    has_training_metrics: bool,
+    has_artifacts: bool,
+) -> str:
+    if inference_complete:
+        return "Complete"
+    if job is not None:
+        return {
+            "RUNNING": "Inference running",
+            "COMPLETING": "Inference completing",
+            "CONFIGURING": "Inference starting",
+            "PENDING": "Inference queued",
+            "COMPLETED": "Result pending",
+        }.get(job.state, job.state)
+    if has_training_metrics:
+        return "Test pending"
+    return "Training" if has_artifacts else "Waiting"
+
+
+def collect_final_results(
+    results_root: Path,
+    result_job_ids: Optional[dict[str, tuple[int, ...]]] = None,
+    result_time_limits_seconds: Optional[dict[str, float]] = None,
+    jobs: Optional[dict[int, JobState]] = None,
+) -> list[FinalResultSnapshot]:
+    """Collect every canonical experiment, including runs without metrics yet."""
+    result_job_ids = result_job_ids or {}
+    result_time_limits_seconds = result_time_limits_seconds or {}
+    jobs = jobs or {}
+    snapshots = []
+    for experiment in FINAL_EXPERIMENTS.values():
+        result_dir = results_root / experiment.experiment_name
+        training_metrics = _load_yaml(result_dir / "results.yaml")
+        inference_metrics = _load_yaml(result_dir / "inference_metrics.yaml")
+        metrics = {**training_metrics, **inference_metrics}
+        inference_complete = all(
+            _finite_number(inference_metrics.get(name)) is not None
+            for name in ("test_f1", "test_precision", "test_recall")
+        )
+        job = _choose_result_job(
+            result_job_ids.get(experiment.experiment_name, ()),
+            jobs,
+        )
+        stdout_log = _find_log(job.job_id, "out") if job else None
+        inference_progress = parse_inference_progress(
+            _read_tail(stdout_log) if stdout_log else ""
+        )
+        has_artifacts = result_dir.is_dir() and any(result_dir.iterdir())
+
+        snapshots.append(FinalResultSnapshot(
+            experiment_name=experiment.experiment_name,
+            regime=experiment.regime,
+            status=_result_status(
+                inference_complete=inference_complete,
+                job=job,
+                has_training_metrics=bool(training_metrics),
+                has_artifacts=has_artifacts,
+            ),
+            metrics=metrics,
+            job=job,
+            inference_progress=inference_progress,
+            time_limit_seconds=result_time_limits_seconds.get(
+                experiment.experiment_name
+            ),
+        ))
+    return snapshots
+
+
 def _format_percent(value: Any) -> str:
     number = _finite_number(value)
     return "-" if number is None else f"{100.0 * number:.2f}%"
@@ -413,6 +557,103 @@ def _format_duration(seconds: Optional[float]) -> str:
     return f"{hours / 24.0:.1f} d"
 
 
+def _format_compact_duration(seconds: Optional[float]) -> str:
+    if seconds is None:
+        return "-"
+    seconds = max(int(round(seconds)), 0)
+    if seconds < 60:
+        return f"{seconds}s"
+    minutes, remainder = divmod(seconds, 60)
+    if minutes < 60:
+        return f"{minutes}m {remainder:02d}s"
+    hours, minutes = divmod(minutes, 60)
+    if hours < 24:
+        return f"{hours}h {minutes:02d}m"
+    days, hours = divmod(hours, 24)
+    return f"{days}d {hours:02d}h"
+
+
+def _slurm_elapsed_seconds(value: str) -> Optional[float]:
+    if not value or value == "-":
+        return None
+    try:
+        days = 0
+        clock = value
+        if "-" in value:
+            day_text, clock = value.split("-", 1)
+            days = int(day_text)
+        parts = [int(part) for part in clock.split(":")]
+        if len(parts) == 3:
+            hours, minutes, seconds = parts
+        elif len(parts) == 2:
+            hours = 0
+            minutes, seconds = parts
+        elif len(parts) == 1:
+            hours = minutes = 0
+            seconds = parts[0]
+        else:
+            return None
+    except ValueError:
+        return None
+    return float(days * 86400 + hours * 3600 + minutes * 60 + seconds)
+
+
+def _inference_time_cells(
+    result: FinalResultSnapshot,
+    now: datetime,
+) -> tuple[str, str, str, str, str]:
+    job = result.job
+    elapsed_seconds = _slurm_elapsed_seconds(job.elapsed) if job else None
+    elapsed_cell = _format_compact_duration(elapsed_seconds)
+    if result.status == "Complete":
+        return elapsed_cell, "100%", elapsed_cell, "complete", "complete"
+
+    progress = result.inference_progress
+    if progress is not None:
+        remaining = progress.remaining_seconds
+        total = (
+            elapsed_seconds + remaining
+            if elapsed_seconds is not None and remaining is not None
+            else progress.elapsed_seconds + (remaining or 0.0)
+        )
+        finish = (
+            (now + timedelta(seconds=remaining)).strftime("%Y-%m-%d %H:%M %Z")
+            if remaining is not None
+            else "-"
+        )
+        return (
+            elapsed_cell,
+            f"{progress.percent:.1f}% ({progress.completed:,}/{progress.total:,})",
+            f"~{_format_compact_duration(total)}",
+            f"~{_format_compact_duration(remaining)}",
+            finish,
+        )
+
+    limit = result.time_limit_seconds
+    if job is not None and job.state in ACTIVE_STATES and limit is not None:
+        if job.state == "RUNNING":
+            remaining_budget = max(limit - (elapsed_seconds or 0.0), 0.0)
+            finish = (
+                now + timedelta(seconds=remaining_budget)
+            ).strftime("by %Y-%m-%d %H:%M %Z")
+            return (
+                elapsed_cell,
+                "measuring",
+                f"≤ {_format_compact_duration(limit)} (limit)",
+                f"≤ {_format_compact_duration(remaining_budget)} (limit)",
+                finish,
+            )
+        return (
+            elapsed_cell,
+            "not started",
+            f"≤ {_format_compact_duration(limit)} (limit)",
+            f"≤ {_format_compact_duration(limit)} after start",
+            "after scheduling",
+        )
+
+    return elapsed_cell, "-", "-", "-", "-"
+
+
 def _format_eta_range(low: Optional[float], high: Optional[float]) -> str:
     if low is None or high is None:
         return "-"
@@ -432,6 +673,22 @@ def _format_finish(now: datetime, low: Optional[float], high: Optional[float]) -
     if start.date() == end.date():
         return f"{start:%Y-%m-%d %H:%M}-{end:%H:%M} {zone}".strip()
     return f"{start:%Y-%m-%d %H:%M} - {end:%Y-%m-%d %H:%M} {zone}".strip()
+
+
+def _validation_f1(result: FinalResultSnapshot) -> Any:
+    return (
+        result.metrics.get("best_validation_f1")
+        or result.metrics.get("best_dev_f1")
+        or result.metrics.get("best_f1")
+    )
+
+
+def _regime_label(regime: str) -> str:
+    return {
+        "encoder": "Encoder",
+        "llm_lora": "LLM LoRA/QLoRA",
+        "llm_zeroshot": "LLM zero-shot",
+    }.get(regime, regime)
 
 
 def _progress_cell(snapshot: ModelSnapshot) -> str:
@@ -464,6 +721,7 @@ def render_markdown(
     refresh_seconds: int,
     summary_job: Optional[JobState],
     browser_refresh_seconds: int = DEFAULT_BROWSER_REFRESH_SECONDS,
+    final_results: Optional[list[FinalResultSnapshot]] = None,
 ) -> str:
     decoder_snapshots = [s for s in snapshots if s.spec.kind == "decoder"]
     lines = [
@@ -585,6 +843,54 @@ def render_markdown(
             f"{_format_percent(best_row.get('parse_failure_rate'))} |"
         )
 
+    if final_results is not None:
+        lines.extend([
+            "",
+            "## All Final Experiments",
+            "",
+            "| Experiment | Regime | Status | Job | Validation F1 | Test F1 | Test precision | Test recall | Mean latency | Result folder |",
+            "|---|---|---|---:|---:|---:|---:|---:|---:|---|",
+        ])
+        for result in final_results:
+            latency = _finite_number(result.metrics.get("latency_ms_mean"))
+            latency_cell = "-" if latency is None else f"{latency:.1f} ms"
+            job_cell = str(result.job.job_id) if result.job else "-"
+            validation_cell = (
+                "N/A"
+                if result.regime == "llm_zeroshot"
+                else _format_percent(_validation_f1(result))
+            )
+            lines.append(
+                f"| {result.experiment_name} | "
+                f"{_regime_label(result.regime)} | "
+                f"{result.status} | "
+                f"{job_cell} | "
+                f"{validation_cell} | "
+                f"{_format_percent(result.metrics.get('test_f1'))} | "
+                f"{_format_percent(result.metrics.get('test_precision'))} | "
+                f"{_format_percent(result.metrics.get('test_recall'))} | "
+                f"{latency_cell} | "
+                f"`results/multinerd/{result.experiment_name}` |"
+            )
+
+        lines.extend([
+            "",
+            "## Inference Time Estimates",
+            "",
+            "| Experiment | Job | Status | Elapsed | Progress | Estimated inference time | Estimated remaining | Expected finish |",
+            "|---|---:|---|---:|---:|---:|---:|---|",
+        ])
+        for result in final_results:
+            elapsed, progress, total, remaining, finish = _inference_time_cells(
+                result,
+                now,
+            )
+            job_cell = str(result.job.job_id) if result.job else "-"
+            lines.append(
+                f"| {result.experiment_name} | {job_cell} | {result.status} | "
+                f"{elapsed} | {progress} | {total} | {remaining} | {finish} |"
+            )
+
     lines.extend([
         "",
         "## Recovery Checkpoints",
@@ -612,7 +918,7 @@ def render_markdown(
         "",
         *(alerts or ["All selected jobs have no active error signature."]),
         "",
-        f"Final summary job: `{summary_job.job_id if summary_job else '-'}` "
+        f"Final comparison job: `{summary_job.job_id if summary_job else '-'}` "
         f"({summary_job.state if summary_job else 'UNKNOWN'})",
         "",
         "_ETAs combine the measured step rate with remaining epoch validation and "
@@ -812,12 +1118,26 @@ def load_config(path: Path) -> MonitorConfig:
             restart_buffer_seconds=float(item.get("restart_buffer_seconds", 0)),
         ))
     summary_job_id = raw.get("summary_job_id")
+    raw_result_jobs = raw.get("result_jobs", {})
+    result_job_ids = {
+        str(experiment_name): tuple(int(job_id) for job_id in job_ids)
+        for experiment_name, job_ids in raw_result_jobs.items()
+    }
+    raw_time_limits = raw.get("result_time_limits_hours", {})
+    result_time_limits_seconds = {
+        str(experiment_name): float(hours) * 3600.0
+        for experiment_name, hours in raw_time_limits.items()
+    }
+    if any(seconds <= 0 for seconds in result_time_limits_seconds.values()):
+        raise ValueError("result_time_limits_hours values must be positive")
     return MonitorConfig(
         specs=tuple(specs),
         refresh_seconds=refresh_seconds,
         scheduler_refresh_seconds=scheduler_refresh_seconds,
         browser_refresh_seconds=browser_refresh_seconds,
         summary_job_id=int(summary_job_id) if summary_job_id else None,
+        result_job_ids=result_job_ids,
+        result_time_limits_seconds=result_time_limits_seconds,
     )
 
 
@@ -870,12 +1190,20 @@ def update_dashboard(
         ]
         if settings.summary_job_id:
             all_job_ids.append(settings.summary_job_id)
+        for result_jobs in settings.result_job_ids.values():
+            all_job_ids.extend(result_jobs)
         jobs = query_jobs(all_job_ids)
     results_root = resolve_results_root()
     snapshots = [
         collect_snapshot(spec, jobs, results_root)
         for spec in settings.specs
     ]
+    final_results = collect_final_results(
+        results_root,
+        settings.result_job_ids,
+        settings.result_time_limits_seconds,
+        jobs,
+    )
     now = datetime.now().astimezone()
     summary_job = (
         jobs.get(settings.summary_job_id)
@@ -888,6 +1216,7 @@ def update_dashboard(
         settings.refresh_seconds,
         summary_job,
         settings.browser_refresh_seconds,
+        final_results,
     )
     write_atomic(output_path, rendered)
     if html_output_path is not None:
@@ -925,6 +1254,8 @@ def main() -> None:
     ]
     if settings.summary_job_id:
         all_job_ids.append(settings.summary_job_id)
+    for result_jobs in settings.result_job_ids.values():
+        all_job_ids.extend(result_jobs)
     while True:
         try:
             monotonic_now = time.monotonic()

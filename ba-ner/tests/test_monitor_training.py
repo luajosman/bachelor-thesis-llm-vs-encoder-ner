@@ -7,6 +7,8 @@ import pytest
 
 from src.evaluate.monitor_training import (
     _encoder_validation_metrics,
+    collect_final_results,
+    FinalResultSnapshot,
     JobState,
     MonitorConfig,
     ModelSnapshot,
@@ -15,6 +17,7 @@ from src.evaluate.monitor_training import (
     choose_job,
     estimate_remaining,
     load_config,
+    parse_inference_progress,
     parse_progress,
     parse_train_metrics,
     render_html,
@@ -61,6 +64,21 @@ def test_parse_train_metrics_skips_unrelated_dicts() -> None:
         "mean_token_accuracy": 0.95,
         "step": 25,
     }
+
+
+def test_parse_inference_progress_uses_latest_sample() -> None:
+    text = "\n".join([
+        "INFERENCE_PROGRESS 100/1000 elapsed=20.000s",
+        "INFERENCE_PROGRESS 250/1000 elapsed=45.500s",
+    ])
+
+    progress = parse_inference_progress(text)
+
+    assert progress is not None
+    assert progress.completed == 250
+    assert progress.total == 1000
+    assert progress.percent == pytest.approx(25.0)
+    assert progress.remaining_seconds == pytest.approx(136.5)
 
 
 def test_choose_job_prefers_running_resume() -> None:
@@ -156,6 +174,14 @@ def test_render_markdown_contains_requested_live_sections() -> None:
         datetime.now().astimezone(),
         refresh_seconds=300,
         summary_job=JobState(99, "PENDING"),
+        final_results=[
+            FinalResultSnapshot(
+                experiment_name="qwen-test",
+                regime="llm_zeroshot",
+                status="Training",
+                metrics={},
+            ),
+        ],
     )
 
     assert "**Data refresh:** every 5 minutes" in rendered
@@ -163,11 +189,56 @@ def test_render_markdown_contains_requested_live_sections() -> None:
     assert "## Live Estimate" in rendered
     assert "## Live Training Metrics" in rendered
     assert "## Validation Results" in rendered
+    assert "## All Final Experiments" in rendered
+    assert "## Inference Time Estimates" in rendered
     assert "## Recovery Checkpoints" in rendered
     assert "Qwen test | RUNNING" in rendered
     assert "**All models** | Parallel" in rendered
     assert "90.00%" in rendered
-    assert "Final summary job: `99` (PENDING)" in rendered
+    assert "Final comparison job: `99` (PENDING)" in rendered
+    assert "`results/multinerd/qwen-test`" in rendered
+    assert "| qwen-test | LLM zero-shot | Training | - | N/A |" in rendered
+
+
+def test_collect_final_results_includes_all_experiments_and_metrics(tmp_path) -> None:
+    result_dir = tmp_path / "deberta-v3-base"
+    result_dir.mkdir()
+    (result_dir / "results.yaml").write_text(
+        "best_validation_f1: 0.9\n",
+        encoding="utf-8",
+    )
+    (result_dir / "inference_metrics.yaml").write_text(
+        "\n".join([
+            "test_f1: 0.88",
+            "test_precision: 0.87",
+            "test_recall: 0.89",
+        ]),
+        encoding="utf-8",
+    )
+
+    results = collect_final_results(tmp_path)
+
+    assert len(results) == 8
+    assert results[0].experiment_name == "deberta-v3-base"
+    assert results[0].status == "Complete"
+    assert results[0].metrics["test_f1"] == 0.88
+    assert {result.status for result in results[1:]} == {"Waiting"}
+
+
+def test_collect_final_results_shows_inference_job_state(tmp_path) -> None:
+    results = collect_final_results(
+        tmp_path,
+        {"qwen35-08b-zeroshot": (123,)},
+        jobs={123: JobState(123, "RUNNING", "00:01", "node1")},
+    )
+
+    qwen = next(
+        result
+        for result in results
+        if result.experiment_name == "qwen35-08b-zeroshot"
+    )
+    assert qwen.status == "Inference running"
+    assert qwen.job == JobState(123, "RUNNING", "00:01", "node1")
 
 
 def test_render_markdown_includes_encoder_validation_details() -> None:
@@ -258,6 +329,8 @@ def test_load_config_supports_separate_refresh_intervals(tmp_path) -> None:
         scheduler_refresh_seconds=60,
         browser_refresh_seconds=15,
         summary_job_id=None,
+        result_job_ids={},
+        result_time_limits_seconds={},
     )
 
 
