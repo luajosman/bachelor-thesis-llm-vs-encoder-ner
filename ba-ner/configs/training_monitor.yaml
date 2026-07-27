@@ -1,7 +1,7 @@
 refresh_seconds: 30
 scheduler_refresh_seconds: 60
 browser_refresh_seconds: 15
-summary_job_id: 3221510
+summary_job_id: 3226685
 
 result_jobs:
   deberta-v3-base: [3221505]
@@ -9,19 +9,19 @@ result_jobs:
   qwen35-08b-zeroshot: [3221498, 3226654]
   qwen35-4b-zeroshot: [3221499, 3226655]
   qwen35-27b-zeroshot: [3221500, 3226656]
-  qwen35-08b-qlora: [3221507]
-  qwen35-4b-qlora: [3225154]
-  qwen35-27b-qlora: [3221509]
+  qwen35-08b-qlora: [3221507, 3226682]
+  qwen35-4b-qlora: [3225154, 3226683]
+  qwen35-27b-qlora: [3221509, 3226684]
 
 result_time_limits_hours:
   deberta-v3-base: 3
   deberta-v3-large: 3
   qwen35-08b-zeroshot: 24
-  qwen35-4b-zeroshot: 48
+  qwen35-4b-zeroshot: 72
   qwen35-27b-zeroshot: 72
-  qwen35-08b-qlora: 8
-  qwen35-4b-qlora: 8
-  qwen35-27b-qlora: 8
+  qwen35-08b-qlora: 24
+  qwen35-4b-qlora: 72
+  qwen35-27b-qlora: 72
 
 models:
   - key: deberta-v3-base

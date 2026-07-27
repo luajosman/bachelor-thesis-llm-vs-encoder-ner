@@ -2,7 +2,7 @@
 #SBATCH --job-name=ner-lora-infer
 #SBATCH --gres=gpu:a100:1
 #SBATCH --mem=96G
-#SBATCH --time=08:00:00
+#SBATCH --time=3-00:00:00
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
 

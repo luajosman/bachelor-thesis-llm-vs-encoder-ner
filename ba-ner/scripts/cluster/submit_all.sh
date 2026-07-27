@@ -19,13 +19,15 @@ MEM_QWEN_27B="${MEM_QWEN_27B:-160G}"
 TIME_ENCODER_BASE_TRAIN="${TIME_ENCODER_BASE_TRAIN:-04:00:00}"
 TIME_ENCODER_LARGE_TRAIN="${TIME_ENCODER_LARGE_TRAIN:-08:00:00}"
 TIME_ENCODER_INFER="${TIME_ENCODER_INFER:-03:00:00}"
-TIME_QWEN_08B_ZS="${TIME_QWEN_08B_ZS:-04:00:00}"
-TIME_QWEN_4B_ZS="${TIME_QWEN_4B_ZS:-08:00:00}"
-TIME_QWEN_27B_ZS="${TIME_QWEN_27B_ZS:-16:00:00}"
+TIME_QWEN_08B_ZS="${TIME_QWEN_08B_ZS:-1-00:00:00}"
+TIME_QWEN_4B_ZS="${TIME_QWEN_4B_ZS:-3-00:00:00}"
+TIME_QWEN_27B_ZS="${TIME_QWEN_27B_ZS:-3-00:00:00}"
 TIME_QWEN_08B_TRAIN="${TIME_QWEN_08B_TRAIN:-12:00:00}"
 TIME_QWEN_4B_TRAIN="${TIME_QWEN_4B_TRAIN:-24:00:00}"
 TIME_QWEN_27B_TRAIN="${TIME_QWEN_27B_TRAIN:-48:00:00}"
-TIME_QWEN_INFER="${TIME_QWEN_INFER:-08:00:00}"
+TIME_QWEN_08B_INFER="${TIME_QWEN_08B_INFER:-1-00:00:00}"
+TIME_QWEN_4B_INFER="${TIME_QWEN_4B_INFER:-3-00:00:00}"
+TIME_QWEN_27B_INFER="${TIME_QWEN_27B_INFER:-3-00:00:00}"
 
 submit_job() {
     local description="$1"
@@ -110,7 +112,7 @@ lora_08b_infer="$(submit_job "qwen35-08b lora infer" \
     --dependency="afterok:${lora_08b_train}" \
     --gres="${GPU_QWEN}" \
     --mem="${MEM_QWEN_08B}" \
-    --time="${TIME_QWEN_INFER}" \
+    --time="${TIME_QWEN_08B_INFER}" \
     scripts/cluster/job_decoder_lora_infer.sh configs/qwen35_08b.yaml results/multinerd/qwen35-08b-qlora/best_lora_adapter)"
 all_inference_jobs+=("${lora_08b_infer}")
 
@@ -125,7 +127,7 @@ lora_4b_infer="$(submit_job "qwen35-4b lora infer" \
     --dependency="afterok:${lora_4b_train}" \
     --gres="${GPU_QWEN}" \
     --mem="${MEM_QWEN_4B}" \
-    --time="${TIME_QWEN_INFER}" \
+    --time="${TIME_QWEN_4B_INFER}" \
     scripts/cluster/job_decoder_lora_infer.sh configs/qwen35_4b.yaml results/multinerd/qwen35-4b-qlora/best_lora_adapter)"
 all_inference_jobs+=("${lora_4b_infer}")
 
@@ -140,7 +142,7 @@ lora_27b_infer="$(submit_job "qwen35-27b lora infer" \
     --dependency="afterok:${lora_27b_train}" \
     --gres="${GPU_QWEN}" \
     --mem="${MEM_QWEN_27B}" \
-    --time="${TIME_QWEN_INFER}" \
+    --time="${TIME_QWEN_27B_INFER}" \
     scripts/cluster/job_decoder_lora_infer.sh configs/qwen35_27b.yaml results/multinerd/qwen35-27b-qlora/best_lora_adapter)"
 all_inference_jobs+=("${lora_27b_infer}")
 
