@@ -9,6 +9,7 @@ import yaml
 from src.decoder import train
 from src.decoder.train import (
     GENERATIVE_EVAL_STATE_FILENAME,
+    GENERATIVE_EVAL_STATE_VERSION,
     GenerativeDevEvalCallback,
 )
 
@@ -59,7 +60,7 @@ def test_eval_state_survives_callback_restart(
     state_file = tmp_path / GENERATIVE_EVAL_STATE_FILENAME
     persisted = yaml.safe_load(state_file.read_text(encoding="utf-8"))
     assert persisted == {
-        "version": 1,
+        "version": GENERATIVE_EVAL_STATE_VERSION,
         "best_f1": 0.75,
         "best_epoch": 1,
         "epoch_results": [{
@@ -124,6 +125,31 @@ def test_restarted_callback_skips_an_already_persisted_epoch(
 
     assert model.save_calls == 0
     assert len(restarted.epoch_results) == 1
+
+
+def test_previous_generation_contract_eval_state_is_ignored(tmp_path: Path) -> None:
+    state_file = tmp_path / GENERATIVE_EVAL_STATE_FILENAME
+    state_file.write_text(
+        yaml.safe_dump({
+            "version": GENERATIVE_EVAL_STATE_VERSION - 1,
+            "best_f1": 0.38,
+            "best_epoch": 1,
+            "epoch_results": [{
+                "epoch": 1,
+                "dev_f1": 0.38,
+                "dev_precision": 0.97,
+                "dev_recall": 0.24,
+                "parse_failure_rate": 0.71,
+            }],
+        }),
+        encoding="utf-8",
+    )
+
+    callback = _callback(tmp_path)
+
+    assert callback.best_f1 == -1.0
+    assert callback.best_epoch == -1
+    assert callback.epoch_results == []
 
 
 @pytest.mark.parametrize(

@@ -53,12 +53,14 @@ from src.decoder.parse_output import (
     evaluate_llm_predictions,
     parse_llm_output_with_diagnostics,
 )
+from src.decoder.generation import THINKING_ENABLED, prepare_generation_inputs
 from src.run_metadata import collect_run_metadata
 
 console = Console()
 
 GENERATIVE_EVAL_STATE_FILENAME = "generative_eval_state.yaml"
-GENERATIVE_EVAL_STATE_VERSION = 1
+# Version 2 invalidates metrics produced with Qwen thinking implicitly enabled.
+GENERATIVE_EVAL_STATE_VERSION = 2
 
 
 # ---------------------------------------------------------------------------
@@ -103,12 +105,7 @@ def _run_generative_eval(
     parse_diagnostics: List[Dict[str, int]] = []
 
     for i in range(n):
-        model_inputs = tokenizer.apply_chat_template(
-            prompts[i],
-            add_generation_prompt=True,
-            return_tensors="pt",
-            return_dict=True,
-        ).to(device)
+        model_inputs = prepare_generation_inputs(tokenizer, prompts[i], device)
 
         with torch.no_grad():
             output_ids = model.generate(
@@ -627,6 +624,7 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
         "epoch_results":         gen_eval_callback.epoch_results,
         "best_adapter_dir":      str(best_adapter_dir),
         "last_adapter_dir":      str(last_adapter_dir),
+        "thinking_enabled":      THINKING_ENABLED,
         "seed":                  seed,
         "run_metadata":          collect_run_metadata(cfg),
     }

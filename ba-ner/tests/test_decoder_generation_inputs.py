@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 from transformers import BatchEncoding
 
-from src.decoder import train
+from src.decoder import inference, train
 
 
 class _Tokenizer:
@@ -11,6 +11,8 @@ class _Tokenizer:
     pad_token_id = 0
 
     def apply_chat_template(self, messages, **kwargs):
+        assert kwargs["add_generation_prompt"] is True
+        assert kwargs["enable_thinking"] is False
         assert kwargs["return_tensors"] == "pt"
         assert kwargs["return_dict"] is True
         return BatchEncoding({
@@ -67,4 +69,18 @@ def test_generative_eval_passes_batch_encoding_as_keyword_inputs(monkeypatch):
     )
 
     assert metrics == {"f1": 0.0}
+    assert set(model.generate_kwargs) >= {"input_ids", "attention_mask"}
+
+
+def test_inference_warmup_uses_direct_answer_generation():
+    model = _Model()
+
+    inference._warmup(
+        model=model,
+        tokenizer=_Tokenizer(),
+        sample_messages=[{"role": "user", "content": "example"}],
+        device=torch.device("cpu"),
+        max_new_tokens=256,
+    )
+
     assert set(model.generate_kwargs) >= {"input_ids", "attention_mask"}

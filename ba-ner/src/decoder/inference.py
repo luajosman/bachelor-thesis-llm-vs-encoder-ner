@@ -50,6 +50,7 @@ from src.decoder.parse_output import (
     evaluate_llm_predictions,
     parse_llm_output_with_diagnostics,
 )
+from src.decoder.generation import THINKING_ENABLED, prepare_generation_inputs
 from src.evaluate.efficiency import count_parameters, get_vram_peak_mb, reset_vram_tracking
 from src.run_metadata import collect_run_metadata
 
@@ -206,12 +207,7 @@ def run_decoder_inference(
         task = progress.add_task("Generiere...", total=len(prompts))
 
         for i, (messages, tokens) in enumerate(zip(prompts, tokens_list)):
-            model_inputs = tokenizer.apply_chat_template(
-                messages,
-                add_generation_prompt=True,
-                return_tensors="pt",
-                return_dict=True,
-            ).to(device)
+            model_inputs = prepare_generation_inputs(tokenizer, messages, device)
 
             if device.type == "cuda":
                 torch.cuda.synchronize()
@@ -321,6 +317,7 @@ def run_decoder_inference(
         "latency_ms_p95":  latency_p95,
         "vram_peak_mb":    vram_peak,
         "total_params":    total_params,
+        "thinking_enabled": THINKING_ENABLED,
         "seed":            seed,
         "max_new_tokens":  max_new_tokens,
         "run_metadata":    collect_run_metadata(cfg),
@@ -340,12 +337,7 @@ def run_decoder_inference(
 def _warmup(model, tokenizer, sample_messages: List[Dict], device, max_new_tokens: int) -> None:
     """Fuehrt einen einzelnen Generate-Aufruf zur Aufwaermung der CUDA-Caches durch."""
     console.print("[dim]Waerme CUDA-Caches auf...[/dim]")
-    model_inputs = tokenizer.apply_chat_template(
-        sample_messages,
-        add_generation_prompt=True,
-        return_tensors="pt",
-        return_dict=True,
-    ).to(device)
+    model_inputs = prepare_generation_inputs(tokenizer, sample_messages, device)
     with torch.no_grad():
         model.generate(
             **model_inputs,

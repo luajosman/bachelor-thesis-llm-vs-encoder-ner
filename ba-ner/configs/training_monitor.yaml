@@ -10,7 +10,7 @@ result_jobs:
   qwen35-4b-zeroshot: [3221499]
   qwen35-27b-zeroshot: [3221500]
   qwen35-08b-qlora: [3221507]
-  qwen35-4b-qlora: [3221508]
+  qwen35-4b-qlora: [3225154]
   qwen35-27b-qlora: [3221509]
 
 result_time_limits_hours:
@@ -46,7 +46,7 @@ models:
   - key: qwen35-4b-qlora
     label: Qwen 4B
     kind: decoder
-    job_ids: [3219770]
+    job_ids: [3219770, 3225153]
     total_steps: 24615
     epochs: 3
     eval_seconds_low: 3000
