@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any, Dict, List
@@ -55,6 +56,62 @@ from src.evaluate.efficiency import count_parameters, get_vram_peak_mb, reset_vr
 from src.run_metadata import collect_run_metadata
 
 console = Console()
+INFERENCE_CHECKPOINT_VERSION = 1
+INFERENCE_CHECKPOINT_FILENAME = "inference_checkpoint.jsonl"
+
+
+def _load_inference_checkpoint(
+    path: Path,
+    expected_header: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    if not path.is_file():
+        return []
+    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    if not lines:
+        return []
+    try:
+        header = json.loads(lines[0])
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(f"Invalid inference checkpoint header: {path}") from exc
+    if header != expected_header:
+        raise RuntimeError(
+            f"Inference checkpoint does not match this run: {path}"
+        )
+
+    records = []
+    for line in lines[1:]:
+        try:
+            record = json.loads(line)
+        except (TypeError, ValueError):
+            break
+        if (
+            not isinstance(record, dict)
+            or record.get("index") != len(records)
+            or not isinstance(record.get("pred_entities"), list)
+            or not isinstance(record.get("raw_output"), str)
+            or not isinstance(record.get("parse_status"), str)
+            or not isinstance(record.get("parse_diagnostics"), dict)
+            or not isinstance(record.get("latency_ms"), (int, float))
+            or not isinstance(record.get("elapsed_seconds"), (int, float))
+        ):
+            break
+        records.append(record)
+    return records
+
+
+def _write_inference_checkpoint(
+    path: Path,
+    header: Dict[str, Any],
+    records: List[Dict[str, Any]],
+) -> None:
+    temporary = path.with_name(f".{path.name}.tmp")
+    with temporary.open("w", encoding="utf-8") as handle:
+        handle.write(json.dumps(header, ensure_ascii=False) + "\n")
+        for record in records:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, path)
 
 
 # ---------------------------------------------------------------------------
@@ -183,75 +240,151 @@ def run_decoder_inference(
     tokens_list: List[List[str]] = [s["tokens"] for s in raw_test]
     valid_types = frozenset(info.entity_types)
 
+    output_dir = output_dir_from_config(cfg)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = output_dir / INFERENCE_CHECKPOINT_FILENAME
+    checkpoint_header = {
+        "version": INFERENCE_CHECKPOINT_VERSION,
+        "experiment_name": cfg["experiment_name"],
+        "model_name": base_model_name,
+        "regime": regime_label,
+        "thinking_enabled": THINKING_ENABLED,
+        "max_new_tokens": max_new_tokens,
+        "seed": seed,
+        "total_samples": len(prompts),
+    }
+    checkpoint_records = _load_inference_checkpoint(
+        checkpoint_path,
+        checkpoint_header,
+    )
+    _write_inference_checkpoint(
+        checkpoint_path,
+        checkpoint_header,
+        checkpoint_records,
+    )
+    if checkpoint_records:
+        console.print(
+            f"[yellow]Setze Inferenz bei Sample {len(checkpoint_records):,}/"
+            f"{len(prompts):,} fort: {checkpoint_path}[/yellow]"
+        )
+
     # --- Warmup-Lauf ---
     reset_vram_tracking()
     _warmup(model, tokenizer, prompts[0], device, max_new_tokens)
 
     # --- Inferenz-Schleife ---
-    pred_entities:  List[List[Dict]] = []
-    parse_statuses: List[str]        = []
-    parse_diagnostics: List[Dict[str, int]] = []
-    raw_outputs:    List[str]        = []
-    latencies_ms:   List[float]      = []
+    pred_entities: List[List[Dict]] = [
+        record["pred_entities"] for record in checkpoint_records
+    ]
+    parse_statuses: List[str] = [
+        record["parse_status"] for record in checkpoint_records
+    ]
+    parse_diagnostics: List[Dict[str, int]] = [
+        record["parse_diagnostics"] for record in checkpoint_records
+    ]
+    raw_outputs: List[str] = [
+        record["raw_output"] for record in checkpoint_records
+    ]
+    latencies_ms: List[float] = [
+        float(record["latency_ms"]) for record in checkpoint_records
+    ]
+    previous_elapsed = (
+        float(checkpoint_records[-1]["elapsed_seconds"])
+        if checkpoint_records
+        else 0.0
+    )
+    start_index = len(checkpoint_records)
 
     console.print(f"\n[cyan]Generiere fuer {len(prompts)} Test-Samples...[/cyan]")
     inference_started = time.perf_counter()
 
-    with Progress(
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        MofNCompleteColumn(),
-        TimeElapsedColumn(),
-        console=console,
-    ) as progress:
-        task = progress.add_task("Generiere...", total=len(prompts))
-
-        for i, (messages, tokens) in enumerate(zip(prompts, tokens_list)):
-            model_inputs = prepare_generation_inputs(tokenizer, messages, device)
-
-            if device.type == "cuda":
-                torch.cuda.synchronize()
-            t0 = time.perf_counter()
-
-            with torch.no_grad():
-                output_ids = model.generate(
-                    **model_inputs,
-                    max_new_tokens=max_new_tokens,
-                    do_sample=False,
-                    temperature=None,
-                    top_p=None,
-                    eos_token_id=tokenizer.eos_token_id,
-                    pad_token_id=tokenizer.pad_token_id,
-                )
-
-            if device.type == "cuda":
-                torch.cuda.synchronize()
-            t1 = time.perf_counter()
-            latencies_ms.append((t1 - t0) * 1000)
-
-            prompt_len     = model_inputs["input_ids"].shape[1]
-            new_token_ids  = output_ids[0][prompt_len:]
-            generated_text = tokenizer.decode(new_token_ids, skip_special_tokens=True)
-
-            raw_outputs.append(generated_text)
-
-            entities, status, diagnostics = parse_llm_output_with_diagnostics(
-                generated_text,
-                tokens,
-                valid_types,
+    with checkpoint_path.open("a", encoding="utf-8") as checkpoint_handle:
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task(
+                "Generiere...",
+                total=len(prompts),
+                completed=start_index,
             )
-            pred_entities.append(entities)
-            parse_statuses.append(status)
-            parse_diagnostics.append(diagnostics)
 
-            completed = i + 1
-            if completed % 100 == 0 or completed == len(prompts):
-                inference_elapsed = time.perf_counter() - inference_started
-                console.print(
-                    f"INFERENCE_PROGRESS {completed}/{len(prompts)} "
-                    f"elapsed={inference_elapsed:.3f}s"
+            for i in range(start_index, len(prompts)):
+                messages = prompts[i]
+                tokens = tokens_list[i]
+                model_inputs = prepare_generation_inputs(
+                    tokenizer,
+                    messages,
+                    device,
                 )
-            progress.advance(task)
+
+                if device.type == "cuda":
+                    torch.cuda.synchronize()
+                t0 = time.perf_counter()
+
+                with torch.no_grad():
+                    output_ids = model.generate(
+                        **model_inputs,
+                        max_new_tokens=max_new_tokens,
+                        do_sample=False,
+                        temperature=None,
+                        top_p=None,
+                        eos_token_id=tokenizer.eos_token_id,
+                        pad_token_id=tokenizer.pad_token_id,
+                    )
+
+                if device.type == "cuda":
+                    torch.cuda.synchronize()
+                t1 = time.perf_counter()
+                latencies_ms.append((t1 - t0) * 1000)
+
+                prompt_len = model_inputs["input_ids"].shape[1]
+                new_token_ids = output_ids[0][prompt_len:]
+                generated_text = tokenizer.decode(
+                    new_token_ids,
+                    skip_special_tokens=True,
+                )
+
+                raw_outputs.append(generated_text)
+
+                entities, status, diagnostics = (
+                    parse_llm_output_with_diagnostics(
+                        generated_text,
+                        tokens,
+                        valid_types,
+                    )
+                )
+                pred_entities.append(entities)
+                parse_statuses.append(status)
+                parse_diagnostics.append(diagnostics)
+
+                completed = i + 1
+                elapsed_seconds = (
+                    previous_elapsed + time.perf_counter() - inference_started
+                )
+                record = {
+                    "index": i,
+                    "pred_entities": entities,
+                    "raw_output": generated_text,
+                    "parse_status": status,
+                    "parse_diagnostics": diagnostics,
+                    "latency_ms": latencies_ms[-1],
+                    "elapsed_seconds": elapsed_seconds,
+                }
+                checkpoint_handle.write(
+                    json.dumps(record, ensure_ascii=False) + "\n"
+                )
+                checkpoint_handle.flush()
+                os.fsync(checkpoint_handle.fileno())
+                if completed % 100 == 0 or completed == len(prompts):
+                    console.print(
+                        f"INFERENCE_PROGRESS {completed}/{len(prompts)} "
+                        f"elapsed={elapsed_seconds:.3f}s"
+                    )
+                progress.advance(task)
 
     vram_peak = get_vram_peak_mb()
 
@@ -278,9 +411,6 @@ def run_decoder_inference(
     console.print(f"VRAM-Peak: {vram_peak:.1f} MB")
 
     # --- Ausgaben speichern ---
-    output_dir = output_dir_from_config(cfg)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
     saved_samples = [
         {
             "tokens":        tokens,
@@ -326,6 +456,7 @@ def run_decoder_inference(
     with open(inf_file, "w") as f:
         yaml.dump(full_metrics, f, default_flow_style=False)
     console.print(f"Inferenz-Metriken gespeichert: {inf_file}")
+    checkpoint_path.unlink(missing_ok=True)
 
     return full_metrics
 
