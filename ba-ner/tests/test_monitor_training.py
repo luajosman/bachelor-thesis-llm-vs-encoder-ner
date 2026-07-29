@@ -264,6 +264,37 @@ def test_collect_final_results_shows_inference_job_state(tmp_path) -> None:
     assert qwen.job == JobState(123, "RUNNING", "00:01", "node1")
 
 
+def test_pending_replacement_hides_stale_completed_inference_metrics(tmp_path) -> None:
+    result_dir = tmp_path / "qwen35-08b-zeroshot"
+    result_dir.mkdir()
+    (result_dir / "inference_metrics.yaml").write_text(
+        "\n".join([
+            "test_f1: 0.0046",
+            "test_precision: 0.0931",
+            "test_recall: 0.0024",
+        ]),
+        encoding="utf-8",
+    )
+
+    results = collect_final_results(
+        tmp_path,
+        {"qwen35-08b-zeroshot": (100, 101)},
+        jobs={
+            100: JobState(100, "COMPLETED", "01:43"),
+            101: JobState(101, "PENDING", "00:00"),
+        },
+    )
+
+    qwen = next(
+        result
+        for result in results
+        if result.experiment_name == "qwen35-08b-zeroshot"
+    )
+    assert qwen.status == "Inference queued"
+    assert qwen.job == JobState(101, "PENDING", "00:00")
+    assert "test_f1" not in qwen.metrics
+
+
 def test_render_markdown_includes_encoder_validation_details() -> None:
     spec = ModelSpec(
         key="deberta-test",

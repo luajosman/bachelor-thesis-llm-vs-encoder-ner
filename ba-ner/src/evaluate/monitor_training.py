@@ -456,16 +456,21 @@ def _result_status(
     has_training_metrics: bool,
     has_artifacts: bool,
 ) -> str:
-    if inference_complete:
-        return "Complete"
     if job is not None:
-        return {
+        active_status = {
             "RUNNING": "Inference running",
             "COMPLETING": "Inference completing",
             "CONFIGURING": "Inference starting",
             "PENDING": "Inference queued",
-            "COMPLETED": "Result pending",
-        }.get(job.state, job.state)
+        }.get(job.state)
+        if active_status is not None:
+            return active_status
+        if job.state in {"FAILED", "OUT_OF_MEMORY", "TIMEOUT", "CANCELLED"}:
+            return job.state
+    if inference_complete:
+        return "Complete"
+    if job is not None:
+        return "Result pending" if job.state == "COMPLETED" else job.state
     if has_training_metrics:
         return "Test pending"
     return "Training" if has_artifacts else "Waiting"
@@ -486,14 +491,21 @@ def collect_final_results(
         result_dir = results_root / experiment.experiment_name
         training_metrics = _load_yaml(result_dir / "results.yaml")
         inference_metrics = _load_yaml(result_dir / "inference_metrics.yaml")
-        metrics = {**training_metrics, **inference_metrics}
-        inference_complete = all(
-            _finite_number(inference_metrics.get(name)) is not None
-            for name in ("test_f1", "test_precision", "test_recall")
-        )
         job = _choose_result_job(
             result_job_ids.get(experiment.experiment_name, ()),
             jobs,
+        )
+        # A newly queued/running replacement supersedes metrics left by an
+        # earlier completed run in the same canonical result directory.
+        current_inference_metrics = (
+            {}
+            if job is not None and job.state in ACTIVE_STATES
+            else inference_metrics
+        )
+        metrics = {**training_metrics, **current_inference_metrics}
+        inference_complete = all(
+            _finite_number(current_inference_metrics.get(name)) is not None
+            for name in ("test_f1", "test_precision", "test_recall")
         )
         stdout_log = _find_log(job.job_id, "out") if job else None
         inference_progress = parse_inference_progress(
