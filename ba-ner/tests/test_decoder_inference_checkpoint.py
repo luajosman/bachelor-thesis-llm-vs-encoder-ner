@@ -10,12 +10,15 @@ from src.decoder.inference import (
 
 def _header():
     return {
-        "version": 1,
+        "version": 2,
         "experiment_name": "test",
         "model_name": "model",
         "regime": "llm_zeroshot",
         "thinking_enabled": False,
         "max_new_tokens": 256,
+        "generation_batch_size": 1,
+        "precision_mode": "qlora_4bit",
+        "attn_impl": "sdpa",
         "seed": 42,
         "total_samples": 2,
     }
@@ -65,3 +68,33 @@ def test_inference_checkpoint_rejects_different_run(tmp_path):
 
     with pytest.raises(RuntimeError, match="does not match"):
         _load_inference_checkpoint(path, other_header)
+
+
+def test_inference_checkpoint_accepts_legacy_batch_one_qlora_run(tmp_path):
+    path = tmp_path / "checkpoint.jsonl"
+    legacy_header = {
+        key: value
+        for key, value in _header().items()
+        if key not in {"generation_batch_size", "precision_mode", "attn_impl"}
+    }
+    legacy_header["version"] = 1
+    _write_inference_checkpoint(path, legacy_header, [_record(0)])
+
+    assert _load_inference_checkpoint(path, _header()) == [_record(0)]
+
+
+def test_inference_checkpoint_rejects_legacy_run_for_batched_generation(tmp_path):
+    path = tmp_path / "checkpoint.jsonl"
+    legacy_header = {
+        key: value
+        for key, value in _header().items()
+        if key not in {"generation_batch_size", "precision_mode", "attn_impl"}
+    }
+    legacy_header["version"] = 1
+    _write_inference_checkpoint(path, legacy_header, [_record(0)])
+
+    with pytest.raises(RuntimeError, match="does not match"):
+        _load_inference_checkpoint(
+            path,
+            {**_header(), "generation_batch_size": 16},
+        )

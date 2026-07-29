@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 from transformers import BatchEncoding
 
-from src.decoder import inference, train
+from src.decoder import generation, inference, train
 
 
 class _Tokenizer:
@@ -23,6 +23,32 @@ class _Tokenizer:
     def decode(self, token_ids, skip_special_tokens):
         assert skip_special_tokens is True
         return "[]"
+
+
+class _BatchTokenizer:
+    padding_side = "right"
+
+    def __init__(self) -> None:
+        self.rendered = []
+        self.tokenizer_kwargs = None
+
+    def apply_chat_template(self, messages, **kwargs):
+        assert kwargs == {
+            "add_generation_prompt": True,
+            "enable_thinking": False,
+            "tokenize": False,
+        }
+        rendered = messages[0]["content"]
+        self.rendered.append(rendered)
+        return rendered
+
+    def __call__(self, prompts, **kwargs):
+        self.tokenizer_kwargs = kwargs
+        assert prompts == ["short", "long prompt"]
+        return BatchEncoding({
+            "input_ids": torch.tensor([[0, 4, 5], [6, 7, 8]]),
+            "attention_mask": torch.tensor([[0, 1, 1], [1, 1, 1]]),
+        })
 
 
 class _Model:
@@ -84,3 +110,36 @@ def test_inference_warmup_uses_direct_answer_generation():
     )
 
     assert set(model.generate_kwargs) >= {"input_ids", "attention_mask"}
+
+
+def test_generation_batch_inputs_render_without_thinking_and_left_pad():
+    tokenizer = _BatchTokenizer()
+
+    result = generation.prepare_generation_batch_inputs(
+        tokenizer,
+        [
+            [{"role": "user", "content": "short"}],
+            [{"role": "user", "content": "long prompt"}],
+        ],
+        torch.device("cpu"),
+    )
+
+    assert tokenizer.padding_side == "left"
+    assert tokenizer.tokenizer_kwargs == {
+        "add_special_tokens": False,
+        "padding": True,
+        "return_tensors": "pt",
+    }
+    assert result["input_ids"].shape == (2, 3)
+
+
+def test_generation_one_item_batch_preserves_original_path():
+    tokenizer = _Tokenizer()
+
+    result = generation.prepare_generation_batch_inputs(
+        tokenizer,
+        [[{"role": "user", "content": "example"}]],
+        torch.device("cpu"),
+    )
+
+    assert result["input_ids"].tolist() == [[4, 5]]

@@ -7,6 +7,7 @@ import pytest
 
 from src.evaluate.monitor_training import (
     _encoder_validation_metrics,
+    _inference_time_cells,
     collect_final_results,
     FinalResultSnapshot,
     JobState,
@@ -79,6 +80,28 @@ def test_parse_inference_progress_uses_latest_sample() -> None:
     assert progress.total == 1000
     assert progress.percent == pytest.approx(25.0)
     assert progress.remaining_seconds == pytest.approx(136.5)
+
+
+def test_pending_inference_distinguishes_unknown_eta_from_time_limit() -> None:
+    result = FinalResultSnapshot(
+        experiment_name="qwen-test",
+        regime="llm_zeroshot",
+        status="Inference queued",
+        metrics={},
+        job=JobState(123, "PENDING", "00:00"),
+        time_limit_seconds=3 * 86400,
+    )
+
+    assert _inference_time_cells(
+        result,
+        datetime.now().astimezone(),
+    ) == (
+        "0s",
+        "not started",
+        "unknown (limit: 3d 00h)",
+        "unknown until start",
+        "waiting for scheduler",
+    )
 
 
 def test_choose_job_prefers_running_resume() -> None:

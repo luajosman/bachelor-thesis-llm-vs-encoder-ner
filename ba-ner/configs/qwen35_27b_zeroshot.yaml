@@ -1,8 +1,8 @@
 # Qwen3.5-27B — Zero-Shot Baseline (kein Training)
 # Hauptbenchmark: MultiNERD (englisch)
 #
-# Hinweis: Auch im Zero-Shot Mode benoetigt Qwen3.5-27B mit 4-bit
-# Quantisierung mindestens ~24 GB VRAM. Ohne Quantisierung deutlich mehr.
+# Hinweis: BF16 inference needs an approximately 54 GB model allocation and is
+# therefore assigned to an H100 NVL with 96 GB VRAM.
 
 experiment_name: qwen35-27b-zeroshot
 model_name: Qwen/Qwen3.5-27B
@@ -13,12 +13,15 @@ mode: zeroshot
 dataset: multinerd
 dataset_language: en
 
-# 4-bit-Quantisierung ist hier praktisch Pflicht
-use_qlora: true
+# BF16 keeps inference precision consistent across all three zero-shot Qwen
+# models and avoids the measured bitsandbytes generation overhead.
+use_qlora: false
 attn_impl: sdpa
 
 # Generierung
 max_new_tokens: 256
+inference_batch_size: 1
+checkpoint_sync_interval: 100
 
 # Reproduzierbarkeit
 seed: 42

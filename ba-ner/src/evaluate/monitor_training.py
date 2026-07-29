@@ -639,16 +639,16 @@ def _inference_time_cells(
             return (
                 elapsed_cell,
                 "measuring",
-                f"≤ {_format_compact_duration(limit)} (limit)",
-                f"≤ {_format_compact_duration(remaining_budget)} (limit)",
-                finish,
+                f"measuring (limit: {_format_compact_duration(limit)})",
+                f"measuring (budget: {_format_compact_duration(remaining_budget)})",
+                f"{finish} if the full limit is used",
             )
         return (
             elapsed_cell,
             "not started",
-            f"≤ {_format_compact_duration(limit)} (limit)",
-            f"≤ {_format_compact_duration(limit)} after start",
-            "after scheduling",
+            f"unknown (limit: {_format_compact_duration(limit)})",
+            "unknown until start",
+            "waiting for scheduler",
         )
 
     return elapsed_cell, "-", "-", "-", "-"

@@ -51,13 +51,41 @@ from src.decoder.parse_output import (
     evaluate_llm_predictions,
     parse_llm_output_with_diagnostics,
 )
-from src.decoder.generation import THINKING_ENABLED, prepare_generation_inputs
+from src.decoder.generation import (
+    THINKING_ENABLED,
+    prepare_generation_batch_inputs,
+    prepare_generation_inputs,
+)
 from src.evaluate.efficiency import count_parameters, get_vram_peak_mb, reset_vram_tracking
 from src.run_metadata import collect_run_metadata
 
 console = Console()
-INFERENCE_CHECKPOINT_VERSION = 1
+INFERENCE_CHECKPOINT_VERSION = 2
 INFERENCE_CHECKPOINT_FILENAME = "inference_checkpoint.jsonl"
+
+
+def _legacy_checkpoint_header(expected_header: Dict[str, Any]) -> Dict[str, Any] | None:
+    """Return the v1 equivalent for an unchanged batch-size-one QLoRA run."""
+    if (
+        expected_header.get("version") != 2
+        or expected_header.get("generation_batch_size") != 1
+        or expected_header.get("precision_mode") != "qlora_4bit"
+        or expected_header.get("attn_impl") != "sdpa"
+    ):
+        return None
+    legacy_keys = (
+        "experiment_name",
+        "model_name",
+        "regime",
+        "thinking_enabled",
+        "max_new_tokens",
+        "seed",
+        "total_samples",
+    )
+    return {
+        "version": 1,
+        **{key: expected_header[key] for key in legacy_keys},
+    }
 
 
 def _load_inference_checkpoint(
@@ -73,7 +101,7 @@ def _load_inference_checkpoint(
         header = json.loads(lines[0])
     except (TypeError, ValueError) as exc:
         raise RuntimeError(f"Invalid inference checkpoint header: {path}") from exc
-    if header != expected_header:
+    if header != expected_header and header != _legacy_checkpoint_header(expected_header):
         raise RuntimeError(
             f"Inference checkpoint does not match this run: {path}"
         )
@@ -178,9 +206,16 @@ def run_decoder_inference(
         f"[bold cyan]Decoder-Inferenz ({mode_str}): {cfg['experiment_name']} on MultiNERD English[/bold cyan]"
     )
 
-    use_qlora:      bool = cfg.get("use_qlora", True)
-    attn_impl:      str  = cfg.get("attn_impl", "sdpa")
-    max_new_tokens: int  = int(cfg.get("max_new_tokens", 256))
+    use_qlora:                bool = cfg.get("use_qlora", True)
+    attn_impl:                str  = cfg.get("attn_impl", "sdpa")
+    max_new_tokens:           int  = int(cfg.get("max_new_tokens", 256))
+    generation_batch_size:    int  = int(cfg.get("inference_batch_size", 1))
+    checkpoint_sync_interval: int  = int(cfg.get("checkpoint_sync_interval", 100))
+    if generation_batch_size < 1:
+        raise ValueError("inference_batch_size must be >= 1")
+    if checkpoint_sync_interval < 1:
+        raise ValueError("checkpoint_sync_interval must be >= 1")
+    precision_mode = "qlora_4bit" if use_qlora else "bf16"
 
     # --- Tokenizer laden ---
     # Bei Zero-Shot direkt vom Basismodell, sonst vom Adapter-Verzeichnis
@@ -190,6 +225,7 @@ def run_decoder_inference(
     if tokenizer.pad_token is None:
         tokenizer.pad_token    = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
+    tokenizer.padding_side = "left"
 
     # --- Basismodell laden ---
     console.print(f"[cyan]Lade Basismodell: {base_model_name}[/cyan]")
@@ -250,6 +286,9 @@ def run_decoder_inference(
         "regime": regime_label,
         "thinking_enabled": THINKING_ENABLED,
         "max_new_tokens": max_new_tokens,
+        "generation_batch_size": generation_batch_size,
+        "precision_mode": precision_mode,
+        "attn_impl": attn_impl,
         "seed": seed,
         "total_samples": len(prompts),
     }
@@ -295,10 +334,18 @@ def run_decoder_inference(
     )
     start_index = len(checkpoint_records)
 
-    console.print(f"\n[cyan]Generiere fuer {len(prompts)} Test-Samples...[/cyan]")
+    console.print(
+        f"\n[cyan]Generiere fuer {len(prompts)} Test-Samples "
+        f"(Batch-Groesse {generation_batch_size}, Checkpoint-Sync alle "
+        f"{checkpoint_sync_interval} Samples)...[/cyan]"
+    )
     inference_started = time.perf_counter()
+    total_generation_seconds = sum(latencies_ms)
+    if checkpoint_records:
+        total_generation_seconds /= 1000.0
 
     with checkpoint_path.open("a", encoding="utf-8") as checkpoint_handle:
+        records_since_sync = 0
         with Progress(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
@@ -312,12 +359,19 @@ def run_decoder_inference(
                 completed=start_index,
             )
 
-            for i in range(start_index, len(prompts)):
-                messages = prompts[i]
-                tokens = tokens_list[i]
-                model_inputs = prepare_generation_inputs(
+            for batch_start in range(
+                start_index,
+                len(prompts),
+                generation_batch_size,
+            ):
+                batch_end = min(
+                    batch_start + generation_batch_size,
+                    len(prompts),
+                )
+                batch_prompts = prompts[batch_start:batch_end]
+                model_inputs = prepare_generation_batch_inputs(
                     tokenizer,
-                    messages,
+                    batch_prompts,
                     device,
                 )
 
@@ -339,52 +393,69 @@ def run_decoder_inference(
                 if device.type == "cuda":
                     torch.cuda.synchronize()
                 t1 = time.perf_counter()
-                latencies_ms.append((t1 - t0) * 1000)
+                batch_generation_seconds = t1 - t0
+                total_generation_seconds += batch_generation_seconds
+                batch_length = batch_end - batch_start
+                amortized_latency_ms = (
+                    batch_generation_seconds * 1000.0 / batch_length
+                )
 
                 prompt_len = model_inputs["input_ids"].shape[1]
-                new_token_ids = output_ids[0][prompt_len:]
-                generated_text = tokenizer.decode(
-                    new_token_ids,
+                generated_texts = tokenizer.batch_decode(
+                    output_ids[:, prompt_len:],
                     skip_special_tokens=True,
                 )
 
-                raw_outputs.append(generated_text)
+                for offset, generated_text in enumerate(generated_texts):
+                    i = batch_start + offset
+                    tokens = tokens_list[i]
+                    raw_outputs.append(generated_text)
 
-                entities, status, diagnostics = (
-                    parse_llm_output_with_diagnostics(
-                        generated_text,
-                        tokens,
-                        valid_types,
+                    entities, status, diagnostics = (
+                        parse_llm_output_with_diagnostics(
+                            generated_text,
+                            tokens,
+                            valid_types,
+                        )
                     )
-                )
-                pred_entities.append(entities)
-                parse_statuses.append(status)
-                parse_diagnostics.append(diagnostics)
+                    pred_entities.append(entities)
+                    parse_statuses.append(status)
+                    parse_diagnostics.append(diagnostics)
+                    latencies_ms.append(amortized_latency_ms)
 
-                completed = i + 1
-                elapsed_seconds = (
-                    previous_elapsed + time.perf_counter() - inference_started
-                )
-                record = {
-                    "index": i,
-                    "pred_entities": entities,
-                    "raw_output": generated_text,
-                    "parse_status": status,
-                    "parse_diagnostics": diagnostics,
-                    "latency_ms": latencies_ms[-1],
-                    "elapsed_seconds": elapsed_seconds,
-                }
-                checkpoint_handle.write(
-                    json.dumps(record, ensure_ascii=False) + "\n"
-                )
-                checkpoint_handle.flush()
-                os.fsync(checkpoint_handle.fileno())
+                    completed = i + 1
+                    elapsed_seconds = (
+                        previous_elapsed + time.perf_counter() - inference_started
+                    )
+                    record = {
+                        "index": i,
+                        "pred_entities": entities,
+                        "raw_output": generated_text,
+                        "parse_status": status,
+                        "parse_diagnostics": diagnostics,
+                        "latency_ms": amortized_latency_ms,
+                        "batch_latency_ms": batch_generation_seconds * 1000.0,
+                        "elapsed_seconds": elapsed_seconds,
+                    }
+                    checkpoint_handle.write(
+                        json.dumps(record, ensure_ascii=False) + "\n"
+                    )
+                    records_since_sync += 1
+
+                completed = batch_end
+                if (
+                    records_since_sync >= checkpoint_sync_interval
+                    or completed == len(prompts)
+                ):
+                    checkpoint_handle.flush()
+                    os.fsync(checkpoint_handle.fileno())
+                    records_since_sync = 0
                 if completed % 100 == 0 or completed == len(prompts):
                     console.print(
                         f"INFERENCE_PROGRESS {completed}/{len(prompts)} "
                         f"elapsed={elapsed_seconds:.3f}s"
                     )
-                progress.advance(task)
+                progress.advance(task, advance=batch_length)
 
     vram_peak = get_vram_peak_mb()
 
@@ -399,6 +470,11 @@ def run_decoder_inference(
 
     latency_mean = float(np.mean(latencies_ms))
     latency_p95  = float(np.percentile(latencies_ms, 95))
+    generation_samples_per_second = (
+        len(prompts) / total_generation_seconds
+        if total_generation_seconds > 0
+        else 0.0
+    )
 
     console.print(f"\n[bold green]Test F1: {metrics['f1']:.4f}[/bold green]")
     console.print(f"Precision: {metrics['precision']:.4f}  Recall: {metrics['recall']:.4f}")
@@ -408,6 +484,9 @@ def run_decoder_inference(
         f"  regex={metrics['parse_regex_fallback']}  failed={metrics['parse_failed']}"
     )
     console.print(f"Mittlere Latenz: {latency_mean:.2f} ms  (p95: {latency_p95:.2f} ms)")
+    console.print(
+        f"Generierungsdurchsatz: {generation_samples_per_second:.2f} Samples/s"
+    )
     console.print(f"VRAM-Peak: {vram_peak:.1f} MB")
 
     # --- Ausgaben speichern ---
@@ -445,6 +524,12 @@ def run_decoder_inference(
         **metrics,
         "latency_ms_mean": latency_mean,
         "latency_ms_p95":  latency_p95,
+        "latency_measurement": "amortized_per_sample",
+        "generation_samples_per_second": generation_samples_per_second,
+        "inference_batch_size": generation_batch_size,
+        "checkpoint_sync_interval": checkpoint_sync_interval,
+        "precision_mode": precision_mode,
+        "attn_impl": attn_impl,
         "vram_peak_mb":    vram_peak,
         "total_params":    total_params,
         "thinking_enabled": THINKING_ENABLED,

@@ -14,12 +14,18 @@ mode: zeroshot     # Inference-Skript erkennt diesen Mode automatisch
 dataset: multinerd
 dataset_language: en
 
-# 4-bit-Quantisierung spart VRAM auch im Zero-Shot Mode
-use_qlora: true
+# BF16 ist auf der A100 fuer 0.8B deutlich schneller als 4-bit und benoetigt
+# im Benchmark nur rund 1.5 GB Peak-Allokation.
+use_qlora: false
 attn_impl: sdpa
 
 # Generierung — greedy/deterministisch fuer Reproduzierbarkeit
 max_new_tokens: 256
+
+# Batch 1 behaelt eine echte, mit den anderen Modellen vergleichbare
+# Einzelbeispiel-Latenz. BF16 allein war im A100-Benchmark rund 20x schneller.
+inference_batch_size: 1
+checkpoint_sync_interval: 100
 
 # Kein Training, daher keine LoRA-/Trainings-Hyperparameter noetig.
 
