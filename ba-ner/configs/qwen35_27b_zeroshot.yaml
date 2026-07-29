@@ -18,8 +18,15 @@ dataset_language: en
 use_qlora: false
 attn_impl: sdpa
 
-# Generierung
+# Same genuine zero-shot prompt and official non-thinking text sampling setup
+# as the other Qwen3.5 zero-shot models.
+prompt_profile: multinerd_glossary_v2
 max_new_tokens: 256
+do_sample: true
+temperature: 1.0
+top_p: 1.0
+top_k: 20
+min_p: 0.0
 inference_batch_size: 1
 checkpoint_sync_interval: 100
 

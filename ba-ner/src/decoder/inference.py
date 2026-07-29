@@ -9,11 +9,10 @@ Unterstuetzt zwei Modi auf demselben Codepfad:
   2. Zero-Shot Mode: Lade nur das Basismodell ohne Adapter.
      Aktiviert via --zeroshot ODER mode: zeroshot in der Config.
 
-Beide Modi nutzen denselben Prompt, denselben Parser, dieselben Metriken
-und denselben Output-Pfad-Konventionen, damit die Ergebnisse direkt
-vergleichbar sind.
-
-Greedy Decoding (do_sample=False) wird fuer Reproduzierbarkeit verwendet.
+Beide Modi nutzen dasselbe Ausgabeschema, denselben Parser, dieselben Metriken
+und dieselben Output-Pfad-Konventionen. Der versionierte Prompt und die
+Decoding-Strategie werden in der Config festgelegt und mit den Metriken
+gespeichert.
 
 Verwendung:
     # LoRA-Mode
@@ -45,7 +44,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from src.config import DATASET_LANGUAGE, DATASET_NAME, load_experiment_config, output_dir_from_config
 from src.data.dataset_loader import load_ner_dataset
-from src.data.preprocess_decoder import prepare_test_inputs
+from src.data.preprocess_decoder import DEFAULT_PROMPT_PROFILE, prepare_test_inputs
 from src.decoder.parse_output import (
     entities_to_bio,
     evaluate_llm_predictions,
@@ -62,6 +61,40 @@ from src.run_metadata import collect_run_metadata
 console = Console()
 INFERENCE_CHECKPOINT_VERSION = 2
 INFERENCE_CHECKPOINT_FILENAME = "inference_checkpoint.jsonl"
+
+
+def _generation_settings_from_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """Return validated, serializable kwargs for ``model.generate``."""
+    do_sample = cfg.get("do_sample", False)
+    if type(do_sample) is not bool:
+        raise ValueError("do_sample must be a boolean")
+
+    if not do_sample:
+        return {
+            "do_sample": False,
+            "temperature": None,
+            "top_p": None,
+        }
+
+    temperature = float(cfg.get("temperature", 1.0))
+    top_p = float(cfg.get("top_p", 1.0))
+    top_k = int(cfg.get("top_k", 50))
+    min_p = float(cfg.get("min_p", 0.0))
+    if temperature <= 0:
+        raise ValueError("temperature must be > 0 when do_sample is true")
+    if not 0 < top_p <= 1:
+        raise ValueError("top_p must be in (0, 1]")
+    if top_k < 0:
+        raise ValueError("top_k must be >= 0")
+    if not 0 <= min_p <= 1:
+        raise ValueError("min_p must be in [0, 1]")
+    return {
+        "do_sample": True,
+        "temperature": temperature,
+        "top_p": top_p,
+        "top_k": top_k,
+        "min_p": min_p,
+    }
 
 
 def _legacy_checkpoint_header(expected_header: Dict[str, Any]) -> Dict[str, Any] | None:
@@ -211,6 +244,8 @@ def run_decoder_inference(
     max_new_tokens:           int  = int(cfg.get("max_new_tokens", 256))
     generation_batch_size:    int  = int(cfg.get("inference_batch_size", 1))
     checkpoint_sync_interval: int  = int(cfg.get("checkpoint_sync_interval", 100))
+    prompt_profile:           str  = str(cfg.get("prompt_profile", DEFAULT_PROMPT_PROFILE))
+    generation_settings = _generation_settings_from_config(cfg)
     if generation_batch_size < 1:
         raise ValueError("inference_batch_size must be >= 1")
     if checkpoint_sync_interval < 1:
@@ -272,7 +307,11 @@ def run_decoder_inference(
     console.print("[cyan]Loading MultiNERD English test split...[/cyan]")
     raw_dataset, info = load_ner_dataset()
     raw_test = raw_dataset["test"]
-    prompts, gold_entities = prepare_test_inputs(raw_test, info)
+    prompts, gold_entities = prepare_test_inputs(
+        raw_test,
+        info,
+        prompt_profile=prompt_profile,
+    )
     tokens_list: List[List[str]] = [s["tokens"] for s in raw_test]
     valid_types = frozenset(info.entity_types)
 
@@ -289,6 +328,8 @@ def run_decoder_inference(
         "generation_batch_size": generation_batch_size,
         "precision_mode": precision_mode,
         "attn_impl": attn_impl,
+        "prompt_profile": prompt_profile,
+        "generation_settings": generation_settings,
         "seed": seed,
         "total_samples": len(prompts),
     }
@@ -310,6 +351,8 @@ def run_decoder_inference(
     # --- Warmup-Lauf ---
     reset_vram_tracking()
     _warmup(model, tokenizer, prompts[0], device, max_new_tokens)
+    # The warmup must not influence seeded sampling in the measured run.
+    set_seed(seed)
 
     # --- Inferenz-Schleife ---
     pred_entities: List[List[Dict]] = [
@@ -379,13 +422,11 @@ def run_decoder_inference(
                     torch.cuda.synchronize()
                 t0 = time.perf_counter()
 
-                with torch.no_grad():
+                with torch.inference_mode():
                     output_ids = model.generate(
                         **model_inputs,
                         max_new_tokens=max_new_tokens,
-                        do_sample=False,
-                        temperature=None,
-                        top_p=None,
+                        **generation_settings,
                         eos_token_id=tokenizer.eos_token_id,
                         pad_token_id=tokenizer.pad_token_id,
                     )
@@ -530,6 +571,8 @@ def run_decoder_inference(
         "checkpoint_sync_interval": checkpoint_sync_interval,
         "precision_mode": precision_mode,
         "attn_impl": attn_impl,
+        "prompt_profile": prompt_profile,
+        "generation_settings": generation_settings,
         "vram_peak_mb":    vram_peak,
         "total_params":    total_params,
         "thinking_enabled": THINKING_ENABLED,
@@ -554,7 +597,7 @@ def _warmup(model, tokenizer, sample_messages: List[Dict], device, max_new_token
     """Fuehrt einen einzelnen Generate-Aufruf zur Aufwaermung der CUDA-Caches durch."""
     console.print("[dim]Waerme CUDA-Caches auf...[/dim]")
     model_inputs = prepare_generation_inputs(tokenizer, sample_messages, device)
-    with torch.no_grad():
+    with torch.inference_mode():
         model.generate(
             **model_inputs,
             max_new_tokens=16,

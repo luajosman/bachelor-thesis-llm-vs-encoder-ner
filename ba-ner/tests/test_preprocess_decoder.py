@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.data.preprocess_decoder import (
+    ZEROSHOT_PROMPT_PROFILE,
     build_system_prompt,
     extract_entities_from_bio,
     format_for_llm,
@@ -10,6 +11,19 @@ from src.data.preprocess_decoder import (
 
 def test_format_numbered_tokens_matches_prompt_contract() -> None:
     assert format_numbered_tokens(["Barack", "Obama", "."]) == "Tokens:\n0: Barack\n1: Obama\n2: ."
+
+
+def test_zeroshot_prompt_expands_multinerd_label_names_without_examples() -> None:
+    prompt = build_system_prompt(
+        ["PER", "LOC", "MYTH"],
+        prompt_profile=ZEROSHOT_PROMPT_PROFILE,
+    )
+
+    assert "PER = Person" in prompt
+    assert "LOC = Location" in prompt
+    assert "MYTH = Mythological entity" in prompt
+    assert "Return [] only when none" in prompt
+    assert "example" not in prompt.lower()
 
 
 def test_extract_entities_from_bio_returns_token_offsets() -> None:

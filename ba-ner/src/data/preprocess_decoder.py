@@ -11,20 +11,85 @@ if TYPE_CHECKING:
     from datasets import Dataset, DatasetDict
 
 
+DEFAULT_PROMPT_PROFILE = "task_v1"
+ZEROSHOT_PROMPT_PROFILE = "multinerd_glossary_v2"
+MULTINERD_TYPE_NAMES = {
+    "PER": "Person",
+    "ORG": "Organization",
+    "LOC": "Location",
+    "ANIM": "Animal",
+    "BIO": "Biological entity",
+    "CEL": "Celestial body",
+    "DIS": "Disease",
+    "EVE": "Event",
+    "FOOD": "Food",
+    "INST": "Instrument",
+    "MEDIA": "Media or creative work",
+    "MYTH": "Mythological entity",
+    "PLANT": "Plant",
+    "TIME": "Time or date",
+    "VEHI": "Vehicle",
+}
+
+
 # ---------------------------------------------------------------------------
 # System-Prompt (dynamisch je nach Datensatz)
 # ---------------------------------------------------------------------------
 
-def build_system_prompt(entity_types: List[str]) -> str:
+def build_system_prompt(
+    entity_types: List[str],
+    prompt_profile: str = DEFAULT_PROMPT_PROFILE,
+) -> str:
     """Baut den System-Prompt mit den Entity-Typen des jeweiligen Datensatzes.
 
     Args:
         entity_types: Liste der Entity-Typen (z.B. ["PER", "ORG", "LOC", ...]).
+        prompt_profile: Versionierte Prompt-Variante. ``task_v1`` preserves the
+            prompt used for QLoRA training; ``multinerd_glossary_v2`` expands
+            the opaque MultiNERD abbreviations for a stronger zero-shot prompt.
 
     Returns:
         Vollstaendiger System-Prompt als String.
     """
     types_str = ", ".join(entity_types)
+    if prompt_profile == ZEROSHOT_PROMPT_PROFILE:
+        unknown_types = [
+            entity_type
+            for entity_type in entity_types
+            if entity_type not in MULTINERD_TYPE_NAMES
+        ]
+        if unknown_types:
+            raise ValueError(
+                "The MultiNERD glossary has no names for entity types: "
+                + ", ".join(unknown_types)
+            )
+        type_glossary = "; ".join(
+            f"{entity_type} = {MULTINERD_TYPE_NAMES[entity_type]}"
+            for entity_type in entity_types
+        )
+        return (
+            "You are an expert Named Entity Recognition (NER) system. "
+            "Find every named-entity mention in the numbered token list. "
+            "Named entities are specific named people, organizations, places, "
+            "animals, biological entities, celestial bodies, diseases, events, "
+            "foods, instruments, media or creative works, mythological entities, "
+            "plants, times or dates, and vehicles. Do not label ordinary common "
+            "nouns unless they are part of a specific named entity.\n"
+            f"Use these exact MultiNERD labels: {type_glossary}.\n"
+            "Return ONLY a JSON array. Do not use Markdown code blocks and do not "
+            "add explanations. Extract all occurrences, including multi-token "
+            "entities.\n"
+            "Each entity object must have exactly these fields: "
+            "\"start_token\" (integer, inclusive), "
+            "\"end_token\" (integer, exclusive), "
+            "\"text\" (the exact text covered by the token span), and "
+            f"\"type\" (one of: {types_str}).\n"
+            "Token indices must refer exactly to the numbered token list shown by "
+            "the user. Check the entire token list before answering. Return [] "
+            "only when none of the listed named-entity categories occurs."
+        )
+    if prompt_profile != DEFAULT_PROMPT_PROFILE:
+        raise ValueError(f"Unknown decoder prompt profile: {prompt_profile}")
     return (
         "You are a Named Entity Recognition (NER) system. "
         "Extract all named entities from the numbered token list.\n"
@@ -192,6 +257,7 @@ def prepare_decoder_dataset(
 def prepare_test_inputs(
     dataset_split: "Dataset",
     info: DatasetInfo,
+    prompt_profile: str = DEFAULT_PROMPT_PROFILE,
 ) -> Tuple[List[List[Dict]], List[List[Dict[str, Any]]]]:
     """Baut Prompt-Only-Nachrichten (ohne Assistent-Turn) fuer die Inferenz.
 
@@ -208,7 +274,10 @@ def prepare_test_inputs(
           - prompts:       Liste von [system, user]-Nachrichtenlisten
           - gold_entities: Liste von Entity-Dicts pro Satz (Referenz fuer Evaluation)
     """
-    system_prompt = build_system_prompt(info.entity_types)
+    system_prompt = build_system_prompt(
+        info.entity_types,
+        prompt_profile=prompt_profile,
+    )
     id2label = info.id2label
 
     prompts: List[List[Dict]] = []

@@ -3,6 +3,7 @@ import json
 import pytest
 
 from src.decoder.inference import (
+    _generation_settings_from_config,
     _load_inference_checkpoint,
     _write_inference_checkpoint,
 )
@@ -19,6 +20,12 @@ def _header():
         "generation_batch_size": 1,
         "precision_mode": "qlora_4bit",
         "attn_impl": "sdpa",
+        "prompt_profile": "task_v1",
+        "generation_settings": {
+            "do_sample": False,
+            "temperature": None,
+            "top_p": None,
+        },
         "seed": 42,
         "total_samples": 2,
     }
@@ -75,7 +82,13 @@ def test_inference_checkpoint_accepts_legacy_batch_one_qlora_run(tmp_path):
     legacy_header = {
         key: value
         for key, value in _header().items()
-        if key not in {"generation_batch_size", "precision_mode", "attn_impl"}
+        if key not in {
+            "generation_batch_size",
+            "precision_mode",
+            "attn_impl",
+            "prompt_profile",
+            "generation_settings",
+        }
     }
     legacy_header["version"] = 1
     _write_inference_checkpoint(path, legacy_header, [_record(0)])
@@ -88,7 +101,13 @@ def test_inference_checkpoint_rejects_legacy_run_for_batched_generation(tmp_path
     legacy_header = {
         key: value
         for key, value in _header().items()
-        if key not in {"generation_batch_size", "precision_mode", "attn_impl"}
+        if key not in {
+            "generation_batch_size",
+            "precision_mode",
+            "attn_impl",
+            "prompt_profile",
+            "generation_settings",
+        }
     }
     legacy_header["version"] = 1
     _write_inference_checkpoint(path, legacy_header, [_record(0)])
@@ -98,3 +117,27 @@ def test_inference_checkpoint_rejects_legacy_run_for_batched_generation(tmp_path
             path,
             {**_header(), "generation_batch_size": 16},
         )
+
+
+def test_recommended_sampling_settings_are_loaded_from_config():
+    assert _generation_settings_from_config({
+        "do_sample": True,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "top_k": 20,
+        "min_p": 0.0,
+    }) == {
+        "do_sample": True,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "top_k": 20,
+        "min_p": 0.0,
+    }
+
+
+def test_greedy_generation_remains_default_for_qlora_configs():
+    assert _generation_settings_from_config({}) == {
+        "do_sample": False,
+        "temperature": None,
+        "top_p": None,
+    }
