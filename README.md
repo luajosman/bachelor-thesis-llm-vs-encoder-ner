@@ -273,7 +273,8 @@ python -m src.evaluate.error_analysis \
 ## GPU Cluster
 
 The repository includes SLURM scripts for running the matrix on a GPU cluster.
-They assume a Conda environment named `ba-ner`.
+They support either a project-local `.venv` or a Conda environment named
+`ba-ner`.
 
 ```bash
 cd ba-ner
@@ -299,6 +300,9 @@ scripts/cluster/submit_all.sh
 
 Resource defaults can be adjusted through environment variables before calling
 `submit_all.sh`.
+
+For day-to-day commands, job monitoring, log inspection, cancellation, and
+troubleshooting, see [Cluster job guide](ba-ner/docs/cluster-jobs.md).
 
 ## Outputs and Reproducibility
 

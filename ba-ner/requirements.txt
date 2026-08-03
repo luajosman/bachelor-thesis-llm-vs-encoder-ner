@@ -10,7 +10,9 @@ wandb>=0.19.0
 pyyaml>=6.0
 rich>=13.0
 matplotlib>=3.9.0
-numpy>=1.26.0
+# NumPy 2.4+ requires the x86-64-v2 CPU baseline. The cluster login node
+# exposes an older virtual CPU, so keep the environment usable there as well.
+numpy>=1.26.0,<2.4
 sentencepiece>=0.2.0
 protobuf>=5.0.0
 pytest>=8.0.0
