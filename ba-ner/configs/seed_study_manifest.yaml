@@ -1,0 +1,247 @@
+version: 3
+dataset: multinerd
+dataset_language: en
+dataset_revision: 2814b78e7af4b5a1f1886fe7ad49632de4d9dd25
+dataset_split_sizes: {train: 131280, validation: 16410, test: 16454}
+minimum_free_bytes: 536870912000
+expected_canonical_seeds: [42, 123, 456]
+planned_new_training_runs: 15
+primary_standard_deviation: sample
+ddof: 1
+
+zero_shot:
+  repeated_for_seeds: false
+  seed: not_applicable
+  number_of_runs: 1
+  standard_deviation: not_applicable
+  reason: deterministic greedy decoding with do_sample=false
+
+groups:
+  - key: deberta-v3-base
+    label: DeBERTa-v3-base
+    model_name: microsoft/deberta-v3-base
+    model_family: encoder
+    regime: encoder
+    variant: default
+    max_epochs: 5
+    reference_config: configs/deberta_base_canonical.yaml
+    derivation_config: configs/deberta_base.yaml
+    reference_training_job_id: null
+    reference_git_commit: null
+    reference_git_dirty: null
+    reference_provenance:
+      status: verified
+      evidence_repository: /home/losman/bachelor-thesis-llm-vs-encoder-ner-1
+      source_config_commit: 5c5b74f5f1fe17e317680871ce51373c3ce60f79
+      note: This is a fresh canonical group. The provenance-incomplete original Seed-42 output is historical and excluded.
+    resources:
+      train: {partition: H100, gres: "gpu:1", memory: 32G, time: "04:00:00"}
+      inference: {partition: H100, gres: "gpu:1", memory: 32G, time: "03:00:00"}
+    canonical_runs:
+      - {seed: 42, config: configs/deberta_base_canonical.yaml, output_dir: results/multinerd/deberta-v3-base-canonical, source: new, status: planned_canonical, read_only: false, scientific_config_hash: 9c6923ee69a082ef396a7486eee7db470bcaf24d91b8809059f25173498bb3aa, full_run_config_hash: 93333c434e3bb94e3f2dc25adeef9c73997d4d5bf5fae824d778416a806852e6}
+      - {seed: 123, config: configs/deberta_base_seed123.yaml, output_dir: results/multinerd/deberta-v3-base-canonical-seed123, source: new, status: planned_canonical, read_only: false, scientific_config_hash: 9c6923ee69a082ef396a7486eee7db470bcaf24d91b8809059f25173498bb3aa, full_run_config_hash: f71e89a2f53343016cc5b2c11de821a60793e53ec9d33733a82b0140a4655962}
+      - {seed: 456, config: configs/deberta_base_seed456.yaml, output_dir: results/multinerd/deberta-v3-base-canonical-seed456, source: new, status: planned_canonical, read_only: false, scientific_config_hash: 9c6923ee69a082ef396a7486eee7db470bcaf24d91b8809059f25173498bb3aa, full_run_config_hash: 03f238dd33a31a5cb212be92eaee220fd67bf6f137ab0f0d7e0118a79f50de11}
+    historical_runs:
+      - id: original_seed42_provenance_incomplete
+        seed: 42
+        config: configs/deberta_base.yaml
+        output_dir: results/multinerd/deberta-v3-base
+        max_epochs: 5
+        source: existing
+        status: existing_completed
+        role: historical_exploratory
+        variant: original
+        canonical: false
+        included_in_primary_seed_aggregation: false
+        read_only: true
+        training_job_id: 3219783
+        inference_job_id: null
+        git_commit: 5c5b74f5f1fe17e317680871ce51373c3ce60f79
+        provenance_status: dirty_worktree_diff_unavailable
+        scientific_config_hash: 9c6923ee69a082ef396a7486eee7db470bcaf24d91b8809059f25173498bb3aa
+        full_run_config_hash: fd519d20ed6da2f165ebcb62f8b464286423558f98f07e31e5f26ecab0fa29fa
+
+  - key: deberta-v3-large
+    label: DeBERTa-v3-large
+    model_name: microsoft/deberta-v3-large
+    model_family: encoder
+    regime: encoder
+    variant: default
+    max_epochs: 4
+    reference_config: configs/deberta_large_canonical.yaml
+    derivation_config: configs/deberta_large.yaml
+    reference_training_job_id: null
+    reference_git_commit: null
+    reference_git_dirty: null
+    reference_provenance:
+      status: verified
+      evidence_repository: /home/losman/bachelor-thesis-llm-vs-encoder-ner-1
+      source_config_commit: 5c5b74f5f1fe17e317680871ce51373c3ce60f79
+      note: This is a fresh canonical group. The provenance-incomplete original Seed-42 output is historical and excluded.
+    resources:
+      train: {partition: H100, gres: "gpu:1", memory: 48G, time: "08:00:00"}
+      inference: {partition: H100, gres: "gpu:1", memory: 48G, time: "03:00:00"}
+    canonical_runs:
+      - {seed: 42, config: configs/deberta_large_canonical.yaml, output_dir: results/multinerd/deberta-v3-large-canonical, source: new, status: planned_canonical, read_only: false, scientific_config_hash: cc64b78df5bc7236d856b8ff6dba417cd08d756f3bb8578d3a8fc31ba19960d6, full_run_config_hash: d5854be30f0afbb9d602ea33c9d051fe7a04caa92bcc86504aeed49308c24e85}
+      - {seed: 123, config: configs/deberta_large_seed123.yaml, output_dir: results/multinerd/deberta-v3-large-canonical-seed123, source: new, status: planned_canonical, read_only: false, scientific_config_hash: cc64b78df5bc7236d856b8ff6dba417cd08d756f3bb8578d3a8fc31ba19960d6, full_run_config_hash: c0d70d936b20b27780ddb906ccae0eb2396bdcddb1bc1b57d6f8006328c5bed1}
+      - {seed: 456, config: configs/deberta_large_seed456.yaml, output_dir: results/multinerd/deberta-v3-large-canonical-seed456, source: new, status: planned_canonical, read_only: false, scientific_config_hash: cc64b78df5bc7236d856b8ff6dba417cd08d756f3bb8578d3a8fc31ba19960d6, full_run_config_hash: fcc216610dd44ac340db57a9506448c3ab15da5e5d597ab1ca12e17da63f5556}
+    historical_runs:
+      - id: original_seed42_provenance_incomplete
+        seed: 42
+        config: configs/deberta_large.yaml
+        output_dir: results/multinerd/deberta-v3-large
+        max_epochs: 4
+        source: existing
+        status: existing_completed
+        role: historical_exploratory
+        variant: original
+        canonical: false
+        included_in_primary_seed_aggregation: false
+        read_only: true
+        training_job_id: 3219785
+        inference_job_id: null
+        git_commit: 5c5b74f5f1fe17e317680871ce51373c3ce60f79
+        provenance_status: dirty_worktree_diff_unavailable
+        scientific_config_hash: cc64b78df5bc7236d856b8ff6dba417cd08d756f3bb8578d3a8fc31ba19960d6
+        full_run_config_hash: 13106b20015cef9598de0cb285a2f6f938cbb7e69d362c864907cae0b0486ea7
+
+  - key: qwen35-08b-qlora
+    label: Qwen3.5-0.8B QLoRA
+    model_name: Qwen/Qwen3.5-0.8B
+    model_family: decoder
+    regime: llm_lora
+    variant: default
+    max_epochs: 3
+    reference_config: configs/qwen35_08b_canonical.yaml
+    derivation_config: configs/qwen35_08b.yaml
+    reference_training_job_id: null
+    reference_git_commit: null
+    reference_git_dirty: null
+    reference_provenance:
+      status: verified
+      evidence_repository: /home/losman/bachelor-thesis-llm-vs-encoder-ner-1
+      source_config_commit: cdf10db7914f70b28f37823a8a6152e46bd2e7ca
+      note: This is a fresh canonical group. The provenance-incomplete original Seed-42 output is historical and excluded.
+    resources:
+      train: {partition: H100, gres: "gpu:1", memory: 64G, time: "20:00:00", requeue: true}
+      inference: {partition: H100, gres: "gpu:1", memory: 64G, time: "1-00:00:00"}
+    canonical_runs:
+      - {seed: 42, config: configs/qwen35_08b_canonical.yaml, output_dir: results/multinerd/qwen35-08b-qlora-canonical, source: new, status: planned_canonical, read_only: false, scientific_config_hash: 318b40ec5c083e4ac04dea6910899093365062d3058ce49e9514e1156118b45f, full_run_config_hash: f2b550c6eb2600fe7145acc35c58189fa04feeb8959f8a2cf0fde554da184917}
+      - {seed: 123, config: configs/qwen35_08b_seed123.yaml, output_dir: results/multinerd/qwen35-08b-qlora-canonical-seed123, source: new, status: planned_canonical, read_only: false, scientific_config_hash: 318b40ec5c083e4ac04dea6910899093365062d3058ce49e9514e1156118b45f, full_run_config_hash: b81a2c742a52d4f7b7782c2c6539b764e35801a47774f6c3b16ea3ed3910f1fd}
+      - {seed: 456, config: configs/qwen35_08b_seed456.yaml, output_dir: results/multinerd/qwen35-08b-qlora-canonical-seed456, source: new, status: planned_canonical, read_only: false, scientific_config_hash: 318b40ec5c083e4ac04dea6910899093365062d3058ce49e9514e1156118b45f, full_run_config_hash: 9217dabdf7aa38bdae0185180144d332d7ae3d314fbaa957effa569340d2161e}
+    historical_runs:
+      - id: original_seed42_provenance_incomplete
+        seed: 42
+        config: configs/qwen35_08b.yaml
+        output_dir: results/multinerd/qwen35-08b-qlora
+        max_epochs: 3
+        source: existing
+        status: existing_completed
+        role: historical_exploratory
+        variant: original
+        canonical: false
+        included_in_primary_seed_aggregation: false
+        read_only: true
+        training_job_id: 3220278
+        inference_job_id: null
+        git_commit: cdf10db7914f70b28f37823a8a6152e46bd2e7ca
+        provenance_status: initial_training_worktree_incomplete
+        scientific_config_hash: 318b40ec5c083e4ac04dea6910899093365062d3058ce49e9514e1156118b45f
+        full_run_config_hash: 44fa61eb9fc03b41f667496eb3569c630bb6f116b3f2c505a26cf5c77ad3944c
+
+  - key: qwen35-4b-qlora
+    label: Qwen3.5-4B QLoRA
+    model_name: Qwen/Qwen3.5-4B
+    model_family: decoder
+    regime: llm_lora
+    variant: default
+    max_epochs: 3
+    reference_config: configs/qwen35_4b_canonical.yaml
+    derivation_config: configs/qwen35_4b.yaml
+    reference_training_job_id: null
+    reference_git_commit: null
+    reference_git_dirty: null
+    reference_provenance:
+      status: verified
+      evidence_repository: /home/losman/bachelor-thesis-llm-vs-encoder-ner-1
+      source_config_commit: 137bffdd9b4351b35a31e4550bde0c15b3c53a19
+      note: This is a fresh canonical group for maximum cross-model uniformity. The verified original Seed-42 output is historical and excluded.
+    resources:
+      train: {partition: A100-80GB, gres: "gpu:1", memory: 96G, time: "3-00:00:00", requeue: true}
+      inference: {partition: A100-80GB, gres: "gpu:1", memory: 96G, time: "3-00:00:00"}
+    canonical_runs:
+      - {seed: 42, config: configs/qwen35_4b_canonical.yaml, output_dir: results/multinerd/qwen35-4b-qlora-canonical, source: new, status: planned_canonical, read_only: false, scientific_config_hash: c147427b0d5d3f2a34aa0cfe8ffc36f576be8a6b698e8a8ca9ff15f07c0b638c, full_run_config_hash: 3f7f6533e9e1b2111ea9788403a76d4ff495f43f21e0ef190f4190437e49e226}
+      - {seed: 123, config: configs/qwen35_4b_seed123.yaml, output_dir: results/multinerd/qwen35-4b-qlora-canonical-seed123, source: new, status: planned_canonical, read_only: false, scientific_config_hash: c147427b0d5d3f2a34aa0cfe8ffc36f576be8a6b698e8a8ca9ff15f07c0b638c, full_run_config_hash: c804ae2934814921552eca3fa708213b2dae1f310dc1cdbd7c075420004e46d6}
+      - {seed: 456, config: configs/qwen35_4b_seed456.yaml, output_dir: results/multinerd/qwen35-4b-qlora-canonical-seed456, source: new, status: planned_canonical, read_only: false, scientific_config_hash: c147427b0d5d3f2a34aa0cfe8ffc36f576be8a6b698e8a8ca9ff15f07c0b638c, full_run_config_hash: 08feda5d36e3c77e6b6db2c77e8e71fa9e2fb4138c099612ff1f7d94ea8de2bd}
+    historical_runs:
+      - id: original_seed42_verified
+        seed: 42
+        config: configs/qwen35_4b.yaml
+        output_dir: results/multinerd/qwen35-4b-qlora
+        max_epochs: 3
+        source: existing
+        status: existing_completed
+        role: historical_external_replication
+        variant: original
+        canonical: false
+        included_in_primary_seed_aggregation: false
+        read_only: true
+        training_job_id: 3225153
+        inference_job_id: null
+        git_commit: 137bffdd9b4351b35a31e4550bde0c15b3c53a19
+        provenance_status: verified
+        scientific_config_hash: c147427b0d5d3f2a34aa0cfe8ffc36f576be8a6b698e8a8ca9ff15f07c0b638c
+        full_run_config_hash: 2c80c15e4b83bf1eab6718419938db6744f529301f7e66c6f14f899572fd9a97
+
+  - key: qwen35-27b-qlora-3ep
+    label: Qwen3.5-27B QLoRA
+    model_name: Qwen/Qwen3.5-27B
+    model_family: decoder
+    regime: llm_lora
+    variant: 3ep
+    max_epochs: 3
+    reference_config: configs/qwen35_27b_3ep.yaml
+    derivation_config: configs/qwen35_27b.yaml
+    reference_training_job_id: null
+    reference_git_commit: null
+    reference_git_dirty: null
+    reference_provenance:
+      status: verified
+      evidence_repository: /home/losman/bachelor-thesis-llm-vs-encoder-ner-1
+      derivation_commit: 137bffdd9b4351b35a31e4550bde0c15b3c53a19
+      note: This is a fresh canonical group; the 3ep configs are recursively verified against the preserved 2ep config and against one another.
+    resources:
+      train: {partition: H100-Trails, gres: "gpu:1", memory: 160G, time: "3-00:00:00", requeue: true}
+      inference: {partition: H100-Trails, gres: "gpu:1", memory: 160G, time: "3-00:00:00"}
+    canonical_runs:
+      - {seed: 42, config: configs/qwen35_27b_3ep.yaml, output_dir: results/multinerd/qwen35-27b-qlora-3ep, source: new, status: planned_canonical, read_only: false, scientific_config_hash: d7f5d3cef9c980fda6b3d1f2e692aec0392485c564f06c5742f0d899dc2c070f, full_run_config_hash: e5fb69dd1ccb9029053bf9a691f0ca0670ffd4f3578008e7e19063ada2ccdd67}
+      - {seed: 123, config: configs/qwen35_27b_3ep_seed123.yaml, output_dir: results/multinerd/qwen35-27b-qlora-3ep-seed123, source: new, status: planned_canonical, read_only: false, scientific_config_hash: d7f5d3cef9c980fda6b3d1f2e692aec0392485c564f06c5742f0d899dc2c070f, full_run_config_hash: 36f828e6cd5c17804cd7d65d2b3d0911a165dba5af5979b962635e560e687fa9}
+      - {seed: 456, config: configs/qwen35_27b_3ep_seed456.yaml, output_dir: results/multinerd/qwen35-27b-qlora-3ep-seed456, source: new, status: planned_canonical, read_only: false, scientific_config_hash: d7f5d3cef9c980fda6b3d1f2e692aec0392485c564f06c5742f0d899dc2c070f, full_run_config_hash: 873cf3e9187cdf8043192182608c1e407d590f4d7de7499e57dc23ee583b0f81}
+    historical_runs:
+      - id: original_seed42_2ep
+        seed: 42
+        config: configs/qwen35_27b.yaml
+        output_dir: results/multinerd/qwen35-27b-qlora
+        max_epochs: 2
+        source: existing
+        status: existing_completed
+        role: historical_exploratory
+        variant: 2ep
+        canonical: false
+        included_in_primary_seed_aggregation: false
+        read_only: true
+        training_job_id: 3219771
+        inference_job_id: 3226684
+        training_status_at_inventory: completed
+        inference_status_at_inventory: completed
+        training_completed_at: 2026-08-03
+        inference_completed_at: 2026-08-04
+        git_commit: 137bffdd9b4351b35a31e4550bde0c15b3c53a19
+        scientific_config_hash: 9e316ac051e7d03dd4499d13cc981881b387593fdeaee75c59adcb1ae9ecf5f4
+        full_run_config_hash: f8e054e7af567cac2a3581ece71308549d9c1aae2ae94c35c8d95a0813d0987c
+
+methodology:
+  primary_description: All five fine-tuned model groups are trained fresh with Seeds 42, 123, and 456 under one frozen managed contract. The checkpoint with the highest validation F1 is selected for test evaluation.
+  historical_policy: All pre-study Seed-42 outputs are preserved read-only and excluded from primary seed aggregates.
+  qwen27b_2ep_policy: The original two-epoch run is preserved and is never resumed into the canonical three-epoch setup.
+  continued_training_policy: Extending the two-epoch cosine schedule would be a separate continued-training ablation and is outside the primary study.

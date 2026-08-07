@@ -55,6 +55,14 @@ from src.decoder.parse_output import (
 )
 from src.decoder.generation import THINKING_ENABLED, prepare_generation_inputs
 from src.run_metadata import collect_run_metadata
+from src.seed_provenance import MODEL_REVISIONS
+from src.seed_study import (
+    RunStatusCallback,
+    atomic_write_json,
+    atomic_write_yaml,
+    managed_run_phase,
+    record_dataset_metadata,
+)
 
 console = Console()
 
@@ -390,7 +398,7 @@ class GenerativeDevEvalCallback(TrainerCallback):
 # Training
 # ---------------------------------------------------------------------------
 
-def train_decoder(config_path: str) -> Dict[str, Any]:
+def _train_decoder(config_path: str, run_context: Any = None) -> Dict[str, Any]:
     """Fine-tuned ein kausales LM fuer NER via LoRA (oder QLoRA) mit SFTTrainer.
 
     Ablauf:
@@ -437,7 +445,11 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
 
     # --- Tokenizer laden ---
     console.print(f"[cyan]Lade Tokenizer: {model_name}[/cyan]")
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name,
+        revision=MODEL_REVISIONS[model_name],
+        trust_remote_code=True,
+    )
     if tokenizer.pad_token is None:
         tokenizer.pad_token    = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
@@ -453,6 +465,7 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
         )
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
+            revision=MODEL_REVISIONS[model_name],
             quantization_config=bnb_config,
             attn_implementation=attn_impl,
             device_map="auto",
@@ -462,6 +475,7 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
         console.print(f"[cyan]Lade Modell in bf16 (attn={attn_impl})...[/cyan]")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
+            revision=MODEL_REVISIONS[model_name],
             torch_dtype=torch.bfloat16,
             attn_implementation=attn_impl,
             device_map="auto",
@@ -498,6 +512,7 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
     # --- Rohen Dev-Split fuer generative Evaluation laden ---
     console.print("[cyan]Bereite Dev-Daten fuer generative Evaluation vor...[/cyan]")
     raw_dataset, _ = load_ner_dataset()
+    record_dataset_metadata(run_context, raw_dataset)
     raw_dev = raw_dataset["validation"]
 
     system_prompt = build_system_prompt(info.entity_types)
@@ -556,6 +571,7 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
         gradient_checkpointing_kwargs={"use_reentrant": False},
         packing=cfg.get("packing", False),
         seed=seed,
+        data_seed=seed,
         report_to="wandb" if cfg.get("use_wandb", False) else "none",
         run_name=f"{cfg.get('experiment_name')}_{DATASET_NAME}",
         dataset_text_field=None,
@@ -569,13 +585,17 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
     sft_config = SFTConfig(**sft_config_kwargs)
 
     # --- SFTTrainer zusammenbauen ---
+    callbacks = [gen_eval_callback]
+    if run_context is not None:
+        callbacks.append(RunStatusCallback(run_context))
+
     trainer = SFTTrainer(
         model=model,
         args=sft_config,
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         processing_class=tokenizer,
-        callbacks=[gen_eval_callback],
+        callbacks=callbacks,
     )
 
     # Trainer-Referenz fuer den Callback setzen
@@ -583,7 +603,11 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
 
     # --- Training starten ---
     console.print("[bold yellow]Starte LoRA-Finetuning...[/bold yellow]")
-    last_checkpoint = get_last_checkpoint(str(output_dir))
+    last_checkpoint = (
+        run_context.resume_checkpoint
+        if run_context is not None
+        else get_last_checkpoint(str(output_dir))
+    )
     if last_checkpoint:
         console.print(
             f"[yellow]Setze Training vom letzten Checkpoint fort: "
@@ -628,16 +652,47 @@ def train_decoder(config_path: str) -> Dict[str, Any]:
         "seed":                  seed,
         "run_metadata":          collect_run_metadata(cfg),
     }
+    if run_context is not None:
+        results.update({
+            "canonical": True,
+            "variant": run_context.descriptor.variant,
+            "num_train_epochs": cfg.get("num_train_epochs"),
+            "scientific_config_hash": run_context.scientific_config_hash,
+            "full_run_config_hash": run_context.full_run_config_hash,
+            "resumed": run_context.resumed,
+            "resume_checkpoint": run_context.resume_checkpoint,
+            "checkpoint_selection": "highest_generative_validation_f1",
+        })
 
+    atomic_write_json(output_dir / "training_history.json", trainer.state.log_history)
     results_file = output_dir / "results.yaml"
-    with open(results_file, "w") as f:
-        yaml.dump(results, f, default_flow_style=False)
+    atomic_write_yaml(results_file, results)
+    if run_context is not None:
+        run_context.update_metadata(
+            total_params=total_params,
+            trainable_params=trainable_params,
+            trainable_parameter_fraction=(trainable_params / total_params if total_params else None),
+            best_validation_f1=gen_eval_callback.best_f1,
+            best_validation_loss=None,
+            best_step=None,
+            best_epoch=gen_eval_callback.best_epoch,
+            training_runtime_seconds=float(train_runtime),
+            training_history_path=str(output_dir / "training_history.json"),
+            best_checkpoint_path=str(best_adapter_dir),
+            generative_validation_history=gen_eval_callback.epoch_results,
+        )
     console.print(f"Ergebnisse gespeichert: {results_file}")
 
     console.print(f"\n[bold green]Training abgeschlossen in {train_runtime:.1f}s[/bold green]")
     console.print(f"Bester Dev-F1: {gen_eval_callback.best_f1:.4f} (Epoche {gen_eval_callback.best_epoch})")
 
     return results
+
+
+def train_decoder(config_path: str) -> Dict[str, Any]:
+    """Run QLoRA training with strict same-run-only resume protection."""
+    with managed_run_phase(config_path, "training") as run_context:
+        return _train_decoder(config_path, run_context)
 
 
 # ---------------------------------------------------------------------------

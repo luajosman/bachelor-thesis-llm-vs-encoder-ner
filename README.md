@@ -189,7 +189,7 @@ p95 inference latency, peak VRAM usage, and total/trainable parameter counts.
 
 ```text
 ba-ner/
-  configs/              # eight final experiment configs
+  configs/              # historical matrix plus canonical seed-study configs/manifest
   scripts/              # local orchestration scripts
   scripts/cluster/      # SLURM preflight, jobs, and dependency submission
   src/config.py         # experiment registry and config validation
@@ -269,6 +269,154 @@ python -m src.evaluate.error_analysis \
   --encoder-preds results/multinerd/deberta-v3-large/test_predictions.json \
   --decoder-preds results/multinerd/qwen35-27b-qlora/test_predictions.json
 ```
+
+## Canonical Multi-Seed Study
+
+Training variance is measured with seeds `42`, `123`, and `456` for five
+fine-tuned model configurations. Every group is trained as a fresh managed
+cohort with seeds 42, 123, and 456, giving exactly fifteen new training runs.
+This uniform design avoids mixing legacy Seed-42 results with newly managed
+runs. All five earlier Seed-42 outputs remain read-only historical evidence and
+are excluded from the primary seed aggregates.
+
+The original Qwen3.5-0.8B seed-42 run is preserved at
+`results/multinerd/qwen35-08b-qlora` as read-only historical evidence. Its
+initial worktree is not fully recoverable, so it is excluded from the primary
+seed aggregate. The fresh managed cohort writes to
+`results/multinerd/qwen35-08b-qlora-canonical{,-seed123,-seed456}` and starts
+all three runs from the pinned base model without reusing the historical path.
+
+The original Qwen3.5-27B seed-42 run used two epochs and is preserved at
+`results/multinerd/qwen35-27b-qlora` as a read-only historical/exploratory
+run. It is never continued into the canonical setup and is excluded from the
+primary 27B seed aggregate. Its cosine schedule already reached its configured
+endpoint; adding an epoch from that checkpoint would change or restart the
+scheduler trajectory and would therefore be a separate continued-training
+ablation. The canonical replacement starts from the unchanged base model with
+new QLoRA adapters, optimizer, scheduler, and RNG state at
+`results/multinerd/qwen35-27b-qlora-3ep`.
+The read-only inventory was refreshed on 2026-08-07: training job `3219771`
+and inference job `3226684` are both completed.
+
+Within each canonical group, only the seed and operational identity/path fields
+may differ. `configs/seed_study_manifest.yaml` records canonical and historical
+roles, legacy paths, reference provenance, and SLURM resources. Recursive
+validation blocks missing, extra, type, list, or value differences outside the
+allowlist. Each run records:
+
+- `scientific_config_hash`: SHA-256 of the fully resolved scientific/technical
+  config plus immutable model/dataset revisions, preprocessing/evaluation code,
+  prompt, parser, thinking/decoding policy, and checkpoint-selection contract.
+  Only seed and operational identity are removed; the hash must match within a
+  seed group.
+- `full_run_config_hash`: SHA-256 of the complete resolved run config; it must
+  be unique per run.
+
+New run directories contain source/resolved configs, run metadata, environment
+versions, an atomic `status.json`, a guarded run lock, training/evaluation
+artifacts, predictions, and both hashes. Existing result directories are not
+migrated or modified. Cross-seed and cross-variant resumes are blocked. A
+resume is possible only for an interrupted instance of the exact same run with
+matching model, seed, epoch count, output path, and both hashes.
+
+Decoder model selection uses the highest generative validation F1 and test
+inference accepts only `best_lora_adapter`; encoders use the best validation-F1
+`best_model`. The test split is not used for checkpoint selection. For the
+canonical decoder setup: “Models were trained for up to three epochs, with the
+checkpoint achieving the highest generative validation F1 selected for test
+evaluation.” DeBERTa retains its existing reference epoch limits (five for base
+and four for large).
+
+The three zero-shot Qwen experiments are not repeated. Their inference is
+greedy with `do_sample=false`, so seed count and standard deviation are reported
+as `not_applicable`, not as an artificial zero.
+
+### Validation and orchestration commands
+
+Run from `ba-ner/` with the project environment active:
+
+```bash
+# Full local preflight (includes pytest)
+python scripts/run_seed_matrix.py --preflight
+
+# Complete fifteen-run dry run
+python scripts/run_seed_matrix.py --dry-run
+
+# Subset dry runs
+python scripts/run_seed_matrix.py --encoder-only --dry-run
+python scripts/run_seed_matrix.py --decoder-only --dry-run
+python scripts/run_seed_matrix.py --model qwen35_27b_3ep --dry-run
+
+# Submit all fifteen train -> inference -> evaluation pipelines.
+# This first waits for a successful CUDA compute-node preflight.
+python scripts/run_seed_matrix.py --submit
+
+# Submit seed/model subsets
+python scripts/run_seed_matrix.py --seeds 123 --submit
+python scripts/run_seed_matrix.py --seeds 456 --submit
+python scripts/run_seed_matrix.py --model qwen35_27b_3ep --seeds 42 --submit
+python scripts/run_seed_matrix.py --model qwen35_27b_3ep --seeds 42 123 456 --submit
+
+# Status and non-mutating live monitor
+python scripts/run_seed_matrix.py --status
+python scripts/live_monitor.py --refresh 10
+python scripts/live_monitor.py --model qwen35-27b --all
+python scripts/live_monitor.py --canonical
+python scripts/live_monitor.py --variant 3ep --seed 42
+
+# Re-run downstream phases without training
+python scripts/run_seed_matrix.py --inference-only --submit
+python scripts/run_seed_matrix.py --evaluation-only --submit
+
+# Aggregate one group or every group (sample standard deviation, ddof=1)
+python scripts/run_seed_matrix.py --aggregate-only --group deberta-v3-base
+python scripts/run_seed_matrix.py --aggregate-only
+
+# Explicit recovery of failed runs only; hashes and checkpoint ownership are
+# revalidated before any same-run resume/restart is allowed.
+python scripts/run_seed_matrix.py --resume-failed --submit
+```
+
+For subset submissions, the orchestrator passes the exact selected config paths
+to the CUDA compute-node preflight. Provenance gates from unselected groups do
+not block a verified subset, and the selection cannot expand into an unintended
+model-by-seed cross product.
+
+Completed and currently running runs are skipped by default. A failed or
+unknown existing path is never deleted or silently reused. Inference depends on
+successful training, evaluation depends on successful inference, and the final
+aggregation uses SLURM `afterany` across selected evaluation jobs. This allows
+an explicitly incomplete aggregate to report dependency-cancelled or failed
+runs instead of silently producing no report.
+
+Aggregation writes `seed_summary.yaml`, `seed_summary.csv`,
+`seed_metrics.json`, and `missing_or_failed_runs.yaml` per group below
+`results/seed_studies/multinerd/<group>/aggregate/`, plus wide and long-format
+cross-model tables. It reports mean, sample standard deviation (`ddof=1`), min,
+max, successful/expected counts, and explicit missing/failed seeds. With fewer
+than two successful runs, standard deviation is `null` rather than zero. The
+five historical Seed-42 results remain visible in separate historical sections
+but are never part of the primary means.
+
+A fixed seed improves reproducibility but does not guarantee bitwise-identical
+results across GPU models, CUDA kernels, library versions, or other
+nondeterministic hardware paths. Run metadata records the actual environment so
+remaining differences can be reported.
+
+### Frozen canonical execution
+
+The historical provenance gaps no longer block the study because none of the
+legacy outputs is used in a canonical aggregate. The new fifteen-run cohort is
+fully managed from Seed 42 onward. `--submit` additionally requires a clean,
+committed worktree. The orchestrator exports the exact Git commit to every
+SLURM job; the compute preflight and every downstream phase reject a changed
+HEAD or dirty worktree before executing scientific code. Local preflight also
+requires at least 500 GiB free in the configured scratch filesystem.
+
+Consequently, commit the complete study definition first, leave the worktree
+clean, and only then run `python scripts/run_seed_matrix.py --submit`. The
+evidence inventory and design decision are recorded in
+[the seed-study provenance audit](ba-ner/docs/seed-study-provenance.md).
 
 ## GPU Cluster
 

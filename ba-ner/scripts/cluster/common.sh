@@ -6,6 +6,34 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 cd "${PROJECT_DIR}"
+
+verify_frozen_repository() {
+    local expected_commit="${BA_NER_EXPECTED_GIT_COMMIT:-}"
+    if [ -z "${expected_commit}" ]; then
+        return
+    fi
+    if ! command -v git >/dev/null 2>&1; then
+        echo "Git is required to verify the frozen training snapshot." >&2
+        exit 1
+    fi
+
+    local actual_commit
+    actual_commit="$(git rev-parse HEAD)"
+    if [ "${actual_commit}" != "${expected_commit}" ]; then
+        echo "Frozen repository mismatch: expected ${expected_commit}, got ${actual_commit}." >&2
+        exit 1
+    fi
+
+    local worktree_status
+    worktree_status="$(git status --porcelain=v1 --untracked-files=all)"
+    if [ -n "${worktree_status}" ]; then
+        echo "Frozen repository has uncommitted changes; refusing to run:" >&2
+        echo "${worktree_status}" >&2
+        exit 1
+    fi
+}
+
+verify_frozen_repository
 mkdir -p logs results
 
 export PYTHONPATH="${PROJECT_DIR}:${PYTHONPATH:-}"

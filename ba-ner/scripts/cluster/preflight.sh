@@ -53,10 +53,14 @@ PY
 echo "=== Config validation ==="
 python - <<'PY'
 from src.config import FINAL_EXPERIMENTS, load_experiment_config
+from src.seed_study import validate_manifest
 
 for spec in FINAL_EXPERIMENTS.values():
     load_experiment_config(spec.config_path)
     print(f"ok: {spec.key} -> {spec.config_path}")
+
+report = validate_manifest()
+print(f"ok: seed study manifest -> {report['new_run_count']} new runs")
 PY
 
 echo "=== CUDA visibility ==="
@@ -79,12 +83,22 @@ PY
 
 echo "=== CLI help checks ==="
 python scripts/run_all.py --help >/dev/null
+python scripts/run_seed_matrix.py --help >/dev/null
 python -m src.encoder.train --help >/dev/null
 python -m src.encoder.inference --help >/dev/null
 python -m src.decoder.train --help >/dev/null
 python -m src.decoder.inference --help >/dev/null
 python -m src.evaluate.compare_all --help >/dev/null
 python -m src.evaluate.error_analysis --help >/dev/null
+python -m src.evaluate.validate_seed_run --help >/dev/null
+python -m src.evaluate.aggregate_seeds --help >/dev/null
+
+if [ "${BA_NER_SEED_PREFLIGHT:-0}" = "1" ]; then
+    echo "=== Seed matrix dry run ==="
+    # Submission passes the exact selected config paths as positional script
+    # arguments. "$@" preserves that selection without shell evaluation.
+    python scripts/run_seed_matrix.py --dry-run --skip-tests "$@"
+fi
 
 echo "=== Unit tests ==="
 python -m pytest

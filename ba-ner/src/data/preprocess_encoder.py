@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
 from src.data.dataset_loader import DatasetInfo, load_ner_dataset
+from src.seed_provenance import MODEL_REVISIONS
 
 if TYPE_CHECKING:
     from datasets import DatasetDict
@@ -92,10 +93,16 @@ def prepare_encoder_dataset(
     """
     dataset, info = load_ner_dataset()
 
+    revision_kwargs = (
+        {"revision": MODEL_REVISIONS[model_name]}
+        if model_name in MODEL_REVISIONS
+        else {}
+    )
     tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
         model_name,
         add_prefix_space=True,
         use_fast=True,
+        **revision_kwargs,
     )
 
     tokenized_dataset: "DatasetDict" = dataset.map(

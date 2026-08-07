@@ -13,7 +13,7 @@ import statistics
 import subprocess
 import tempfile
 import time
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable, Optional
@@ -56,6 +56,11 @@ class ModelSpec:
     eval_seconds_low: float = 0.0
     eval_seconds_high: float = 0.0
     restart_buffer_seconds: float = 0.0
+    variant: str = "default"
+    seed: int = 42
+    canonical: bool = True
+    historical: bool = False
+    max_epochs: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -102,6 +107,8 @@ class ModelSnapshot:
     alert: Optional[str]
     eta_low_seconds: Optional[float] = None
     eta_high_seconds: Optional[float] = None
+    status_data: dict[str, Any] = field(default_factory=dict)
+    run_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -251,7 +258,7 @@ def query_jobs(job_ids: Iterable[int]) -> dict[int, JobState]:
 def choose_job(spec: ModelSpec, jobs: dict[int, JobState]) -> JobState:
     candidates = [jobs[job_id] for job_id in spec.job_ids if job_id in jobs]
     if not candidates:
-        return JobState(spec.job_ids[-1], "UNKNOWN")
+        return JobState(spec.job_ids[-1], "UNKNOWN") if spec.job_ids else JobState(0, "PLANNED")
     priority = {"RUNNING": 0, "COMPLETING": 1, "CONFIGURING": 2, "PENDING": 3}
     return min(
         candidates,
@@ -263,7 +270,9 @@ def choose_job(spec: ModelSpec, jobs: dict[int, JobState]) -> JobState:
 
 
 def _find_log(job_id: int, suffix: str) -> Optional[Path]:
-    matches = sorted((PROJECT_ROOT / "logs").glob(f"*_{job_id}.{suffix}"))
+    if job_id <= 0:
+        return None
+    matches = sorted((PROJECT_ROOT / "logs").rglob(f"*{job_id}.{suffix}"))
     return matches[-1] if matches else None
 
 
@@ -273,6 +282,16 @@ def _load_yaml(path: Path) -> dict[str, Any]:
     try:
         value = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, yaml.YAMLError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError, TypeError):
         return {}
     return value if isinstance(value, dict) else {}
 
@@ -361,7 +380,7 @@ def _finite_number(value: Any) -> Optional[float]:
 
 
 def estimate_remaining(snapshot: ModelSnapshot) -> tuple[Optional[float], Optional[float]]:
-    if snapshot.results and snapshot.spec.kind == "encoder":
+    if snapshot.results:
         return 0.0, 0.0
     progress = snapshot.progress
     if progress is None or progress.seconds_per_step <= 0:
@@ -386,6 +405,17 @@ def collect_snapshot(
 ) -> ModelSnapshot:
     job = choose_job(spec, jobs)
     result_dir = results_root / spec.key
+    status_data = _load_json(result_dir / "status.json")
+    run_metadata = _load_yaml(result_dir / "run_metadata.yaml")
+    if status_data and job.job_id == 0:
+        raw_job_id = status_data.get("slurm_job_id")
+        job_id = int(raw_job_id) if str(raw_job_id or "").isdigit() else 0
+        job = JobState(
+            job_id,
+            str(status_data.get("status", "UNKNOWN")),
+            "-",
+            str(status_data.get("node") or "-"),
+        )
     error_log = _find_log(job.job_id, "err")
     stdout_log = _find_log(job.job_id, "out")
     error_text = _read_tail(error_log) if error_log else ""
@@ -422,6 +452,8 @@ def collect_snapshot(
         checkpoint_time=checkpoint_time,
         results=results,
         alert=alert,
+        status_data=status_data,
+        run_metadata=run_metadata,
     )
     snapshot.eta_low_seconds, snapshot.eta_high_seconds = estimate_remaining(snapshot)
     return snapshot
@@ -573,6 +605,15 @@ def _format_compact_duration(seconds: Optional[float]) -> str:
     return f"{days}d {hours:02d}h"
 
 
+def _format_clock_duration(seconds: float) -> str:
+    total_seconds = max(int(round(seconds)), 0)
+    days, remainder = divmod(total_seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    clock = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    return f"{days}-{clock}" if days else clock
+
+
 def _slurm_elapsed_seconds(value: str) -> Optional[float]:
     if not value or value == "-":
         return None
@@ -692,27 +733,116 @@ def _regime_label(regime: str) -> str:
 
 
 def _progress_cell(snapshot: ModelSnapshot) -> str:
-    if snapshot.results and snapshot.spec.kind == "encoder":
+    if snapshot.progress is not None:
+        return (
+            f"{snapshot.progress.percent:.1f}% "
+            f"({snapshot.progress.step:,}/{snapshot.progress.total:,})"
+        )
+    if snapshot.results:
+        if snapshot.spec.kind == "decoder" and snapshot.spec.total_steps:
+            total = snapshot.spec.total_steps
+            return f"100.0% ({total:,}/{total:,})"
         return "100% (complete)"
-    if snapshot.progress is None:
-        return "-"
-    return (
-        f"{snapshot.progress.percent:.1f}% "
-        f"({snapshot.progress.step:,}/{snapshot.progress.total:,})"
-    )
+    return "-"
 
 
 def _epoch_cell(snapshot: ModelSnapshot) -> str:
+    if snapshot.progress is not None and snapshot.spec.epochs:
+        epoch = min(
+            snapshot.spec.epochs,
+            snapshot.progress.step
+            / (snapshot.progress.total / snapshot.spec.epochs),
+        )
+        return f"{epoch:.2f}/{snapshot.spec.epochs}"
+    if snapshot.results:
+        epochs = (
+            snapshot.results.get("num_train_epochs")
+            if snapshot.spec.kind == "encoder"
+            else snapshot.spec.epochs
+        )
+        if not epochs:
+            return "-"
+        return (
+            f"{float(epochs):.2f}/{epochs}"
+            if snapshot.spec.kind == "decoder"
+            else f"{epochs}/{epochs}"
+        )
+    return "-"
+
+
+def _best_validation_row(snapshot: ModelSnapshot) -> dict[str, Any]:
     if snapshot.spec.kind == "encoder":
-        epochs = snapshot.results.get("num_train_epochs")
-        return f"{epochs}/{epochs}" if epochs else "-"
-    if snapshot.progress is None or not snapshot.spec.epochs:
-        return "-"
-    epoch = min(
-        snapshot.spec.epochs,
-        snapshot.progress.step / (snapshot.progress.total / snapshot.spec.epochs),
+        return {
+            "dev_precision": snapshot.dev_metrics.get("best_precision"),
+            "dev_recall": snapshot.dev_metrics.get("best_recall"),
+            "dev_f1": snapshot.dev_metrics.get("best_f1")
+            or snapshot.results.get("best_validation_f1"),
+            "epoch": snapshot.dev_metrics.get("best_epoch"),
+        }
+    rows = snapshot.dev_metrics.get("epoch_results", [])
+    best_epoch = snapshot.dev_metrics.get("best_epoch")
+    return next(
+        (
+            row for row in rows
+            if isinstance(row, dict) and row.get("epoch") == best_epoch
+        ),
+        {},
     )
-    return f"{epoch:.2f}/{snapshot.spec.epochs}"
+
+
+def _seed_snapshot_status(snapshot: ModelSnapshot, now: datetime) -> str:
+    status = str(snapshot.status_data.get("status") or snapshot.job.state)
+    raw_update = snapshot.status_data.get("last_update")
+    if status in {"RUNNING", "VALIDATING", "SAVING", "INFERENCE_RUNNING", "EVALUATION_RUNNING"} and raw_update:
+        try:
+            updated = datetime.fromisoformat(str(raw_update))
+            if updated.tzinfo is None:
+                updated = updated.replace(tzinfo=now.tzinfo)
+            if (now - updated.astimezone(now.tzinfo)).total_seconds() > 600:
+                return f"STALE ({status})"
+        except (TypeError, ValueError):
+            return f"STALE ({status})"
+    return status
+
+
+def _seed_gpu(snapshot: ModelSnapshot) -> str:
+    runtime = snapshot.run_metadata.get("runtime", {})
+    cuda = runtime.get("cuda", {}) if isinstance(runtime, dict) else {}
+    devices = cuda.get("devices", []) if isinstance(cuda, dict) else []
+    if isinstance(devices, list) and devices:
+        rendered = []
+        for device in devices:
+            if isinstance(device, dict):
+                rendered.append(str(device.get("name") or device.get("uuid") or "unknown"))
+            else:
+                rendered.append(str(device))
+        return ", ".join(rendered)
+    return "-"
+
+
+def _seed_update_cell(status_data: dict[str, Any], now: datetime) -> str:
+    raw = status_data.get("last_update")
+    if not raw:
+        return "-"
+    try:
+        updated = datetime.fromisoformat(str(raw))
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=now.tzinfo)
+        age = max(0.0, (now - updated.astimezone(now.tzinfo)).total_seconds())
+        return f"{raw} ({_format_clock_duration(age)} old)"
+    except (TypeError, ValueError):
+        return str(raw)
+
+
+def _seed_peak_vram(status_data: dict[str, Any], results: dict[str, Any]) -> str:
+    megabytes = _finite_number(status_data.get("peak_vram_mb"))
+    if megabytes is None:
+        raw_bytes = _finite_number(status_data.get("peak_vram_bytes"))
+        if raw_bytes is not None:
+            megabytes = raw_bytes / (1024.0 * 1024.0)
+    if megabytes is None:
+        megabytes = _finite_number(results.get("vram_peak_mb"))
+    return "-" if megabytes is None else f"{megabytes:.1f} MiB"
 
 
 def render_markdown(
@@ -784,10 +914,24 @@ def render_markdown(
         "|---|---:|---|---:|---:|---:|---:|---:|---:|",
     ])
     for snapshot in decoder_snapshots:
+        recorded_runtime = _finite_number(
+            snapshot.results.get("train_runtime_seconds")
+        )
+        if snapshot.progress is not None:
+            seconds_per_step = snapshot.progress.seconds_per_step
+        elif recorded_runtime is not None and snapshot.spec.total_steps:
+            seconds_per_step = recorded_runtime / snapshot.spec.total_steps
+        else:
+            seconds_per_step = None
         rate = (
-            f"{snapshot.progress.seconds_per_step:.2f} s"
-            if snapshot.progress is not None
+            f"{seconds_per_step:.2f} s"
+            if seconds_per_step is not None
             else "-"
+        )
+        runtime = (
+            _format_clock_duration(recorded_runtime)
+            if recorded_runtime is not None
+            else snapshot.job.elapsed
         )
         lines.append(
             "| {label} | {job} | {node} | {runtime} | {rate} | {loss} | "
@@ -795,7 +939,7 @@ def render_markdown(
                 label=snapshot.spec.label,
                 job=snapshot.job.job_id,
                 node=snapshot.job.location,
-                runtime=snapshot.job.elapsed,
+                runtime=runtime,
                 rate=rate,
                 loss=_format_metric(snapshot.train_metrics.get("loss")),
                 accuracy=_format_percent(
@@ -841,6 +985,69 @@ def render_markdown(
             f"{_format_percent(best_row.get('dev_recall'))} | "
             f"{_format_epoch(best_epoch)} | "
             f"{_format_percent(best_row.get('parse_failure_rate'))} |"
+        )
+
+    lines.extend([
+        "",
+        "## Canonical Seed Study Runs",
+        "",
+        "| Model | Family | Regime | Variant | Max epochs | Seed | Role | Phase | Status | Job | Array | Node | GPU | Started | Elapsed | Epoch | Step | Progress | Train loss | Val loss | Val P | Val R | Val F1 | Best F1 | Best step | Best epoch | LR | Peak VRAM | ETA | Output | Updated / age | Error |",
+        "|---|---|---|---|---:|---:|---|---|---|---:|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|",
+    ])
+    for snapshot in snapshots:
+        status_data = snapshot.status_data
+        best_row = _best_validation_row(snapshot)
+        current_f1 = status_data.get("eval_f1")
+        best_f1 = (
+            status_data.get("best_eval_f1")
+            or best_row.get("dev_f1")
+            or snapshot.dev_metrics.get("best_f1")
+            or snapshot.results.get("best_validation_f1")
+        )
+        epoch = status_data.get("epoch")
+        if epoch is None and snapshot.progress is not None and snapshot.spec.epochs:
+            epoch = snapshot.progress.step / (snapshot.progress.total / snapshot.spec.epochs)
+        step = status_data.get("step")
+        if step is None and snapshot.progress is not None:
+            step = snapshot.progress.step
+        phase = str(status_data.get("phase") or (
+            "complete" if snapshot.results else "planned" if snapshot.job.state == "PLANNED" else "training"
+        ))
+        role = "historical" if snapshot.spec.historical else "canonical"
+        run_name = f"{snapshot.spec.label}"
+        max_steps = status_data.get("max_steps") or (
+            snapshot.progress.total if snapshot.progress is not None else snapshot.spec.total_steps
+        )
+        step_cell = f"{step if step is not None else '-'}/{max_steps or '-'}"
+        progress = status_data.get("progress_percent")
+        if progress is None and snapshot.progress is not None:
+            progress = snapshot.progress.percent
+        progress_cell = "-" if _finite_number(progress) is None else f"{float(progress):.1f}%"
+        elapsed = _finite_number(status_data.get("elapsed_seconds"))
+        eta = _finite_number(status_data.get("eta_seconds"))
+        best_step = status_data.get("best_step", snapshot.run_metadata.get("best_step"))
+        best_epoch = status_data.get("best_epoch", snapshot.run_metadata.get("best_epoch"))
+        lines.append(
+            f"| {run_name} | {snapshot.spec.kind} | "
+            f"{'full fine-tune' if snapshot.spec.kind == 'encoder' else 'QLoRA'} | "
+            f"{snapshot.spec.variant} | {snapshot.spec.max_epochs or snapshot.spec.epochs or '-'} | "
+            f"{snapshot.spec.seed} | {role} | {phase} | {_seed_snapshot_status(snapshot, now)} | "
+            f"{snapshot.job.job_id or '-'} | {status_data.get('slurm_array_id') or '-'} | "
+            f"{status_data.get('node') or snapshot.job.location} | {_seed_gpu(snapshot)} | "
+            f"{status_data.get('start_time') or snapshot.run_metadata.get('start_time') or '-'} | "
+            f"{_format_clock_duration(elapsed) if elapsed is not None else snapshot.job.elapsed} | "
+            f"{_format_metric(epoch, 2)} | {step_cell} | {progress_cell} | "
+            f"{_format_metric(status_data.get('train_loss', snapshot.train_metrics.get('loss')))} | "
+            f"{_format_metric(status_data.get('eval_loss'))} | "
+            f"{_format_percent(status_data.get('eval_precision', best_row.get('dev_precision')))} | "
+            f"{_format_percent(status_data.get('eval_recall', best_row.get('dev_recall')))} | "
+            f"{_format_percent(current_f1)} | {_format_percent(best_f1)} | "
+            f"{best_step if best_step is not None else '-'} | {_format_epoch(best_epoch)} | "
+            f"{_format_metric(status_data.get('learning_rate', snapshot.train_metrics.get('learning_rate')), 7)} | "
+            f"{_seed_peak_vram(status_data, snapshot.results)} | "
+            f"{_format_clock_duration(eta) if eta is not None else '-'} | "
+            f"`results/multinerd/{snapshot.spec.key}` | {_seed_update_cell(status_data, now)} | "
+            f"{status_data.get('failure_reason') or snapshot.alert or '-'} |"
         )
 
     if final_results is not None:
@@ -1116,6 +1323,11 @@ def load_config(path: Path) -> MonitorConfig:
             eval_seconds_low=float(item.get("eval_seconds_low", 0)),
             eval_seconds_high=float(item.get("eval_seconds_high", 0)),
             restart_buffer_seconds=float(item.get("restart_buffer_seconds", 0)),
+            variant=str(item.get("variant", "default")),
+            seed=int(item.get("seed", 42)),
+            canonical=bool(item.get("canonical", True)),
+            historical=bool(item.get("historical", False)),
+            max_epochs=int(item["max_epochs"]) if item.get("max_epochs") is not None else None,
         ))
     summary_job_id = raw.get("summary_job_id")
     raw_result_jobs = raw.get("result_jobs", {})
@@ -1139,6 +1351,83 @@ def load_config(path: Path) -> MonitorConfig:
         result_job_ids=result_job_ids,
         result_time_limits_seconds=result_time_limits_seconds,
     )
+
+
+def filter_specs(
+    specs: Iterable[ModelSpec],
+    *,
+    model: Optional[str] = None,
+    variant: Optional[str] = None,
+    seed: Optional[int] = None,
+    canonical: bool = False,
+    historical: bool = False,
+    phase: Optional[str] = None,
+    completed: bool = False,
+    failed: bool = False,
+    results_root: Optional[Path] = None,
+) -> tuple[ModelSpec, ...]:
+    """Apply non-mutating CLI filters to monitor entries."""
+    selected = list(specs)
+    if model:
+        needle = model.lower().replace("_", "-")
+        selected = [
+            spec for spec in selected
+            if needle in spec.key.lower().replace("_", "-")
+            or needle in spec.label.lower().replace("_", "-")
+        ]
+    if variant:
+        selected = [spec for spec in selected if spec.variant == variant]
+    if seed is not None:
+        selected = [spec for spec in selected if spec.seed == seed]
+    if canonical:
+        selected = [spec for spec in selected if spec.canonical and not spec.historical]
+    if historical:
+        selected = [spec for spec in selected if spec.historical]
+    if phase or completed or failed:
+        root = results_root or resolve_results_root()
+        filtered = []
+        for spec in selected:
+            status = _load_json(root / spec.key / "status.json")
+            status_name = str(status.get("status", "")).upper()
+            status_phase = str(status.get("phase", "planned")).lower()
+            has_results = (root / spec.key / "results.yaml").is_file()
+            has_inference = (root / spec.key / "inference_metrics.yaml").is_file()
+            if phase and status_phase != phase.lower():
+                continue
+            if completed and not (status_name == "COMPLETED" or (has_results and has_inference)):
+                continue
+            if failed and status_name != "FAILED":
+                continue
+            filtered.append(spec)
+        selected = filtered
+    return tuple(selected)
+
+
+def merge_submission_registry(
+    settings: MonitorConfig,
+    results_root: Optional[Path] = None,
+) -> MonitorConfig:
+    """Attach real submitted job IDs without modifying the tracked YAML."""
+    root = results_root or resolve_results_root()
+    registry_path = root.parent / "seed_studies" / "multinerd" / "submission_registry.yaml"
+    registry = _load_yaml(registry_path)
+    jobs = registry.get("jobs", [])
+    if not isinstance(jobs, list):
+        return settings
+    merged_specs = []
+    for spec in settings.specs:
+        job_ids = list(spec.job_ids)
+        for job in jobs:
+            if not isinstance(job, dict):
+                continue
+            output_name = Path(str(job.get("output_dir", ""))).name
+            job_id = job.get("job_id")
+            if output_name == spec.key and str(job_id or "").isdigit():
+                numeric = int(job_id)
+                if numeric not in job_ids:
+                    job_ids.append(numeric)
+        merged_specs.append(replace(spec, job_ids=tuple(job_ids)))
+    return replace(settings, specs=tuple(merged_specs))
 
 
 def resolve_results_root() -> Path:
@@ -1236,14 +1525,40 @@ def main() -> None:
         type=Path,
         help="Auto-refreshing HTML output (defaults next to --output)",
     )
-    parser.add_argument("--interval", type=int, help="Override refresh interval in seconds")
+    parser.add_argument("--interval", "--refresh", dest="interval", type=int, help="Override refresh interval in seconds")
     parser.add_argument("--once", action="store_true", help="Write one snapshot and exit")
     parser.add_argument("--stdout", action="store_true", help="Print each rendered snapshot")
+    parser.add_argument("--model", help="Filter by model key or label")
+    parser.add_argument("--variant", help="Filter by setup variant, e.g. 3ep")
+    parser.add_argument("--seed", type=int, choices=(42, 123, 456))
+    role = parser.add_mutually_exclusive_group()
+    role.add_argument("--canonical", action="store_true")
+    role.add_argument("--historical", action="store_true")
+    parser.add_argument("--phase")
+    outcome = parser.add_mutually_exclusive_group()
+    outcome.add_argument("--completed", action="store_true")
+    outcome.add_argument("--failed", action="store_true")
+    parser.add_argument("--all", action="store_true", help="Show all configured runs (default)")
     args = parser.parse_args()
 
     settings = load_config(args.config)
     interval = args.interval or settings.refresh_seconds
-    settings = replace(settings, refresh_seconds=interval)
+    settings = replace(
+        settings,
+        refresh_seconds=interval,
+        specs=filter_specs(
+            settings.specs,
+            model=args.model,
+            variant=args.variant,
+            seed=args.seed,
+            canonical=args.canonical,
+            historical=args.historical,
+            phase=args.phase,
+            completed=args.completed,
+            failed=args.failed,
+        ),
+    )
+    settings = merge_submission_registry(settings)
     html_output = args.html_output or args.output.with_suffix(".html")
     cached_jobs: Optional[dict[int, JobState]] = None
     last_scheduler_refresh: Optional[float] = None

@@ -58,6 +58,14 @@ from src.decoder.generation import (
 )
 from src.evaluate.efficiency import count_parameters, get_vram_peak_mb, reset_vram_tracking
 from src.run_metadata import collect_run_metadata
+from src.seed_provenance import MODEL_REVISIONS
+from src.seed_study import (
+    ResumeValidationError,
+    atomic_write_json,
+    atomic_write_yaml,
+    managed_run_phase,
+    record_dataset_metadata,
+)
 
 console = Console()
 INFERENCE_CHECKPOINT_VERSION = 2
@@ -146,11 +154,12 @@ def _write_inference_checkpoint(
 # Inferenz
 # ---------------------------------------------------------------------------
 
-def run_decoder_inference(
+def _run_decoder_inference(
     adapter_path:    str | None,
     base_model_name: str | None,
     config_path:     str,
     zeroshot:        bool = False,
+    run_context: Any = None,
 ) -> Dict[str, Any]:
     """Fuehrt NER-Inferenz mit einem LLM auf dem Test-Set durch.
 
@@ -190,6 +199,13 @@ def run_decoder_inference(
             "LoRA/QLoRA-Inferenz benoetigt --adapter. "
             "Fuer Zero-Shot bitte eine mode: zeroshot Config verwenden."
         )
+    if run_context is not None and adapter_path:
+        expected_adapter = (run_context.output_dir / "best_lora_adapter").resolve()
+        if Path(adapter_path).resolve() != expected_adapter:
+            raise ResumeValidationError(
+                "Test inference must use the adapter with the highest generative "
+                f"validation F1: expected {expected_adapter}, got {Path(adapter_path).resolve()}"
+            )
 
     configured_model_name = str(cfg["model_name"])
     if base_model_name is not None and base_model_name != configured_model_name:
@@ -221,7 +237,16 @@ def run_decoder_inference(
     # Bei Zero-Shot direkt vom Basismodell, sonst vom Adapter-Verzeichnis
     tokenizer_source = base_model_name if is_zeroshot else adapter_path
     console.print(f"[cyan]Lade Tokenizer von {tokenizer_source}...[/cyan]")
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_source, trust_remote_code=True)
+    tokenizer_revision = (
+        MODEL_REVISIONS[base_model_name]
+        if tokenizer_source == base_model_name
+        else None
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_source,
+        revision=tokenizer_revision,
+        trust_remote_code=True,
+    )
     if tokenizer.pad_token is None:
         tokenizer.pad_token    = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
@@ -238,6 +263,7 @@ def run_decoder_inference(
         )
         base_model = AutoModelForCausalLM.from_pretrained(
             base_model_name,
+            revision=MODEL_REVISIONS[base_model_name],
             quantization_config=bnb_config,
             attn_implementation=attn_impl,
             device_map="auto",
@@ -246,6 +272,7 @@ def run_decoder_inference(
     else:
         base_model = AutoModelForCausalLM.from_pretrained(
             base_model_name,
+            revision=MODEL_REVISIONS[base_model_name],
             torch_dtype=torch.bfloat16,
             attn_implementation=attn_impl,
             device_map="auto",
@@ -271,6 +298,7 @@ def run_decoder_inference(
     # --- Test-Daten laden ---
     console.print("[cyan]Loading MultiNERD English test split...[/cyan]")
     raw_dataset, info = load_ner_dataset()
+    record_dataset_metadata(run_context, raw_dataset)
     raw_test = raw_dataset["test"]
     prompts, gold_entities = prepare_test_inputs(raw_test, info)
     tokens_list: List[List[str]] = [s["tokens"] for s in raw_test]
@@ -469,6 +497,7 @@ def run_decoder_inference(
     )
 
     latency_mean = float(np.mean(latencies_ms))
+    latency_p50  = float(np.percentile(latencies_ms, 50))
     latency_p95  = float(np.percentile(latencies_ms, 95))
     generation_samples_per_second = (
         len(prompts) / total_generation_seconds
@@ -506,8 +535,7 @@ def run_decoder_inference(
         )
     ]
     pred_file = output_dir / "test_predictions.json"
-    with open(pred_file, "w", encoding="utf-8") as f:
-        json.dump(saved_samples, f, ensure_ascii=False, indent=2)
+    atomic_write_json(pred_file, saved_samples)
     console.print(f"\nVorhersagen gespeichert: {pred_file}")
 
     full_metrics: Dict[str, Any] = {
@@ -523,6 +551,7 @@ def run_decoder_inference(
         "test_recall":     metrics["recall"],
         **metrics,
         "latency_ms_mean": latency_mean,
+        "latency_ms_p50":  latency_p50,
         "latency_ms_p95":  latency_p95,
         "latency_measurement": "amortized_per_sample",
         "generation_samples_per_second": generation_samples_per_second,
@@ -537,13 +566,58 @@ def run_decoder_inference(
         "max_new_tokens":  max_new_tokens,
         "run_metadata":    collect_run_metadata(cfg),
     }
+    if run_context is not None:
+        full_metrics.update({
+            "canonical": True,
+            "variant": run_context.descriptor.variant,
+            "num_train_epochs": cfg.get("num_train_epochs"),
+            "checkpoint_used": str(Path(adapter_path)) if adapter_path else None,
+            "checkpoint_selection": "highest_generative_validation_f1",
+            "scientific_config_hash": run_context.scientific_config_hash,
+            "full_run_config_hash": run_context.full_run_config_hash,
+        })
     inf_file = output_dir / "inference_metrics.yaml"
-    with open(inf_file, "w") as f:
-        yaml.dump(full_metrics, f, default_flow_style=False)
+    atomic_write_yaml(inf_file, full_metrics)
+    if run_context is not None:
+        run_context.update_metadata(
+            checkpoint_used=str(Path(adapter_path)) if adapter_path else None,
+            test_precision=float(metrics["precision"]),
+            test_recall=float(metrics["recall"]),
+            strict_entity_micro_f1=float(metrics["f1"]),
+            inference_latency_ms_mean=latency_mean,
+            inference_latency_ms_p50=latency_p50,
+            inference_latency_ms_p95=latency_p95,
+            peak_vram_mb=vram_peak,
+            test_sample_count=len(saved_samples),
+            test_predictions_path=str(pred_file),
+            inference_metrics_path=str(inf_file),
+            parse_failure_rate=metrics.get("parse_failure_rate"),
+            parser_diagnostics={
+                key: value for key, value in metrics.items()
+                if key.startswith("parse_")
+            },
+        )
     console.print(f"Inferenz-Metriken gespeichert: {inf_file}")
     checkpoint_path.unlink(missing_ok=True)
 
     return full_metrics
+
+
+def run_decoder_inference(
+    adapter_path: str | None,
+    base_model_name: str | None,
+    config_path: str,
+    zeroshot: bool = False,
+) -> Dict[str, Any]:
+    """Run decoder test inference under the managed run safety contract."""
+    with managed_run_phase(config_path, "inference") as run_context:
+        return _run_decoder_inference(
+            adapter_path,
+            base_model_name,
+            config_path,
+            zeroshot,
+            run_context,
+        )
 
 
 # ---------------------------------------------------------------------------

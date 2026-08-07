@@ -21,6 +21,13 @@ from src.data.preprocess_encoder import prepare_encoder_dataset
 from src.evaluate.efficiency import count_parameters, reset_vram_tracking, get_vram_peak_mb
 from src.evaluate.metrics import compute_ner_metrics
 from src.run_metadata import collect_run_metadata
+from src.seed_study import (
+    ResumeValidationError,
+    atomic_write_json,
+    atomic_write_yaml,
+    managed_run_phase,
+    record_dataset_metadata,
+)
 
 console = Console()
 
@@ -66,9 +73,10 @@ def _decode_predictions(
 # Inferenz
 # ---------------------------------------------------------------------------
 
-def run_encoder_inference(
+def _run_encoder_inference(
     model_path: str,
     config_path: str,
+    run_context: Any = None,
 ) -> Dict[str, Any]:
     """Fuehrt Inferenz mit einem trainierten Encoder-Modell auf dem Test-Set durch.
 
@@ -82,6 +90,13 @@ def run_encoder_inference(
         Dict mit f1, precision, recall, latency_ms_mean, vram_peak_mb.
     """
     cfg = load_experiment_config(config_path, expected_model_type="encoder", expected_regime="encoder")
+    if run_context is not None:
+        expected_model = (run_context.output_dir / "best_model").resolve()
+        if Path(model_path).resolve() != expected_model:
+            raise ResumeValidationError(
+                f"Test inference must use this run's best validation checkpoint: "
+                f"expected {expected_model}, got {Path(model_path).resolve()}"
+            )
     seed = int(cfg.get("seed", 42))
     set_seed(seed)
 
@@ -109,6 +124,7 @@ def run_encoder_inference(
 
     # Rohe Token-Strings fuer die Fehleranalyse-Ausgabe aufbewahren
     raw_dataset, _ = load_ner_dataset()
+    record_dataset_metadata(run_context, raw_dataset)
     raw_test = raw_dataset["test"]
 
     # --- Warmup-Lauf (CUDA-Caches aufwaermen) ---
@@ -179,6 +195,7 @@ def run_encoder_inference(
     recall = ner_metrics["recall"]
 
     latency_mean = float(np.mean(latencies_ms))
+    latency_p50  = float(np.percentile(latencies_ms, 50))
     latency_p95  = float(np.percentile(latencies_ms, 95))
 
     console.print(f"\n[bold green]Test F1: {f1:.4f}[/bold green]")
@@ -191,8 +208,7 @@ def run_encoder_inference(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     pred_file = output_dir / "test_predictions.json"
-    with open(pred_file, "w", encoding="utf-8") as f:
-        json.dump(saved_samples, f, ensure_ascii=False, indent=2)
+    atomic_write_json(pred_file, saved_samples)
     console.print(f"Vorhersagen gespeichert: {pred_file}")
 
     # --- Inferenz-Metriken als YAML speichern ---
@@ -207,19 +223,49 @@ def run_encoder_inference(
         "test_precision":    float(precision),
         "test_recall":       float(recall),
         "latency_ms_mean":   latency_mean,
+        "latency_ms_p50":    latency_p50,
         "latency_ms_p95":    latency_p95,
         "vram_peak_mb":      vram_peak,
         "total_params":      total_params,
         "seed":              seed,
         "run_metadata":      collect_run_metadata(cfg),
     }
+    if run_context is not None:
+        metrics.update({
+            "canonical": True,
+            "variant": run_context.descriptor.variant,
+            "num_train_epochs": cfg.get("num_train_epochs"),
+            "checkpoint_used": str(Path(model_path)),
+            "checkpoint_selection": "highest_validation_f1",
+            "scientific_config_hash": run_context.scientific_config_hash,
+            "full_run_config_hash": run_context.full_run_config_hash,
+        })
 
     inf_file = output_dir / "inference_metrics.yaml"
-    with open(inf_file, "w") as f:
-        yaml.dump(metrics, f, default_flow_style=False)
+    atomic_write_yaml(inf_file, metrics)
+    if run_context is not None:
+        run_context.update_metadata(
+            checkpoint_used=str(Path(model_path)),
+            test_precision=float(precision),
+            test_recall=float(recall),
+            strict_entity_micro_f1=float(f1),
+            inference_latency_ms_mean=latency_mean,
+            inference_latency_ms_p50=latency_p50,
+            inference_latency_ms_p95=latency_p95,
+            peak_vram_mb=vram_peak,
+            test_sample_count=len(saved_samples),
+            test_predictions_path=str(pred_file),
+            inference_metrics_path=str(inf_file),
+        )
     console.print(f"Inferenz-Metriken gespeichert: {inf_file}")
 
     return metrics
+
+
+def run_encoder_inference(model_path: str, config_path: str) -> Dict[str, Any]:
+    """Run test inference with the exact run's best validation checkpoint."""
+    with managed_run_phase(config_path, "inference") as run_context:
+        return _run_encoder_inference(model_path, config_path, run_context)
 
 
 # ---------------------------------------------------------------------------

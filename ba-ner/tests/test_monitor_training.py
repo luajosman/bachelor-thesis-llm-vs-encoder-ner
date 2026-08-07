@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 
@@ -16,7 +17,9 @@ from src.evaluate.monitor_training import (
     ModelSpec,
     Progress,
     choose_job,
+    collect_snapshot,
     estimate_remaining,
+    filter_specs,
     load_config,
     parse_inference_progress,
     parse_progress,
@@ -112,6 +115,33 @@ def test_choose_job_prefers_running_resume() -> None:
     }
 
     assert choose_job(spec, jobs).job_id == 11
+
+
+def test_choose_job_renders_new_run_without_placeholder_id_as_planned() -> None:
+    spec = ModelSpec(
+        key="qwen-new",
+        label="Qwen new",
+        kind="decoder",
+        job_ids=(),
+        variant="3ep",
+        seed=123,
+    )
+
+    assert choose_job(spec, {}) == JobState(0, "PLANNED")
+
+
+def test_monitor_filters_canonical_historical_variant_and_seed() -> None:
+    specs = (
+        ModelSpec("qwen-2ep", "Qwen 2ep", "decoder", (1,), variant="2ep", seed=42, canonical=False, historical=True),
+        ModelSpec("qwen-3ep", "Qwen 3ep", "decoder", (), variant="3ep", seed=42),
+        ModelSpec("qwen-3ep-seed123", "Qwen 3ep", "decoder", (), variant="3ep", seed=123),
+    )
+
+    assert [spec.key for spec in filter_specs(specs, historical=True)] == ["qwen-2ep"]
+    assert [spec.key for spec in filter_specs(specs, canonical=True, seed=123)] == [
+        "qwen-3ep-seed123"
+    ]
+    assert len(filter_specs(specs, variant="3ep")) == 2
 
 
 def test_estimate_remaining_includes_pending_evals_and_restart_buffer() -> None:
@@ -212,6 +242,7 @@ def test_render_markdown_contains_requested_live_sections() -> None:
     assert "## Live Estimate" in rendered
     assert "## Live Training Metrics" in rendered
     assert "## Validation Results" in rendered
+    assert "## Canonical Seed Study Runs" in rendered
     assert "## All Final Experiments" in rendered
     assert "## Inference Time Estimates" in rendered
     assert "## Recovery Checkpoints" in rendered
@@ -221,6 +252,34 @@ def test_render_markdown_contains_requested_live_sections() -> None:
     assert "Final comparison job: `99` (PENDING)" in rendered
     assert "`results/multinerd/qwen-test`" in rendered
     assert "| qwen-test | LLM zero-shot | Training | - | N/A |" in rendered
+
+
+def test_completed_decoder_without_log_progress_renders_complete() -> None:
+    snapshot = ModelSnapshot(
+        spec=_decoder_spec(),
+        job=JobState(11, "COMPLETED", "00:00:01"),
+        progress=None,
+        train_metrics={},
+        dev_metrics={"best_f1": 0.9, "best_epoch": 2},
+        checkpoint_step=300,
+        checkpoint_time=None,
+        results={"best_dev_f1": 0.9, "train_runtime_seconds": 600.0},
+        alert=None,
+    )
+    snapshot.eta_low_seconds, snapshot.eta_high_seconds = estimate_remaining(snapshot)
+
+    rendered = render_markdown(
+        [snapshot],
+        datetime.now().astimezone(),
+        refresh_seconds=300,
+        summary_job=None,
+    )
+
+    assert (
+        "| Qwen test | COMPLETED | 100.0% (300/300) | 3.00/3 | "
+        "complete | complete |"
+    ) in rendered
+    assert "| Qwen test | 11 | - | 00:10:00 | 2.00 s |" in rendered
 
 
 def test_collect_final_results_includes_all_experiments_and_metrics(tmp_path) -> None:
@@ -357,6 +416,39 @@ def test_load_config_supports_separate_refresh_intervals(tmp_path) -> None:
     )
 
 
+def test_repository_monitor_tracks_all_fresh_and_historical_groups() -> None:
+    settings = load_config(Path("configs/training_monitor.yaml"))
+    by_key = {spec.key: spec for spec in settings.specs}
+
+    assert len(by_key) == len(settings.specs)
+    historical_keys = {
+        "deberta-v3-base",
+        "deberta-v3-large",
+        "qwen35-08b-qlora",
+        "qwen35-4b-qlora",
+        "qwen35-27b-qlora",
+    }
+    assert all(
+        by_key[key].historical and not by_key[key].canonical
+        for key in historical_keys
+    )
+
+    canonical_groups = (
+        "deberta-v3-base-canonical",
+        "deberta-v3-large-canonical",
+        "qwen35-08b-qlora-canonical",
+        "qwen35-4b-qlora-canonical",
+        "qwen35-27b-qlora-3ep",
+    )
+    for base in canonical_groups:
+        keys = (base, f"{base}-seed123", f"{base}-seed456")
+        assert {by_key[key].seed for key in keys} == {42, 123, 456}
+        assert all(
+            by_key[key].canonical and not by_key[key].historical
+            for key in keys
+        )
+
+
 def test_write_atomic_makes_dashboard_browser_readable(tmp_path) -> None:
     output = tmp_path / "training_monitor.html"
 
@@ -364,3 +456,58 @@ def test_write_atomic_makes_dashboard_browser_readable(tmp_path) -> None:
 
     assert output.read_text(encoding="utf-8") == "<p>live</p>"
     assert output.stat().st_mode & 0o777 == 0o644
+
+
+def test_corrupt_status_file_does_not_break_snapshot_collection(tmp_path) -> None:
+    result_dir = tmp_path / "qwen-test"
+    result_dir.mkdir()
+    (result_dir / "status.json").write_text("{broken", encoding="utf-8")
+
+    snapshot = collect_snapshot(_decoder_spec(), {}, tmp_path)
+
+    assert snapshot.status_data == {}
+    assert snapshot.job.state == "UNKNOWN"
+
+
+def test_seed_table_renders_extended_runtime_fields_and_stale_state() -> None:
+    snapshot = ModelSnapshot(
+        spec=_decoder_spec(),
+        job=JobState(11, "RUNNING", "00:05", "node1"),
+        progress=Progress(step=100, total=300, seconds_per_step=2.0),
+        train_metrics={},
+        dev_metrics={},
+        checkpoint_step=100,
+        checkpoint_time=None,
+        results={},
+        alert=None,
+        status_data={
+            "status": "RUNNING",
+            "phase": "training",
+            "slurm_array_id": "77",
+            "node": "node1",
+            "start_time": "2026-08-07T10:00:00+00:00",
+            "last_update": "2020-01-01T00:00:00+00:00",
+            "elapsed_seconds": 300,
+            "eta_seconds": 400,
+            "progress_percent": 33.3,
+            "step": 100,
+            "max_steps": 300,
+            "best_step": 90,
+            "best_epoch": 1,
+            "peak_vram_bytes": 1024 * 1024,
+        },
+        run_metadata={"runtime": {"cuda": {"devices": ["H100"]}}},
+    )
+
+    rendered = render_markdown(
+        [snapshot],
+        datetime.now().astimezone(),
+        refresh_seconds=30,
+        summary_job=None,
+    )
+
+    assert "| Job | Array | Node | GPU | Started | Elapsed |" in rendered
+    assert "STALE (RUNNING)" in rendered
+    assert "| 11 | 77 | node1 | H100 |" in rendered
+    assert "100/300 | 33.3%" in rendered
+    assert "1.0 MiB" in rendered

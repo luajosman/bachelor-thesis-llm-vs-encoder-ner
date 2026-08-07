@@ -26,6 +26,14 @@ from src.config import DATASET_LANGUAGE, DATASET_NAME, load_experiment_config, o
 from src.data.preprocess_encoder import prepare_encoder_dataset
 from src.evaluate.metrics import build_token_classification_compute_metrics
 from src.run_metadata import collect_run_metadata
+from src.seed_provenance import MODEL_REVISIONS
+from src.seed_study import (
+    RunStatusCallback,
+    atomic_write_json,
+    atomic_write_yaml,
+    managed_run_phase,
+    record_dataset_metadata,
+)
 
 console = Console()
 
@@ -34,7 +42,7 @@ console = Console()
 # Training
 # ---------------------------------------------------------------------------
 
-def train_encoder(config_path: str) -> Dict[str, Any]:
+def _train_encoder(config_path: str, run_context: Any = None) -> Dict[str, Any]:
     """Trainiert ein Encoder-Modell fuer NER auf Basis einer YAML-Config.
 
     Ablauf:
@@ -72,11 +80,13 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
         model_name=cfg["model_name"],
         max_length=max_length,
     )
+    record_dataset_metadata(run_context, tokenized_dataset)
 
     # --- Modell laden ---
     console.print(f"[cyan]Lade Modell: {cfg['model_name']}[/cyan]")
     model = AutoModelForTokenClassification.from_pretrained(
         cfg["model_name"],
+        revision=MODEL_REVISIONS[cfg["model_name"]],
         num_labels=info.num_labels,
         id2label=info.id2label,
         label2id=info.label2id,
@@ -122,6 +132,7 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
         bf16=use_bf16,
         fp16=use_fp16,
         seed=seed,
+        data_seed=seed,
         logging_steps=cfg.get("logging_steps", 50),
         logging_nan_inf_filter=False,
         report_to="wandb" if cfg.get("use_wandb", False) else "none",
@@ -140,6 +151,10 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
     early_stopping_patience = cfg.get("early_stopping_patience", 1)
 
     # --- Trainer zusammenbauen ---
+    callbacks = [EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)]
+    if run_context is not None:
+        callbacks.append(RunStatusCallback(run_context))
+
     trainer_kwargs = dict(
         model=model,
         args=training_args,
@@ -147,7 +162,7 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
         eval_dataset=tokenized_dataset["validation"],
         data_collator=data_collator,
         compute_metrics=compute_metrics,
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)],
+        callbacks=callbacks,
     )
     tokenizer_arg = (
         "processing_class"
@@ -160,7 +175,9 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
     # --- Training starten ---
     console.print("[bold yellow]Starte Training...[/bold yellow]")
     train_start = time.perf_counter()
-    trainer.train()
+    trainer.train(
+        resume_from_checkpoint=(run_context.resume_checkpoint if run_context else None)
+    )
     train_runtime = time.perf_counter() - train_start
 
     # --- Bestes Modell speichern ---
@@ -169,6 +186,21 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
     tokenizer.save_pretrained(str(best_model_dir))
 
     best_validation_f1 = float(trainer.state.best_metric or 0.0)
+    best_step = None
+    if trainer.state.best_model_checkpoint:
+        checkpoint_name = Path(trainer.state.best_model_checkpoint).name
+        if checkpoint_name.startswith("checkpoint-") and checkpoint_name[11:].isdigit():
+            best_step = int(checkpoint_name[11:])
+    best_epoch = None
+    best_validation_loss = None
+    for entry in trainer.state.log_history:
+        if not isinstance(entry, dict) or "eval_f1" not in entry:
+            continue
+        if float(entry["eval_f1"]) == best_validation_f1:
+            best_epoch = entry.get("epoch")
+            best_validation_loss = entry.get("eval_loss")
+            best_step = entry.get("step", best_step)
+            break
     console.print(f"\n[bold green]Best validation F1: {best_validation_f1:.4f}[/bold green]")
     console.print(f"Trainingszeit: {train_runtime:.1f}s")
 
@@ -181,6 +213,9 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
         "dataset":               DATASET_NAME,
         "dataset_language":      DATASET_LANGUAGE,
         "best_validation_f1":    best_validation_f1,
+        "best_validation_loss":  best_validation_loss,
+        "best_step":             best_step,
+        "best_epoch":            best_epoch,
         "train_runtime_seconds": float(train_runtime),
         "best_model_dir":        str(best_model_dir),
         "seed":                  seed,
@@ -190,13 +225,45 @@ def train_encoder(config_path: str) -> Dict[str, Any]:
         "max_length":            max_length,
         "run_metadata":          collect_run_metadata(cfg),
     }
+    if run_context is not None:
+        results.update({
+            "canonical": True,
+            "variant": run_context.descriptor.variant,
+            "scientific_config_hash": run_context.scientific_config_hash,
+            "full_run_config_hash": run_context.full_run_config_hash,
+            "resumed": run_context.resumed,
+            "resume_checkpoint": run_context.resume_checkpoint,
+        })
 
+    atomic_write_json(output_dir / "training_history.json", trainer.state.log_history)
     results_file = output_dir / "results.yaml"
-    with open(results_file, "w") as f:
-        yaml.dump(results, f, default_flow_style=False)
+    atomic_write_yaml(results_file, results)
+    if run_context is not None:
+        total_params = sum(parameter.numel() for parameter in model.parameters())
+        trainable_params = sum(
+            parameter.numel() for parameter in model.parameters() if parameter.requires_grad
+        )
+        run_context.update_metadata(
+            total_params=total_params,
+            trainable_params=trainable_params,
+            trainable_parameter_fraction=(trainable_params / total_params if total_params else None),
+            best_validation_f1=best_validation_f1,
+            best_validation_loss=best_validation_loss,
+            best_step=best_step,
+            best_epoch=best_epoch,
+            training_runtime_seconds=float(train_runtime),
+            training_history_path=str(output_dir / "training_history.json"),
+            best_checkpoint_path=str(best_model_dir),
+        )
     console.print(f"Ergebnisse gespeichert: {results_file}")
 
     return results
+
+
+def train_encoder(config_path: str) -> Dict[str, Any]:
+    """Run encoder training with seed-study collision and resume safeguards."""
+    with managed_run_phase(config_path, "training") as run_context:
+        return _train_encoder(config_path, run_context)
 
 
 # ---------------------------------------------------------------------------

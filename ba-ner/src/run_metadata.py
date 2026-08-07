@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import importlib.metadata
+import hashlib
+import os
 import platform
 import socket
 import subprocess
@@ -42,15 +44,24 @@ def collect_run_metadata(cfg: Dict[str, Any] | None = None) -> Dict[str, Any]:
             "release": platform.release(),
             "machine": platform.machine(),
             "processor": platform.processor(),
+            "cpu_count": os.cpu_count(),
         },
         "hostname": socket.gethostname(),
         "packages": _package_versions(TRACKED_PACKAGES),
         "cuda": _cuda_metadata(),
+        "slurm": {
+            "job_id": os.environ.get("SLURM_JOB_ID"),
+            "array_job_id": os.environ.get("SLURM_ARRAY_JOB_ID"),
+            "node": os.environ.get("SLURMD_NODENAME"),
+            "cpus_per_task": os.environ.get("SLURM_CPUS_PER_TASK"),
+            "memory_per_node": os.environ.get("SLURM_MEM_PER_NODE"),
+            "job_gpus": os.environ.get("SLURM_JOB_GPUS"),
+        },
     }
 
     revisions = {
         key: cfg[key]
-        for key in ("model_revision", "dataset_revision")
+        for key in ("model_revision", "tokenizer_revision", "dataset_revision")
         if key in cfg
     }
     if revisions:
@@ -64,6 +75,7 @@ def _git_metadata() -> Dict[str, Any]:
         "commit": _run_git(["rev-parse", "HEAD"]),
         "branch": _run_git(["rev-parse", "--abbrev-ref", "HEAD"]),
         "dirty": _git_dirty(),
+        "diff_sha256": _git_diff_hash(),
     }
 
 
@@ -72,6 +84,13 @@ def _git_dirty() -> bool | None:
     if status is None:
         return None
     return bool(status.strip())
+
+
+def _git_diff_hash() -> str | None:
+    diff = _run_git(["diff", "--binary", "HEAD"])
+    if diff is None:
+        return None
+    return hashlib.sha256(diff.encode("utf-8")).hexdigest()
 
 
 def _run_git(args: list[str]) -> str | None:
@@ -131,6 +150,26 @@ def _cuda_metadata() -> Dict[str, Any]:
         "torch_importable": True,
         "available": available,
         "torch_cuda_version": getattr(torch.version, "cuda", None),
+        "cudnn_version": torch.backends.cudnn.version() if available else None,
+        "driver_version": _nvidia_driver_version(),
         "device_count": device_count,
         "devices": devices,
     }
+
+
+def _nvidia_driver_version() -> str | None:
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        return None
+    if result.returncode != 0:
+        return None
+    values = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    return values[0] if values else None

@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Tuple
 from rich.console import Console
 
 from src.config import DATASET_LANGUAGE, DATASET_NAME
+from src.seed_provenance import DATASET_REVISION
 
 console = Console()
 
@@ -97,6 +98,7 @@ def load_ner_dataset(
     # repository files match the 164.1K English sentences reported in the paper.
     raw: DatasetDict = load_dataset(
         MULTINERD_HF_NAME,
+        revision=DATASET_REVISION,
         verification_mode="no_checks",
     )
     _validate_raw_schema(raw)

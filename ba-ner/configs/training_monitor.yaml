@@ -25,39 +25,254 @@ result_time_limits_hours:
 
 models:
   - key: deberta-v3-base
-    label: DeBERTa v3 base
+    label: DeBERTa v3 base (s42 historical)
     kind: encoder
     job_ids: [3219783]
+    total_steps: 41025
+    epochs: 5
+    max_epochs: 5
+    seed: 42
+    variant: default
+    canonical: false
+    historical: true
+
+  - key: deberta-v3-base-canonical
+    label: DeBERTa v3 base (canonical s42)
+    kind: encoder
+    job_ids: []
+    total_steps: 41025
+    epochs: 5
+    max_epochs: 5
+    seed: 42
+    variant: default
+    canonical: true
+
+  - key: deberta-v3-base-canonical-seed123
+    label: DeBERTa v3 base (s123)
+    kind: encoder
+    job_ids: []
+    total_steps: 41025
+    epochs: 5
+    max_epochs: 5
+    seed: 123
+    variant: default
+    canonical: true
+
+  - key: deberta-v3-base-canonical-seed456
+    label: DeBERTa v3 base (s456)
+    kind: encoder
+    job_ids: []
+    total_steps: 41025
+    epochs: 5
+    max_epochs: 5
+    seed: 456
+    variant: default
+    canonical: true
 
   - key: deberta-v3-large
-    label: DeBERTa v3 large
+    label: DeBERTa v3 large (s42 historical)
     kind: encoder
     job_ids: [3219785]
+    total_steps: 32820
+    epochs: 4
+    max_epochs: 4
+    seed: 42
+    variant: default
+    canonical: false
+    historical: true
+
+  - key: deberta-v3-large-canonical
+    label: DeBERTa v3 large (canonical s42)
+    kind: encoder
+    job_ids: []
+    total_steps: 32820
+    epochs: 4
+    max_epochs: 4
+    seed: 42
+    variant: default
+    canonical: true
+
+  - key: deberta-v3-large-canonical-seed123
+    label: DeBERTa v3 large (s123)
+    kind: encoder
+    job_ids: []
+    total_steps: 32820
+    epochs: 4
+    max_epochs: 4
+    seed: 123
+    variant: default
+    canonical: true
+
+  - key: deberta-v3-large-canonical-seed456
+    label: DeBERTa v3 large (s456)
+    kind: encoder
+    job_ids: []
+    total_steps: 32820
+    epochs: 4
+    max_epochs: 4
+    seed: 456
+    variant: default
+    canonical: true
 
   - key: qwen35-08b-qlora
-    label: Qwen 0.8B
+    label: Qwen 0.8B (s42 historical)
     kind: decoder
     job_ids: [3219769, 3220278]
     total_steps: 24615
     epochs: 3
+    max_epochs: 3
+    seed: 42
+    variant: default
+    canonical: false
+    historical: true
+    eval_seconds_low: 650
+    eval_seconds_high: 900
+
+  - key: qwen35-08b-qlora-canonical
+    label: Qwen 0.8B (canonical s42)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 42
+    variant: default
+    canonical: true
+    eval_seconds_low: 650
+    eval_seconds_high: 900
+
+  - key: qwen35-08b-qlora-canonical-seed123
+    label: Qwen 0.8B (s123)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 123
+    variant: default
+    canonical: true
+    eval_seconds_low: 650
+    eval_seconds_high: 900
+
+  - key: qwen35-08b-qlora-canonical-seed456
+    label: Qwen 0.8B (s456)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 456
+    variant: default
+    canonical: true
     eval_seconds_low: 650
     eval_seconds_high: 900
 
   - key: qwen35-4b-qlora
-    label: Qwen 4B
+    label: Qwen 4B (s42 historical)
     kind: decoder
     job_ids: [3219770, 3225153]
     total_steps: 24615
     epochs: 3
+    max_epochs: 3
+    seed: 42
+    variant: default
+    canonical: false
+    historical: true
+    eval_seconds_low: 3000
+    eval_seconds_high: 5400
+
+  - key: qwen35-4b-qlora-canonical
+    label: Qwen 4B (canonical s42)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 42
+    variant: default
+    canonical: true
+    eval_seconds_low: 3000
+    eval_seconds_high: 5400
+
+  - key: qwen35-4b-qlora-canonical-seed123
+    label: Qwen 4B (s123)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 123
+    variant: default
+    canonical: true
+    eval_seconds_low: 3000
+    eval_seconds_high: 5400
+
+  - key: qwen35-4b-qlora-canonical-seed456
+    label: Qwen 4B (s456)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 456
+    variant: default
+    canonical: true
     eval_seconds_low: 3000
     eval_seconds_high: 5400
 
   - key: qwen35-27b-qlora
-    label: Qwen 27B
+    label: Qwen 27B (2ep s42 historical)
     kind: decoder
-    job_ids: [3219771, 3219803, 3219804, 3219805]
+    job_ids: [3219771, 3219803, 3219804, 3219805, 3226684]
     total_steps: 16410
     epochs: 2
+    max_epochs: 2
+    seed: 42
+    variant: 2ep
+    canonical: false
+    historical: true
+    eval_seconds_low: 14400
+    eval_seconds_high: 21600
+    restart_buffer_seconds: 36000
+
+  - key: qwen35-27b-qlora-3ep
+    label: Qwen 27B (3ep s42)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 42
+    variant: 3ep
+    canonical: true
+    eval_seconds_low: 14400
+    eval_seconds_high: 21600
+    restart_buffer_seconds: 36000
+
+  - key: qwen35-27b-qlora-3ep-seed123
+    label: Qwen 27B (3ep s123)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 123
+    variant: 3ep
+    canonical: true
+    eval_seconds_low: 14400
+    eval_seconds_high: 21600
+    restart_buffer_seconds: 36000
+
+  - key: qwen35-27b-qlora-3ep-seed456
+    label: Qwen 27B (3ep s456)
+    kind: decoder
+    job_ids: []
+    total_steps: 24615
+    epochs: 3
+    max_epochs: 3
+    seed: 456
+    variant: 3ep
+    canonical: true
     eval_seconds_low: 14400
     eval_seconds_high: 21600
     restart_buffer_seconds: 36000

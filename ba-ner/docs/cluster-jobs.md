@@ -120,6 +120,73 @@ and runs the comparison job after all inference jobs succeed:
 scripts/cluster/submit_all.sh
 ```
 
+### Canonical seed study
+
+The historical eight-experiment command above remains available and is not
+used to duplicate zero-shot runs. The canonical seed study has its own guarded
+orchestrator:
+
+```bash
+python scripts/run_seed_matrix.py --preflight
+python scripts/run_seed_matrix.py --dry-run
+python scripts/run_seed_matrix.py --submit
+```
+
+`--submit` runs tests and config/hash/path checks locally, then submits and
+waits for a CUDA compute-node preflight. Only after that job succeeds are the
+fifteen training pipelines submitted. Each run uses `afterok` dependencies:
+
+```text
+training -> inference -> strict saved-prediction evaluation
+```
+
+The aggregate job uses `afterany` across evaluation jobs. If a run fails and
+its downstream jobs are dependency-cancelled, aggregation still writes an
+explicitly incomplete report rather than silently producing nothing.
+
+Job and log names contain model, 27B variant where applicable, seed, phase, and
+SLURM job ID. Logs are stored below
+`logs/seed-studies/<group>/seed-<seed>/<phase>-%j.{out,err}`. The successful
+reference resources are reused. Qwen3.5-27B uses the historical H100-Trails,
+160G, three-day allocation with SLURM requeue; any continuation is allowed only
+at a checkpoint owned by the exact same seed/run/hash. The historical 2ep path
+is read-only and cannot be a resume source for the 3ep variant.
+
+Useful subsets and recovery commands:
+
+```bash
+python scripts/run_seed_matrix.py --encoder-only --dry-run
+python scripts/run_seed_matrix.py --decoder-only --dry-run
+python scripts/run_seed_matrix.py --model qwen35_27b_3ep --dry-run
+python scripts/run_seed_matrix.py --model qwen35_08b --model qwen35_4b --model qwen35_27b_3ep --dry-run
+python scripts/run_seed_matrix.py --seeds 123 --submit
+python scripts/run_seed_matrix.py --seeds 456 --submit
+python scripts/run_seed_matrix.py --resume-failed --submit
+python scripts/run_seed_matrix.py --inference-only --submit
+python scripts/run_seed_matrix.py --evaluation-only --submit
+python scripts/run_seed_matrix.py --aggregate-only
+```
+
+Subset submissions carry their exact resolved config list into the compute-node
+preflight. Its provenance, path, cache, resource, and CUDA checks therefore
+apply only to the selected runs; this does not bypass any validation and cannot
+expand the request into a model-by-seed cross product.
+
+Do not use `--resume-failed` to change a seed, variant, model, output path, epoch
+limit, or config hash; the runtime guard rejects all such attempts.
+
+All five model groups use fresh managed runs for Seeds 42, 123, and 456. Their
+five earlier Seed-42 outputs are historical, read-only, and excluded from the
+primary aggregates, so gaps in legacy worktree evidence cannot contaminate or
+block the canonical cohort.
+
+Submission requires a clean committed repository. `--submit` records the
+current HEAD in `BA_NER_EXPECTED_GIT_COMMIT`; the CUDA preflight and every
+training, inference, evaluation, and aggregation job verify that exact commit
+and reject any dirty worktree before running. Commit and freeze the experiment
+definition before submission, and do not edit the checkout while the matrix is
+active. The configured scratch filesystem must also have at least 500 GiB free.
+
 ## 4. Monitor jobs
 
 List all of your queued and running jobs:
@@ -134,6 +201,22 @@ Inspect one job:
 squeue -j JOB_ID
 scontrol show job JOB_ID
 ```
+
+The repository monitor includes all 15 canonical fine-tuning entries plus five
+historical Seed-42 entries:
+
+```bash
+python scripts/live_monitor.py --refresh 10
+python scripts/live_monitor.py --model qwen35-27b --all
+python scripts/live_monitor.py --variant 3ep
+python scripts/live_monitor.py --canonical
+python scripts/live_monitor.py --historical
+python scripts/run_seed_matrix.py --status
+```
+
+It reads structured status/metadata first, then trainer state, manifests, SLURM,
+and logs. Missing/corrupt files or unavailable SLURM commands do not stop the
+monitor, and it never starts, stops, or modifies training.
 
 Typical SLURM states are:
 

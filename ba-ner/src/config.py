@@ -114,6 +114,138 @@ FINAL_EXPERIMENTS: Dict[str, ExperimentSpec] = {
 }
 
 
+# The historical eight-experiment matrix above remains unchanged.  The seed
+# study is registered separately so existing callers of ``FINAL_EXPERIMENTS``
+# keep their original behaviour (especially the deterministic zero-shot runs).
+SEED_STUDY_EXPERIMENTS: Dict[str, ExperimentSpec] = {
+    "deberta_base_canonical_seed42": ExperimentSpec(
+        key="deberta_base_canonical_seed42",
+        config_path="configs/deberta_base_canonical.yaml",
+        experiment_name="deberta-v3-base-canonical",
+        model_name=ENCODER_MODELS["deberta-v3-base"],
+        model_type="encoder",
+        regime="encoder",
+    ),
+    "deberta_base_seed123": ExperimentSpec(
+        key="deberta_base_seed123",
+        config_path="configs/deberta_base_seed123.yaml",
+        experiment_name="deberta-v3-base-canonical-seed123",
+        model_name=ENCODER_MODELS["deberta-v3-base"],
+        model_type="encoder",
+        regime="encoder",
+    ),
+    "deberta_base_seed456": ExperimentSpec(
+        key="deberta_base_seed456",
+        config_path="configs/deberta_base_seed456.yaml",
+        experiment_name="deberta-v3-base-canonical-seed456",
+        model_name=ENCODER_MODELS["deberta-v3-base"],
+        model_type="encoder",
+        regime="encoder",
+    ),
+    "deberta_large_canonical_seed42": ExperimentSpec(
+        key="deberta_large_canonical_seed42",
+        config_path="configs/deberta_large_canonical.yaml",
+        experiment_name="deberta-v3-large-canonical",
+        model_name=ENCODER_MODELS["deberta-v3-large"],
+        model_type="encoder",
+        regime="encoder",
+    ),
+    "deberta_large_seed123": ExperimentSpec(
+        key="deberta_large_seed123",
+        config_path="configs/deberta_large_seed123.yaml",
+        experiment_name="deberta-v3-large-canonical-seed123",
+        model_name=ENCODER_MODELS["deberta-v3-large"],
+        model_type="encoder",
+        regime="encoder",
+    ),
+    "deberta_large_seed456": ExperimentSpec(
+        key="deberta_large_seed456",
+        config_path="configs/deberta_large_seed456.yaml",
+        experiment_name="deberta-v3-large-canonical-seed456",
+        model_name=ENCODER_MODELS["deberta-v3-large"],
+        model_type="encoder",
+        regime="encoder",
+    ),
+    "qwen35_08b_canonical_seed42": ExperimentSpec(
+        key="qwen35_08b_canonical_seed42",
+        config_path="configs/qwen35_08b_canonical.yaml",
+        experiment_name="qwen35-08b-qlora-canonical",
+        model_name=QWEN_MODELS["qwen35-08b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+    "qwen35_08b_seed123": ExperimentSpec(
+        key="qwen35_08b_seed123",
+        config_path="configs/qwen35_08b_seed123.yaml",
+        experiment_name="qwen35-08b-qlora-canonical-seed123",
+        model_name=QWEN_MODELS["qwen35-08b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+    "qwen35_08b_seed456": ExperimentSpec(
+        key="qwen35_08b_seed456",
+        config_path="configs/qwen35_08b_seed456.yaml",
+        experiment_name="qwen35-08b-qlora-canonical-seed456",
+        model_name=QWEN_MODELS["qwen35-08b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+    "qwen35_4b_canonical_seed42": ExperimentSpec(
+        key="qwen35_4b_canonical_seed42",
+        config_path="configs/qwen35_4b_canonical.yaml",
+        experiment_name="qwen35-4b-qlora-canonical",
+        model_name=QWEN_MODELS["qwen35-4b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+    "qwen35_4b_seed123": ExperimentSpec(
+        key="qwen35_4b_seed123",
+        config_path="configs/qwen35_4b_seed123.yaml",
+        experiment_name="qwen35-4b-qlora-canonical-seed123",
+        model_name=QWEN_MODELS["qwen35-4b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+    "qwen35_4b_seed456": ExperimentSpec(
+        key="qwen35_4b_seed456",
+        config_path="configs/qwen35_4b_seed456.yaml",
+        experiment_name="qwen35-4b-qlora-canonical-seed456",
+        model_name=QWEN_MODELS["qwen35-4b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+    "qwen35_27b_3ep_seed42": ExperimentSpec(
+        key="qwen35_27b_3ep_seed42",
+        config_path="configs/qwen35_27b_3ep.yaml",
+        experiment_name="qwen35-27b-qlora-3ep",
+        model_name=QWEN_MODELS["qwen35-27b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+    "qwen35_27b_3ep_seed123": ExperimentSpec(
+        key="qwen35_27b_3ep_seed123",
+        config_path="configs/qwen35_27b_3ep_seed123.yaml",
+        experiment_name="qwen35-27b-qlora-3ep-seed123",
+        model_name=QWEN_MODELS["qwen35-27b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+    "qwen35_27b_3ep_seed456": ExperimentSpec(
+        key="qwen35_27b_3ep_seed456",
+        config_path="configs/qwen35_27b_3ep_seed456.yaml",
+        experiment_name="qwen35-27b-qlora-3ep-seed456",
+        model_name=QWEN_MODELS["qwen35-27b"],
+        model_type="decoder",
+        regime="llm_lora",
+    ),
+}
+
+ALL_EXPERIMENTS: Dict[str, ExperimentSpec] = {
+    **FINAL_EXPERIMENTS,
+    **SEED_STUDY_EXPERIMENTS,
+}
+
+
 def final_config_paths(
     *,
     model_type: Optional[str] = None,
@@ -125,7 +257,7 @@ def final_config_paths(
 
 def experiment_by_config_path(config_path: str | Path) -> ExperimentSpec:
     normalized = Path(config_path).as_posix()
-    for spec in FINAL_EXPERIMENTS.values():
+    for spec in ALL_EXPERIMENTS.values():
         if normalized == spec.config_path or normalized.endswith("/" + spec.config_path):
             return spec
     raise ValueError(f"Unsupported experiment config: {config_path}")
@@ -211,7 +343,7 @@ def output_dir_from_config(cfg: Dict[str, Any]) -> Path:
 
 
 def _experiment_by_name(experiment_name: str) -> ExperimentSpec:
-    for spec in FINAL_EXPERIMENTS.values():
+    for spec in ALL_EXPERIMENTS.values():
         if spec.experiment_name == experiment_name:
             return spec
     raise ValueError(f"Unsupported experiment name: {experiment_name}")
