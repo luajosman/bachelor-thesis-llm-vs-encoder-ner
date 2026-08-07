@@ -282,6 +282,57 @@ def test_completed_decoder_without_log_progress_renders_complete() -> None:
     assert "| Qwen test | 11 | - | 00:10:00 | 2.00 s |" in rendered
 
 
+def test_planned_canonical_runs_are_not_summarized_as_complete() -> None:
+    historical = ModelSnapshot(
+        spec=ModelSpec(
+            key="qwen-historical",
+            label="Qwen historical",
+            kind="decoder",
+            job_ids=(10,),
+            canonical=False,
+            historical=True,
+        ),
+        job=JobState(10, "COMPLETED"),
+        progress=None,
+        train_metrics={},
+        dev_metrics={},
+        checkpoint_step=None,
+        checkpoint_time=None,
+        results={"best_dev_f1": 0.9},
+        alert=None,
+        eta_low_seconds=0.0,
+        eta_high_seconds=0.0,
+    )
+    planned = ModelSnapshot(
+        spec=ModelSpec(
+            key="qwen-canonical",
+            label="Qwen canonical",
+            kind="decoder",
+            job_ids=(),
+            seed=123,
+            canonical=True,
+        ),
+        job=JobState(0, "PLANNED"),
+        progress=None,
+        train_metrics={},
+        dev_metrics={},
+        checkpoint_step=None,
+        checkpoint_time=None,
+        results={},
+        alert=None,
+    )
+
+    rendered = render_markdown(
+        [historical, planned],
+        datetime.now().astimezone(),
+        refresh_seconds=30,
+        summary_job=None,
+    )
+
+    assert "| **All models** | PLANNED | - | - | **waiting for submission** | **-** |" in rendered
+    assert "**Estimated time until all models finish:** waiting for submission" in rendered
+
+
 def test_collect_final_results_includes_all_experiments_and_metrics(tmp_path) -> None:
     result_dir = tmp_path / "deberta-v3-base"
     result_dir.mkdir()

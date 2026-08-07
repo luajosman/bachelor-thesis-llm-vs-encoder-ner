@@ -716,6 +716,59 @@ def _format_finish(now: datetime, low: Optional[float], high: Optional[float]) -
     return f"{start:%Y-%m-%d %H:%M} - {end:%Y-%m-%d %H:%M} {zone}".strip()
 
 
+def _overall_live_estimate(
+    snapshots: list[ModelSnapshot],
+    now: datetime,
+) -> tuple[str, str, str]:
+    """Summarize canonical work without treating unscheduled runs as complete."""
+    canonical = [
+        snapshot
+        for snapshot in snapshots
+        if snapshot.spec.canonical and not snapshot.spec.historical
+    ]
+    tracked = canonical or snapshots
+    if not tracked:
+        return "NO RUNS", "-", "-"
+
+    states = {snapshot.job.state.upper() for snapshot in tracked}
+    failed_states = {
+        "FAILED", "OUT_OF_MEMORY", "TIMEOUT", "CANCELLED", "NODE_FAIL", "PREEMPTED",
+    }
+    if states & failed_states:
+        return "ATTENTION", "check failed jobs", "-"
+
+    planned_count = sum(snapshot.job.state.upper() == "PLANNED" for snapshot in tracked)
+    if planned_count:
+        state = "PLANNED" if planned_count == len(tracked) else "PARTIALLY SUBMITTED"
+        return state, "waiting for submission", "-"
+
+    running = [
+        snapshot
+        for snapshot in tracked
+        if snapshot.job.state.upper() in {"RUNNING", "COMPLETING"}
+    ]
+    queued = states & {"PENDING", "CONFIGURING"}
+    if running:
+        lows = [snapshot.eta_low_seconds for snapshot in running]
+        highs = [snapshot.eta_high_seconds for snapshot in running]
+        if any(value is None for value in [*lows, *highs]):
+            return "Parallel", "measuring", "-"
+        overall_low = max(float(value) for value in lows if value is not None)
+        overall_high = max(float(value) for value in highs if value is not None)
+        state = "RUNNING / QUEUED" if queued else "Parallel"
+        return (
+            state,
+            _format_eta_range(overall_low, overall_high),
+            _format_finish(now, overall_low, overall_high),
+        )
+    if queued:
+        return "QUEUED", "waiting for scheduler", "-"
+
+    if all(snapshot.job.state.upper() == "COMPLETED" or snapshot.results for snapshot in tracked):
+        return "COMPLETED", "complete", "complete"
+    return "UNKNOWN", "-", "-"
+
+
 def _validation_f1(result: FinalResultSnapshot) -> Any:
     return (
         result.metrics.get("best_validation_f1")
@@ -886,27 +939,18 @@ def render_markdown(
             )
         )
 
-    active_lows = [
-        s.eta_low_seconds
-        for s in decoder_snapshots
-        if s.eta_low_seconds is not None
-    ]
-    active_highs = [
-        s.eta_high_seconds
-        for s in decoder_snapshots
-        if s.eta_high_seconds is not None
-    ]
-    overall_low = max(active_lows) if active_lows else None
-    overall_high = max(active_highs) if active_highs else None
+    overall_state, overall_remaining, overall_finish = _overall_live_estimate(
+        snapshots,
+        now,
+    )
     lines.append(
-        "| **All models** | Parallel | - | - | "
-        f"**{_format_eta_range(overall_low, overall_high)}** | "
-        f"**{_format_finish(now, overall_low, overall_high)}** |"
+        f"| **All models** | {overall_state} | - | - | "
+        f"**{overall_remaining}** | **{overall_finish}** |"
     )
     lines.extend([
         "",
         f"**Estimated time until all models finish:** "
-        f"{_format_eta_range(overall_low, overall_high)}",
+        f"{overall_remaining}",
         "",
         "## Live Training Metrics",
         "",

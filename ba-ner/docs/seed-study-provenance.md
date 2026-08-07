@@ -71,7 +71,7 @@ and CUDA is enforced by the compute-node preflight before any training
 submission. At least 500 GiB of free scratch space is required.
 
 The final login-node preflight and the exact fifteen-config compute-preflight
-simulation both passed on 2026-08-07. The regression suite passed all 94 tests;
+simulation both passed on 2026-08-07. The regression suite passed all 95 tests;
 all fifteen destination paths were free, and no path, scientific-hash, resume,
 or canonical-group conflict was reported. No training job was submitted during
 validation.
