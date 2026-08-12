@@ -1466,7 +1466,11 @@ def merge_submission_registry(
                 continue
             output_name = Path(str(job.get("output_dir", ""))).name
             job_id = job.get("job_id")
-            if output_name == spec.key and str(job_id or "").isdigit():
+            if (
+                output_name == spec.key
+                and job.get("phase") == "training"
+                and str(job_id or "").isdigit()
+            ):
                 numeric = int(job_id)
                 if numeric not in job_ids:
                     job_ids.append(numeric)

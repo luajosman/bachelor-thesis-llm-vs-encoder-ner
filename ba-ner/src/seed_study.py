@@ -1062,7 +1062,29 @@ def _acquire_lock(path: Path, payload: Mapping[str, Any]) -> None:
         descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     except FileExistsError as exc:
         existing = _load_json(path)
-        raise RunLockedError(f"Run is already locked: {path}; owner={existing}") from exc
+        try:
+            restart_count = int(os.environ.get("SLURM_RESTART_COUNT", "0") or 0)
+        except ValueError:
+            restart_count = 0
+        ownership_fields = (
+            "experiment_name",
+            "variant",
+            "seed",
+            "phase",
+            "slurm_job_id",
+            "full_run_config_hash",
+        )
+        same_requeued_job = (
+            restart_count > 0
+            and bool(payload.get("slurm_job_id"))
+            and all(existing.get(field) == payload.get(field) for field in ownership_fields)
+        )
+        if not same_requeued_job:
+            raise RunLockedError(f"Run is already locked: {path}; owner={existing}") from exc
+        descriptor = os.open(
+            path,
+            os.O_WRONLY | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0),
+        )
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2, sort_keys=True)

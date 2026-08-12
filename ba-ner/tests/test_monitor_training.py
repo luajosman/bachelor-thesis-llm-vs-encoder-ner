@@ -21,6 +21,7 @@ from src.evaluate.monitor_training import (
     estimate_remaining,
     filter_specs,
     load_config,
+    merge_submission_registry,
     parse_inference_progress,
     parse_progress,
     parse_train_metrics,
@@ -498,6 +499,41 @@ def test_repository_monitor_tracks_all_fresh_and_historical_groups() -> None:
             by_key[key].canonical and not by_key[key].historical
             for key in keys
         )
+
+
+def test_submission_registry_attaches_only_training_jobs(tmp_path) -> None:
+    results_root = tmp_path / "results" / "multinerd"
+    registry_path = (
+        results_root.parent / "seed_studies" / "multinerd" / "submission_registry.yaml"
+    )
+    registry_path.parent.mkdir(parents=True)
+    registry_path.write_text(
+        "\n".join([
+            "jobs:",
+            "  - {output_dir: /scratch/qwen-test, phase: training, job_id: '10'}",
+            "  - {output_dir: /scratch/qwen-test, phase: inference, job_id: '11'}",
+            "  - {output_dir: /scratch/qwen-test, phase: evaluation, job_id: '12'}",
+        ]),
+        encoding="utf-8",
+    )
+    settings = MonitorConfig(
+        specs=(ModelSpec(
+            key="qwen-test",
+            label="Qwen test",
+            kind="decoder",
+            job_ids=(),
+        ),),
+        refresh_seconds=30,
+        scheduler_refresh_seconds=60,
+        browser_refresh_seconds=15,
+        summary_job_id=None,
+        result_job_ids={},
+        result_time_limits_seconds={},
+    )
+
+    merged = merge_submission_registry(settings, results_root)
+
+    assert merged.specs[0].job_ids == (10,)
 
 
 def test_write_atomic_makes_dashboard_browser_readable(tmp_path) -> None:

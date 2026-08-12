@@ -12,6 +12,7 @@ from src.seed_study import (
     OutputCollisionError,
     ResumeValidationError,
     RunLockedError,
+    _acquire_lock,
     full_run_config_hash,
     managed_run_phase,
     recursive_config_diff,
@@ -192,6 +193,40 @@ def test_managed_run_writes_atomic_provenance_and_prevents_duplicate_lock(
     status = json.loads((context.output_dir / "status.json").read_text())
     assert status["status"] == "TRAINING_COMPLETED"
     assert not (context.output_dir / ".run.lock").exists()
+
+
+def test_requeued_slurm_job_reclaims_only_its_own_stale_lock(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / ".run.lock"
+    original = {
+        "experiment_name": "qwen-test",
+        "variant": "3ep",
+        "seed": 42,
+        "phase": "training",
+        "pid": 100,
+        "hostname": "node-a",
+        "slurm_job_id": "123",
+        "started_at": "2026-08-01T00:00:00+00:00",
+        "full_run_config_hash": "abc",
+    }
+    path.write_text(json.dumps(original), encoding="utf-8")
+    monkeypatch.setenv("SLURM_RESTART_COUNT", "1")
+    restarted = {
+        **original,
+        "pid": 200,
+        "hostname": "node-b",
+        "started_at": "2026-08-04T00:00:00+00:00",
+    }
+
+    _acquire_lock(path, restarted)
+
+    assert json.loads(path.read_text(encoding="utf-8")) == restarted
+
+    path.write_text(json.dumps(original), encoding="utf-8")
+    with pytest.raises(RunLockedError):
+        _acquire_lock(path, {**restarted, "slurm_job_id": "456"})
 
 
 def test_same_run_resume_requires_explicit_flag_and_matching_hashes(
