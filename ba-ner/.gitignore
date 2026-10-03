@@ -13,3 +13,5 @@ logs/
 *.safetensors
 *.bin
 *.pt
+# Local Hugging Face and pinned CrossNER download cache.
+.hf_cache/

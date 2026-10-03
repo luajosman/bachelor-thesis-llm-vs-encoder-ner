@@ -420,6 +420,63 @@ evidence inventory and design decision are recorded in
 
 ## GPU Cluster
 
+### CrossNER domain-transfer extension
+
+The inference-only extension evaluates the frozen canonical DeBERTa-v3-large
+and Qwen3.5-27B QLoRA checkpoints for seeds 42, 123, and 456 on all five
+CrossNER test domains. No training or target-domain checkpoint selection is
+performed. Qwen retains its original 15-type MultiNERD prompt and greedy,
+non-thinking, 4-bit inference setup; both families are scored on PER/ORG/LOC.
+
+CrossNER person, politician, scientist, writer, musicalartist, and researcher
+map to PER; organisation, politicalparty, university, and band map to ORG;
+location and country map to LOC. Other native labels and other MultiNERD
+prediction types map to O. A PER/ORG/LOC prediction on an excluded gold entity
+counts as a false positive. Original tokens, native BIO tags, full model
+predictions, and decoder outputs remain available in the saved artifacts.
+
+The official test files are pinned to CrossNER revision
+`2e7ba2a7798c961e3f29fbc51252c5a8d40224bf`, verified by SHA-256, and contain
+2,506 examples in total. Preflight verifies all six checkpoint owners, their
+original scientific contracts, cached base-model revisions, and complete
+encoder word coverage. Source runs are read-only and results have a separate
+evaluation contract. Resume rejects changed weights, data, mapping, or code.
+
+Run from `ba-ner/`, with the environment active:
+
+```bash
+export BA_NER_RESULTS_ROOT=/netscratch/losman/ba-ner/results
+python scripts/run_crossner.py --preflight
+python scripts/run_crossner.py --dry-run
+
+# Commit the tested implementation and keep the checkout clean before submit.
+# One small GPU smoke job per family; outputs are isolated in crossner/smoke/.
+python scripts/run_crossner.py --submit --seeds 42 --smoke-limit 2
+
+# Six inference jobs, one model load per checkpoint across all five domains.
+python scripts/run_crossner.py --submit
+python scripts/run_crossner.py --status
+python scripts/run_crossner.py --submit --resume-failed
+python scripts/run_crossner.py --aggregate-only
+```
+
+`--model`, `--seeds`, `--domains`, `--source-results-root`, `--output-root`,
+and `--cache-dir` allow explicit subsets and paths. The default output is
+`<source-results-root>/crossner/`; completed domains and active jobs are skipped.
+The retired H100-Trails partition is replaced by H100 with its current 24-hour
+limit; the manifest's GPU count and memory allocation are retained.
+
+The dependent CPU aggregation uses `afterany` so failed jobs produce an
+explicitly incomplete report. `aggregate/summary.{csv,yaml,md}` contains
+per-domain seed means and sample standard deviations (`ddof=1`), pooled micro
+F1, and the equally weighted domain mean. `seed_metrics.csv` and
+`per_entity_metrics.csv` retain individual results. The MultiNERD baseline is
+recomputed from the same checkpoint's saved predictions on PER/ORG/LOC;
+the paired F1 difference is CrossNER minus MultiNERD. Values inside machine
+readable artifacts are fractions; Markdown tables show percentages and
+percentage-point differences. Smoke runs are excluded from primary aggregates.
+These results describe transfer of the three shared classes between datasets.
+
 The repository includes SLURM scripts for running the matrix on a GPU cluster.
 They support either a project-local `.venv` or a Conda environment named
 `ba-ner`.
