@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import pytest
+import yaml
 
+from src.evaluate import monitor_training as monitor
 from src.evaluate.monitor_training import (
+    CrossnerOutputLimitConfig,
+    collect_crossner_dashboard,
     _encoder_validation_metrics,
     _inference_time_cells,
     collect_final_results,
@@ -22,6 +28,7 @@ from src.evaluate.monitor_training import (
     filter_specs,
     load_config,
     merge_submission_registry,
+    monitor_job_ids,
     parse_inference_progress,
     parse_progress,
     parse_train_metrics,
@@ -598,3 +605,264 @@ def test_seed_table_renders_extended_runtime_fields_and_stale_state() -> None:
     assert "| 11 | 77 | node1 | H100 |" in rendered
     assert "100/300 | 33.3%" in rendered
     assert "1.0 MiB" in rendered
+
+
+def _crossner_settings() -> MonitorConfig:
+    return MonitorConfig(
+        specs=(), refresh_seconds=30, scheduler_refresh_seconds=60,
+        browser_refresh_seconds=15, summary_job_id=None,
+        result_job_ids={}, result_time_limits_seconds={},
+        crossner_output_limit=CrossnerOutputLimitConfig(
+            Path("crossner_output_limit_1024"), Path("crossner"), 1024,
+        ),
+    )
+
+
+def _crossner_domain(tmp_path: Path, seed: int, domain: str = "ai", *, limit: int = 1024,
+                     smoke_limit: int | None = None) -> Path:
+    experiment = monitor.CROSSNER_QWEN + (f"-seed{seed}" if seed != 42 else "")
+    target = tmp_path / "crossner_output_limit_1024" / experiment / domain / "inference_metrics.yaml"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    references = {}
+    reference_artifacts = {}
+    predictions = target.parent / "test_predictions.json"
+    predictions.write_text("[]", encoding="utf-8")
+    prediction_hash = hashlib.sha256(predictions.read_bytes()).hexdigest()
+    for evaluation, base in (("encoder_baseline", "deberta-v3-large-canonical"), ("baseline_256", monitor.CROSSNER_QWEN)):
+        reference_experiment = base + (f"-seed{seed}" if seed != 42 else "")
+        reference_predictions = tmp_path / "crossner" / reference_experiment / domain / "test_predictions.json"
+        reference_predictions.parent.mkdir(parents=True, exist_ok=True)
+        reference_predictions.write_text("[]", encoding="utf-8")
+        contract_hash = f"baseline-{evaluation}-{seed}-{domain}"
+        (reference_predictions.parent / "inference_metrics.yaml").write_text(yaml.safe_dump({
+            "complete": True, "sample_count": monitor.CROSSNER_TEST_SIZES[domain],
+            "contract_hash": contract_hash, "predictions_sha256": prediction_hash,
+        }), encoding="utf-8")
+        reference_artifacts[evaluation] = {"path": str(reference_predictions),
+                                            "predictions_sha256": prediction_hash, "contract_hash": contract_hash}
+    for population in ("full", "deduplicated"):
+        references[population] = {}
+        for evaluation in ("encoder_baseline", "baseline_256", f"output_limit_{limit}"):
+            reference_limit = None if evaluation == "encoder_baseline" else 256 if evaluation == "baseline_256" else limit
+            references[population][evaluation] = {
+                "model": "deberta-v3-large" if evaluation == "encoder_baseline" else monitor.CROSSNER_QWEN,
+                "seed": seed, "max_new_tokens": reference_limit,
+                "precision": 0.8, "recall": 0.7, "f1": 0.7467,
+                "parse_failure_rate": None if evaluation == "encoder_baseline" else 0.1,
+                "output_limit_rate": 0.0 if evaluation.startswith("output_limit_") else None,
+                "latency_ms": 250,
+            }
+    target.write_text(yaml.safe_dump({
+        "complete": smoke_limit is None, "sample_count": monitor.CROSSNER_TEST_SIZES[domain],
+        "contract": {"smoke_limit": smoke_limit, "domain": domain,
+                     "source": {"seed": seed, "experiment_name": experiment},
+                     "decoder": {"max_new_tokens": limit}},
+        "reference_metrics": references,
+        "reference_artifacts": reference_artifacts, "predictions_sha256": prediction_hash,
+    }), encoding="utf-8")
+    return target
+
+
+def _comparison_report(tmp_path: Path) -> dict:
+    rows = []
+    for population in ("full", "deduplicated"):
+        for domain in (*monitor.CROSSNER_DOMAINS, "pooled_micro", "domain_mean"):
+            for evaluation in ("encoder_baseline", "baseline_256", "output_limit_1024"):
+                rows.append({
+                    "model": "deberta-v3-large" if evaluation == "encoder_baseline" else monitor.CROSSNER_QWEN,
+                    "evaluation": evaluation, "population": population, "domain": domain,
+                    "successful_seeds": 3, "expected_seeds": 3,
+                    "precision_mean": 0.8, "recall_mean": 0.7, "f1_mean": 0.7467,
+                    "precision_std": 0.01, "recall_std": 0.01, "f1_std": 0.01,
+                })
+    return {
+        "max_new_tokens": 1024, "baseline_output_root": str(tmp_path / "crossner"),
+        "complete": True, "selection_complete": True,
+        "successful_evaluations": 15, "expected_evaluations": 15,
+        "missing_or_failed": [],
+        "selection": {"models": [monitor.CROSSNER_QWEN], "seeds": [42, 123, 456],
+                      "domains": list(monitor.CROSSNER_DOMAINS)},
+        "summary": rows,
+    }
+
+
+def test_crossner_config_is_optional_and_paths_are_relative_to_shared_results(tmp_path) -> None:
+    config_path = tmp_path / "monitor.yaml"
+    config_path.write_text("models: []\n", encoding="utf-8")
+    settings = load_config(config_path)
+    assert settings.crossner_output_limit is None
+    now = datetime.now().astimezone()
+    unchanged = render_markdown([], now, 30, None)
+    assert render_markdown([], now, 30, None, crossner_dashboard=None) == unchanged
+    assert "CrossNER" not in unchanged
+    config_path.write_text(yaml.safe_dump({"models": [], "crossner_output_limit": {
+        "output_root": "crossner_output_limit_1024", "baseline_root": "crossner", "max_new_tokens": 1024,
+    }}), encoding="utf-8")
+    configured = load_config(config_path).crossner_output_limit
+    dashboard = collect_crossner_dashboard(configured, tmp_path / "multinerd", {})
+    assert dashboard.output_root == tmp_path / "crossner_output_limit_1024"
+    assert dashboard.baseline_root == tmp_path / "crossner"
+    assert [run.seed for run in dashboard.runs] == [42, 123, 456]
+    assert {run.status for run in dashboard.runs} == {"PLANNED"}
+
+
+@pytest.mark.parametrize("limit", [256, 0, True, 1024.5])
+def test_crossner_monitor_rejects_invalid_config_limit(tmp_path, limit) -> None:
+    path = tmp_path / "monitor.yaml"
+    path.write_text(yaml.safe_dump({"models": [], "crossner_output_limit": {
+        "output_root": "new", "baseline_root": "old", "max_new_tokens": limit,
+    }}), encoding="utf-8")
+    with pytest.raises(ValueError, match="greater than 256"):
+        load_config(path)
+
+
+def test_crossner_progress_and_finished_domain_comparisons_render_before_aggregation(tmp_path) -> None:
+    target = _crossner_domain(tmp_path, 42)
+    status_path = target.parent.parent / "status.json"
+    status_path.write_text(json.dumps({
+        "seed": 42, "max_new_tokens": 1024, "smoke_limit": None,
+        "status": "RUNNING", "job_id": "111", "current_domain": "literature",
+        "completed_samples": 456, "total_samples": 2506,
+        "elapsed_seconds": 60, "eta_seconds": 300,
+        "parse_failure_count": 2, "output_limit_count": 1,
+        "updated_at": "2026-10-06T12:00:00+00:00",
+    }), encoding="utf-8")
+    dashboard = collect_crossner_dashboard(_crossner_settings().crossner_output_limit, tmp_path / "multinerd", {
+        111: JobState(111, "RUNNING", "00:01", "node1"),
+    })
+    assert dashboard.runs[0].completed_domains == ("ai",)
+    assert not dashboard.comparison_complete
+    assert len(dashboard.summary) == 6  # Three paired models, both populations.
+    markdown = render_markdown([], datetime.now().astimezone(), 30, None, crossner_dashboard=dashboard)
+    assert "| 42 | 1024 | RUNNING | 111 | literature | 1/5 | 18.2% (456/2,506) |" in markdown
+    assert "| ai | DeBERTa large | 1/3 | Incomplete | 80.00% | 70.00% |" in markdown
+    assert "| ai | Qwen 256 | 1/3 | Incomplete | 80.00% | 70.00% | 74.67% | - | - | 10.00% | - |" in markdown
+    assert "CrossNER Comparison — Without source-training overlaps" in markdown
+    assert "Comparison: **INCOMPLETE**" in markdown
+    assert "CrossNER Output Limit Evaluation" in render_html(markdown)
+
+
+def test_crossner_new_and_resumed_jobs_are_discovered_while_monitor_is_running(tmp_path, monkeypatch) -> None:
+    config_path = tmp_path / "monitor.yaml"
+    config_path.write_text(yaml.safe_dump({"models": [], "crossner_output_limit": {
+        "output_root": "crossner_output_limit_1024", "baseline_root": "crossner", "max_new_tokens": 1024,
+    }}), encoding="utf-8")
+    ledger_path = tmp_path / "crossner_output_limit_1024" / "submissions.json"
+    ledger_path.parent.mkdir()
+    ledger_path.write_text(json.dumps({"jobs": [{"job_id": "101", "experiment": monitor.CROSSNER_QWEN}]}))
+    monkeypatch.setattr(monitor, "resolve_results_root", lambda: tmp_path / "multinerd")
+    monkeypatch.setattr(sys, "argv", [
+        "live_monitor", "--config", str(config_path), "--output", str(tmp_path / "monitor.md"),
+    ])
+    timestamps = iter([0, 61])
+    monkeypatch.setattr(monitor.time, "monotonic", lambda: next(timestamps))
+    monkeypatch.setattr(monitor.time, "sleep", lambda seconds: None)
+    observed = []
+
+    def query(ids):
+        observed.append(ids)
+        if len(observed) == 1:
+            ledger_path.write_text(json.dumps({
+                "jobs": [{"job_id": "101"}, {"job_id": "102"}, {"job_id": "999", "smoke_limit": 2}],
+                "aggregations": [{"job_id": "103"}],
+            }))
+            return {101: JobState(101, "FAILED")}
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(monitor, "query_jobs", query)
+    with pytest.raises(KeyboardInterrupt):
+        monitor.main()
+    assert observed == [[101], [101, 102, 103]]
+    assert "CrossNER Output Limit Evaluation" in (tmp_path / "monitor.html").read_text()
+
+
+def test_crossner_resume_uses_new_running_job_and_preserves_completed_domains(tmp_path) -> None:
+    target = _crossner_domain(tmp_path, 42)
+    output_root = target.parents[2]
+    (output_root / "submissions.json").write_text(json.dumps({"jobs": [
+        {"job_id": "11", "experiment": monitor.CROSSNER_QWEN},
+        {"job_id": "12", "experiment": monitor.CROSSNER_QWEN},
+    ]}))
+    (target.parent.parent / "status.json").write_text(json.dumps({
+        "seed": 42, "max_new_tokens": 1024, "status": "RUNNING", "job_id": "11",
+        "completed_samples": 431, "total_samples": 2506,
+    }))
+    dashboard = collect_crossner_dashboard(_crossner_settings().crossner_output_limit, tmp_path / "multinerd", {
+        11: JobState(11, "FAILED"), 12: JobState(12, "RUNNING"),
+    })
+    assert dashboard.runs[0].job.job_id == 12
+    assert dashboard.runs[0].status == "RUNNING"
+    assert dashboard.runs[0].completed_domains == ("ai",)
+    assert dashboard.runs[0].status_data == {}
+
+
+def test_crossner_smoke_limit_mismatch_and_malformed_artifacts_do_not_become_results(tmp_path) -> None:
+    _crossner_domain(tmp_path, 42, limit=256)
+    _crossner_domain(tmp_path, 123, smoke_limit=2)
+    target = _crossner_domain(tmp_path, 456)
+    target.write_text("contract: [broken\n")
+    (target.parent.parent / "status.json").write_text("{broken")
+    report_path = tmp_path / "crossner_output_limit_1024" / "aggregate" / "comparison.yaml"
+    report_path.parent.mkdir()
+    report = _comparison_report(tmp_path)
+    report["summary"] = [{"model": [], "evaluation": [], "population": "full"}, None]
+    report_path.write_text(yaml.safe_dump(report))
+    dashboard = collect_crossner_dashboard(_crossner_settings().crossner_output_limit, tmp_path / "multinerd", {})
+    assert dashboard.summary == ()
+    assert not dashboard.comparison_complete
+    assert all(not run.completed_domains for run in dashboard.runs)
+    assert "contract differs" in dashboard.runs[0].error
+    assert "Unreadable" in dashboard.runs[2].error
+    assert "invalid rows" in dashboard.warning
+    assert "CrossNER" in render_markdown([], datetime.now().astimezone(), 30, None, crossner_dashboard=dashboard)
+
+
+def test_crossner_comparison_requires_all_verified_domains_and_complete_unique_report(tmp_path) -> None:
+    for seed in monitor.CROSSNER_SEEDS:
+        for domain in monitor.CROSSNER_DOMAINS:
+            _crossner_domain(tmp_path, seed, domain)
+    path = tmp_path / "crossner_output_limit_1024" / "aggregate" / "comparison.yaml"
+    path.parent.mkdir()
+    report = _comparison_report(tmp_path)
+    path.write_text(yaml.safe_dump(report))
+    config = _crossner_settings().crossner_output_limit
+    dashboard = collect_crossner_dashboard(config, tmp_path / "multinerd", {})
+    assert dashboard.comparison_complete
+    assert "Comparison: **COMPLETE**" in render_markdown([], datetime.now().astimezone(), 30, None, crossner_dashboard=dashboard)
+    for bad_report in (
+        {**report, "summary": report["summary"][:1]},
+        {**report, "summary": report["summary"][:-1] + [report["summary"][0]]},
+        {**report, "baseline_output_root": str(tmp_path / "wrong_baseline")},
+        {**report, "selection": {**report["selection"], "seeds": [42]}},
+        {**report, "successful_evaluations": 14},
+    ):
+        path.write_text(yaml.safe_dump(bad_report))
+        assert not collect_crossner_dashboard(config, tmp_path / "multinerd", {}).comparison_complete
+    path.write_text(yaml.safe_dump(report))
+    (tmp_path / "crossner_output_limit_1024" / monitor.CROSSNER_QWEN / "ai" / "inference_metrics.yaml").unlink()
+    assert not collect_crossner_dashboard(config, tmp_path / "multinerd", {}).comparison_complete
+
+
+@pytest.mark.parametrize("artifact", ["new_missing", "new_altered", "baseline_missing", "baseline_altered", "encoder_missing"])
+def test_crossner_deleted_or_altered_prediction_artifacts_invalidate_completion(tmp_path, artifact) -> None:
+    for seed in monitor.CROSSNER_SEEDS:
+        for domain in monitor.CROSSNER_DOMAINS:
+            _crossner_domain(tmp_path, seed, domain)
+    path = tmp_path / "crossner_output_limit_1024" / "aggregate" / "comparison.yaml"
+    path.parent.mkdir()
+    path.write_text(yaml.safe_dump(_comparison_report(tmp_path)))
+    config = _crossner_settings().crossner_output_limit
+    assert collect_crossner_dashboard(config, tmp_path / "multinerd", {}).comparison_complete
+    if artifact.startswith("new"):
+        predictions = tmp_path / "crossner_output_limit_1024" / monitor.CROSSNER_QWEN / "ai" / "test_predictions.json"
+    else:
+        model = "deberta-v3-large-canonical" if artifact.startswith("encoder") else monitor.CROSSNER_QWEN
+        predictions = tmp_path / "crossner" / model / "ai" / "test_predictions.json"
+    if artifact.endswith("missing"):
+        predictions.unlink()
+    else:
+        predictions.write_text("[{}]", encoding="utf-8")
+    dashboard = collect_crossner_dashboard(config, tmp_path / "multinerd", {})
+    assert not dashboard.comparison_complete
+    assert "ai" not in dashboard.runs[0].completed_domains
+    assert "missing or altered" in dashboard.runs[0].error

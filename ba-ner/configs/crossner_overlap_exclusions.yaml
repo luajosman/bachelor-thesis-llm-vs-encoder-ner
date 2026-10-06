@@ -1,0 +1,29 @@
+version: 1
+dataset: crossner
+revision: 2e7ba2a7798c961e3f29fbc51252c5a8d40224bf
+match_rule: exact equality of the full original token sequence
+source_report: results/crossner_overlap_check_2026-10-05.json
+source_report_sha256: 5155418aa601e07f864a007c22ddc742b9a21adb6d5338ff711062378b0325cb
+expected_excluded_samples: 21
+excluded_sample_ids:
+- ai:test:254
+- ai:test:255
+- music:test:111
+- music:test:182
+- music:test:353
+- music:test:63
+- politics:test:184
+- politics:test:54
+- politics:test:59
+- science:test:126
+- science:test:172
+- science:test:245
+- science:test:264
+- science:test:274
+- science:test:281
+- science:test:31
+- science:test:335
+- science:test:388
+- science:test:458
+- science:test:459
+- science:test:469

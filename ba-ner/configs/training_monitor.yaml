@@ -3,6 +3,12 @@ scheduler_refresh_seconds: 60
 browser_refresh_seconds: 15
 summary_job_id: 3226685
 
+# Paths are relative to the shared results root (next to multinerd/).
+crossner_output_limit:
+  output_root: crossner_output_limit_1024
+  baseline_root: crossner
+  max_new_tokens: 1024
+
 result_jobs:
   deberta-v3-base: [3221505]
   deberta-v3-large: [3221506]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import html
 import json
 import math
@@ -21,6 +22,10 @@ from typing import Any, Iterable, Optional
 import yaml
 
 from src.config import FINAL_EXPERIMENTS
+from src.data.crossner_loader import (
+    DOMAINS as CROSSNER_DOMAINS,
+    TEST_SIZES as CROSSNER_TEST_SIZES,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +48,9 @@ ERROR_RE = re.compile(
     re.IGNORECASE,
 )
 ACTIVE_STATES = {"RUNNING", "COMPLETING", "PENDING", "CONFIGURING"}
+CROSSNER_SEEDS = (42, 123, 456)
+CROSSNER_QWEN = "qwen35-27b-qlora-3ep"
+_CROSSNER_PREDICTION_HASHES: dict[Path, tuple[int, int, int, str]] = {}
 
 
 @dataclass(frozen=True)
@@ -64,6 +72,13 @@ class ModelSpec:
 
 
 @dataclass(frozen=True)
+class CrossnerOutputLimitConfig:
+    output_root: Path
+    baseline_root: Path
+    max_new_tokens: int
+
+
+@dataclass(frozen=True)
 class MonitorConfig:
     specs: tuple[ModelSpec, ...]
     refresh_seconds: int
@@ -72,6 +87,7 @@ class MonitorConfig:
     summary_job_id: Optional[int]
     result_job_ids: dict[str, tuple[int, ...]]
     result_time_limits_seconds: dict[str, float]
+    crossner_output_limit: Optional[CrossnerOutputLimitConfig] = None
 
 
 @dataclass(frozen=True)
@@ -120,6 +136,29 @@ class FinalResultSnapshot:
     job: Optional[JobState] = None
     inference_progress: Optional[InferenceProgress] = None
     time_limit_seconds: Optional[float] = None
+
+
+@dataclass(frozen=True)
+class CrossnerRunSnapshot:
+    seed: int
+    experiment_name: str
+    status: str
+    job: Optional[JobState]
+    status_data: dict[str, Any]
+    completed_domains: tuple[str, ...]
+    error: str = ""
+
+
+@dataclass(frozen=True)
+class CrossnerDashboard:
+    config: CrossnerOutputLimitConfig
+    output_root: Path
+    baseline_root: Path
+    runs: tuple[CrossnerRunSnapshot, ...]
+    summary: tuple[dict[str, Any], ...]
+    comparison_complete: bool
+    aggregation_jobs: tuple[JobState, ...]
+    warning: str = ""
 
 
 @dataclass(frozen=True)
@@ -552,6 +591,290 @@ def collect_final_results(
     return snapshots
 
 
+def _crossner_roots(
+    config: CrossnerOutputLimitConfig, results_root: Path,
+) -> tuple[Path, Path]:
+    root = results_root.parent
+    return tuple(
+        path if path.is_absolute() else root / path
+        for path in (config.output_root, config.baseline_root)
+    )
+
+
+def _crossner_ledger(config: CrossnerOutputLimitConfig, results_root: Path) -> dict[str, Any]:
+    output_root, _ = _crossner_roots(config, results_root)
+    ledger = _load_json(output_root / "submissions.json")
+    identity = ledger.get("identity")
+    if identity is not None and (not isinstance(identity, dict)
+                                 or identity.get("max_new_tokens") != config.max_new_tokens
+                                 or identity.get("smoke_limit") is not None):
+        return {}
+    return ledger
+
+
+def _crossner_submission_rows(ledger: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    rows = ledger.get(key, [])
+    return [row for row in rows if isinstance(row, dict)] if isinstance(rows, list) else []
+
+
+def _crossner_job_ids(rows: Iterable[dict[str, Any]]) -> tuple[int, ...]:
+    return tuple(dict.fromkeys(
+        int(row["job_id"]) for row in rows
+        if str(row.get("job_id") or "").isdecimal()
+        and row.get("smoke_limit") is None
+    ))
+
+
+def monitor_job_ids(settings: MonitorConfig, results_root: Optional[Path] = None) -> list[int]:
+    """Discover newly submitted CrossNER and resumed jobs on each scheduler refresh."""
+    job_ids = [job_id for spec in settings.specs for job_id in spec.job_ids]
+    if settings.summary_job_id:
+        job_ids.append(settings.summary_job_id)
+    for result_jobs in settings.result_job_ids.values():
+        job_ids.extend(result_jobs)
+    config = settings.crossner_output_limit
+    if config is not None:
+        ledger = _crossner_ledger(config, results_root or resolve_results_root())
+        for key in ("jobs", "aggregations"):
+            job_ids.extend(_crossner_job_ids(_crossner_submission_rows(ledger, key)))
+    return list(dict.fromkeys(job_ids))
+
+
+def _crossner_summary_rows(rows: list[dict[str, Any]]) -> tuple[dict[str, Any], ...]:
+    grouped: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    for row in rows:
+        key = tuple(str(row[name]) for name in ("model", "evaluation", "population", "domain"))
+        grouped.setdefault(key, []).append(row)
+    result = []
+    for (model, evaluation, population, domain), records in grouped.items():
+        summary: dict[str, Any] = {
+            "model": model, "evaluation": evaluation, "population": population,
+            "domain": domain, "successful_seeds": len(records), "expected_seeds": 3,
+        }
+        for name in ("precision", "recall", "f1", "parse_failure_rate", "output_limit_rate",
+                     "latency_ms", "generated_tokens", "delta_f1_vs_256", "delta_recall_vs_256"):
+            values = [_finite_number(row.get(name)) for row in records]
+            usable = [value for value in values if value is not None]
+            summary[name + "_mean"] = statistics.fmean(usable) if len(usable) == len(records) else None
+            summary[name + "_std"] = statistics.stdev(usable) if len(usable) == len(records) and len(usable) > 1 else None
+        result.append(summary)
+    return tuple(result)
+
+
+def _crossner_predictions_match(path: Path, expected_hash: Any) -> bool:
+    """Cache hashes of completed artifacts so unchanged files are cheap to monitor."""
+    if not isinstance(expected_hash, str):
+        return False
+    try:
+        stat = path.stat()
+        identity = (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+        cached = _CROSSNER_PREDICTION_HASHES.get(path)
+        if cached is None or cached[:3] != identity:
+            digest = hashlib.sha256()
+            with path.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            cached = (*identity, digest.hexdigest())
+            _CROSSNER_PREDICTION_HASHES[path] = cached
+        return cached[3] == expected_hash
+    except (OSError, ValueError):
+        return False
+
+
+def _crossner_references_match(metrics: dict[str, Any], baseline_root: Path, seed: int, domain: str) -> bool:
+    artifacts = metrics.get("reference_artifacts")
+    if not isinstance(artifacts, dict):
+        return False
+    for evaluation, base in (("encoder_baseline", "deberta-v3-large-canonical"), ("baseline_256", CROSSNER_QWEN)):
+        experiment = base + (f"-seed{seed}" if seed != 42 else "")
+        expected_path = baseline_root / experiment / domain / "test_predictions.json"
+        artifact = artifacts.get(evaluation)
+        if not isinstance(artifact, dict) or not isinstance(artifact.get("path"), str):
+            return False
+        try:
+            if Path(artifact["path"]).resolve() != expected_path.resolve():
+                return False
+        except (OSError, ValueError):
+            return False
+        baseline = _load_yaml(expected_path.parent / "inference_metrics.yaml")
+        if (baseline.get("complete") is not True
+                or baseline.get("sample_count") != CROSSNER_TEST_SIZES[domain]
+                or not isinstance(artifact.get("contract_hash"), str)
+                or baseline.get("contract_hash") != artifact["contract_hash"]
+                or baseline.get("predictions_sha256") != artifact.get("predictions_sha256")
+                or not _crossner_predictions_match(expected_path, artifact.get("predictions_sha256"))):
+            return False
+    return True
+
+
+def collect_crossner_dashboard(
+    config: CrossnerOutputLimitConfig, results_root: Path, jobs: dict[int, JobState],
+) -> CrossnerDashboard:
+    """Read only completed domain metrics; partial files never interrupt the training monitor."""
+    output_root, baseline_root = _crossner_roots(config, results_root)
+    ledger = _crossner_ledger(config, results_root)
+    submissions = _crossner_submission_rows(ledger, "jobs")
+    reference_rows: list[dict[str, Any]] = []
+    runs = []
+    evaluations = {"encoder_baseline", "baseline_256", f"output_limit_{config.max_new_tokens}"}
+    for seed in CROSSNER_SEEDS:
+        experiment = CROSSNER_QWEN + (f"-seed{seed}" if seed != 42 else "")
+        directory = output_root / experiment
+        status_data = _load_json(directory / "status.json")
+        error = str(status_data.get("error") or "")
+        if (directory / "status.json").exists() and not status_data:
+            error = "Unreadable status file"
+        if status_data and (status_data.get("smoke_limit") is not None
+                            or status_data.get("max_new_tokens") != config.max_new_tokens
+                            or status_data.get("seed") != seed):
+            status_data = {}
+            error = "Status identity differs; excluded from results"
+        job_ids = _crossner_job_ids(
+            row for row in submissions if row.get("experiment") == experiment
+            and row.get("max_new_tokens", config.max_new_tokens) == config.max_new_tokens
+        )
+        job = _choose_result_job(job_ids, jobs)
+        if job is None and str(status_data.get("job_id") or "").isdecimal():
+            job_id = int(status_data["job_id"])
+            job = jobs.get(job_id, JobState(job_id, str(status_data.get("status", "UNKNOWN"))))
+        if (job is not None and job.state in ACTIVE_STATES
+                and str(status_data.get("job_id") or "").isdecimal()
+                and int(status_data["job_id"]) != job.job_id):
+            # A resumed job has its own clock; the previous attempt's ETA is stale.
+            status_data = {}
+            error = ""
+        completed = []
+        for domain in CROSSNER_DOMAINS:
+            metrics_path = directory / domain / "inference_metrics.yaml"
+            metrics = _load_yaml(metrics_path)
+            if not metrics:
+                if metrics_path.exists():
+                    error = "Unreadable domain metrics; excluded from results"
+                continue
+            contract = metrics.get("contract")
+            if (not isinstance(contract, dict) or metrics.get("complete") is not True
+                    or contract.get("smoke_limit") is not None):
+                continue
+            decoder = contract.get("decoder", {})
+            source = contract.get("source", {})
+            if (not isinstance(decoder, dict) or decoder.get("max_new_tokens") != config.max_new_tokens
+                    or not isinstance(source, dict) or source.get("seed") != seed
+                    or source.get("experiment_name") != experiment
+                    or contract.get("domain") != domain
+                    or metrics.get("sample_count") != CROSSNER_TEST_SIZES[domain]):
+                error = "Domain contract differs; excluded from results"
+                continue
+            if not _crossner_predictions_match(metrics_path.parent / "test_predictions.json", metrics.get("predictions_sha256")):
+                error = "Predictions missing or altered; excluded from results"
+                continue
+            if not _crossner_references_match(metrics, baseline_root, seed, domain):
+                error = "Baseline artifacts missing or altered; excluded from comparison"
+                continue
+            completed.append(domain)
+            references = metrics.get("reference_metrics", {})
+            if not isinstance(references, dict):
+                continue
+            for population in ("full", "deduplicated"):
+                population_metrics = references.get(population, {})
+                if not isinstance(population_metrics, dict):
+                    continue
+                for evaluation, row in population_metrics.items():
+                    if (evaluation not in evaluations or not isinstance(row, dict)
+                            or row.get("seed") != seed
+                            or any(_finite_number(row.get(name)) is None for name in ("precision", "recall", "f1"))):
+                        continue
+                    expected_model = "deberta-v3-large" if evaluation == "encoder_baseline" else CROSSNER_QWEN
+                    expected_limit = (None if evaluation == "encoder_baseline" else
+                                      config.max_new_tokens if evaluation.startswith("output_limit_") else 256)
+                    if row.get("model") != expected_model or row.get("max_new_tokens") != expected_limit:
+                        continue
+                    reference_rows.append({**row, "evaluation": evaluation, "population": population, "domain": domain})
+        if len(completed) == len(CROSSNER_DOMAINS):
+            state = "COMPLETED"
+        elif job is not None and job.state != "UNKNOWN":
+            state = "Result pending" if job.state == "COMPLETED" else job.state
+        else:
+            state = str(status_data.get("status") or ("UNKNOWN" if job else "PLANNED"))
+            if state == "COMPLETED":
+                state = "Result pending"
+        if state == "Result pending" and not error:
+            error = "Completion artifacts missing or invalid"
+        runs.append(CrossnerRunSnapshot(seed, experiment, state, job, status_data, tuple(completed), error))
+
+    comparison = _load_yaml(output_root / "aggregate" / "comparison.yaml")
+    summary = _crossner_summary_rows(reference_rows)
+    comparison_complete = False
+    report_rows = comparison.get("summary")
+    warning = ""
+    report_baseline = comparison.get("baseline_output_root")
+    try:
+        baseline_matches = isinstance(report_baseline, str) and Path(report_baseline).resolve() == baseline_root.resolve()
+    except (OSError, ValueError):
+        baseline_matches = False
+    if (output_root / "aggregate" / "comparison.yaml").exists() and (
+        comparison.get("max_new_tokens") != config.max_new_tokens or not baseline_matches or not isinstance(report_rows, list)
+    ):
+        warning = "Comparison report unreadable or metadata differs; excluded"
+    if comparison.get("max_new_tokens") == config.max_new_tokens and baseline_matches and isinstance(report_rows, list):
+        valid_rows = []
+        for row in report_rows:
+            if (not isinstance(row, dict)
+                    or any(not isinstance(row.get(name), str) for name in ("model", "evaluation", "population", "domain"))
+                    or type(row.get("successful_seeds")) is not int or type(row.get("expected_seeds")) is not int
+                    or not 0 <= row["successful_seeds"] <= row["expected_seeds"] <= 3
+                    or row.get("evaluation") not in evaluations
+                    or row.get("population") not in {"full", "deduplicated"}
+                    or row.get("domain") not in {*CROSSNER_DOMAINS, "pooled_micro", "domain_mean"}
+                    or row.get("model") not in {"deberta-v3-large", CROSSNER_QWEN}):
+                continue
+            expected_model = "deberta-v3-large" if row["evaluation"] == "encoder_baseline" else CROSSNER_QWEN
+            if row["model"] != expected_model:
+                continue
+            verified_count = sum(
+                row["domain"] in run.completed_domains
+                if row["domain"] in CROSSNER_DOMAINS else len(run.completed_domains) == len(CROSSNER_DOMAINS)
+                for run in runs
+            )
+            if row.get("successful_seeds") != verified_count:
+                continue
+            valid_rows.append(row)
+        if valid_rows:
+            # Freshly completed domains can appear before the next CPU aggregation.
+            merged = {(row["evaluation"], row["population"], row["domain"]): row for row in summary}
+            for row in valid_rows:
+                key = (row["evaluation"], row["population"], row["domain"])
+                if row.get("successful_seeds", 0) >= merged.get(key, {}).get("successful_seeds", 0):
+                    merged[key] = row
+            summary = tuple(merged.values())
+            expected_rows = len(evaluations) * 2 * (len(CROSSNER_DOMAINS) + 2)
+            selection = comparison.get("selection", {})
+            full_selection = isinstance(selection, dict) and all(
+                isinstance(selection.get(name), list)
+                and len(selection[name]) == len(expected)
+                and all(value in expected for value in selection[name])
+                and all(value in selection[name] for value in expected)
+                for name, expected in (("models", [CROSSNER_QWEN]), ("seeds", CROSSNER_SEEDS), ("domains", CROSSNER_DOMAINS))
+            )
+            unique_rows = {(row["evaluation"], row["population"], row["domain"]) for row in valid_rows}
+            comparison_complete = (
+                comparison.get("complete") is True and comparison.get("selection_complete") is True
+                and comparison.get("expected_evaluations") == 15 and comparison.get("successful_evaluations") == 15
+                and comparison.get("missing_or_failed") == [] and full_selection
+                and len(valid_rows) == len(unique_rows) == expected_rows
+                and all(len(run.completed_domains) == len(CROSSNER_DOMAINS) for run in runs)
+                and all(
+                    row.get("successful_seeds") == 3 and row.get("expected_seeds") == 3
+                    and all(_finite_number(row.get(name + "_mean")) is not None for name in ("precision", "recall", "f1"))
+                    for row in valid_rows
+                )
+            )
+        if len(valid_rows) != len(report_rows) or (comparison.get("complete") is True and not comparison_complete):
+            warning = "Comparison report incomplete or contains invalid rows"
+    aggregation_ids = _crossner_job_ids(_crossner_submission_rows(ledger, "aggregations"))
+    aggregations = tuple(jobs.get(job_id, JobState(job_id, "UNKNOWN")) for job_id in aggregation_ids)
+    return CrossnerDashboard(config, output_root, baseline_root, tuple(runs), summary, comparison_complete, aggregations, warning)
+
+
 def _format_percent(value: Any) -> str:
     number = _finite_number(value)
     return "-" if number is None else f"{100.0 * number:.2f}%"
@@ -898,6 +1221,92 @@ def _seed_peak_vram(status_data: dict[str, Any], results: dict[str, Any]) -> str
     return "-" if megabytes is None else f"{megabytes:.1f} MiB"
 
 
+def _crossner_cell(value: Any) -> str:
+    return str(value).replace("|", "/").replace("\n", " ").replace("\r", " ")
+
+
+def _crossner_summary_metric(row: dict[str, Any], name: str, *, unit: str = "%") -> str:
+    mean = _finite_number(row.get(name + "_mean"))
+    if mean is None:
+        return "-"
+    std = _finite_number(row.get(name + "_std"))
+    scale = 100 if unit in {"%", "pp"} else 1
+    cell = f"{mean * scale:.2f}"
+    if std is not None:
+        cell += f" ± {std * scale:.2f}"
+    return cell + ("%" if unit == "%" else " " + unit)
+
+
+def render_crossner_markdown(dashboard: CrossnerDashboard, now: datetime) -> list[str]:
+    limit = dashboard.config.max_new_tokens
+    lines = [
+        "", "## CrossNER Output Limit Evaluation", "",
+        f"Qwen 27B QLoRA: **256 → {limit} max_new_tokens**; frozen checkpoints, PER / ORG / LOC.",
+        f"Results: `{_crossner_cell(dashboard.output_root)}`; baseline: `{_crossner_cell(dashboard.baseline_root)}`.",
+        "", "| Seed | Limit | Status | Job | Domain | Domains complete | Progress | Elapsed | Remaining | Parse failures | Output limit | Updated / age | Error |",
+        "|---:|---:|---|---:|---|---:|---:|---:|---:|---:|---:|---|---|",
+    ]
+    expected_total = sum(CROSSNER_TEST_SIZES.values())
+    for run in dashboard.runs:
+        data = run.status_data
+        completed = _finite_number(data.get("completed_samples"))
+        verified = sum(CROSSNER_TEST_SIZES[domain] for domain in run.completed_domains)
+        completed = max(completed or 0, verified)
+        total = _finite_number(data.get("total_samples")) or expected_total
+        if completed > total or total <= 0:
+            completed, total = verified, expected_total
+        progress = f"{100 * completed / total:.1f}% ({int(completed):,}/{int(total):,})" if total > 0 else "-"
+        elapsed = _finite_number(data.get("elapsed_seconds"))
+        eta = _finite_number(data.get("eta_seconds"))
+        remaining = "complete" if run.status == "COMPLETED" else (
+            _format_compact_duration(eta) if eta is not None and eta >= 0 else "unknown"
+        )
+        rates = []
+        for key in ("parse_failure_count", "output_limit_count"):
+            count = _finite_number(data.get(key))
+            rates.append(_format_percent(count / completed) if count is not None and 0 <= count <= completed and completed > 0 else "-")
+        updated = _seed_update_cell({"last_update": data.get("updated_at")}, now)
+        error = run.error
+        if run.job and run.job.state in {"FAILED", "OUT_OF_MEMORY", "TIMEOUT", "CANCELLED"} and not error:
+            error = f"Slurm {run.job.state}, exit {run.job.exit_code}"
+        lines.append(
+            f"| {run.seed} | {limit} | {_crossner_cell(run.status)} | {run.job.job_id if run.job else '-'} | "
+            f"{_crossner_cell(data.get('current_domain') or '-')} | {len(run.completed_domains)}/5 | {progress} | "
+            f"{_format_compact_duration(elapsed) if elapsed is not None else run.job.elapsed if run.job else '-'} | "
+            f"{remaining} | {rates[0]} | {rates[1]} | {updated} | {_crossner_cell(error or '-')} |"
+        )
+    aggregation_status = ", ".join(f"`{job.job_id}` ({job.state})" for job in dashboard.aggregation_jobs) or "not submitted"
+    lines.extend(["", f"Comparison aggregation: {aggregation_status}."])
+    complete = dashboard.comparison_complete and all(run.status == "COMPLETED" for run in dashboard.runs)
+    lines.append(f"Comparison: **{'COMPLETE' if complete else 'INCOMPLETE'}**; means ± sample SD across completed seeds.")
+    if dashboard.warning:
+        lines.append(f"Warning: {_crossner_cell(dashboard.warning)}.")
+    for population, label in (("full", "Full test set"), ("deduplicated", "Without source-training overlaps")):
+        lines.extend([
+            "", f"## CrossNER Comparison — {label}", "",
+            "| Domain | Model / limit | Seeds | Status | Precision | Recall | F1 | ΔF1 vs 256 | ΔRecall vs 256 | Parse failures | Output limit | Mean latency |",
+            "|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        ])
+        for domain in (*CROSSNER_DOMAINS, "pooled_micro", "domain_mean"):
+            for evaluation in ("encoder_baseline", "baseline_256", f"output_limit_{limit}"):
+                row = next((row for row in dashboard.summary
+                            if row.get("population") == population and row.get("domain") == domain
+                            and row.get("evaluation") == evaluation), {})
+                count = row.get("successful_seeds", 0)
+                expected = row.get("expected_seeds", 3)
+                state = "Complete" if count == 3 and expected == 3 else "Incomplete"
+                model = "DeBERTa large" if evaluation == "encoder_baseline" else f"Qwen {256 if evaluation == 'baseline_256' else limit}"
+                metrics = [_crossner_summary_metric(row, name) for name in ("precision", "recall", "f1")]
+                deltas = [_crossner_summary_metric(row, name, unit="pp") for name in ("delta_f1_vs_256", "delta_recall_vs_256")]
+                diagnostics = [_crossner_summary_metric(row, name) for name in ("parse_failure_rate", "output_limit_rate")]
+                latency = _crossner_summary_metric(row, "latency_ms", unit="ms")
+                lines.append(f"| {domain} | {model} | {_crossner_cell(count)}/{_crossner_cell(expected)} | {state} | "
+                             + " | ".join([*metrics, *deltas, *diagnostics, latency]) + " |")
+    lines.extend(["", "Δ values compare CrossNER with the 256-token CrossNER baseline. "
+                  "Pooled micro scores appear after aggregation; missing historical output-limit telemetry is shown as '-'."])
+    return lines
+
+
 def render_markdown(
     snapshots: list[ModelSnapshot],
     now: datetime,
@@ -905,6 +1314,7 @@ def render_markdown(
     summary_job: Optional[JobState],
     browser_refresh_seconds: int = DEFAULT_BROWSER_REFRESH_SECONDS,
     final_results: Optional[list[FinalResultSnapshot]] = None,
+    crossner_dashboard: Optional[CrossnerDashboard] = None,
 ) -> str:
     decoder_snapshots = [s for s in snapshots if s.spec.kind == "decoder"]
     lines = [
@@ -1141,6 +1551,9 @@ def render_markdown(
                 f"| {result.experiment_name} | {job_cell} | {result.status} | "
                 f"{elapsed} | {progress} | {total} | {remaining} | {finish} |"
             )
+
+    if crossner_dashboard is not None:
+        lines.extend(render_crossner_markdown(crossner_dashboard, now))
 
     lines.extend([
         "",
@@ -1386,6 +1799,24 @@ def load_config(path: Path) -> MonitorConfig:
     }
     if any(seconds <= 0 for seconds in result_time_limits_seconds.values()):
         raise ValueError("result_time_limits_hours values must be positive")
+    crossner_output_limit = None
+    raw_crossner = raw.get("crossner_output_limit")
+    if raw_crossner is not None:
+        if not isinstance(raw_crossner, dict):
+            raise ValueError("crossner_output_limit must be a mapping")
+        limit = raw_crossner.get("max_new_tokens")
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 256:
+            raise ValueError("crossner_output_limit.max_new_tokens must be an integer greater than 256")
+        for name in ("output_root", "baseline_root"):
+            if not isinstance(raw_crossner.get(name), str) or not raw_crossner[name].strip():
+                raise ValueError(f"crossner_output_limit.{name} must be a nonempty path")
+        crossner_output_limit = CrossnerOutputLimitConfig(
+            output_root=Path(raw_crossner["output_root"]),
+            baseline_root=Path(raw_crossner["baseline_root"]),
+            max_new_tokens=limit,
+        )
+        if crossner_output_limit.output_root == crossner_output_limit.baseline_root:
+            raise ValueError("CrossNER output and baseline roots must differ")
     return MonitorConfig(
         specs=tuple(specs),
         refresh_seconds=refresh_seconds,
@@ -1394,6 +1825,7 @@ def load_config(path: Path) -> MonitorConfig:
         summary_job_id=int(summary_job_id) if summary_job_id else None,
         result_job_ids=result_job_ids,
         result_time_limits_seconds=result_time_limits_seconds,
+        crossner_output_limit=crossner_output_limit,
     )
 
 
@@ -1520,16 +1952,7 @@ def update_dashboard(
 ) -> str:
     settings = settings or load_config(config_path)
     if jobs is None:
-        all_job_ids = [
-            job_id
-            for spec in settings.specs
-            for job_id in spec.job_ids
-        ]
-        if settings.summary_job_id:
-            all_job_ids.append(settings.summary_job_id)
-        for result_jobs in settings.result_job_ids.values():
-            all_job_ids.extend(result_jobs)
-        jobs = query_jobs(all_job_ids)
+        jobs = query_jobs(monitor_job_ids(settings))
     results_root = resolve_results_root()
     snapshots = [
         collect_snapshot(spec, jobs, results_root)
@@ -1541,6 +1964,17 @@ def update_dashboard(
         settings.result_time_limits_seconds,
         jobs,
     )
+    crossner_dashboard = None
+    if settings.crossner_output_limit is not None:
+        config = settings.crossner_output_limit
+        try:
+            crossner_dashboard = collect_crossner_dashboard(config, results_root, jobs)
+        except (OSError, ValueError, TypeError, KeyError, OverflowError) as exc:
+            output_root, baseline_root = _crossner_roots(config, results_root)
+            crossner_dashboard = CrossnerDashboard(
+                config, output_root, baseline_root, (), (), False, (),
+                f"CrossNER artifacts could not be read: {exc}",
+            )
     now = datetime.now().astimezone()
     summary_job = (
         jobs.get(settings.summary_job_id)
@@ -1554,6 +1988,7 @@ def update_dashboard(
         summary_job,
         settings.browser_refresh_seconds,
         final_results,
+        crossner_dashboard,
     )
     write_atomic(output_path, rendered)
     if html_output_path is not None:
@@ -1610,15 +2045,6 @@ def main() -> None:
     html_output = args.html_output or args.output.with_suffix(".html")
     cached_jobs: Optional[dict[int, JobState]] = None
     last_scheduler_refresh: Optional[float] = None
-    all_job_ids = [
-        job_id
-        for spec in settings.specs
-        for job_id in spec.job_ids
-    ]
-    if settings.summary_job_id:
-        all_job_ids.append(settings.summary_job_id)
-    for result_jobs in settings.result_job_ids.values():
-        all_job_ids.extend(result_jobs)
     while True:
         try:
             monotonic_now = time.monotonic()
@@ -1628,7 +2054,7 @@ def main() -> None:
                 or monotonic_now - last_scheduler_refresh
                 >= settings.scheduler_refresh_seconds
             ):
-                cached_jobs = query_jobs(all_job_ids)
+                cached_jobs = query_jobs(monitor_job_ids(settings))
                 last_scheduler_refresh = monotonic_now
             rendered = update_dashboard(
                 args.config,

@@ -477,6 +477,76 @@ readable artifacts are fractions; Markdown tables show percentages and
 percentage-point differences. Smoke runs are excluded from primary aggregates.
 These results describe transfer of the three shared classes between datasets.
 
+### CrossNER output-limit sensitivity evaluation
+
+The additional, post-hoc evaluation fixes Qwen's output limit at 1,024 tokens
+instead of 256. It reuses the same frozen QLoRA checkpoints, all three seeds,
+all five domains, and the original prompt, parser, label mapping, and greedy
+inference settings. It performs no training. The original CrossNER evaluator
+and its scientific code hashes remain unchanged.
+
+Run from `ba-ner/` with the project environment active:
+
+```bash
+export BA_NER_RESULTS_ROOT=/netscratch/losman/ba-ner/results
+python scripts/run_crossner.py --max-new-tokens 1024 --preflight
+python scripts/run_crossner.py --max-new-tokens 1024 --dry-run
+
+# Commit the tested implementation and keep the checkout clean before submit.
+# These prefixes contain known unparseable outputs in the 256-token baseline.
+python scripts/run_crossner.py --max-new-tokens 1024 --submit \
+  --seeds 42 --domains music politics --smoke-limit 25
+
+# After checking the smoke results, submit three inference jobs and a dependent
+# CPU aggregation: fifteen complete domain evaluations, with no training jobs.
+python scripts/run_crossner.py --max-new-tokens 1024 --submit
+python scripts/run_crossner.py --max-new-tokens 1024 --status
+python scripts/run_crossner.py --max-new-tokens 1024 --submit --resume-failed
+python scripts/run_crossner.py --max-new-tokens 1024 --aggregate-only
+```
+
+The default results root is
+`<source-results-root>/crossner_output_limit_1024/`; smoke results use its
+`smoke/` subdirectory. Without `--max-new-tokens`, the existing 256-token
+commands, model selection, and result paths are retained. A higher limit selects
+only Qwen by default and rejects an explicit encoder selection. Separate
+contracts, checkpoints, locks, job names, and submission ledgers prevent
+mixing baseline and additional results. Resume verifies the exact evaluation
+contract, including the output limit and code hashes.
+
+All 2,506 examples are inferred. The additional comparison reports
+`aggregate/comparison.{yaml,csv,md}` pair Qwen-256, Qwen-1024, and the existing
+DeBERTa results by seed, domain, sample ID, original tokens, and gold labels.
+They report both the full population and the same 2,485 examples after removing
+the 21 known exact source-training overlaps. The fixed exclusion list and its
+provenance are versioned in `configs/crossner_overlap_exclusions.yaml`.
+Unparseable outputs remain in both populations. The limit is chosen before the
+run and is not selected by the resulting test F1.
+
+Each new prediction records the actual generated token count, whether the
+limit was reached, the inferred stop reason, and strict JSON completeness.
+The comparison includes precision, recall, F1, parse failures, latency and
+CUDA memory; pooled metrics are computed per seed before mean and sample
+standard deviation (`ddof=1`). `delta_f1_vs_256` is the paired limit effect;
+the existing `delta_f1` still means CrossNER minus MultiNERD. A complete
+comparison requires all fifteen new evaluations and valid baseline artifacts.
+
+The optional `crossner_output_limit` block in the monitor configuration adds a
+separate section with seed/job status, current domain, verified progress, ETA,
+and full/filtered comparisons. It discovers new and resumed jobs on scheduler
+refreshes. Existing tables, styling, and refresh intervals are retained. After
+updating the implementation, restart an already running monitor to load it:
+
+```bash
+bash scripts/cluster/stop_training_monitor.sh
+bash scripts/cluster/start_training_monitor.sh
+```
+
+The new runs retain one H100, 160 GB host memory, and a 24-hour limit per seed.
+Longer outputs can increase runtime. Interrupted runs resume from verified
+per-example checkpoints with `--resume-failed`; smoke results never contribute
+to complete comparison reports.
+
 The repository includes SLURM scripts for running the matrix on a GPU cluster.
 They support either a project-local `.venv` or a Conda environment named
 `ba-ner`.

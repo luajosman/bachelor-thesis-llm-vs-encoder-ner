@@ -12,6 +12,12 @@ source "${SCRIPT_DIR}/common.sh"
 activate_ba_ner_env
 print_runtime_info
 
+if [ "${1:-}" = "--output-limit" ]; then
+    shift
+    python -m src.evaluate.crossner_output_limit "$@"
+    exit 0
+fi
+
 if [ "${1:-}" = "--aggregate" ]; then
     shift
     python -m src.evaluate.crossner_aggregate "$@"

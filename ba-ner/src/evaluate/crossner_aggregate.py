@@ -44,8 +44,10 @@ def write_csv(path: Path, rows: list[dict]) -> None:
     atomic_write_bytes(path, buffer.getvalue().encode("utf-8"))
 
 
-def aggregate(source_root: Path, output_root: Path, cache_dir: Path, models=GROUPS, seeds=SEEDS, domains=DOMAINS) -> dict:
+def aggregate(source_root: Path, output_root: Path, cache_dir: Path, models=GROUPS, seeds=SEEDS, domains=DOMAINS,
+              *, contract_factory=None, primary_models=GROUPS) -> dict:
     ensure_safe_output(output_root, source_root)
+    contract_factory = contract_factory or evaluation_contract
     runs = selected_runs(models, seeds)
     datasets = {domain: load_crossner_test(domain, cache_dir) for domain in domains}
     raw_rows, class_rows, overall_rows, missing = [], [], [], []
@@ -60,7 +62,7 @@ def aggregate(source_root: Path, output_root: Path, cache_dir: Path, models=GROU
         for domain in domains:
             directory = output_root / source["config"]["experiment_name"] / domain
             try:
-                contract = evaluation_contract(source, domain)
+                contract = contract_factory(source, domain)
                 if not completed_domain(directory, contract, datasets[domain]):
                     raise ValueError("Missing final metrics")
                 metrics = yaml.safe_load((directory / "inference_metrics.yaml").read_text())
@@ -96,10 +98,11 @@ def aggregate(source_root: Path, output_root: Path, cache_dir: Path, models=GROU
                                  "f1": macro, "baseline_f1": baseline["f1"], "delta_f1": macro - baseline["f1"]})
     summaries = [summary_row(model, domain, [r for r in raw_rows + overall_rows if r["model"] == model and r["domain"] == domain], len(seeds))
                  for model in models for domain in (*domains, "pooled_micro", "domain_mean")]
-    primary = set(models) == set(GROUPS) and set(seeds) == set(SEEDS) and set(domains) == set(DOMAINS)
+    primary = set(models) == set(primary_models) and set(seeds) == set(SEEDS) and set(domains) == set(DOMAINS)
     report = {"complete": primary and not missing, "selection_complete": not missing,
               "successful_evaluations": len(raw_rows), "expected_evaluations": len(runs) * len(domains),
-              "primary_expected_evaluations": 30, "ddof": 1, "scored_types": list(COMMON_TYPES),
+              "primary_expected_evaluations": len(selected_runs(primary_models, SEEDS)) * len(DOMAINS),
+              "ddof": 1, "scored_types": list(COMMON_TYPES),
               "interpretation": "Transfer of PER/ORG/LOC between datasets with frozen models and prompts",
               "selection": {"models": list(models), "seeds": list(seeds), "domains": list(domains)},
               "summary": summaries, "missing_or_failed": missing}
