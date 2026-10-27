@@ -1,0 +1,189 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+% --- Pakete ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}    % \mathbb in Kapitel 2 (LoRA-Notation)
+\usepackage{setspace}
+\usepackage{csquotes}
+
+% Bessere Umbrüche / Vermeidung von Overfull hbox
+\usepackage{microtype}      % feine Laufweite, bessere Silbentrennung
+\emergencystretch=2em       % LaTeX darf Zeilen bei Bedarf "ziehen"
+
+% =========================
+% BibLaTeX / APA-Zitierstil
+% =========================
+\usepackage[
+  backend=biber,
+  style=apa,
+  natbib=true,
+  doi=true,
+  url=true,
+  eprint=true
+]{biblatex}
+
+\addbibresource{references.bib}
+
+% BibLaTeX: ganzer Zitiertext als Link, nicht nur das Jahr
+\DeclareFieldFormat{citehyperref}{%
+  \DeclareFieldAlias{bibhyperref}{noformat}%
+  \bibhyperref{#1}}
+
+\DeclareFieldFormat{textcitehyperref}{%
+  \DeclareFieldAlias{bibhyperref}{noformat}%
+  \bibhyperref{%
+    #1%
+    \ifbool{cbx:parens}
+      {\bibcloseparen\global\boolfalse{cbx:parens}}
+      {}}}
+
+\savebibmacro{cite}
+\savebibmacro{textcite}
+
+\renewbibmacro*{cite}{%
+  \printtext[citehyperref]{%
+    \restorebibmacro{cite}%
+    \usebibmacro{cite}}}
+
+\renewbibmacro*{textcite}{%
+  \ifboolexpr{
+    ( not test {\iffieldundef{prenote}} and
+      test {\ifnumequal{\value{citecount}}{1}} )
+    or
+    ( not test {\iffieldundef{postnote}} and
+      test {\ifnumequal{\value{citecount}}{\value{citetotal}}} )
+  }
+    {\DeclareFieldAlias{textcitehyperref}{noformat}}
+    {}%
+  \printtext[textcitehyperref]{%
+    \restorebibmacro{textcite}%
+    \usebibmacro{textcite}}}
+
+\DeclareLanguageMapping{ngerman}{ngerman-apa}
+
+\DefineBibliographyStrings{ngerman}{
+  retrieved = {Zuletzt geprüft am}
+}
+
+% Damit \cite{...} wie ein APA-Klammerzitat erscheint: (Autor, Jahr)
+\let\cite\parencite
+
+\usepackage{xcolor}
+\usepackage{xurl} % bessere Zeilenumbrüche in URLs
+
+\usepackage[
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black,
+  breaklinks=true
+]{hyperref}
+
+\usepackage[noforwardlinks]{acronym}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{lmodern}
+
+\usepackage{tabularx}
+\usepackage{booktabs}   % Linien der Übersichtstabelle in Kapitel 3
+\usepackage{listings}
+\onehalfspacing
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\setlength{\parindent}{0pt}
+\usepackage{parskip}    % Absatzabstand statt Einzug; eine Zeile, bei Bedarf entfernen
+
+% Kapitelüberschriften wie "1 Einleitung" in einer Zeile
+\titleformat{\chapter}[hang]
+  {\normalfont\Huge\bfseries}
+  {\thechapter}
+  {1em}
+  {}
+
+\titlespacing*{\chapter}{0pt}{-10pt}{25pt}
+
+% Sections wie im Beispiel
+\titleformat{\section}[hang]
+  {\normalfont\LARGE\bfseries}
+  {\thesection}
+  {1em}
+  {}
+
+\titlespacing*{\section}{0pt}{18pt}{12pt}
+
+% Subsections etwas kompakter
+\titleformat{\subsection}[hang]
+  {\normalfont\large\bfseries}
+  {\thesubsection}
+  {1em}
+  {}
+
+\titlespacing*{\subsection}{0pt}{12pt}{8pt}
+
+\begin{document}
+
+% =========================
+% Vorderteil
+% =========================
+\pagenumbering{arabic}
+\pagestyle{empty}
+
+% Deckblatt
+\hypersetup{pageanchor=false}
+\input{frontmatter/deckblatt}
+\clearpage
+\hypersetup{pageanchor=true}
+
+% Eigenständigkeitserklärung
+\input{frontmatter/eigenstaendigkeitserklaerung}
+\clearpage
+
+% Abstract
+\input{frontmatter/abstract}
+\clearpage
+
+% Abkürzungsverzeichnis
+\input{frontmatter/abkuerzungsverzeichnis}
+\clearpage
+
+% Inhaltsverzeichnis
+\begingroup
+\makeatletter
+\let\ps@plain\ps@empty
+\makeatother
+\tableofcontents
+\clearpage
+\endgroup
+
+% =========================
+% Hauptteil
+% =========================
+\pagestyle{plain}
+
+\input{chapters/01_einleitung}
+\input{chapters/02_grundlagen}
+\input{chapters/03_verwandte_arbeiten}
+\input{chapters/04_methodik}
+\input{chapters/05_ergebnisse_und_diskussion}
+\input{chapters/06_fazit_und_ausblick}
+
+% =========================
+% Literaturverzeichnis
+% =========================
+\printbibliography[
+  heading=bibintoc,
+  title={Literaturverzeichnis}
+]
+
+% =========================
+% Anhang
+% =========================
+\appendix
+\input{chapters/anhang}
+
+\end{document}

@@ -1,0 +1,876 @@
+% chapters/05_ergebnisse_und_diskussion.tex
+%
+% Erstentwurf vom 27.10.2026 (KI-gestützt erstellt, siehe Erklärung).
+% Struktur, Tabellenskelette, Konventionen und Deutungsrahmen stehen;
+% alle Messwerte und alle Aussagen, deren Richtung von den Messwerten
+% abhängt, sind mit \PH{...} rot markiert und aus den Laufartefakten
+% (Anhang~A.1: evaluation_metrics.yaml, inference_metrics.yaml,
+% test_predictions.json) zu füllen. Die "% TODO"-Kommentare je Abschnitt
+% nennen die dafür nötigen Auswertungen.
+%
+% Konventionen dieses Kapitels:
+%  - Alle F1-, Precision- und Recall-Werte in Punkten (0--100).
+%  - Trainierte Konfigurationen: Mittelwert +- Stichprobenstandardabweichung
+%    über die Seeds 42, 123, 456; Zero-Shot: Einzellauf (Seed 42).
+%  - Abschnitte 5.1 bis 5.6 berichten, 5.7 interpretiert.
+%  - Bereits bekannte Werte (Support, Parameterzahlen, GPU-Typen,
+%    gewählte Epochen, 8,7 ms Encoder-Latenz) sind eingetragen.
+%
+% Hinweis für Kapitel 4: Dort steht in 4.4.3 "strikter F1-Wert unter 0,01"
+% (Skala 0--1). Für Konsistenz mit diesem Kapitel auf "unter 1" ändern.
+\providecommand{\PH}[1]{\textcolor{red}{\textbf{[#1]}}}
+
+\chapter{Ergebnisse und Diskussion}
+\label{chap:ergebnisse}
+
+Dieses Kapitel berichtet die Ergebnisse der in Kapitel~\ref{chap:methodik}
+beschriebenen Experimente und diskutiert sie anschließend.
+Abschnitt~\ref{sec:erg-leistung} stellt die Erkennungsleistung aller
+Konfigurationen insgesamt und je Entitätstyp dar,
+Abschnitt~\ref{sec:erg-formtreue} die Formtreue der LLM-Ausgaben; beide
+zusammen beantworten FF1.
+Abschnitt~\ref{sec:erg-groesse} betrachtet den Einfluss der Modellgröße,
+Abschnitt~\ref{sec:erg-effizienz} den Ressourcenbedarf (FF2).
+Abschnitt~\ref{sec:erg-fehlertypen} vergleicht die Fehlerprofile der
+Modellklassen, Abschnitt~\ref{sec:erg-crossner} berichtet den
+CrossNER-Ergänzungsversuch.
+Abschnitt~\ref{sec:erg-diskussion} ordnet die Befunde in die verwandten
+Arbeiten ein, leitet daraus die Empfehlungen zu FF3 ab und benennt,
+welche Unterschiede angesichts der Streuung belastbar sind.
+Die Abschnitte~\ref{sec:erg-leistung} bis~\ref{sec:erg-crossner}
+beschränken sich auf die Darstellung der Messwerte; Interpretationen
+folgen in Abschnitt~\ref{sec:erg-diskussion}.
+
+Für alle Kennzahlen gelten die Festlegungen aus
+Abschnitt~\ref{sec:evaluationskonzept}.
+Precision, Recall und F$_1$ sind strikte Entity-Level-Werte nach dem
+IOB2-Schema, berechnet mit \texttt{seqeval} auf dem vollständigen
+englischen MultiNERD-Testsplit mit 16\,454 Sätzen und 25\,645
+Referenzentitäten (Tabelle~\ref{tab:datensplits}); sie werden in Punkten
+auf einer Skala von 0 bis 100 angegeben.
+Für die fünf trainierten Konfigurationen werden Mittelwert und
+Stichprobenstandardabweichung über die Seeds 42, 123 und 456 berichtet,
+in den Tabellen als Mittelwert~$\pm$~Standardabweichung.
+Die drei Zero-Shot-Konfigurationen beruhen auf je einem Lauf mit
+Sampling (Abschnitt~\ref{sec:llm-pipeline}); ihre Werte sind daher
+Einzelwerte ohne Streuungsangabe.
+Ein Unterschied zwischen zwei trainierten Konfigurationen wird im
+Folgenden nur dann als Unterschied bezeichnet, wenn er größer ist als
+die Summe der beiden Standardabweichungen; kleinere Differenzen werden
+als nicht unterscheidbar bezeichnet.
+Dieses Kriterium ist in Abschnitt~\ref{sec:performanzmetriken}
+festgelegt; es ersetzt keinen statistischen Test, macht die Lesart aber
+nachvollziehbar.
+
+\section{Erkennungsleistung auf MultiNERD}
+\label{sec:erg-leistung}
+
+Dieser Abschnitt berichtet die Erkennungsleistung zunächst über alle
+Typen hinweg (Abschnitt~\ref{sec:erg-gesamt}) und anschließend je
+Entitätstyp (Abschnitt~\ref{sec:erg-typen}).
+
+\subsection{Gesamtergebnisse}
+\label{sec:erg-gesamt}
+
+% TODO: Werte aus evaluation_metrics.yaml der sechs DeBERTa-Läufe:
+%  - Precision, Recall, Micro-F1 je Seed -> Mittelwert und Stichproben-SD
+%  - Makro-F1 aus den typbezogenen F1-Werten (ungewichtetes Mittel über 15 Typen)
+%  - Seed-Einzelwerte in tab:app-seeds (Anhang A.2)
+
+Tabelle~\ref{tab:haupt} fasst die Erkennungsleistung aller acht
+Konfigurationen zusammen; die Seed-Einzelwerte stehen in
+Anhang~\ref{app:ergebnistabellen}.
+Die beiden Encoder stehen in den ersten beiden Zeilen.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{Erkennungsleistung aller Konfigurationen auf dem englischen
+  MultiNERD-Testsplit (strikte Entity-Level-Werte, IOB2, in Punkten).
+  Trainierte Konfigurationen: Mittelwert~$\pm$~Stichprobenstandardabweichung
+  über drei Seeds; Zero-Shot: Einzellauf mit Sampling.
+  Makro-F$_1$: ungewichtetes Mittel der typbezogenen F$_1$-Werte über
+  15 Typen.
+  Seed-Einzelwerte in Anhang~\ref{app:ergebnistabellen}.}
+  \label{tab:haupt}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{llcccc}
+    \toprule
+    \textbf{Modell} & \textbf{Regime} & \textbf{Precision} &
+    \textbf{Recall} & \textbf{Micro-F$_1$} & \textbf{Makro-F$_1$} \\
+    \midrule
+    DeBERTa-v3-base  & Fine-Tuning & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} \\
+    DeBERTa-v3-large & Fine-Tuning & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} \\
+    \midrule
+    Qwen3.5-0.8B & Zero-Shot & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    Qwen3.5-4B   & Zero-Shot & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    Qwen3.5-27B  & Zero-Shot & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    \midrule
+    Qwen3.5-0.8B & QLoRA & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} \\
+    Qwen3.5-4B   & QLoRA & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} \\
+    Qwen3.5-27B  & QLoRA & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+DeBERTa-v3-base erreicht einen Micro-F$_1$ von \PH{xx,x}, DeBERTa-v3-large
+einen von \PH{xx,x}.
+Die Differenz von \PH{x,x} Punkten ist \PH{größer / kleiner} als die Summe
+der beiden Standardabweichungen (\PH{x,x} und \PH{x,x}); die größere
+Variante ist damit \PH{unterscheidbar besser / nicht unterscheidbar}.
+Precision und Recall liegen bei beiden Modellen \PH{nahe beieinander /
+auseinander}: \PH{Precision xx,x gegenüber Recall xx,x (base) bzw.
+xx,x gegenüber xx,x (large)}.
+Der Makro-F$_1$ liegt mit \PH{xx,x} bzw. \PH{xx,x} um \PH{x} Punkte unter
+dem Micro-F$_1$, was auf \PH{deutlich schwächere Werte bei den seltenen
+oder verrauschten Typen} zurückgeht (Tabelle~\ref{tab:typen} in
+Abschnitt~\ref{sec:erg-typen}).
+
+Die Streuung über die Seeds ist mit Standardabweichungen von \PH{x,x}
+(base) und \PH{x,x} (large) \PH{gering}.
+Die Checkpoint-Auswahl fiel bei DeBERTa-v3-base auf die vierte
+(Seed~42) bzw. fünfte Epoche (Seeds 123 und 456), bei DeBERTa-v3-large
+auf die dritte bzw. vierte Epoche (Abschnitt~\ref{sec:encoder-pipeline});
+die Validierungs-F$_1$-Werte der ausgewählten Checkpoints liegen bei
+\PH{xx,x} bzw. \PH{xx,x} und damit \PH{über / nahe an} den Testwerten.
+% TODO: Validierungs-F1 der gewählten Checkpoints aus results.yaml;
+% Abweichung Validierung/Test kommentieren (Verteilungsverschiebung LOC
+% 29,1 % -> 46,9 %, Abschnitt 4.3.3).
+
+
+% TODO: Werte aus den drei Zero-Shot-Läufen (inference_metrics.yaml bzw.
+% aus test_predictions.json nachgerechnet) und den neun QLoRA-Läufen
+% (evaluation_metrics.yaml). Parse-Fehlerraten gehören in tab:formtreue-erg (Abschnitt 5.2).
+
+Die Zeilen drei bis acht in Tabelle~\ref{tab:haupt} zeigen die
+LLM-Konfigurationen.
+Im Zero-Shot-Regime erreichen die drei Qwen3.5-Modelle Micro-F$_1$-Werte
+von \PH{xx,x} (0.8B), \PH{xx,x} (4B) und \PH{xx,x} (27B).
+\PH{Beschreibung des Profils: Precision gegenüber Recall je Größe, etwa
+ob die Modelle viele Entitäten übersehen (niedriger Recall) oder
+Nicht-Entitäten markieren (niedrige Precision).}
+Die Werte sind Einzelwerte aus gesampelten Ausgaben und beruhen auf einem
+Prompt und Decoding-Einstellungen, die nach Beobachtungen auf dem
+Testsplit gewählt wurden (Abschnitt~\ref{sec:datenaufteilung}); sie sind
+daher als obere Abschätzung dessen zu lesen, was die unveränderten
+Checkpoints mit diesem Format leisten.
+
+Nach der Anpassung mit QLoRA steigt der Micro-F$_1$ auf \PH{xx,x}
+(0.8B), \PH{xx,x} (4B) und \PH{xx,x} (27B).
+Der Zugewinn gegenüber dem Zero-Shot-Regime beträgt damit \PH{xx}, \PH{xx}
+bzw. \PH{xx} Punkte und ist \PH{bei allen drei Größen deutlich größer als
+die Streuung über die Seeds}.
+Die Standardabweichungen über die Seeds liegen bei \PH{x,x}, \PH{x,x} und
+\PH{x,x}.
+Der Makro-F$_1$ der QLoRA-Modelle beträgt \PH{xx,x}, \PH{xx,x} und
+\PH{xx,x}.
+Ausgewählt wurde in acht der neun Läufe der Adapter der dritten Epoche,
+beim 4B-Modell mit Seed~42 der der zweiten
+(Abschnitt~\ref{sec:llm-pipeline}); die generative Validierung auf 200
+Sätzen ergab für die gewählten Adapter F$_1$-Werte von \PH{xx,x},
+\PH{xx,x} und \PH{xx,x}.
+% TODO: Validierungs-F1 (200 Sätze, greedy) aus results.yaml; prüfen, ob
+% der Verlauf über die Epochen (Epoche 1/2/3) bereits sättigt.
+
+
+Der beste Encoder, \PH{DeBERTa-v3-large}, erreicht einen Micro-F$_1$ von
+\PH{xx,x}; das beste LLM, \PH{Qwen3.5-27B im QLoRA-Regime}, einen von
+\PH{xx,x}.
+Der Abstand beträgt \PH{x,x} Punkte zugunsten \PH{des Encoders / des LLM}
+und ist \PH{größer / kleiner} als die Summe der Standardabweichungen.
+\PH{Einordnung der kleineren Konfigurationen: Liegt Qwen3.5-4B (QLoRA)
+über oder unter DeBERTa-v3-base? Wo steht Qwen3.5-0.8B (QLoRA) relativ zu
+den Encodern?}
+Alle Zero-Shot-Konfigurationen liegen \PH{xx bis xx} Punkte unter dem
+schwächsten trainierten Modell.
+
+Die beiden Modellklassen unterscheiden sich im Profil aus Precision und
+Recall: \PH{Encoder: Precision xx,x / Recall xx,x; bestes LLM: Precision
+xx,x / Recall xx,x. Beschreiben, ob der Vorsprung einer Klasse vor allem
+aus der Precision oder aus dem Recall stammt.}
+
+\subsection{Ergebnisse nach Entitätstyp}
+\label{sec:erg-typen}
+
+
+% TODO: typbezogene P/R/F1 je Konfiguration (evaluation_metrics.yaml für
+% die trainierten Läufe; Zero-Shot aus test_predictions.json nachrechnen).
+% Mittelwerte über Seeds; vollständige Tabelle mit P/R/F1 in Anhang A.2.
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption{Typbezogene F$_1$-Werte (strikt, in Punkten) ausgewählter
+  Konfigurationen auf dem Testsplit; trainierte Konfigurationen als
+  Mittelwert über drei Seeds, Zero-Shot als Einzellauf.
+  Support: Zahl der Referenzentitäten im Testsplit
+  (Tabelle~\ref{tab:datensplits}).
+  Die Typen sind nach der Zuverlässigkeit ihrer Annotation gruppiert
+  (Abschnitt~\ref{sec:datenauswahl}).
+  Precision und Recall je Typ in Anhang~\ref{app:ergebnistabellen}.}
+  \label{tab:typen}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{lrcccccc}
+    \toprule
+    & & \multicolumn{2}{c}{\textbf{DeBERTa-v3}} &
+      \multicolumn{3}{c}{\textbf{Qwen3.5 QLoRA}} &
+      \textbf{Qwen3.5} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-7}\cmidrule(lr){8-8}
+    \textbf{Typ} & \textbf{Support} & \textbf{base} & \textbf{large} &
+      \textbf{0.8B} & \textbf{4B} & \textbf{27B} & \textbf{27B Zero-Shot} \\
+    \midrule
+    \multicolumn{8}{l}{\emph{Zuverlässig annotierte Typen}} \\
+    PER   & 5\,265  & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    ORG   & 3\,309  & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    LOC   & 12\,024 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    CEL   & 41      & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    DIS   & 759     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    EVE   & 352     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    MEDIA & 458     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    \midrule
+    \multicolumn{8}{l}{\emph{Häufig verwechselte oder unvollständig verlinkte Typen}} \\
+    ANIM  & 1\,604  & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    BIO   & 8       & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    FOOD  & 566     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    PLANT & 894     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    \midrule
+    \multicolumn{8}{l}{\emph{Übrige Typen}} \\
+    INST  & 12      & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    MYTH  & 32      & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    TIME  & 289     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    VEHI  & 32      & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    \midrule
+    Micro-F$_1$ (alle) & 25\,645 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    Makro-F$_1$ & -- & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Tabelle~\ref{tab:typen} schlüsselt die F$_1$-Werte nach Entitätstyp auf;
+Abbildung~\ref{fig:typen} stellt die drei Kernkonfigurationen gegenüber.
+Bei den drei häufigen Typen PER, ORG und LOC, die 80\,\% der
+Testentitäten stellen, liegen alle trainierten Konfigurationen
+\PH{über xx Punkten}; die Unterschiede zwischen den Modellklassen betragen
+hier \PH{höchstens x,x Punkte}.
+Die Typen ANIM, BIO, FOOD und PLANT, deren Silberannotation nach
+\textcite{tedeschi2022multinerd} häufig verwechselt oder unvollständig
+verlinkt ist, erreichen bei allen Modellen \PH{deutlich niedrigere} Werte
+zwischen \PH{xx} und \PH{xx} Punkten.
+\PH{Benennen, bei welchen Typen die Modellklassen am stärksten
+auseinanderliegen, etwa ob das LLM bei DIS, EVE oder MEDIA vorn liegt
+und der Encoder bei LOC oder ANIM.}
+Für BIO (8 Referenzentitäten), INST (12), MYTH (32) und VEHI (32) sind
+die Werte mit erheblicher Unsicherheit behaftet, da wenige Fehler den
+F$_1$ um zweistellige Beträge verändern; sie werden nicht einzeln
+interpretiert.
+Im Zero-Shot-Regime \PH{beschreiben: welche Typen das 27B-Modell ohne
+Training erkennt (vermutlich PER, LOC, ORG, DIS) und welche nahezu nicht
+(vermutlich MEDIA, EVE, TIME mit abweichenden Typgrenzen)}.
+
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][6cm][c]{0.9\linewidth}{\centering
+    \PH{Abbildung: F$_1$ je Entitätstyp (y) für DeBERTa-v3-large,
+    Qwen3.5-27B (QLoRA) und Qwen3.5-27B (Zero-Shot); Typen auf der
+    x-Achse nach Support sortiert, Gruppen aus Tabelle~\ref{tab:typen}
+    farblich abgesetzt; ein Punkt je Konfiguration und Typ}}}
+  \caption{Typbezogene F$_1$-Werte der drei Kernkonfigurationen auf dem
+  Testsplit (Werte aus Tabelle~\ref{tab:typen}).}
+  \label{fig:typen}
+\end{figure}
+
+\section{Formtreue der LLM-Ausgaben}
+\label{sec:erg-formtreue}
+
+% TODO: Zähler aus inference_metrics.yaml je LLM-Lauf (Kennzahlen nach
+% Tab. 4.8); QLoRA als Mittel über drei Seeds, gerundet; zusätzlich die
+% Zahl nicht parsebarer Antworten ohne schließende Klammer (Indikator für
+% Abbruch am 256-Token-Limit) aus test_predictions.json.
+
+Tabelle~\ref{tab:formtreue-erg} berichtet die Kennzahlen zur Formtreue
+aus Tabelle~\ref{tab:formtreue} für die sechs LLM-Konfigurationen.
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption{Formtreue der LLM-Ausgaben auf dem Testsplit (16\,454
+  Antworten).
+  Parse-Fehlerrate in Prozent der Antworten; übrige Werte absolute
+  Häufigkeiten (QLoRA: Mittel über drei Seeds, gerundet).
+  Jedes verworfene Element zählt nur bei der ersten verletzten Regel
+  (Abschnitt~\ref{sec:robustheit-ausgaben}).
+  Leere Vorhersagen: Sätze ohne übernommenen Span.}
+  \label{tab:formtreue-erg}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{>{\raggedright\arraybackslash}p{4.4cm}rrrrrr}
+    \toprule
+    & \multicolumn{3}{c}{\textbf{Zero-Shot}} &
+      \multicolumn{3}{c}{\textbf{QLoRA}} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    \textbf{Kennzahl} & \textbf{0.8B} & \textbf{4B} & \textbf{27B} &
+      \textbf{0.8B} & \textbf{4B} & \textbf{27B} \\
+    \midrule
+    Parse-Fehlerrate [\%]          & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} \\
+    \quad davon ohne schließende Klammer & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    Parse direkt / Codeblock / Extraktion & \PH{x/x/x} & \PH{x/x/x} & \PH{x/x/x} & \PH{x/x/x} & \PH{x/x/x} & \PH{x/x/x} \\
+    Falsche Struktur (kein Array)  & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    Nicht-Objekte                  & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    Fehlende Felder                & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    Unzulässige Indizes            & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    Unbekannte Typen               & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    Text-Abweichungen              & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    Überlappungen                  & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    \midrule
+    Leere Vorhersagen & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} & \PH{x} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Im QLoRA-Regime ist die Parse-Fehlerrate mit \PH{x,x}, \PH{x,x} und
+\PH{x,x}\,\% \PH{gering}; \PH{nahezu alle / x von x} nicht parsebaren
+Antworten enden ohne schließende Klammer und gehen damit mit hoher
+Wahrscheinlichkeit auf das Limit von 256 Ausgabetokens zurück.
+Unbekannte Typen und Text-Abweichungen treten nach dem Training
+\PH{praktisch nicht mehr / in x Fällen} auf; die häufigste verbleibende
+Fehlerklasse ist \PH{Überlappungen / unzulässige Indizes}.
+Im Zero-Shot-Regime zeigt sich ein anderes Bild: \PH{Beschreiben je
+Größe: Parse-Fehlerrate, Anteil der Extraktion aus umgebendem Text,
+halluzinierte Typen (Beispiele nennen, etwa ausgeschriebene Typnamen
+oder neue Kategorien), Text-Abweichungen als Indiz für fehlerhaft
+gezählte Indizes, leere Arrays.}
+Da die Zähler absolute Häufigkeiten ohne Bezug zur Zahl erzeugter
+Elemente sind, lassen sie sich zwischen Konfigurationen vergleichen,
+aber nicht als Fehlerraten je Element lesen
+(Abschnitt~\ref{sec:robustheit-ausgaben}).
+
+\section{Einfluss der Modellgröße auf die NER-Leistung}
+\label{sec:erg-groesse}
+
+% TODO: Differenzen zwischen den Größenklassen aus tab:haupt berechnen;
+% Abbildung fig:groesse (F1 gegen Parameterzahl, log-x, Fehlerbalken = SD) aus
+% den Mittelwerten erzeugen (pgfplots oder extern als PDF).
+
+Tabelle~\ref{tab:groesse} und Abbildung~\ref{fig:groesse} stellen die
+Erkennungsleistung über die Größenklassen aus
+Abschnitt~\ref{sec:groessenklassen} getrennt nach Familie und Regime dar.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{Micro-F$_1$ (in Punkten) nach Größenklasse und Regime.
+  S/M/L bezeichnen die relative Größe innerhalb der Familie
+  (Tabelle~\ref{tab:experiment-matrix}); $\Delta$ ist die Differenz zur
+  nächstkleineren Klasse.
+  Trainierte Konfigurationen als Mittelwert~$\pm$~Standardabweichung über
+  drei Seeds.}
+  \label{tab:groesse}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{llccccc}
+    \toprule
+    \textbf{Familie} & \textbf{Regime} & \textbf{S} & \textbf{M} &
+    \textbf{L} & $\Delta$(M$-$S) & $\Delta$(L$-$M) \\
+    \midrule
+    DeBERTa-v3 & Fine-Tuning & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & -- & \PH{+x,x} & -- \\
+    Qwen3.5    & Zero-Shot   & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{+x,x} & \PH{+x,x} \\
+    Qwen3.5    & QLoRA       & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{+x,x} & \PH{+x,x} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][6cm][c]{0.9\linewidth}{\centering
+    \PH{Abbildung: Micro-F$_1$ (y) gegen Parameterzahl des Textmodells (x,
+    logarithmisch) für DeBERTa-v3 (Fine-Tuning), Qwen3.5 (Zero-Shot) und
+    Qwen3.5 (QLoRA); eine Linie je Familie und Regime, Fehlerbalken =
+    Standardabweichung über Seeds}}}
+  \caption{Erkennungsleistung in Abhängigkeit von der Parameterzahl,
+  getrennt nach Modellfamilie und Regime.
+  Parameterzahlen nach Tabelle~\ref{tab:experiment-matrix}
+  (DeBERTa-v3: 184 und 434~Mio.; Qwen3.5: 0{,}75, 4{,}21 und 26{,}90~Mrd.).}
+  \label{fig:groesse}
+\end{figure}
+
+Innerhalb der Encoder-Familie bringt der Schritt von 184 auf 434~Mio.
+Parameter \PH{+x,x} Punkte.
+Innerhalb der LLM-Familie wächst der Micro-F$_1$ im QLoRA-Regime von
+\PH{xx,x} (0.8B) über \PH{xx,x} (4B) auf \PH{xx,x} (27B); der Zugewinn von
+0.8B auf 4B beträgt \PH{x,x} Punkte, der von 4B auf 27B \PH{x,x} Punkte.
+\PH{Einordnen: Sättigt der Zugewinn ab 4B? Ist der Schritt 4B zu 27B
+überhaupt unterscheidbar (Summe der SD)?}
+Im Zero-Shot-Regime fällt der Größeneffekt \PH{deutlich größer / ähnlich}
+aus: \PH{xx,x}, \PH{xx,x} und \PH{xx,x} Punkte.
+\PH{Falls das 0.8B-Modell im Zero-Shot nahezu versagt: das als Befund
+festhalten (Formtreue in Abschnitt~\ref{sec:erg-formtreue} dazu heranziehen).}
+Über die Familien hinweg erreicht \PH{das kleinste LLM im QLoRA-Regime
+(0,75 Mrd.) / DeBERTa-v3-base (184 Mio.)} \PH{xx,x} Punkte und damit
+\PH{mehr / weniger} als \PH{DeBERTa-v3-base / Qwen3.5-0.8B}, obwohl es
+\PH{viermal so viele / ein Viertel so viele} Parameter besitzt.
+Mit zwei Encoder- und drei LLM-Größen bleibt diese Betrachtung
+deskriptiv (Abschnitt~\ref{sec:einfluss-parameteranzahl}); zudem
+variieren Hyperparameter und GPU-Typ mit der Größe.
+
+\section{Effizienzanalyse}
+\label{sec:erg-effizienz}
+
+% TODO: inference_metrics.yaml je Lauf: Latenz (Mittel, Median, P95),
+% Durchsatz (LLMs), max. allokierter GPU-Speicher (MiB -> GB);
+% results.yaml: Trainingsdauer (27B nur Untergrenze, Fußnote).
+% Mittelwerte über Seeds; Abbildung fig:tradeoff (F1 gegen Latenz, F1
+% gegen Speicher) aus tab:haupt und tab:effizienz erzeugen.
+
+Tabelle~\ref{tab:effizienz} stellt den Ressourcenbedarf der acht
+Konfigurationen nach dem Protokoll aus
+Abschnitt~\ref{sec:effizienzmetriken} zusammen.
+Die Latenz bezeichnet die mittlere Dauer des Modellaufrufs je Testsatz
+bei Batchgröße~1; der GPU-Speicher ist der maximal von PyTorch
+allokierte Speicher während der Testinferenz.
+Da die Konfigurationen auf drei GPU-Typen liefen
+(Tabelle~\ref{tab:hardware}), ist der GPU-Typ in der Tabelle
+mitgeführt; Vergleiche werden vorrangig innerhalb gleicher Hardware
+gezogen.
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption{Ressourcenbedarf der Konfigurationen.
+  Training: Wall-Clock-Dauer des Trainingsaufrufs in Stunden, Mittel über
+  drei Seeds; Latenz: Dauer des Modellaufrufs je Testsatz bei
+  Batchgröße~1 in Millisekunden (Mittelwert, Median, 95.~Perzentil);
+  Durchsatz: Testsätze je Sekunde reiner Generierungszeit; Speicher:
+  maximal allokierter GPU-Speicher während der Testinferenz in GB.
+  Parameter: Textmodell gesamt / trainierbar
+  (Tabelle~\ref{tab:experiment-matrix}).
+  GPU: H100 = H100 80\,GB HBM3, A100 = A100-SXM4 80\,GB, NVL = H100 NVL
+  94\,GB.}
+  \label{tab:effizienz}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{llrrrrrrr}
+    \toprule
+    \textbf{Modell} & \textbf{Regime} & \textbf{GPU} &
+    \textbf{Training} & \multicolumn{3}{c}{\textbf{Latenz [ms]}} &
+    \textbf{Durchsatz} & \textbf{Speicher} \\
+    \cmidrule(lr){5-7}
+    & & & \textbf{[h]} & \textbf{Mittel} & \textbf{Median} & \textbf{P95} &
+    \textbf{[Sätze/s]} & \textbf{[GB]} \\
+    \midrule
+    DeBERTa-v3-base  & Fine-Tuning & H100 & \PH{x,x} & 8{,}7 & \PH{x,x} & \PH{x,x} & -- & \PH{x,x} \\
+    DeBERTa-v3-large & Fine-Tuning & H100 & \PH{x,x} & \PH{xx,x} & \PH{x,x} & \PH{x,x} & -- & \PH{x,x} \\
+    \midrule
+    Qwen3.5-0.8B & Zero-Shot & A100 & -- & \PH{xxx} & \PH{xxx} & \PH{xxx} & \PH{x,x} & \PH{x,x} \\
+    Qwen3.5-4B   & Zero-Shot & A100 & -- & \PH{xxx} & \PH{xxx} & \PH{xxx} & \PH{x,x} & \PH{xx,x} \\
+    Qwen3.5-27B  & Zero-Shot & NVL  & -- & \PH{xxxx} & \PH{xxxx} & \PH{xxxx} & \PH{x,x} & \PH{xx,x} \\
+    \midrule
+    Qwen3.5-0.8B & QLoRA & H100 & \PH{x,x} & \PH{xxx} & \PH{xxx} & \PH{xxx} & \PH{x,x} & \PH{x,x} \\
+    Qwen3.5-4B   & QLoRA & A100 & \PH{x,x} & \PH{xxx} & \PH{xxx} & \PH{xxx} & \PH{x,x} & \PH{x,x} \\
+    Qwen3.5-27B  & QLoRA & NVL  & $\geq$\,\PH{xx,x}$^{a}$ & \PH{xxxx} & \PH{xxxx} & \PH{xxxx} & \PH{x,x} & \PH{xx,x} \\
+    \bottomrule
+    \multicolumn{9}{@{}l}{\scriptsize $^{a}$ Nur der Abschnitt nach der
+      Wiederaufnahme protokolliert; Untergrenze
+      (Abschnitt~\ref{sec:effizienzmetriken}).} \\
+  \end{tabular}
+\end{table}
+
+\paragraph{Trainingsdauer.}
+Das vollständige Fine-Tuning der Encoder dauerte \PH{x,x}~h (base,
+fünf Epochen) bzw. \PH{x,x}~h (large, vier Epochen).
+Das QLoRA-Training über drei Epochen benötigte \PH{x,x}~h für das
+0.8B-Modell und \PH{x,x}~h für das 4B-Modell; für das 27B-Modell ist nur
+eine Untergrenze von \PH{xx}~h bekannt.
+\PH{Einordnen: Verhältnis der Trainingsdauern LLM zu Encoder; Hinweis,
+dass die LLM-Läufe generative Validierung einschließen und das 4B-Modell
+auf einer A100 lief.}
+
+\paragraph{Inferenzlatenz.}
+Die Encoder verarbeiten einen Testsatz in \PH{8{,}7} ms (base) bzw.
+\PH{xx,x} ms (large).
+Die LLMs benötigen im QLoRA-Regime \PH{xxx} ms (0.8B), \PH{xxx} ms (4B) und
+\PH{xxxx} ms (27B) je Satz, also das \PH{xx}-, \PH{xx}- bzw. \PH{xxx}-Fache
+des schnelleren Encoders.
+\PH{Falls das 0.8B-Modell und DeBERTa-v3-base auf derselben H100 liefen:
+diesen Vergleich als hardwaregleich hervorheben.}
+Das 95.~Perzentil liegt bei den LLMs \PH{um das x-Fache} über dem Median,
+was auf die Abhängigkeit der Generierungsdauer von der Zahl der
+ausgegebenen Entitäten zurückgeht (Abschnitt~\ref{sec:effizienzmetriken}).
+Die Zero-Shot-Läufe sind \PH{langsamer / schneller} als die QLoRA-Läufe
+derselben Größe; sie unterscheiden sich in Präzision (BF16 statt NF4),
+Decoding (Sampling statt Greedy) und beim 0.8B-Modell im GPU-Typ, sodass
+dieser Unterschied nicht einem Faktor zugeordnet werden kann.
+
+\paragraph{GPU-Speicher.}
+Der Spitzenspeicher der Inferenz beträgt \PH{x,x} GB (DeBERTa-v3-base),
+\PH{x,x} GB (DeBERTa-v3-large), \PH{x,x} GB (Qwen3.5-0.8B, QLoRA),
+\PH{x,x} GB (Qwen3.5-4B, QLoRA) und \PH{xx,x} GB (Qwen3.5-27B, QLoRA).
+Im Zero-Shot-Regime mit BF16-Gewichten liegt der Bedarf bei \PH{x,x},
+\PH{xx,x} und \PH{xx,x} GB; der Unterschied zum QLoRA-Regime entspricht
+im Wesentlichen der 4-Bit-Quantisierung des Basismodells.
+\PH{Einordnen: Welche Konfigurationen passen auf eine GPU mit 24 GB bzw.
+mit 16 GB? Das ist die Grundlage für FF3.}
+
+\paragraph{Trade-off.}
+Abbildung~\ref{fig:tradeoff} stellt den Micro-F$_1$ der Latenz und dem
+GPU-Speicher gegenüber.
+\PH{Beschreiben: Liegt eine Konfiguration auf der Pareto-Front (kein
+anderes Modell ist zugleich besser und sparsamer)? Typischerweise: die
+beiden Encoder und das beste LLM; einordnen, ob das 4B- oder das
+27B-Modell dominiert wird.}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][6cm][c]{0.9\linewidth}{\centering
+    \PH{Abbildung mit zwei Teilbildern: links Micro-F$_1$ (y) gegen
+    mittlere Inferenzlatenz in ms (x, logarithmisch); rechts Micro-F$_1$
+    gegen GPU-Spitzenspeicher in GB (x, logarithmisch). Ein Punkt je
+    Konfiguration, Form nach Regime, Farbe nach Familie, GPU-Typ als
+    Beschriftung; Pareto-Front als Linie}}}
+  \caption{Erkennungsleistung gegenüber Inferenzlatenz (links) und
+  GPU-Spitzenspeicher (rechts).
+  Latenz und Speicher nach Tabelle~\ref{tab:effizienz}; Werte verschiedener
+  GPU-Typen sind nur eingeschränkt vergleichbar.}
+  \label{fig:tradeoff}
+\end{figure}
+
+\section{Fehleranalyse}
+\label{sec:erg-fehlertypen}
+
+% TODO: aus test_predictions.json je Lauf: Referenz- und vorhergesagte
+% Spans aus den BIO-Sequenzen extrahieren (seqeval-Logik, strikt, IOB2)
+% und jeden Referenzspan einer Klasse zuordnen:
+%   korrekt (Grenzen und Typ gleich), Typfehler (Grenzen gleich, Typ
+%   anders), Grenzfehler (überlappend, Typ gleich), Grenz- und Typfehler
+%   (überlappend, Typ anders), Auslassung (keine Überlappung).
+% Vorhergesagte Spans ohne Überlappung = Zusätze. Mittel über Seeds.
+% Beispiele je Fehlerklasse für tab:app-beispiele (Anhang A.2) auswählen.
+
+Um die Fehlerprofile der Modellklassen zu vergleichen, wird jede
+Referenzentität nach dem in Abschnitt~\ref{sec:performanzmetriken}
+festgelegten Schema genau einer Klasse zugeordnet: korrekt erkannt,
+Typfehler, Grenzfehler, Grenz- und Typfehler oder Auslassung;
+vorhergesagte Spans ohne Überlappung mit einer Referenzentität zählen als
+Zusätze.
+Tabelle~\ref{tab:fehlertypen} zeigt die Verteilung.
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption{Fehlerprofile auf dem Testsplit: Verteilung der 25\,645
+  Referenzentitäten auf Fehlerklassen (in Prozent) sowie Zahl der
+  Zusätze (vorhergesagte Spans ohne Überlappung mit einer Referenz).
+  Trainierte Konfigurationen als Mittel über drei Seeds.}
+  \label{tab:fehlertypen}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{llrrrrrr}
+    \toprule
+    \textbf{Modell} & \textbf{Regime} & \textbf{Korrekt} &
+    \textbf{\shortstack[c]{Typ-\\fehler}} & \textbf{\shortstack[c]{Grenz-\\fehler}} &
+    \textbf{\shortstack[c]{Grenz- und\\Typfehler}} &
+    \textbf{\shortstack[c]{Aus-\\lassung}} & \textbf{Zusätze} \\
+    \midrule
+    DeBERTa-v3-base  & Fine-Tuning & \PH{xx,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{xxx} \\
+    DeBERTa-v3-large & Fine-Tuning & \PH{xx,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{xxx} \\
+    Qwen3.5-0.8B & QLoRA & \PH{xx,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{xxx} \\
+    Qwen3.5-4B   & QLoRA & \PH{xx,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{xxx} \\
+    Qwen3.5-27B  & QLoRA & \PH{xx,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{xxx} \\
+    Qwen3.5-27B  & Zero-Shot & \PH{xx,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{x,x} & \PH{xxxx} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\PH{Beschreiben: Welche Fehlerklasse dominiert bei den Encodern, welche
+bei den LLMs? Zhan et al. (2026) fanden auf CoNLL-2003, dass der Encoder
+vor allem Entitäten übersieht und das LLM vor allem falsche Typen
+vergibt; prüfen, ob sich das hier wiederholt. Grenzfehler bei
+mehrteiligen Namen (ORG, MEDIA) und Typfehler zwischen ANIM/PLANT/FOOD
+sowie LOC/ORG gesondert nennen.}
+Beispiele typischer Fehler jeder Klasse zeigt
+Tabelle~\ref{tab:app-beispiele} im Anhang.
+
+\section{Transfer auf CrossNER}
+\label{sec:erg-crossner}
+
+% TODO: results/crossner/<lauf>/<domäne>/: P/R/F1 je Domäne und Seed für
+% DeBERTa-v3-large und Qwen3.5-27B (QLoRA); gepoolter Mikrowert und
+% Domänenmittel je Seed -> Mittel +- SD; MultiNERD-Referenz (nur
+% PER/ORG/LOC) aus den MultiNERD-Testvorhersagen derselben Checkpoints;
+% Sensitivität ohne die 21 überschneidenden Sätze; Parse-Fehlerrate,
+% Latenz, Speicher auf CrossNER (beide auf H100 80 GB).
+
+Tabelle~\ref{tab:crossner-erg} berichtet den Ergänzungsversuch aus
+Abschnitt~\ref{sec:crossner}: die jeweils größten Modelle beider
+Familien, auf MultiNERD trainiert, ausgewertet auf den Testsplits der
+fünf CrossNER-Domänen und beschränkt auf die Grobtypen PER, ORG und LOC.
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption{CrossNER-Transfertest (nur PER, ORG, LOC; strikte Werte in
+  Punkten; Mittelwert~$\pm$~Standardabweichung über die drei
+  MultiNERD-Checkpoints je Modell).
+  Gepoolt: Mikrowert über alle 2\,506 Sätze; Domänenmittel: ungewichtetes
+  Mittel der fünf Domänen-F$_1$.
+  MultiNERD-Referenz: dieselben Checkpoints auf dem MultiNERD-Testsplit,
+  ebenfalls auf PER, ORG und LOC beschränkt; $\Delta$F$_1$ = gepoolter
+  CrossNER-Wert minus Referenz.
+  Sensitivität: gepoolter Wert ohne die 21 Sätze, die mit
+  MultiNERD-Trainingssätzen übereinstimmen.}
+  \label{tab:crossner-erg}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{>{\raggedright\arraybackslash}p{3.2cm}rcccccc}
+    \toprule
+    & & \multicolumn{3}{c}{\textbf{DeBERTa-v3-large}} &
+      \multicolumn{3}{c}{\textbf{Qwen3.5-27B (QLoRA)}} \\
+    \cmidrule(lr){3-5}\cmidrule(lr){6-8}
+    \textbf{Domäne} & \textbf{Sätze} & \textbf{P} & \textbf{R} & \textbf{F$_1$} &
+      \textbf{P} & \textbf{R} & \textbf{F$_1$} \\
+    \midrule
+    Künstliche Intelligenz & 431 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} \\
+    Literatur              & 416 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} \\
+    Musik                  & 465 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} \\
+    Politik                & 651 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} \\
+    Naturwissenschaften    & 543 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} \\
+    \midrule
+    Gepoolt                & 2\,506 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x}\,$\pm$\,\PH{x,x} \\
+    Domänenmittel          & -- & -- & -- & \PH{xx,x}\,$\pm$\,\PH{x,x} & -- & -- & \PH{xx,x}\,$\pm$\,\PH{x,x} \\
+    Sensitivität (ohne 21 Sätze) & 2\,485 & -- & -- & \PH{xx,x} & -- & -- & \PH{xx,x} \\
+    \midrule
+    MultiNERD-Referenz (PER/ORG/LOC) & 16\,454 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
+    $\Delta$F$_1$ (gepoolt $-$ Referenz) & & & & \PH{$-$xx,x} & & & \PH{$-$xx,x} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Gegenüber der MultiNERD-Referenz fällt der F$_1$ auf CrossNER bei
+DeBERTa-v3-large um \PH{xx,x} Punkte und bei Qwen3.5-27B um \PH{xx,x}
+Punkte.
+\PH{Beschreiben: Welches Modell verliert weniger? Ist der Unterschied
+zwischen den Modellen größer als die Streuung? Welche Domäne ist am
+schwersten (vermutlich Naturwissenschaften oder KI wegen vieler
+nicht abgebildeter Typen, die als Zusätze zählen) und welche am
+leichtesten (vermutlich Politik mit vielen PER/ORG/LOC)? Precision
+gegenüber Recall: Verlieren die Modelle vor allem Recall, weil
+CrossNER-Typen wie politician auf PER abgebildet werden, oder
+Precision, weil misc-Spans als PER/ORG/LOC vorhergesagt werden?}
+Der Ausschluss der 21 mit MultiNERD-Trainingssätzen übereinstimmenden
+Sätze verändert die gepoolten Werte um \PH{höchstens x,x} Punkte.
+Beim LLM waren \PH{x,x}\,\% der Antworten nicht parsebar, \PH{nahezu alle}
+davon ohne schließende Klammer; da CrossNER-Sätze \PH{länger sind und
+mehr Entitäten enthalten als MultiNERD-Sätze}, wirkt das Limit von 256
+Ausgabetokens hier stärker (Abschnitt~\ref{sec:crossner}), und Recall
+und F$_1$ des LLM sind entsprechend unterschätzt.
+Die Latenz auf CrossNER betrug \PH{xx,x} ms (DeBERTa-v3-large) und
+\PH{xxxx} ms (Qwen3.5-27B) je Satz auf derselben H100.
+% TODO: Satz zur 1024-Token-Sensitivitätsanalyse nur aufnehmen, wenn sie
+% durchgeführt wurde; andernfalls den entsprechenden Absatz in 4.6
+% streichen.
+
+\section{Diskussion der Ergebnisse}
+\label{sec:erg-diskussion}
+
+Die folgenden Abschnitte ordnen die Befunde entlang der
+Forschungsfragen aus Abschnitt~\ref{sec:problem_ziel} ein und
+vergleichen sie mit den verwandten Arbeiten aus
+Kapitel~\ref{chap:verwandte_arbeiten}.
+Abschnitt~\ref{sec:disk-validitaet} benennt, welche Unterschiede
+angesichts der Streuung und der bekannten Abweichungen
+(Tabelle~\ref{tab:abweichungen}) belastbar sind.
+
+\subsection{Erkennungsleistung im Vergleich zur Literatur}
+\label{sec:disk-leistung}
+
+% TODO: Richtung des Hauptbefunds eintragen und den passenden Absatz
+% ausformulieren; den nicht zutreffenden Absatz streichen.
+
+Der zentrale Befund zu FF1 lautet: \PH{Das beste LLM (Qwen3.5-27B, QLoRA)
+liegt um x,x Punkte vor / hinter DeBERTa-v3-large; der Abstand ist
+unterscheidbar / nicht unterscheidbar.}
+
+\PH{Falls das LLM vorn liegt:} Das Ergebnis entspricht dem Muster, das
+\textcite{obeidat2025llm} auf vier von fünf biomedizinischen Datensätzen
+berichten, dort mit 2 bis 8 Punkten Vorsprung, und dem von
+\textcite{zhan2026generativeNER} auf CoNLL-2003 mit 93{,}85 gegenüber
+93{,}04 für BERT-MRC.
+Der hier gemessene Vorsprung von \PH{x,x} Punkten liegt \PH{am unteren
+Rand / innerhalb / oberhalb} dieser Spanne.
+Anders als bei Obeidat et al., deren Vorsprung vor allem aus der
+Precision stammt, geht er hier \PH{auf Precision / Recall / beides}
+zurück.
+\PH{Falls der Encoder vorn liegt oder kein Unterschied besteht:} Das
+Ergebnis weicht von \textcite{obeidat2025llm} ab, deckt sich aber mit dem
+Befund von \textcite{zhan2026generativeNER}, dass LoRA-angepasste LLMs
+spezialisierte Modelle auf flachen Datensätzen nur knapp erreichen, und
+mit der Beobachtung von \textcite{lu2024llmstruggle}, dass ein
+LoRA-angepasstes 7B-Modell hinter einem feinjustierten Encoder bleibt.
+Zwei Eigenschaften des Setups sprechen dafür, dass die Encoder hier
+begünstigt sind: Die Encoder wurden vollständig feinjustiert, die LLMs
+nur über Adapter mit 0{,}5 bis 0{,}8\,\% trainierbarer Parameter
+(Tabelle~\ref{tab:lora-hyperparams}); und der Trainingssplit ist mit
+131\,280 Sätzen groß genug, um den Vorteil des Vorwissens großer Modelle
+zu verkleinern, den \textcite{bogdanov2024nuner} und
+\textcite{zaratiana2024gliner} vor allem bei wenigen Beispielen finden.
+
+Unabhängig von der Richtung ist der Abstand zwischen den trainierten
+Klassen \PH{klein} im Verhältnis zum Abstand zwischen den Regimen:
+Die Anpassung mit QLoRA hebt den F$_1$ um \PH{xx bis xx} Punkte über das
+Zero-Shot-Regime.
+\PH{Das bestätigt (prüfen: Zero-Shot deutlich unter allen trainierten
+Konfigurationen) für ein feingranulares Inventar mit 15 Typen, was
+\textcite{keraghel2024recent} mit GPT-4o (65{,}17 gegenüber 90{,}98 auf
+CoNLL-2003) und \textcite{tan2023damo} mit ChatGPT auf MultiCoNER II
+(14{,}78 gegenüber 92{,}77) für geprompte Modelle berichten: Ohne
+aufgabenspezifische Anpassung bleiben LLMs weit hinter überwachten
+Systemen zurück.}
+Die hier gemessenen Zero-Shot-Werte von \PH{xx bis xx} Punkten liegen
+\PH{deutlich unter} dem Zero-Shot-Wert von 76{,}0, den
+\textcite{sainz2024gollie} für GoLLIE-7B auf einer MultiNERD-Fassung
+berichten; GoLLIE ist jedoch auf Annotationsrichtlinien vieler
+Datensätze trainiert und hatte acht der 15 Typen bereits gesehen, sodass
+der Vergleich nur die Größenordnung einordnet.
+Die trainierten Konfigurationen erreichen Werte \PH{in der Größenordnung}
+der 93{,}73 (UniNER-7B) und 91{,}25 (BERT-base), die
+\textcite{zhou2024universalner} auf einer MultiNERD-Variante mit
+eigener Datenaufbereitung berichten; auch dort ist der Abstand zwischen
+LLM und Encoder klein.
+Da alle Werte dieser Arbeit die Übereinstimmung mit einer
+Silberreferenz messen (Abschnitt~\ref{sec:datenauswahl}), bleibt offen,
+ob die Unterschiede bei den verrauschten Typen ANIM, BIO, FOOD und PLANT
+Modellfehler oder Annotationsfehler abbilden; \textcite{tedeschi2022multinerd}
+berichten für diese Typen auf ihrer manuell geprüften Stichprobe
+F$_1$-Werte der Annotation zwischen 0{,}52 und 0{,}71.
+
+\subsection{Ausgabeformat und Formtreue}
+\label{sec:disk-format}
+
+Die zweite Hälfte von FF1 betrifft die Formtreue.
+Im QLoRA-Regime halten die Modelle das JSON-Format mit Wortindizes
+\PH{nahezu vollständig} ein: Parse-Fehlerraten von \PH{unter x}\,\%,
+\PH{keine} unbekannten Typen und \PH{nur x} Text-Abweichungen auf 16\,454
+Antworten.
+Das stützt die in Abschnitt~\ref{sec:llm_ner_related} formulierte
+Erwartung, dass Indizes, die explizit in der Eingabe stehen, den von
+\textcite{zhan2026generativeNER} für Zeichenoffsets beobachteten
+Einbruch vermeiden; der in Tabelle~\ref{tab:haupt} erreichte F$_1$ liegt
+\PH{weit über} den rund 54 Punkten, die dort für JSON mit Zeichenoffsets
+berichtet werden, und \PH{nahe an} den Inline-Formaten.
+\textcite{semin2026spanLabeling} hatten die Wortindex-Variante nicht
+evaluiert; die vorliegenden Ergebnisse zeigen, dass sie nach einem
+Fine-Tuning \PH{tragfähig} ist.
+Zugleich bestätigt sich der von \textcite{dagdelen2024structuredIE}
+berichtete Befund, dass feinjustierte Modelle JSON fast immer parsebar
+ausgeben, auch ohne erzwungene Formatierung.
+Die verbleibenden Parse-Fehler gehen \PH{fast ausschließlich} auf das
+Ausgabelimit zurück, nicht auf das Format; sie sind eine Eigenschaft der
+Pipeline-Einstellung und würden mit einem höheren Limit
+\PH{voraussichtlich} entfallen.
+
+Im Zero-Shot-Regime ist die Formtreue \PH{deutlich schwächer}:
+\PH{zusammenfassen, welche Fehlerklassen dominieren}.
+Das zeigt, dass Formatvorgabe und Typinventar ohne Training zum
+Flaschenhals werden, wie es \textcite{lu2024llmstruggle} für BIO-Tags
+beschreiben; die Nachverarbeitung aus Abschnitt~\ref{sec:postprocessing}
+rettet gültige Elemente, repariert aber keine fehlerhaften Indizes.
+Ob Constrained Decoding diese Fehler ohne Leistungsverlust beseitigen
+würde, bleibt offen; \textcite{tam2024speakfreely} berichten
+Leistungseinbußen durch Formatzwang, \textcite{semin2026spanLabeling}
+dagegen Gewinne durch ihr LogitMatch-Verfahren.
+Für die Effizienz ist das Format ein Faktor: Weil die Ausgabelänge nur
+von der Zahl der Entitäten abhängt, nicht von der Satzlänge, bleiben die
+Latenzen \PH{unter / bei} denen, die \textcite{obeidat2025llm} für
+BIO-Ausgaben berichten (40- bis 220-fache Encoder-Latenz); hier beträgt
+der Faktor \PH{xx bis xxx}.
+
+\subsection{Modellgröße}
+\label{sec:disk-groesse}
+
+Zu FF2 zeigen die Ergebnisse \PH{kleine / deutliche} Größeneffekte
+innerhalb der Familien.
+\PH{Bei den Encodern: base gegenüber large.}
+Das deckt sich mit \textcite{keraghel2024recent}, bei denen
+DeBERTa-v3-base und -large je nach Datensatz die Plätze tauschen.
+\PH{Bei den LLMs im QLoRA-Regime: Zugewinn 0.8B zu 4B und 4B zu 27B.}
+Das Muster entspricht den Beobachtungen bei GoLLIE und UniversalNER,
+wo größere Backbones nur wenig hinzugewinnen und der Gewinn durch die
+Anpassung den Gewinn durch die Größe übersteigt
+\cite{sainz2024gollie,zhou2024universalner}.
+Im Zero-Shot-Regime ist der Größeneffekt \PH{größer}, was zu der
+Beobachtung passt, dass Fähigkeiten wie das Befolgen komplexer
+Formatvorgaben erst ab einer gewissen Größe zuverlässig auftreten
+\cite{wei2022emergent}.
+Der Vergleich über die Familien hinweg \PH{zeigt, dass die Parameterzahl
+allein die Leistung nicht erklärt (prüfen: gilt, wenn DeBERTa-v3-base
+Qwen3.5-0.8B erreicht oder übertrifft)}: \PH{DeBERTa-v3-base mit 184 Mio.
+Parametern erreicht xx,x Punkte, Qwen3.5-0.8B mit dem Vierfachen im
+QLoRA-Regime xx,x.}
+Architektur, Vortrainingsziel und Anpassungsverfahren überlagern den
+Größenunterschied, wie \textcite{zaratiana2024gliner} und
+\textcite{bogdanov2024nuner} für Encoder-Generalisten zeigen.
+Die Skalierungsgesetze aus Abschnitt~\ref{sec:model_size} sind auf
+diese Befunde nicht übertragbar: Sie beschreiben den Vortrainingsverlust
+eigens trainierter Modellreihen, hier wurden veröffentlichte
+Checkpoints mit größenabhängigen Hyperparametern und auf verschiedenen
+GPUs angepasst.
+
+\subsection{Effizienz und praktische Empfehlungen}
+\label{sec:disk-effizienz}
+
+FF3 fragt nach dem günstigsten Verhältnis von Erkennungsleistung und
+Ressourcenbedarf unter Speicher- und Latenzbeschränkungen.
+Die Effizienzwerte lassen sich zu drei Aussagen verdichten.
+Erstens liegen die Encoder bei Latenz und Speicher um \PH{ein bis zwei}
+Größenordnungen unter den LLMs: \PH{8,7 ms gegenüber xxx bis xxxx ms;
+x,x GB gegenüber x,x bis xx,x GB}.
+Zweitens kostet der Leistungsunterschied zwischen den Klassen
+\PH{x,x} Punkte, der Effizienzunterschied dagegen den Faktor \PH{xx}
+bei der Latenz; dieses Verhältnis entspricht der Schlussfolgerung von
+\textcite{obeidat2025llm}, dass Encoder bei kleinen
+Leistungsunterschieden oder bei Latenzanforderungen die geeignetere
+Wahl bleiben.
+Drittens ist das Adaptertraining selbst sparsam: Die QLoRA-Läufe
+trainieren 6{,}4 bis 159~Mio. Parameter und passen mit NF4-Basismodell
+auf eine GPU, das 27B-Modell benötigt dafür aber \PH{xx} GB während der
+Inferenz und \PH{mindestens xx} Stunden Training.
+
+Daraus ergeben sich Empfehlungen, die in Abschnitt~\ref{sec:fazit-zusammenfassung}
+zusammengefasst werden:
+\PH{(1) Bei Latenzanforderungen im Millisekundenbereich oder GPUs unter
+x GB: DeBERTa-v3-base bzw. -large, mit einem Verlust von höchstens x,x
+Punkten gegenüber dem besten LLM.
+(2) Wenn der Leistungsunterschied von x,x Punkten den Mehraufwand
+rechtfertigt und xx GB GPU-Speicher sowie Latenzen von rund x Sekunden
+je Satz akzeptabel sind: Qwen3.5-27B mit QLoRA.
+(3) Qwen3.5-4B mit QLoRA als Mittelweg, falls es DeBERTa-v3-large
+erreicht; andernfalls dominiert.
+(4) Zero-Shot nur, wenn keine Trainingsdaten vorliegen; bei 15 Typen
+mit xx Punkten nicht konkurrenzfähig.}
+Diese Empfehlungen gelten für die hier gemessenen Bedingungen:
+Batchgröße~1, ein Satz je Anfrage, die genannten GPU-Typen.
+Mit Batching steigt der Durchsatz der LLMs stärker als der der Encoder,
+sodass sich die Faktoren bei Offline-Verarbeitung verschieben; dieser
+Fall wurde nicht gemessen (Abschnitt~\ref{sec:abgrenzung}).
+
+\subsection{Belastbarkeit der Befunde}
+\label{sec:disk-validitaet}
+
+Welche der berichteten Unterschiede tragen, bestimmt sich aus der
+Streuung und aus den Abweichungen in Tabelle~\ref{tab:abweichungen}.
+Die Standardabweichungen über die Seeds liegen bei \PH{x,x bis x,x}
+Punkten; Unterschiede unterhalb von \PH{etwa x} Punkten werden daher
+nicht interpretiert.
+Davon betroffen sind \PH{der Vergleich DeBERTa-v3-base gegen -large /
+der Schritt von 4B auf 27B / der Abstand zwischen DeBERTa-v3-large und
+Qwen3.5-27B}.
+Belastbar sind dagegen \PH{der Abstand zwischen Zero-Shot- und
+QLoRA-Regime, der Abstand zwischen den trainierten Modellen und dem
+kleinsten LLM sowie die Effizienzfaktoren}, die um ein Vielfaches über
+der Streuung liegen.
+Für die Effizienzwerte gilt das nur innerhalb gleicher Hardware; der
+hardwaregleiche Vergleich beschränkt sich auf \PH{DeBERTa-v3 und
+Qwen3.5-0.8B (QLoRA) auf der H100}.
+
+Die Einschränkungen des Versuchsdesigns, darunter die Silberreferenz,
+der einzelne Zero-Shot-Lauf je Größe, die drei GPU-Typen und die
+asymmetrische Checkpoint-Auswahl, sind in Tabelle~\ref{tab:abweichungen}
+zusammengefasst und werden in Abschnitt~\ref{sec:limitationen} diskutiert.
+Keine von ihnen kehrt die Richtung der belastbaren Befunde um; sie
+begrenzen aber, wie genau die kleinen Unterschiede zwischen den
+trainierten Konfigurationen zu beziffern sind.

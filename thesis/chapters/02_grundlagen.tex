@@ -1,0 +1,946 @@
+% chapters/02_grundlagen.tex
+%
+% Überarbeitete Fassung vom 16.10.2026 (Betreuerkritik B1–B15 und
+% Quellenprüfung umgesetzt). Alle Labels der Vorfassung sind erhalten.
+% Abbildungsdateien unverändert; Korrekturhinweise siehe Änderungsprotokoll.
+% Benötigt in der Präambel: amsmath, graphicx, booktabs.
+
+\chapter{Grundlagen}
+\label{chap:grundlagen}
+
+Dieses Kapitel führt die Konzepte ein, die das Versuchsdesign in
+Kapitel~\ref{chap:methodik} voraussetzt.
+Es erklärt Begriffe und Mechanismen; die Einordnung einzelner
+Forschungsarbeiten und ihrer Ergebnisse folgt in
+Kapitel~\ref{chap:verwandte_arbeiten}.
+Abschnitt~\ref{sec:nlp} umreißt Natural Language Processing und den
+Übergang von handentworfenen Merkmalen zu gelernten Repräsentationen.
+Abschnitt~\ref{sec:ner} definiert Named Entity Recognition als
+Sequenzlabeling-Aufgabe und führt die Tagging-Schemata ein.
+Abschnitt~\ref{sec:transformer} beschreibt die Transformer-Architektur,
+auf der beide in dieser Arbeit untersuchten Modellklassen beruhen.
+Die Abschnitte~\ref{sec:encoder_ner} und~\ref{sec:llms} behandeln
+Encoder-Modelle für NER und generative Large Language Models.
+Abschnitt~\ref{sec:lora} erklärt parameter-effizientes Fine-Tuning mit
+LoRA und QLoRA, Abschnitt~\ref{sec:model_size} Skalierungsgesetze und
+ihre Grenzen.
+Die Abschnitte~\ref{sec:datasets_corpora} und~\ref{sec:evaluation}
+stellen die verwendeten Datensätze und Evaluationsmetriken vor.
+
+\section{Natural Language Processing (NLP)}
+\label{sec:nlp}
+
+Natural Language Processing (NLP) umfasst Verfahren, mit denen Computer
+natürliche Sprache in geschriebener oder gesprochener Form verarbeiten,
+analysieren und erzeugen~\cite{jurafsky2024speech,manning1999foundations}.
+Typische Aufgaben sind die Klassifikation ganzer Texte, die Zuweisung von
+Labels an einzelne Wörter einer Sequenz, die Extraktion strukturierter
+Informationen und die Erzeugung von Text.
+Named Entity Recognition gehört zur zweiten Gruppe und wird in
+Abschnitt~\ref{sec:ner} eingeführt.
+
+Über lange Zeit beruhten NLP-Systeme auf Merkmalen, die von Hand
+entworfen wurden: Wortformen, Wortarten, orthografische Muster wie
+Großschreibung oder Einträge in Namenslisten.
+Ein statistisches Modell lernte dann, diese Merkmale zu
+gewichten~\cite{manning1999foundations}.
+Die Qualität eines Systems hing damit wesentlich davon ab, welche
+Merkmale ein Mensch vorab definierte.
+\textcite{bengio2013representation} fassen unter dem Begriff
+\emph{Representation Learning} Verfahren zusammen, die diese
+Repräsentationen stattdessen aus den Daten lernen, sodass ein
+nachgeschalteter Klassifikator die relevante Information leichter
+extrahieren kann.
+Die gelernten Repräsentationen sind dichte Vektoren
+(\emph{distributed representations}): Jede Einheit wird durch einen
+reellwertigen Vektor mit einigen hundert Dimensionen beschrieben, und die
+Information verteilt sich über alle Dimensionen, statt an einzelnen,
+für sich interpretierbaren Merkmalen zu hängen.
+
+Den ersten Schritt bildeten Wortvektoren, die aus großen Textmengen so
+gelernt werden, dass Wörter mit ähnlichen Kontexten im Vektorraum nahe
+beieinander liegen~\cite{goldberg2017neural}.
+Ein solcher Vektor ist jedoch für jedes Wort fest, unabhängig vom Satz,
+in dem es steht.
+Kontextualisierte Repräsentationen heben diese Einschränkung auf: Ein
+neuronales Netz liest die gesamte Eingabesequenz und berechnet für jedes
+Token einen Vektor, der von den umgebenden Tokens
+abhängt~\cite{devlin2019bert}.
+Daraus ist das heute dominierende Vorgehen in zwei Schritten
+entstanden: Ein Modell wird zunächst auf großen, nicht annotierten
+Textkorpora vortrainiert und anschließend an eine konkrete Aufgabe
+angepasst, sei es durch Fine-Tuning seiner Gewichte oder durch
+Anweisungen im Eingabetext~\cite{devlin2019bert,brown2020language}.
+Vortrainierte Modelle lassen sich dabei auf zwei Arten nutzen.
+Encoder liefern Repräsentationen, auf denen ein Klassifikator Labels
+vorhersagt (Abschnitt~\ref{sec:encoder_ner}); generative Modelle erzeugen
+die Lösung einer Aufgabe als Text (Abschnitt~\ref{sec:llms}).
+
+\section{Named Entity Recognition (NER)}
+\label{sec:ner}
+
+Named Entity Recognition (NER) ist die Aufgabe, Erwähnungen benannter
+Entitäten in einem Text zu lokalisieren und einer vordefinierten
+Kategorie zuzuordnen~\cite{li2018survey}.
+Formal erhält ein NER-System eine Tokenfolge $t_1, \dots, t_n$ und gibt
+eine Menge von Tripeln $(I_s, I_e, \tau)$ zurück, wobei $I_s$ und $I_e$
+den Start- und Endindex einer Erwähnung und $\tau$ ihren Typ
+bezeichnen~\cite{li2018survey}.
+Eine Erwähnung ist damit ein zusammenhängender Abschnitt der Tokenfolge,
+ein \emph{Span}; korrekt ist eine Vorhersage nur, wenn Grenzen und Typ
+stimmen.
+Abbildung~\ref{fig:ner-grundprinzip} zeigt das Prinzip an einem
+Beispiel.
+Ob der Endindex das letzte Token einschließt oder auf das Token danach
+zeigt, ist Konvention; die Abbildung verwendet einschließende Indizes,
+die LLM-Pipeline in Abschnitt~\ref{sec:prompt-design} einen
+ausschließenden Endindex.
+
+\medskip
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{figures/ner_grundprinzip.pdf}
+  \vspace{0.5em}
+  \caption{Grundprinzip der Named Entity Recognition: Aus einer
+  Tokenfolge werden Erwähnungen als Tripel aus Startindex, Endindex und
+  Typ extrahiert.
+  Eigene Darstellung in Anlehnung an die Formalisierung bei
+  \textcite{li2018survey}; Endindizes einschließend.}
+  \label{fig:ner-grundprinzip}
+\end{figure}
+\medskip
+
+Welche Kategorien unterschieden werden, legt der jeweilige Datensatz
+fest.
+Klassische Benchmarks verwenden wenige grobe Typen wie Person,
+Organisation und Ort, feingranulare Datensätze wie MultiNERD
+unterscheiden mehr als ein Dutzend Typen
+(Abschnitt~\ref{sec:datasets_corpora}).
+
+In der Praxis wird NER meist als Sequenzlabeling formuliert: Jedes Token
+erhält genau ein Label, das zugleich die Segmentierung in Spans und deren
+Typ kodiert~\cite{li2018survey}.
+Das verbreitetste Schema geht auf \textcite{ramshaw1995text} zurück, die
+für das Chunking das Tagset $\{\mathrm{I}, \mathrm{O}, \mathrm{B}\}$
+einführten: I markiert Tokens innerhalb eines Chunks, O Tokens außerhalb,
+und B kennzeichnet das erste Token eines Chunks nur dann, wenn
+unmittelbar davor ein anderer Chunk endet.
+\textcite{tjong1999representing} vergleichen mehrere Varianten dieser
+Kodierung und prägen die Bezeichnungen IOB1 für das ursprüngliche Schema
+und IOB2 für die Variante, bei der jeder Chunk mit einem B-Tag beginnt.
+Für NER wird der Typ an das Tag angehängt, etwa \texttt{B-PER} und
+\texttt{I-PER}.
+Die Kodierung setzt voraus, dass sich Entitäten weder überlappen noch
+ineinander verschachtelt sind; CoNLL-2003 trifft genau diese
+Annahme~\cite{sang2003conll}, und auch die in dieser Arbeit verwendeten
+Datensätze enthalten nur flache Annotationen.
+Erweiterungen wie BIOES oder BILOU markieren zusätzlich das letzte Token
+eines Spans (E) und Spans aus einem einzigen Token (S).
+Tabelle~\ref{tab:bio-beispiel} stellt IOB2 und IOB1 an einem Satz
+gegenüber.
+Die Daten des CoNLL-2003-Benchmarks liegen im IOB1-Schema vor
+\cite{sang2003conll}; diese Arbeit verwendet IOB2, das jeden
+Entitätsbeginn explizit markiert und in Abschnitt~\ref{sec:evaluation}
+für die Auswertung vorausgesetzt wird.
+
+\medskip
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{IOB2- und IOB1-Kodierung desselben Satzes.
+  In IOB2 beginnt jede Entität mit \texttt{B-}; in IOB1 erhält nur eine
+  Entität ein \texttt{B-}-Tag, die unmittelbar auf eine Entität
+  desselben Typs folgt, was in diesem Satz nicht vorkommt.}
+  \label{tab:bio-beispiel}
+  \begin{tabular}{lccccc}
+    \toprule
+    \textbf{Token} & Barack & Obama & visited & Berlin & . \\
+    \midrule
+    \textbf{IOB2} & \texttt{B-PER} & \texttt{I-PER}
+                  & \texttt{O} & \texttt{B-LOC} & \texttt{O} \\
+    \textbf{IOB1} & \texttt{I-PER} & \texttt{I-PER}
+                  & \texttt{O} & \texttt{I-LOC} & \texttt{O} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\medskip
+
+Lange Zeit bestimmten Conditional Random Fields (CRF) den Stand der
+Technik für diese Formulierung.
+\textcite{lafferty2001crf} modellieren die bedingte Wahrscheinlichkeit
+der gesamten Labelfolge gegeben die Eingabe und normalisieren über alle
+möglichen Folgen, sodass Übergänge zwischen benachbarten Labels
+mitgelernt werden und unzulässige Folgen wie ein \texttt{I-}Tag ohne
+vorangehenden Entitätsbeginn unwahrscheinlich werden.
+Die Merkmale eines CRF mussten jedoch von Hand entworfen werden.
+Neuronale Sequenzmodelle ersetzten diesen Schritt durch gelernte
+Repräsentationen: \textcite{lample2016neural} kombinieren Wortvektoren
+mit zeichenbasierten Repräsentationen in einem bidirektionalen LSTM und
+setzen eine CRF-Schicht darauf; sie evaluieren auf Englisch, Deutsch,
+Niederländisch und Spanisch.
+\textcite{ma2016end} verwenden ein Convolutional Neural Network auf
+Zeichenebene und zeigen für englisches Part-of-Speech-Tagging und für
+NER auf CoNLL-2003, dass ein solches BiLSTM-CNN-CRF-Modell ohne
+Merkmalsentwurf von Hand auskommt.
+Mit vortrainierten Transformer-Encodern wurde der Encoder-Teil dieser
+Architektur durch ein vortrainiertes Modell ersetzt
+(Abschnitt~\ref{sec:encoder_ner}); generative LLMs geben die Entitäten
+stattdessen als Text aus (Abschnitt~\ref{sec:llms}).
+Die Encoder-Pipeline dieser Arbeit folgt der Sequenzlabeling-Formulierung
+mit IOB2-Tags (Abschnitt~\ref{sec:encoder-pipeline}).
+
+\section{Transformer-Architektur}
+\label{sec:transformer}
+
+Rekurrente Netze verarbeiten eine Sequenz Token für Token, sodass sich
+Information über viele Schritte fortpflanzen muss und die Berechnung nur
+begrenzt parallelisierbar ist.
+\textcite{vaswani2017attention} ersetzen die Rekurrenz vollständig durch
+Attention: Jedes Token kann in einem Schritt auf jede andere Position der
+Sequenz zugreifen, und alle Positionen werden gleichzeitig berechnet.
+
+Grundbaustein ist die \emph{Self-Attention}.
+Aus der Repräsentation jedes Tokens werden durch gelernte lineare
+Abbildungen drei Vektoren erzeugt: eine Query $q$, ein Key $k$ und ein
+Value $v$.
+Für alle Tokens einer Sequenz zusammengefasst in den Matrizen $Q$, $K$
+und $V$ ergibt sich
+\begin{equation}
+  \text{Attention}(Q, K, V)
+    = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V ,
+  \label{eq:attention}
+\end{equation}
+wobei $d_k$ die Dimension der Key-Vektoren
+ist~\cite{vaswani2017attention}.
+Das Skalarprodukt zwischen der Query eines Tokens und den Keys aller
+Tokens misst deren Relevanz; die Division durch $\sqrt{d_k}$ verhindert,
+dass große Skalarprodukte die Softmax-Funktion in einen Bereich mit
+verschwindenden Gradienten treiben.
+Die Softmax-Funktion normiert die Relevanzwerte zu Gewichten, und die
+Ausgabe für jedes Token ist die gewichtete Summe der Value-Vektoren.
+Jedes Token sammelt so Information aus genau den Positionen, die für es
+relevant sind.
+Statt einer einzigen Attention verwenden Transformer $h$ parallele
+\emph{Köpfe} mit jeweils eigenen Projektionen und reduzierter Dimension
+$d_k = d_{\text{model}}/h$; ihre Ausgaben werden verkettet und mit einer
+weiteren Matrix $W^O$ auf die Modelldimension zurückgebildet.
+Das Originalmodell verwendet $h = 8$ Köpfe mit $d_k = 64$ bei
+$d_{\text{model}} = 512$.
+Verschiedene Köpfe können so unterschiedliche Beziehungen zwischen
+Tokens erfassen, etwa syntaktische Abhängigkeiten oder Koreferenzen, ohne
+dass dies vorgegeben wird~\cite{vaswani2017attention}.
+
+Da Attention die Reihenfolge der Tokens nicht berücksichtigt, wird die
+Position jedes Tokens eigens kodiert.
+\textcite{vaswani2017attention} addieren zu den Eingabe-Embeddings feste
+Positionsvektoren aus Sinus- und Kosinusfunktionen unterschiedlicher
+Frequenz.
+Spätere Modelle kodieren Positionen relativ, etwa als Abstand zweier
+Tokens in der Attention (Abschnitt~\ref{sec:encoder_ner}) oder durch
+Rotation der Query- und Key-Vektoren~\cite{qwen2026card27b}.
+
+Eine Transformer-Schicht des Encoders besteht aus zwei Teilschichten: der
+Multi-Head-Self-Attention und einem positionsweisen Feed-Forward-Netz,
+das jeden Tokenvektor unabhängig transformiert.
+Um jede Teilschicht führt eine Residualverbindung, und das Ergebnis wird
+normiert, sodass die Ausgabe $\text{LayerNorm}(x + \text{Sublayer}(x))$
+lautet~\cite{vaswani2017attention}.
+Die Residualverbindung erlaubt es, die Eingabe unverändert
+weiterzureichen, und stabilisiert zusammen mit der Normierung das
+Training tiefer Stapel; das Originalmodell verwendet sechs Schichten.
+Der Decoder ergänzt jede Schicht um eine dritte Teilschicht, die auf die
+Encoder-Ausgabe zugreift, und maskiert seine Self-Attention so, dass
+Position $i$ nur auf Positionen bis $i$ zugreifen kann.
+Diese \emph{kausale Maske} stellt sicher, dass die Vorhersage eines
+Tokens nur von den bereits bekannten Tokens abhängt.
+Technisch werden dazu die Relevanzwerte aller Positionen $j > i$ vor der
+Softmax-Funktion auf $-\infty$ gesetzt, sodass ihr Gewicht null wird.
+Abbildung~\ref{fig:transformer-architektur} zeigt den Aufbau.
+
+\medskip
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{figures/vaswani_transformer.pdf}
+  \vspace{0.5em}
+  \caption{Transformer-Architektur mit Encoder (links) und Decoder
+  (rechts).
+  Jede Encoder-Schicht enthält Multi-Head-Self-Attention und ein
+  Feed-Forward-Netz, jeweils mit Residualverbindung und
+  Layer-Normalisierung; der Decoder ergänzt eine maskierte Self-Attention
+  und eine Attention über die Encoder-Ausgabe.
+  Eigene Darstellung in Anlehnung an \textcite{vaswani2017attention}.}
+  \label{fig:transformer-architektur}
+\end{figure}
+\medskip
+
+Aus diesem Bauplan sind drei Modellfamilien hervorgegangen.
+\emph{Encoder-only}-Modelle wie BERT verwenden nur den Encoder; jedes
+Token sieht den Kontext in beide Richtungen, und die Ausgabe ist eine
+Repräsentation je Token~\cite{devlin2019bert}.
+\emph{Decoder-only}-Modelle wie GPT-3 verwenden nur den Decoder ohne
+Encoder-Attention; durch die kausale Maske eignen sie sich zur
+Texterzeugung Token für Token~\cite{brown2020language}.
+Encoder-Decoder-Modelle entsprechen dem Original und bilden eine Eingabe-
+auf eine Ausgabesequenz ab.
+Für NER folgt daraus der zentrale Unterschied der beiden in dieser Arbeit
+verglichenen Modellklassen: Ein Encoder liefert für jedes Token eine
+beidseitig kontextualisierte Repräsentation, aus der ein Label
+klassifiziert werden kann; ein Decoder sieht beim Erzeugen eines Tokens
+nur die Vergangenheit und muss die Entitäten als Text ausgeben.
+Der beidseitige Kontext ist für NER unmittelbar relevant, weil der Typ
+eines Tokens oft erst aus dem rechten Kontext hervorgeht, etwa ob
+\enquote{Washington} eine Person oder einen Ort bezeichnet.
+
+Die Kosten der Self-Attention wachsen quadratisch mit der
+Sequenzlänge~$n$, da für jedes Tokenpaar ein Relevanzwert berechnet und
+gespeichert wird~\cite{vaswani2017attention}.
+Bei der Texterzeugung kommt hinzu, dass die Keys und Values aller
+bisherigen Tokens zwischengespeichert werden.
+Zwei Gruppen von Techniken setzen hier an, verfolgen aber verschiedene
+Ziele.
+Attention-Varianten reduzieren den Aufwand des Mechanismus selbst:
+Grouped-Query-Attention lässt mehrere Query-Köpfe denselben Key- und
+Value-Kopf nutzen und verkleinert so den Zwischenspeicher bei nahezu
+unveränderter Qualität~\cite{ainslie2023gqa}; lineare
+Attention-Verfahren wie Gated DeltaNet ersetzen die Relevanzmatrix durch
+einen Zustand fester Größe, der je Token mit einer Delta-Regel
+aktualisiert wird und über ein Gate vergessen kann, sodass der Aufwand
+nur linear mit $n$ wächst~\cite{yang2025gated}.
+Hybride Architekturen kombinieren beides, indem sie lineare Schichten
+mit einzelnen Schichten voller Attention
+abwechseln~\cite{qwen2026card27b}.
+Quantisierung dagegen betrifft nicht die Attention, sondern die
+Darstellung der Gewichte: Sie speichert Parameter mit weniger Bits und
+senkt damit Speicherbedarf und Speicherbandbreite unabhängig von der
+Sequenzlänge~\cite{dettmers2022llmint8}.
+Sie wird in Abschnitt~\ref{sec:lora} im Zusammenhang mit QLoRA
+behandelt.
+Die in dieser Arbeit verwendeten LLMs besitzen eine solche hybride
+Attention, was für die Platzierung der Adapter relevant ist
+(Abschnitt~\ref{sec:lora-konfiguration}).
+
+\section{Encoder-basierte Modelle für NER}
+\label{sec:encoder_ner}
+
+Vortrainierte Transformer-Encoder sind seit BERT die Standardarchitektur
+für überwachte NER~\cite{devlin2019bert}.
+Bevor ein Encoder einen Text verarbeiten kann, muss dieser in Einheiten
+aus einem festen Vokabular zerlegt werden.
+Da ein Vokabular aus ganzen Wörtern seltene Wörter nicht abdecken kann,
+arbeiten alle hier behandelten Modelle mit \emph{Subwort-Einheiten}:
+Häufige Wörter bleiben ganz, seltene werden in mehrere Teilstücke
+zerlegt.
+WordPiece baut das Vokabular aus Zeichen auf, indem es schrittweise die
+Paare zusammenfügt, die die Wahrscheinlichkeit des Trainingskorpus am
+stärksten erhöhen~\cite{schuster2012japanese}; BERT verwendet ein
+WordPiece-Vokabular mit 30\,000 Einheiten~\cite{devlin2019bert}.
+RoBERTa nutzt eine Byte-Paar-Kodierung auf Byte-Ebene mit 50\,000
+Einheiten, die jeden Text ohne unbekannte Zeichen darstellen
+kann~\cite{liu2019roberta}.
+SentencePiece ist ein sprachunabhängiges Werkzeug, das direkt auf dem
+Rohtext einschließlich der Leerzeichen arbeitet~\cite{kudo2018sentencepiece};
+es unterstützt neben der Byte-Paar-Kodierung das Unigram-Modell, das jedem
+Teilstück eine Wahrscheinlichkeit zuweist und die wahrscheinlichste
+Zerlegung eines Wortes wählt~\cite{kudo2018subword}.
+DeBERTaV3 verwendet ein SentencePiece-Vokabular mit
+128\,000 Einheiten~\cite{he2021debertav3}.
+Für NER hat die Zerlegung eine praktische Folge: Die Labels liegen je
+Wort vor, die Modelleingabe besteht aber aus Subwörtern.
+\textcite{devlin2019bert} verwenden deshalb die Repräsentation des ersten
+Subworts eines Wortes als Eingabe des Token-Klassifikators; die übrigen
+Subwörter erhalten kein Label und gehen nicht in den Verlust ein.
+Die Encoder-Pipeline dieser Arbeit folgt diesem Vorgehen
+(Abschnitt~\ref{sec:datenvorverarbeitung}).
+
+\textcite{devlin2019bert} trainieren BERT mit zwei Aufgaben auf nicht
+annotiertem Text: Beim \emph{Masked Language Modeling} (MLM) wird ein
+Teil der Tokens maskiert und aus dem beidseitigen Kontext
+rekonstruiert, bei der \emph{Next Sentence Prediction} (NSP) sagt das
+Modell vorher, ob zwei Segmente aufeinander folgen.
+Für eine Zielaufgabe wird das vortrainierte Modell um eine
+aufgabenspezifische Ausgabeschicht ergänzt und vollständig feinjustiert,
+das heißt, alle Encoder-Gewichte und die neue Schicht werden gemeinsam
+mit dem Verlust der Zielaufgabe optimiert.
+Für NER ist diese Ausgabeschicht eine lineare Klassifikationsschicht, die
+aus der Repräsentation $h_i$ jedes Tokens Werte $W h_i + b$ für alle
+Labels des Tagsets berechnet; eine Softmax-Funktion macht daraus eine
+Verteilung, und bei der Vorhersage wird das Label mit dem höchsten Wert
+gewählt.
+Trainiert wird mit der Kreuzentropie zwischen dieser Verteilung und dem
+Referenzlabel, gemittelt über alle Tokens mit Label.
+Da die Positionskodierung von BERT auf 512 Positionen festgelegt ist,
+müssen längere Eingaben gekürzt oder geteilt werden; eine
+Längenbegrenzung gilt daher auch für die Encoder-Pipeline dieser Arbeit
+(Abschnitt~\ref{sec:datenvorverarbeitung}).
+Auf CoNLL-2003 erreichte BERT-Large damit das Niveau der besten damaligen
+Systeme: einen F$_1$ von 92{,}8 gegenüber 93{,}1 für ein Verfahren mit
+kontextuellen Zeichenketten-Embeddings und 92{,}2 für
+ELMo~\cite{devlin2019bert}.
+
+RoBERTa behält die Architektur von BERT bei und verändert das
+Vortraining: länger, mit größeren Batches und mehr Daten, ohne die
+NSP-Aufgabe, auf längeren Sequenzen und mit dynamischer Maskierung, bei
+der das Maskierungsmuster bei jedem Durchlauf neu gezogen
+wird~\cite{liu2019roberta}.
+Die Autoren zeigen damit, dass die Trainingskonfiguration einen
+erheblichen Teil der Modellqualität bestimmt.
+
+DeBERTa verändert zwei Komponenten des
+Encoders~\cite{he2020deberta}.
+Erstens trennt die \emph{disentangled Attention} Inhalt und Position:
+Jedes Token wird durch einen Inhaltsvektor und einen Vektor für seine
+relative Position zu den anderen Tokens repräsentiert, und der
+Relevanzwert zweier Tokens setzt sich aus einem Inhalt-zu-Inhalt-Term und
+zwei Inhalt-zu-Position-Termen zusammen.
+Die Attention kann so getrennt lernen, welche Inhalte und welche
+Abstände zusammengehören.
+Zweitens bezieht der \emph{Enhanced Mask Decoder} die absoluten
+Positionen erst nach den Transformer-Schichten und unmittelbar vor der
+Vorhersage der maskierten Tokens ein, da etwa die syntaktische Rolle eines
+Wortes von seiner absoluten Position im Satz abhängt.
+DeBERTaV3 behält diese Architektur bei und ersetzt das
+Vortrainingsziel~\cite{he2021debertav3}.
+Statt MLM verwendet es \emph{Replaced Token Detection} nach ELECTRA: Ein
+kleines Generatormodell ersetzt einige Tokens durch plausible
+Alternativen, und das eigentliche Modell lernt als Diskriminator, für
+jedes Token zu entscheiden, ob es ersetzt wurde.
+Das Trainingssignal entsteht so an allen Positionen statt nur an den
+maskierten, was das Vortraining stichprobeneffizienter
+macht~\cite{clark2020electra}.
+Teilen sich Generator und Diskriminator ihre Embeddings, ziehen ihre
+Verluste die Embeddings in verschiedene Richtungen; \textcite{he2021debertav3}
+nennen dies \emph{Tug-of-war} und lösen es durch
+\emph{Gradient-Disentangled Embedding Sharing}: Der Diskriminator nutzt
+die Generator-Embeddings, aber seine Gradienten fließen nicht in sie
+zurück.
+DeBERTaV3 wurde mit denselben Einstellungen und Daten wie DeBERTa
+vortrainiert; die Base-Variante hat zwölf Schichten mit 86~Mio.
+Parametern im Backbone, die Large-Variante 24 Schichten mit 304~Mio.,
+jeweils zuzüglich der Embedding-Parameter des großen
+Vokabulars~\cite{he2021debertav3}.
+In der Vergleichsstudie von \textcite{keraghel2024recent} erweisen sich
+die DeBERTa-Varianten unter den Transformer-Modellen als am effektivsten
+für NER.
+Diese Arbeit verwendet DeBERTa-v3-base und DeBERTa-v3-large mit
+vollständigem Fine-Tuning und linearer Klassifikationsschicht; die
+Parameterzahlen einschließlich der Klassifikationsschicht nennt
+Abschnitt~\ref{sec:encoder-auswahl}.
+
+\section{Large Language Models (LLMs)}
+\label{sec:llms}
+
+Large Language Models (LLMs) sind Sprachmodelle mit Milliarden von
+Parametern, die auf sehr großen Textkorpora vortrainiert werden und ein
+breites Spektrum von Aufgaben mit demselben Modell
+bearbeiten~\cite{brown2020language,zhao2023survey}.
+Die heute verbreiteten LLMs sind Decoder-only-Transformer
+(Abschnitt~\ref{sec:transformer}).
+Sie modellieren die Wahrscheinlichkeit einer Tokenfolge autoregressiv
+als Produkt bedingter Wahrscheinlichkeiten,
+\begin{equation}
+  p(x_1, \dots, x_T) = \prod_{t=1}^{T} p(x_t \mid x_1, \dots, x_{t-1}),
+  \label{eq:lm}
+\end{equation}
+und werden darauf trainiert, an jeder Position das nächste Token
+vorherzusagen~\cite{brown2020language}.
+Text wird erzeugt, indem das Modell wiederholt eine Verteilung über das
+nächste Token berechnet, ein Token auswählt und es an die Eingabe
+anhängt.
+Jedes erzeugte Token erfordert einen eigenen Vorwärtsdurchlauf, wobei
+die Keys und Values der bisherigen Tokens zwischengespeichert werden
+(Abschnitt~\ref{sec:transformer}).
+Die Inferenzzeit wächst damit vor allem mit der Länge der Ausgabe, nicht
+der Eingabe, was bei generativer NER die Wahl des Ausgabeformats zu einer
+Effizienzfrage macht (Abschnitt~\ref{sec:llm_ner_related}).
+Wie das Token ausgewählt wird, legt das \emph{Decoding} fest.
+Greedy-Decoding wählt stets das wahrscheinlichste Token und ist
+deterministisch.
+Beim Sampling wird ein Token zufällig aus der Verteilung gezogen; eine
+Temperatur skaliert die Verteilung, Top-$k$ beschränkt die Auswahl auf
+die $k$ wahrscheinlichsten Tokens, und Top-$p$ (\emph{Nucleus Sampling})
+auf die kleinste Menge von Tokens, deren Wahrscheinlichkeiten sich zu
+mindestens $p$ summieren, wodurch der unzuverlässige Rand der Verteilung
+abgeschnitten wird~\cite{holtzman2020curious}.
+Gesampelte Ausgaben variieren zwischen Durchläufen, was bei der
+Interpretation von Ergebnissen zu berücksichtigen ist
+(Abschnitt~\ref{sec:llm-pipeline}).
+
+Das Vortraining liefert ein Basismodell, das Text fortsetzt, aber
+Anweisungen nicht zuverlässig befolgt.
+\textcite{ouyang2022instructgpt} zeigen, wie ein \emph{Nachtraining}
+(\emph{Post-Training}) dies ändert: Das Modell wird zunächst überwacht
+auf von Menschen geschriebenen Antworten feinjustiert
+(\emph{Supervised Fine-Tuning}, SFT) und anschließend mit
+Verstärkungslernen aus menschlichen Präferenzurteilen weiter angepasst.
+Nachtrainierte Modelle verarbeiten Eingaben in einem Dialogformat aus
+Nachrichten mit Rollen wie System, Nutzer und Assistent, das ein
+\emph{Chat-Template} mit speziellen Steuertokens in eine Tokenfolge
+überführt~\cite{qwen2026card27b}.
+Neuere Modelle der Qwen-Familie können vor der eigentlichen Antwort einen
+abgegrenzten Block mit Zwischenüberlegungen erzeugen; dieser
+\emph{Thinking-Modus} lässt sich ein- und
+ausschalten~\cite{qwen2025qwen3}.
+Die in dieser Arbeit eingesetzten Checkpoints sind solche
+nachtrainierten Modelle (Abschnitt~\ref{sec:llm-auswahl}).
+
+Nachtrainierte LLMs lösen Aufgaben, indem die Aufgabe im Eingabetext
+beschrieben wird.
+\textcite{brown2020language} bezeichnen dies als \emph{In-Context
+Learning}: Das Modell erhält eine Anweisung und optional einige
+Demonstrationsbeispiele im Prompt und löst die Aufgabe ohne Änderung
+seiner Parameter.
+Enthält der Prompt keine Beispiele, spricht man von Zero-Shot, sonst von
+Few-Shot.
+Einige Fähigkeiten treten dabei erst ab einer gewissen Modellgröße auf;
+\textcite{wei2022emergent} bezeichnen sie als emergent.
+Das Zero-Shot-Regime dieser Arbeit verwendet ausschließlich Anweisungen
+ohne Demonstrationsbeispiele (Abschnitt~\ref{sec:methodischer-ansatz}).
+
+Viele LLMs werden mit frei herunterladbaren Gewichten veröffentlicht.
+Das macht sie noch nicht zu Open-Source-Software: Die
+Open-Source-AI-Definition der Open Source Initiative verlangt neben den
+Parametern auch ausreichende Angaben zu den Trainingsdaten und den
+vollständigen Trainings- und Inferenzcode~\cite{osi2024osaid}.
+Modelle, die nur Gewichte und eine Lizenz veröffentlichen, werden daher
+als Modelle mit \emph{offenen Gewichten} (\emph{open weights})
+bezeichnet.
+Die Qwen-Familie von Alibaba gehört zu dieser Gruppe.
+Qwen3 führte Modelle ein, die zwischen Thinking- und Non-Thinking-Modus
+wechseln~\cite{qwen2025qwen3}.
+Qwen3.5 erschien im Februar 2026 zunächst als Mixture-of-Experts-Modell
+mit 397~Mrd. Parametern, von denen je Token 17~Mrd. aktiv
+sind~\cite{qwen2026qwen35blog}; es folgten Modelle ohne
+Mixture-of-Experts-Komponenten, darunter Qwen3.5-27B sowie Qwen3.5-4B
+und Qwen3.5-0.8B~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b}.
+Diese drei Modelle werden in der vorliegenden Arbeit verwendet.
+Laut ihren Modellkarten stehen sie unter der Apache-2.0-Lizenz, sind vor-
+und nachtrainiert, verarbeiten neben Text auch Bilder und besitzen eine
+hybride Attention, in der auf je drei Gated-DeltaNet-Schichten eine
+Schicht voller Attention mit Ausgabe-Gating folgt
+(Abschnitt~\ref{sec:transformer}); die Zahl der Query-Köpfe übersteigt
+dabei die der Key- und Value-Köpfe, was der Grouped-Query-Attention
+entspricht~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b}.
+Das kleinste Modell antwortet standardmäßig ohne Thinking-Block, die
+beiden größeren mit~\cite{qwen2026card08b,qwen2026card4b}.
+Welche Komponenten geladen werden und wie viele Parameter das
+Textmodell umfasst, beschreibt Abschnitt~\ref{sec:llm-auswahl}.
+
+Für NER ergibt sich aus der generativen Arbeitsweise eine andere
+Formulierung als beim Sequenzlabeling.
+Das Modell erhält die Aufgabenbeschreibung und den Text als Prompt und
+erzeugt die Entitäten als Text, etwa als strukturierte Liste im
+JSON-Format mit Angaben zu Position und
+Typ~\cite{dagdelen2024structuredIE}.
+Diese Ausgabe muss anschließend auf die Tokenfolge zurückgeführt werden,
+damit sie mit den Referenzlabels verglichen werden kann.
+Ausgabeformat und Nachverarbeitung werden damit Teil des Systems, und
+die Ausgabe kann formal fehlerhaft sein, etwa durch ungültige Indizes
+oder Typen außerhalb des Inventars~\cite{semin2026spanLabeling}.
+Verfahren des \emph{Constrained Decoding} binden die Erzeugung an eine
+formale Grammatik und schließen solche Fehler aus~\cite{willard2023outlines};
+alternativ wird frei generiert und die Ausgabe nachträglich geprüft.
+Welche Ausgabestrategien untersucht wurden und wie sie abschneiden,
+behandelt Abschnitt~\ref{sec:llm_ner_related}; das Format dieser Arbeit
+beschreibt Abschnitt~\ref{sec:prompt-design}.
+
+\section{Parameter-Efficient Fine-Tuning (LoRA und QLoRA)}
+\label{sec:lora}
+
+Vollständiges Fine-Tuning passt alle Gewichte eines vortrainierten
+Modells an.
+Bei LLMs stößt das an Speichergrenzen, weil während des Trainings zu
+jedem Parameter nicht nur der Gewichtswert, sondern auch sein Gradient
+und die Zustände des Optimierers gehalten werden müssen; Adam führt je
+Parameter zwei zusätzliche Größen.
+\textcite{hu2021lora} beziffern den Speicherbedarf für das vollständige
+Fine-Tuning von GPT-3 mit 175~Mrd. Parametern mit Adam auf 1{,}2~TB
+GPU-Speicher.
+Hinzu kommt, dass für jede Aufgabe eine vollständige Kopie des Modells
+entsteht, bei GPT-3 ein Checkpoint von 350~GB.
+\emph{Parameter-Efficient Fine-Tuning} (PEFT) hält die vortrainierten
+Gewichte eingefroren und trainiert nur eine kleine Zahl zusätzlicher
+oder ausgewählter Parameter.
+\textcite{han2024parameter} unterscheiden vier Klassen: additive
+Verfahren fügen neue Module oder Tokens ein, selektive Verfahren
+trainieren eine Teilmenge der vorhandenen Parameter, reparametrisierende
+Verfahren trainieren eine niedrigdimensionale Darstellung der
+Gewichtsänderung, und hybride Verfahren kombinieren diese Ansätze.
+
+LoRA (\emph{Low-Rank Adaptation}) gehört zu den reparametrisierenden
+Verfahren~\cite{hu2021lora}.
+Für eine vortrainierte Gewichtsmatrix $W_0 \in \mathbb{R}^{d \times k}$
+wird die Änderung $\Delta W$ durch das Produkt zweier kleiner Matrizen
+dargestellt, sodass sich für eine Eingabe $x$ die Ausgabe
+\begin{equation}
+  h = W_0 x + \Delta W x = W_0 x + \frac{\alpha}{r}\, B A x,
+  \qquad B \in \mathbb{R}^{d \times r},\;
+  A \in \mathbb{R}^{r \times k},\;
+  r \ll \min(d, k)
+  \label{eq:lora}
+\end{equation}
+ergibt.
+$W_0$ bleibt eingefroren; trainiert werden nur $A$ und $B$.
+Der Rang $r$ bestimmt die Kapazität des Adapters und die Zahl der
+trainierbaren Parameter $r\,(d + k)$ anstelle von $d \cdot k$; die
+Konstante $\alpha$ skaliert den Beitrag des Adapters, sodass bei einer
+Änderung von $r$ die Lernrate nicht neu eingestellt werden muss.
+Für eine quadratische Matrix mit $d = k = 4\,096$ und $r = 16$ ersetzt
+der Adapter rund 16{,}8~Mio. Gewichte durch rund 131\,000 trainierbare
+Parameter, also weniger als ein Prozent.
+Ein Dropout auf dem Adapterpfad dient als Regularisierung.
+$A$ wird zufällig initialisiert und $B$ mit null, sodass $\Delta W$ zu
+Beginn des Trainings null ist und das Modell unverändert
+startet~\cite{hu2021lora}.
+Abbildung~\ref{fig:lora-adapter} zeigt den Aufbau.
+Nach dem Training kann $\Delta W$ zu $W_0$ addiert werden, sodass
+gegenüber dem Ausgangsmodell keine zusätzliche Inferenzlatenz entsteht;
+alternativ bleibt der Adapter getrennt und wird bei der Inferenz
+mitberechnet.
+\textcite{hu2021lora} adaptieren in ihren Experimenten die Query- und
+Value-Projektionen der Attention; spätere Arbeiten beziehen auch die
+Feed-Forward-Schichten ein (Abschnitt~\ref{sec:lora-konfiguration}).
+Auf GPT-3 reduziert LoRA die Zahl der trainierbaren Parameter gegenüber
+dem vollständigen Fine-Tuning um das 10\,000-Fache und den GPU-Speicher
+um das Dreifache; der Adapter-Checkpoint schrumpft von 350~GB auf
+35~MB~\cite{hu2021lora}.
+Auf RoBERTa, DeBERTa, GPT-2 und GPT-3 erreicht LoRA dabei eine
+gleichwertige oder bessere Qualität als vollständiges Fine-Tuning.
+
+\medskip
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.6\linewidth]{figures/lora_adapter.pdf}
+  \vspace{0.5em}
+  \caption{Aufbau eines LoRA-Adapters.
+  Die eingefrorene Gewichtsmatrix $W_0$ wird um den trainierbaren
+  Low-Rank-Pfad $\Delta W = BA$ mit Rang $r$ ergänzt; beide Pfade
+  verarbeiten dieselbe Eingabe $x$, und ihre Ausgaben werden addiert
+  (Gleichung~\ref{eq:lora}).
+  Eigene Darstellung in Anlehnung an \textcite{hu2021lora}.}
+  \label{fig:lora-adapter}
+\end{figure}
+\medskip
+
+LoRA senkt den Speicherbedarf für Gradienten und Optimiererzustände,
+nicht aber den für die eingefrorenen Gewichte selbst.
+Hier setzt die \emph{Quantisierung} an.
+Sie bildet Gewichte, die üblicherweise mit 16 oder 32 Bit gespeichert
+werden, auf eine kleine Zahl von Stufen ab, etwa 256 Stufen bei 8~Bit.
+Dazu wird ein Block von Gewichten durch eine Skalierungskonstante auf
+den Wertebereich des Zieltyps normiert; zur Berechnung wird der Block
+mit dieser Konstante wieder in höhere Präzision
+zurückgerechnet~\cite{dettmers2022llmint8}.
+Der Speicherbedarf sinkt entsprechend der Bitbreite, der Rundungsfehler
+hängt von der Verteilung der Gewichte und der Blockgröße ab.
+
+QLoRA verbindet beides: Das Basismodell wird quantisiert gespeichert und
+eingefroren, die LoRA-Adapter werden in 16-Bit-Präzision
+trainiert~\cite{dettmers2023qlora}.
+\textcite{dettmers2023qlora} führen dazu drei Komponenten ein.
+Der Datentyp \emph{4-Bit-NormalFloat} (NF4) legt seine 16 Stufen so
+fest, dass bei normalverteilten Gewichten in jede Stufe gleich viele
+Werte fallen; er nutzt die vier Bit damit besser aus als
+gleichabständige Stufen.
+\emph{Double Quantization} quantisiert zusätzlich die
+Skalierungskonstanten der Blöcke, die bei kleinen Blöcken selbst
+spürbar Speicher belegen.
+\emph{Paged Optimizers} lagern die Optimiererzustände bei
+Speicherspitzen automatisch in den Hauptspeicher aus und verhindern so
+Abbrüche wegen Speichermangels.
+Im Vorwärts- und Rückwärtsdurchlauf werden die 4-Bit-Gewichte blockweise
+in den Rechendatentyp BFloat16 zurückgerechnet; die Gradienten fließen
+durch das eingefrorene quantisierte Modell, aktualisiert werden nur die
+Adapter.
+Mit diesem Verfahren lässt sich ein Modell mit 65~Mrd. Parametern auf
+einer einzelnen GPU mit 48~GB feinjustieren, ohne gegenüber dem
+16-Bit-Fine-Tuning an Aufgabenleistung zu verlieren~\cite{dettmers2023qlora}.
+Weitere Varianten verbinden LoRA mit quantisierungsbewusstem Training
+oder mit einer Zerlegung der Gewichte in einen quantisierten und einen
+Low-Rank-Anteil~\cite{xu2024qalora,guo2024lqlora}.
+In dieser Arbeit werden die Encoder vollständig feinjustiert und die
+LLMs mit QLoRA angepasst; welche der genannten Komponenten dabei aktiv
+sind, dokumentiert Abschnitt~\ref{sec:lora-konfiguration}.
+
+\section{Modellgröße und Parameteranzahl}
+\label{sec:model_size}
+
+Sprachmodelle unterscheiden sich um Größenordnungen in ihrer
+Parameterzahl.
+Wie sich die Größe auf die Qualität auswirkt, beschreiben
+\emph{Skalierungsgesetze} in Form von Potenzgesetzen.
+Ein \emph{Potenzgesetz} (\emph{power law}) ist eine Beziehung der Form
+\begin{equation}
+  L(N) = \left(\frac{N_c}{N}\right)^{\alpha_N},
+  \label{eq:powerlaw}
+\end{equation}
+in der der Verlust $L$ mit wachsender Größe $N$ fällt, wobei der
+Exponent $\alpha_N$ die Geschwindigkeit des Abfalls bestimmt und die
+Konstante $N_c$ den Maßstab festlegt~\cite{kaplan2020scaling}.
+Trägt man beide Achsen logarithmisch auf, ergibt sich eine Gerade mit
+der Steigung $-\alpha_N$.
+\textcite{kaplan2020scaling} zeigen für Transformer-Sprachmodelle, dass
+der Test-Loss einem solchen Gesetz folgt, wenn jeweils nur einer von drei
+Faktoren begrenzt: die Zahl der Parameter ohne Embeddings $N$ mit
+$\alpha_N \approx 0{,}076$, der Datensatzumfang $D$ in Tokens mit
+$\alpha_D \approx 0{,}095$ und der optimal eingesetzte Rechenaufwand
+$C_{\min}$ mit $\alpha_C \approx 0{,}050$.
+Diese Beziehungen gelten über mehrere Größenordnungen, wie
+Abbildung~\ref{fig:skalierungsgesetz} zeigt.
+Größere Modelle sind zudem stichprobeneffizienter: Sie erreichen
+denselben Verlust mit weniger Trainingsschritten und weniger Daten.
+Bei festem Rechenbudget ist es daher am effizientesten, ein sehr großes
+Modell zu trainieren und deutlich vor der Konvergenz
+abzubrechen~\cite{kaplan2020scaling}.
+
+\medskip
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[
+    width=0.95\linewidth,
+    height=0.22\textheight,
+    keepaspectratio
+  ]{figures/kaplan_scaling.pdf}
+  \vspace{0.2em}
+  \caption{Test-Loss in Abhängigkeit von Rechenaufwand, Datensatzumfang
+  und Parameteranzahl (ohne Embeddings) in doppelt logarithmischer
+  Darstellung; Kurvenverläufe schematisch.
+  Die eingetragenen Potenzgesetze und Konstanten entsprechen Abbildung~1
+  bei \textcite{kaplan2020scaling}; für den Rechenaufwand nennt deren
+  Gleichung~1.3 abweichend die Konstante $3{,}1 \cdot 10^{8}$.
+  Eigene Darstellung in Anlehnung an \textcite{kaplan2020scaling}.}
+  \label{fig:skalierungsgesetz}
+\end{figure}
+\medskip
+
+\textcite{hoffmann2022training} überprüfen diese Aufteilung mit über
+400 Modellen und kommen zu einem anderen Ergebnis.
+Bezeichnen $N_{\text{opt}} \propto C^{a}$ und
+$D_{\text{opt}} \propto C^{b}$ die bei einem Rechenbudget $C$ optimale
+Modellgröße und Datenmenge, so finden sie $a \approx b \approx 0{,}5$:
+Modellgröße und Trainingsdaten sollten mit wachsendem Budget im
+gleichen Verhältnis wachsen.
+Viele bis dahin trainierte Modelle waren demnach für ihre Datenmenge zu
+groß.
+Als Beleg trainieren sie Chinchilla mit 70~Mrd. Parametern auf
+1{,}4~Billionen Tokens, das mit demselben Rechenbudget das viermal
+größere Gopher übertrifft~\cite{hoffmann2022training}.
+\textcite{bahri2024explaining} liefern eine theoretische Erklärung
+solcher Gesetze und unterscheiden Regime, in denen die Varianz der
+Schätzung begrenzt, von solchen, in denen die Auflösung der
+Datenmannigfaltigkeit durch das Modell begrenzt.
+
+Für die vorliegende Arbeit sind zwei Grenzen dieser Befunde wesentlich.
+Erstens beschreiben die Gesetze den Verlust des Vortrainings von
+Modellen, die eigens für die Untersuchung trainiert wurden; über
+Kennzahlen einer nachgelagerten Aufgabe wie den F$_1$-Score bei NER
+sagen sie nichts unmittelbar aus.
+Zweitens werden in dieser Arbeit veröffentlichte Checkpoints fester
+Größe angepasst, deren Vortraining nicht variiert werden kann; mit der
+Größe ändern sich zugleich Hyperparameter und Hardware.
+Beobachtete Unterschiede zwischen Größenklassen sind deshalb als
+Unterschiede zwischen Konfigurationen zu lesen, nicht als Skalierungsgesetz
+(Abschnitt~\ref{sec:einfluss-parameteranzahl}).
+Empirische Befunde zum Größeneinfluss bei NER fasst
+Abschnitt~\ref{sec:model_size_related} zusammen.
+
+\section{Datensätze und Korpora}
+\label{sec:datasets_corpora}
+
+Annotierte Datensätze legen fest, welche Entitätstypen ein NER-System
+unterscheiden soll, und ermöglichen Training und vergleichbare
+Evaluation.
+Sie unterscheiden sich in Sprache, Textgenre, Zahl und Granularität der
+Typen sowie in der Art der Annotation.
+Vier Datensätze sind für diese Arbeit relevant; Tabelle~\ref{tab:datasets-vergleich}
+stellt sie gegenüber.
+
+Der im Rahmen des CoNLL-2003-Shared-Tasks veröffentlichte Datensatz
+umfasst englische Nachrichtentexte von Reuters und deutsche aus der
+Frankfurter Rundschau und unterscheidet die vier Typen Person,
+Organisation, Ort und Sonstiges~\cite{sang2003conll}.
+Die Daten sind manuell annotiert und im IOB-Schema nach Ramshaw und
+Marcus kodiert, also IOB1 (Abschnitt~\ref{sec:ner}); die Auswertung
+zählt eine Entität nur bei exakter Übereinstimmung als korrekt
+(Abschnitt~\ref{sec:evaluation}).
+CoNLL-2003 ist bis heute der am häufigsten verwendete NER-Benchmark.
+
+OntoNotes 5.0 ist ein manuell annotiertes Korpus mit Texten aus
+Nachrichten, Rundfunk, Gesprächen, Weblogs und Foren in Englisch,
+Chinesisch und Arabisch~\cite{weischedel2013ontonotes}.
+Neben benannten Entitäten in 18 Typen enthält es syntaktische und
+semantische Annotationsebenen sowie Koreferenz.
+Gegenüber CoNLL-2003 bietet es ein feineres Typinventar und mehr Genres.
+
+MultiNERD deckt zehn Sprachen, die Genres Wikipedia und Wikinews und
+15 Entitätstypen ab~\cite{tedeschi2022multinerd}.
+Die Annotation ist automatisch erzeugt: Verlinkte Textstellen werden über
+die Wissensbasis BabelNet einem Typ zugeordnet, auf weitere Vorkommen
+übertragen und durch ein iteratives Verfahren bereinigt, das Sätze
+verwirft, bei denen ein auf den Daten trainiertes Modell der Annotation
+widerspricht.
+Die offiziellen Trainings-, Validierungs- und Testsplits sind damit ein
+\emph{Silver Standard}: Ihre Labels stammen nicht von Menschen, und auch
+die Testreferenz kann Fehler enthalten.
+Zusätzlich stellen die Autoren eine kleine, manuell geprüfte englische
+Teststichprobe bereit, auf der sie die Annotationsqualität je Typ
+messen; PER, ORG, LOC, CEL, DIS, EVE und MEDIA gelten danach als
+zuverlässig annotiert, während ANIM, BIO, FOOD und PLANT häufig
+verwechselt oder nicht erkannt werden~\cite{tedeschi2022multinerd}.
+Der englische Teil mit rund 164\,000 Sätzen bildet die Hauptdatenbasis
+dieser Arbeit (Abschnitt~\ref{sec:datenauswahl}).
+Da Wikipedia- und Wikinews-Texte mit hoher Wahrscheinlichkeit auch in
+den Vortrainingskorpora der LLMs enthalten sind, ist eine Datenkontamination
+nicht auszuschließen; Abschnitt~\ref{sec:research_gap} geht darauf ein.
+
+CrossNER wurde entworfen, um NER über Domänengrenzen hinweg zu
+evaluieren~\cite{liu2021crossner}.
+Es umfasst fünf Zieldomänen, Politik, Naturwissenschaft, Musik, Literatur
+und Künstliche Intelligenz, mit Sätzen aus Wikipedia, die manuell
+annotiert wurden.
+Jede Domäne besitzt ein eigenes Typinventar mit neun bis 17 Kategorien,
+das neben allgemeinen Typen wie Person, Organisation und Ort
+domänenspezifische Typen wie Politiker, Enzym, Album oder Algorithmus
+enthält.
+Die annotierten Datensätze sind klein: je Domäne 100 bis 200 Sätze zum
+Training und einige hundert zur Validierung und zum Test; als
+Quelldomäne dient CoNLL-2003~\cite{liu2021crossner}.
+Diese Arbeit verwendet ausschließlich die Testsplits als Transfertest
+und wertet nur die gemeinsamen Grobtypen aus
+(Abschnitt~\ref{sec:crossner}).
+
+\medskip
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.25}
+  \caption{Vergleich der verwendeten NER-Datensätze.
+  Eigene Zusammenstellung nach \textcite{sang2003conll},
+  \textcite{weischedel2013ontonotes}, \textcite{tedeschi2022multinerd}
+  und \textcite{liu2021crossner}.}
+  \label{tab:datasets-vergleich}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lllrl}
+    \toprule
+    \textbf{Datensatz} & \textbf{Sprachen} & \textbf{Genres}
+      & \textbf{Typen} & \textbf{Annotation} \\
+    \midrule
+    CoNLL-2003    & EN, DE          & Nachrichten             &  4
+      & manuell (IOB1) \\
+    OntoNotes 5.0 & EN, ZH, AR      & Nachrichten, Rundfunk,  & 18
+      & manuell \\
+                  &                 & Gespräche, Web          &
+      & \\
+    MultiNERD     & 10 Sprachen     & Wikipedia, Wikinews     & 15
+      & automatisch (Silver) \\
+                  &                 &                         &
+      & + man.\ Teststichprobe \\
+    CrossNER      & EN              & Wikipedia, 5 Domänen    & 9--17
+      & manuell \\
+                  &                 &                         & je Domäne
+      & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\medskip
+
+\section{Evaluationsmetriken}
+\label{sec:evaluation}
+
+NER-Systeme werden mit Precision, Recall und dem F-Maß bewertet, die
+aus dem Information Retrieval
+stammen~\cite{vanrijsbergen1979information,manning2008introduction}.
+Auf Entitätsebene bezeichnet $TP$ die Zahl korrekt erkannter Entitäten,
+$FP$ die Zahl vorhergesagter Entitäten ohne Entsprechung in der Referenz
+und $FN$ die Zahl der Referenzentitäten, die das System nicht gefunden
+hat.
+Precision ist der Anteil korrekter Vorhersagen an allen Vorhersagen,
+Recall der Anteil gefundener Entitäten an allen Referenzentitäten:
+\begin{equation}
+  \text{Precision} = \frac{TP}{TP + FP}, \qquad
+  \text{Recall}    = \frac{TP}{TP + FN}, \qquad
+  F_1 = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}%
+                      {\text{Precision} + \text{Recall}} .
+  \label{eq:prf1}
+\end{equation}
+Beide Größen stehen in einem Spannungsverhältnis: Ein System, das nur
+sichere Entitäten ausgibt, erreicht eine hohe Precision bei niedrigem
+Recall, ein System, das großzügig markiert, das
+Gegenteil~\cite{vanrijsbergen1979information}.
+Das F-Maß fasst beide in einer Kennzahl zusammen.
+In seiner allgemeinen Form
+\begin{equation}
+  F_\beta = (1 + \beta^2) \cdot
+    \frac{\text{Precision} \cdot \text{Recall}}
+         {\beta^2 \cdot \text{Precision} + \text{Recall}}
+  \label{eq:fbeta}
+\end{equation}
+gewichtet der Parameter $\beta$ den Recall relativ zur Precision; für
+$\beta > 1$ zählt der Recall stärker, für $\beta < 1$ die
+Precision~\cite{vanrijsbergen1979information}.
+Der F$_1$-Score ist der Sonderfall $\beta = 1$, das harmonische Mittel
+beider Größen, und die in der NER-Forschung üblicherweise berichtete
+Kennzahl~\cite{sang2003conll,keraghel2024recent}.
+
+Entscheidend ist, was als Instanz gezählt wird.
+Bei einer Token-Level-Evaluation wird jedes Tokenlabel einzeln bewertet;
+bei einer Entity-Level-Evaluation ist die Instanz die Entität, und eine
+Vorhersage gilt nur dann als korrekt, wenn Spangrenzen und Typ exakt
+mit der Referenz übereinstimmen~\cite{sang2003conll}.
+Diese strenge Zählweise hat sich mit CoNLL-2003 als Standard etabliert.
+\textcite{segura2013semeval} definieren für die SemEval-2013-Aufgabe zur
+Erkennung von Arzneimittelinteraktionen daneben nachsichtigere Modi, die
+nur die Grenzen, nur den Typ oder bereits eine Überlappung mit der
+Referenz als Treffer werten.
+Solche Modi machen partielle Treffer sichtbar, erschweren aber den
+Vergleich zwischen Arbeiten; diese Arbeit verwendet ausschließlich den
+strikten Modus (Abschnitt~\ref{sec:performanzmetriken}).
+
+In der Praxis werden Entity-Level-Metriken aus Tagfolgen berechnet, und
+die Bibliothek bestimmt dabei, wie Spans aus den Tags gewonnen
+werden.
+Die in dieser Arbeit verwendete Bibliothek \texttt{seqeval} bietet zwei
+Modi~\cite{nakayama2018seqeval}.
+Der Standardmodus ahmt das CoNLL-Auswertungsskript nach und ist
+nachsichtig gegenüber formal unzulässigen Tagfolgen; ein
+\texttt{I-}Tag ohne vorangehenden Entitätsbeginn eröffnet dort dennoch
+eine Entität.
+Der strikte Modus wertet die Tagfolgen nach einem explizit angegebenen
+Schema wie IOB2 aus, sodass unzulässige Folgen keine Entität bilden.
+Unterstützt werden IOB1, IOB2, IOE1 und IOE2 sowie im strikten Modus
+IOBES und BILOU~\cite{nakayama2018seqeval}.
+Für den Vergleich generativer Modelle, deren Ausgaben erst in Tagfolgen
+überführt werden, ist der strikte Modus mit festgelegtem Schema die
+eindeutigere Wahl.
+
+Bei mehreren Entitätstypen werden die Kennzahlen aggregiert.
+Der Micro-F$_1$-Score summiert $TP$, $FP$ und $FN$ über alle Typen und
+berechnet daraus eine Kennzahl, sodass häufige Typen das Ergebnis
+dominieren; der Makro-F$_1$-Score mittelt die je Typ berechneten
+F$_1$-Scores und gewichtet alle Typen gleich~\cite{manning2008introduction}.
+Bei stark unausgewogenen Typverteilungen wie in MultiNERD, wo drei Typen
+den größten Teil der Entitäten stellen, spiegelt der Micro-F$_1$-Score
+vor allem die Leistung auf diesen Typen wider; typbezogene Werte
+ergänzen ihn (Abschnitt~\ref{sec:performanzmetriken}).
+Für seltene Typen mit wenigen Referenzentitäten, dem sogenannten
+Support, sind typbezogene Werte allerdings mit großer Unsicherheit
+behaftet, da wenige Fehler den Wert stark verändern.
+Gibt ein System für einen Typ keine Vorhersage ab, ist die Precision
+nicht definiert und wird in der Praxis als null gewertet.
+\textcite{hripcsak2005agreement} zeigen zudem, dass das F-Maß beim
+Vergleich zweier Annotationen der positiven spezifischen Übereinstimmung
+entspricht.
+Ein F$_1$-Score misst damit die Übereinstimmung mit der Referenz, nicht
+die Richtigkeit an sich; bei einem Silver Standard wie MultiNERD ist
+diese Lesart zu berücksichtigen.
+
+Neben der Erkennungsleistung erfasst diese Arbeit den Ressourcenbedarf.
+Übliche Kennzahlen sind die Trainingsdauer, die Latenz je Eingabe bei
+der Inferenz, der maximal belegte GPU-Speicher sowie die Zahl der
+gesamten und der trainierbaren Parameter, deren Verhältnis den
+Effizienzgewinn parameter-effizienter Verfahren
+beschreibt~\cite{hu2021lora,dettmers2023qlora}.
+Diese Größen hängen von Hardware, numerischer Präzision und
+Implementierung ab und sind nur unter vergleichbaren Bedingungen
+interpretierbar; das Messprotokoll beschreibt
+Abschnitt~\ref{sec:effizienzmetriken}.
