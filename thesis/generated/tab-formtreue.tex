@@ -1,0 +1,24 @@
+\begin{tabular}{>{\raggedright\arraybackslash}p{4.4cm}rrrrrr}
+    \toprule
+    & \multicolumn{3}{c}{\textbf{Zero-Shot}} &
+      \multicolumn{3}{c}{\textbf{QLoRA}} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    \textbf{Kennzahl} & \textbf{0.8B} & \textbf{4B} & \textbf{27B} &
+      \textbf{0.8B} & \textbf{4B} & \textbf{27B} \\
+    \midrule
+    Parse-Fehlerrate [\%] & 14,29 & 1,75 & 1,06 & 0,41 & 0,42 & 0,40 \\
+    \quad davon ohne schlie\ss{}ende Klammer & 2\,304 & 256 & 139 & 68 & 69 & 65 \\
+    Parse direkt & 4\,430 & 14\,675 & 16\,261 & 16\,386 & 16\,385 & 16\,389 \\
+    \quad nach Entfernen eines Codeblocks & 9\,477 & 1\,453 & 12 & 0 & 0 & 0 \\
+    \quad durch Extraktion aus Text & 195 & 38 & 6 & 0 & 0 & 0 \\
+    Falsche Struktur (kein Array) & 241 & 0 & 1 & 0 & 0 & 0 \\
+    Nicht-Objekte & 190 & 20 & 4 & 0 & 0 & 0 \\
+    Fehlende Felder & 5\,616 & 81 & 25 & 0 & 0 & 0 \\
+    Unzul\"assige Indizes & 6\,481 & 228 & 34 & 0 & 0 & 0 \\
+    Unbekannte Typen & 1\,882 & 77 & 22 & 0 & 0 & 0 \\
+    Text-Abweichungen & 9\,895 & 3\,930 & 3\,397 & 45 & 12 & 4 \\
+    \"Uberlappungen & 21 & 19 & 109 & 0 & 0 & 0 \\
+    \midrule
+    Leere Vorhersagen & 12\,632 & 10\,021 & 1\,887 & 83 & 76 & 70 \\
+    \bottomrule
+\end{tabular}

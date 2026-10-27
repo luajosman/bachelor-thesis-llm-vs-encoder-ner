@@ -599,7 +599,8 @@ Abweichend vom LoRA-Regime wird mit Sampling decodiert (Temperatur 1,0,
 top-$k = 20$, top-$p = 1{,}0$, min-$p = 0$, Seed~42).
 Diese Einstellungen wurden nach einem explorativen Vorlauf mit
 Qwen3.5-0.8B festgelegt, in dem Greedy-Decoding für nahezu jeden Satz ein
-leeres Array erzeugte (strikter F1-Wert unter 0,01).
+leeres Array erzeugte (strikter F1-Wert 0,5 Punkte; 16\,052 von 16\,454
+Antworten waren leere Arrays).
 Zugleich wurde der Prompt um ausgeschriebene Typbezeichnungen und eine
 Definition benannter Entitäten erweitert, da die Abkürzungen des
 Inventars ohne Training nicht selbsterklärend sind.
@@ -957,7 +958,8 @@ Gemessen wird je Testsatz bei Batchgröße~1 die Dauer des Modellaufrufs
 nach dem Aufruf und nach einem nicht gewerteten Aufwärmdurchlauf.
 Nicht enthalten sind Laden, Tokenisierung, Datentransfer, Dekodierung,
 Validierung, Metrikberechnung und Speichern.
-Berichtet werden Mittelwert, Median und 95.~Perzentil in Millisekunden,
+Berichtet werden Mittelwert, Median und 95.~Perzentil in Millisekunden
+(für die Zero-Shot-Läufe wurde der Median nicht protokolliert),
 für die LLMs zusätzlich der Durchsatz in Testsätzen je Sekunde reiner
 Generierungszeit.
 Die Werte beschreiben die Latenz einzelner Anfragen, nicht den mit
@@ -990,7 +992,7 @@ Da die Konfigurationen auf unterschiedlichen GPU-Typen liefen
 auch Hardwareeffekte.\footnote{Wie groß dieser Effekt sein kann, zeigt die
 Encoder-Inferenz: Im explorativen Vorlauf erreichte DeBERTa-v3-base auf
 einer A100 eine mittlere Latenz von 17,6\,ms je Satz, in der Hauptstudie
-auf einer H100 dagegen 8,7\,ms.}
+auf einer H100 dagegen 8,9\,ms (Mittel der drei Läufe).}
 Zero-Shot- und LoRA-Inferenz unterscheiden sich zudem in Präzision und
 Decoding.
 Effizienzvergleiche werden daher vorrangig innerhalb gleicher Hardware-
@@ -1177,11 +1179,10 @@ nicht parsebar und zählt als leere Vorhersage.
 Die Analyse der nicht parsebaren Antworten deutet darauf hin, dass diese
 nahezu ausnahmslos auf dieses Limit zurückgehen; Recall und F1 des LLM
 sind dadurch tendenziell unterschätzt.
-Eine Wiederholung der Qwen-Inferenz mit einem Limit von 1\,024
-Ausgabetokens ist als Sensitivitätsanalyse vorgesehen und nicht Teil der
-hier beschriebenen Auswertung.
-% Hinweis: Falls die 1024-Token-Analyse vollständig abgeschlossen wird,
-% hier Umfang (Seeds, Domänen) nennen und Ergebnisse in Kapitel 5 ergänzen.
+Als Sensitivitätsanalyse wurde die Inferenz des 27B-Modells (Seed~42)
+mit einem Limit von 1\,024 Ausgabetokens auf einer Stichprobe von je 25
+Sätzen der Domänen Musik und Politik wiederholt und auf denselben Sätzen
+mit dem Hauptlauf verglichen (Abschnitt~\ref{sec:erg-crossner}).
 
 \section{Validität und bekannte Abweichungen}
 \label{sec:validitaet}

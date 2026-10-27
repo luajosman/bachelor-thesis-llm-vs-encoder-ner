@@ -107,8 +107,8 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
     \texttt{Qwen/Qwen3.5-0.8B}               & \texttt{2fc06364715b967f1860aea9cf38778875588b17} \\
     \texttt{Qwen/Qwen3.5-4B}                 & \texttt{851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a} \\
     \texttt{Qwen/Qwen3.5-27B}                & \texttt{fc05daec18b0a78c049392ed2e771dde82bdf654} \\
-    \texttt{microsoft/deberta-v3-base}       & \PH{Revision aus \texttt{MODEL\_REVISIONS} eintragen} \\
-    \texttt{microsoft/deberta-v3-large}      & \PH{Revision aus \texttt{MODEL\_REVISIONS} eintragen} \\
+    \texttt{microsoft/deberta-v3-base}       & \texttt{8ccc9b6f36199bec6961081d44eb72fb3f7353f3} \\
+    \texttt{microsoft/deberta-v3-large}      & \texttt{64a8c8eab3e352a784c658aef62be1662607476f} \\
     \hline
   \end{tabular}
 \end{table}
@@ -177,12 +177,13 @@ Token indices must refer exactly to the numbered token list shown by the user. C
 \section{Ergänzende Ergebnistabellen}
 \label{app:ergebnistabellen}
 
-% Erstentwurf vom 27.10.2026: Skelette für die in Kapitel 5 referenzierten
-% Seed-Einzelwerte und typbezogenen Werte. Zahlen aus den Laufartefakten
-% (Tabelle A.1) eintragen.
+% Tabellenkörper werden von thesis/scripts/aggregate_results.py erzeugt
+% (thesis/generated/); die Beispiele in Tabelle A.6 stammen aus den
+% Testvorhersagen der genannten Läufe (Seed 42).
 
 Tabelle~\ref{tab:app-seeds} nennt die Testwerte der einzelnen Seeds, aus
-denen die Mittelwerte in Tabelle~\ref{tab:haupt} gebildet wurden;
+denen die Mittelwerte in Tabelle~\ref{tab:haupt} gebildet wurden, sowie
+den Validierungs-F$_1$ und die Epoche des jeweils gewählten Checkpoints;
 Tabelle~\ref{tab:app-typen-prf} ergänzt Tabelle~\ref{tab:typen} um
 Precision und Recall je Entitätstyp; Tabelle~\ref{tab:app-beispiele}
 zeigt Beispiele typischer Fehler je Fehlerklasse aus
@@ -192,26 +193,11 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
   \centering
   \footnotesize
   \caption{Micro-F$_1$ (strikt, in Punkten) der einzelnen Seeds auf dem
-  MultiNERD-Testsplit sowie Validierungs-F$_1$ des jeweils ausgewählten
-  Checkpoints (Encoder: vollständiger Validierungssplit; LLMs: 200 Sätze,
-  Greedy).}
+  MultiNERD-Testsplit sowie Validierungs-F$_1$ des gewählten Checkpoints
+  mit Epoche in Klammern (Encoder: vollständiger Validierungssplit;
+  QLoRA: generative Validierung auf 200 Sätzen).}
   \label{tab:app-seeds}
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{llccc c ccc}
-    \toprule
-    & & \multicolumn{3}{c}{\textbf{Test-F$_1$}} & &
-      \multicolumn{3}{c}{\textbf{Validierungs-F$_1$ (Epoche)}} \\
-    \cmidrule(lr){3-5}\cmidrule(lr){7-9}
-    \textbf{Modell} & \textbf{Regime} & \textbf{42} & \textbf{123} &
-      \textbf{456} & & \textbf{42} & \textbf{123} & \textbf{456} \\
-    \midrule
-    DeBERTa-v3-base  & Fine-Tuning & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & & \PH{xx,x} (4) & \PH{xx,x} (5) & \PH{xx,x} (5) \\
-    DeBERTa-v3-large & Fine-Tuning & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & & \PH{xx,x} (3) & \PH{xx,x} (4) & \PH{xx,x} (4) \\
-    Qwen3.5-0.8B & QLoRA & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & & \PH{xx,x} (3) & \PH{xx,x} (3) & \PH{xx,x} (3) \\
-    Qwen3.5-4B   & QLoRA & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & & \PH{xx,x} (2) & \PH{xx,x} (3) & \PH{xx,x} (3) \\
-    Qwen3.5-27B  & QLoRA & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & & \PH{xx,x} (3) & \PH{xx,x} (3) & \PH{xx,x} (3) \\
-    \bottomrule
-  \end{tabular}
+  \input{generated/tab-app-seeds}
 \end{table}
 
 \begin{table}[ht]
@@ -219,46 +205,21 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
   \scriptsize
   \caption{Precision, Recall und F$_1$ je Entitätstyp (strikt, in Punkten)
   für DeBERTa-v3-large und Qwen3.5-27B (QLoRA), Mittel über drei Seeds,
-  sowie für Qwen3.5-27B im Zero-Shot-Regime (Einzellauf).
-  Support nach Tabelle~\ref{tab:datensplits}.}
+  sowie für Qwen3.5-27B im Zero-Shot-Regime (Einzellauf). Support nach
+  Tabelle~\ref{tab:datensplits}.}
   \label{tab:app-typen-prf}
   \setlength{\tabcolsep}{3pt}
-  \begin{tabular}{lrccc ccc ccc}
-    \toprule
-    & & \multicolumn{3}{c}{\textbf{DeBERTa-v3-large}} &
-      \multicolumn{3}{c}{\textbf{Qwen3.5-27B QLoRA}} &
-      \multicolumn{3}{c}{\textbf{Qwen3.5-27B Zero-Shot}} \\
-    \cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(lr){9-11}
-    \textbf{Typ} & \textbf{Support} & P & R & F$_1$ & P & R & F$_1$ & P & R & F$_1$ \\
-    \midrule
-    PER   & 5\,265  & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    ORG   & 3\,309  & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    LOC   & 12\,024 & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    ANIM  & 1\,604  & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    BIO   & 8       & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    CEL   & 41      & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    DIS   & 759     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    EVE   & 352     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    FOOD  & 566     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    INST  & 12      & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    MEDIA & 458     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    MYTH  & 32      & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    PLANT & 894     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    TIME  & 289     & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    VEHI  & 32      & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} & \PH{xx,x} \\
-    \bottomrule
-  \end{tabular}
+  \input{generated/tab-app-typen-prf}
 \end{table}
 
-% TODO: je Fehlerklasse ein Beispiel aus test_predictions.json wählen
-% (Satz kürzen, Spans mit Typ angeben, Konfiguration nennen).
 \begin{table}[ht]
   \centering
   \footnotesize
   \caption{Beispiele typischer Fehler je Fehlerklasse
-  (Abschnitt~\ref{sec:erg-fehlertypen}).
-  Sätze gekürzt; Referenz und Vorhersage als Span mit Typ; Konfiguration,
-  aus deren Testvorhersagen das Beispiel stammt.}
+  (Abschnitt~\ref{sec:erg-fehlertypen}) aus den Testvorhersagen mit
+  Seed~42. Referenz und Vorhersage als Span mit Typ; ein Strich bedeutet,
+  dass die Referenz bzw. die Vorhersage keinen Span an dieser Stelle
+  enthält.}
   \label{tab:app-beispiele}
   \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X
       >{\raggedright\arraybackslash}p{2.1cm}
@@ -269,11 +230,35 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
     \textbf{Satz (gekürzt)} & \textbf{Referenz} & \textbf{Vorhersage} &
     \textbf{Fehlerklasse} & \textbf{Konfiguration} \\
     \midrule
-    \PH{Beispielsatz} & \PH{Span (ANIM)} & \PH{Span (PLANT)} & Typfehler & \PH{DeBERTa-v3-large} \\
-    \PH{Beispielsatz} & \PH{Span (ORG)} & \PH{Teilspan (ORG)} & Grenzfehler & \PH{Qwen3.5-27B, QLoRA} \\
-    \PH{Beispielsatz} & \PH{Span (DIS)} & -- & Auslassung & \PH{DeBERTa-v3-large} \\
-    \PH{Beispielsatz} & -- & \PH{Span (LOC)} & Zusatz & \PH{Qwen3.5-27B, QLoRA} \\
-    \PH{Beispielsatz} & \PH{Span (MEDIA)} & \PH{Span (unbekannter Typ)} & Unbekannter Typ & Qwen3.5-27B, Zero-Shot \\
+    He is also in the band Filthy Friends, playing bass and accordion. &
+      Filthy Friends (PER) & Filthy Friends (ORG) & Typfehler &
+      DeBERTa-v3-large und Qwen3.5-27B (QLoRA) \\
+    The lake is home to perch, pike-perch, bream, roaches, whitefishes,
+      smelt and other species of fish. &
+      perch (ANIM) & perch (FOOD) & Typfehler & DeBERTa-v3-large \\
+    In 2000, the entire campus was designated as an arboretum, the
+      University of Georgia Campus Arboretum. &
+      University of Georgia Campus Arboretum (ORG) &
+      University of Georgia Campus (ORG) & Grenzfehler & DeBERTa-v3-large \\
+    The wilderness provides habitat for wild burro, desert tortoise,
+      spotted bat and desert bighorn sheep. &
+      burro (ANIM) & wild burro (ANIM) & Grenzfehler & Qwen3.5-27B (QLoRA) \\
+    It takes around 6,000 full-grown coconuts to produce one tonne of
+      copra. &
+      copra (FOOD) & -- & Auslassung & DeBERTa-v3-large \\
+    Within city limits, the southwestern fence lizard and whiptails are
+      common. &
+      whiptails (ANIM) & -- & Auslassung & Qwen3.5-27B (QLoRA) \\
+    Commonly seen mammals include the coyote, rock squirrel, Gunnison's
+      prairie dog, desert cottontail, and black-tailed jackrabbit. &
+      -- & desert cottontail (ANIM) & Zusatz &
+      DeBERTa-v3-large und Qwen3.5-27B (QLoRA) \\
+    Propranolol is a beta blocker that is mainly used to treat
+      hypertension, but also prevents trembling. &
+      -- & Propranolol (MED) & Unbekannter Typ & Qwen3.5-27B (Zero-Shot) \\
+    The municipal holiday is Easter Monday. &
+      Easter Monday (TIME) & Easter Monday (TME) & Unbekannter Typ &
+      Qwen3.5-27B (Zero-Shot) \\
     \bottomrule
   \end{tabularx}
 \end{table}

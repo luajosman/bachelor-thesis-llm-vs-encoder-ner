@@ -1,0 +1,26 @@
+\begin{tabular}{llrrrrrrr}
+    \toprule
+    \textbf{Modell} & \textbf{Regime} & \textbf{GPU} &
+    \textbf{Training} & \multicolumn{3}{c}{\textbf{Latenz [ms]}} &
+    \textbf{Durchsatz} & \textbf{Speicher} \\
+    \cmidrule(lr){5-7}
+    & & & \textbf{[h]} & \textbf{Mittel} & \textbf{Median} & \textbf{P95} &
+    \textbf{[S\"atze/s]} & \textbf{[GB]} \\
+    \midrule
+    DeBERTa-v3-base & Fine-Tuning & H100 & 0,4 & 8,9 & 8,9 & 9,3 & -- & 0,7 \\
+    DeBERTa-v3-large & Fine-Tuning & H100 & 1,1 & 16,5 & 16,4 & 17,0 & -- & 1,7 \\
+    \midrule
+    Qwen3.5-0.8B & Zero-Shot & A100 & -- & 3211 & --$^{b}$ & 9186 & 0,31 & 1,5 \\
+    Qwen3.5-4B & Zero-Shot & A100 & -- & 2015 & --$^{b}$ & 6942 & 0,50 & 8,2 \\
+    Qwen3.5-27B & Zero-Shot & NVL & -- & 3783 & --$^{b}$ & 8597 & 0,26 & 50,7 \\
+    \midrule
+    Qwen3.5-0.8B & QLoRA & H100 & 12,1 & 1876 & 1292 & 4413 & 0,53 & 0,9 \\
+    Qwen3.5-4B & QLoRA & A100 & 62,9 & 4685 & 3245 & 10939 & 0,21 & 3,5 \\
+    Qwen3.5-27B & QLoRA & NVL & $\geq$\,50,5$^{a}$ & 5505 & 3792 & 12950 & 0,18 & 18,7 \\
+    \bottomrule
+    \multicolumn{9}{@{}l}{\scriptsize $^{a}$ Nur der Abschnitt nach der
+      Wiederaufnahme protokolliert; Untergrenze
+      (Abschnitt~\ref{sec:effizienzmetriken}).} \\
+    \multicolumn{9}{@{}l}{\scriptsize $^{b}$ F\"ur die Zero-Shot-L\"aufe wurde kein
+      Median protokolliert.} \\
+\end{tabular}

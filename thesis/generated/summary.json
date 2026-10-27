@@ -1,0 +1,8467 @@
+{
+ "groups": {
+  "deberta-base": {
+   "label": "DeBERTa-v3-base",
+   "regime": "Fine-Tuning",
+   "gpu": "H100",
+   "params": 184000000.0,
+   "agg": {
+    "precision": {
+     "mean": 0.9477074088203746,
+     "std": 0.0013855713819187158,
+     "values": [
+      0.9462419113987058,
+      0.9489960766212786,
+      0.9478842384411391
+     ]
+    },
+    "recall": {
+     "mean": 0.9624748164034574,
+     "std": 0.001039270007546169,
+     "values": [
+      0.9636576330668747,
+      0.9620588808734646,
+      0.9617079352700332
+     ]
+    },
+    "f1": {
+     "mean": 0.9550330845684267,
+     "std": 0.00039442316087460105,
+     "values": [
+      0.9548703682237936,
+      0.9554828340723815,
+      0.954746051409105
+     ]
+    },
+    "macro_f1": {
+     "mean": 0.8538596373037576,
+     "std": 0.008876122370520208,
+     "values": [
+      0.8521221578882215,
+      0.8634760293992746,
+      0.8459807246237766
+     ]
+    },
+    "latency_mean": {
+     "mean": 8.922879600125933,
+     "std": 0.16674028538674154,
+     "values": [
+      8.731694251792867,
+      8.9987632736094,
+      9.038181274975532
+     ]
+    },
+    "latency_p50": {
+     "mean": 8.911888328536103,
+     "std": 0.13534627168691454,
+     "values": [
+      8.759938995353878,
+      8.956206031143665,
+      9.019519959110767
+     ]
+    },
+    "latency_p95": {
+     "mean": 9.272062636834258,
+     "std": 0.30519571910153015,
+     "values": [
+      8.920944546116516,
+      9.421516285510734,
+      9.473727078875527
+     ]
+    },
+    "vram_mb": {
+     "mean": 760.91650390625,
+     "std": 0.0,
+     "values": [
+      760.91650390625,
+      760.91650390625,
+      760.91650390625
+     ]
+    },
+    "throughput": {
+     "mean": null,
+     "std": null,
+     "values": [
+      null,
+      null,
+      null
+     ]
+    },
+    "train_seconds": {
+     "mean": 1523.042537640392,
+     "std": 56.54677308610437,
+     "values": [
+      1536.0650645120768,
+      1571.9419942130335,
+      1461.1205541960662
+     ]
+    },
+    "per_type": {
+     "PER": {
+      "precision": {
+       "mean": 0.9959499090297901,
+       "std": 0.00047396015176412833
+      },
+      "recall": {
+       "mean": 0.9963279518835074,
+       "std": 0.0005802564982533302
+      },
+      "f1": {
+       "mean": 0.996138733088932,
+       "std": 0.00019823557160799165
+      },
+      "support": 5265
+     },
+     "ORG": {
+      "precision": {
+       "mean": 0.9824664518805445,
+       "std": 0.002354477221703633
+      },
+      "recall": {
+       "mean": 0.9875088143447165,
+       "std": 0.0015210707031874464
+      },
+      "f1": {
+       "mean": 0.984979209110826,
+       "std": 0.0010141441930197877
+      },
+      "support": 3309
+     },
+     "LOC": {
+      "precision": {
+       "mean": 0.9963637985679487,
+       "std": 0.00025303868111237323
+      },
+      "recall": {
+       "mean": 0.9950931470392548,
+       "std": 0.0001663339986693324
+      },
+      "f1": {
+       "mean": 0.995728042888952,
+       "std": 9.569182753110563e-05
+      },
+      "support": 12024
+     },
+     "CEL": {
+      "precision": {
+       "mean": 0.7220055161544523,
+       "std": 0.029220394497029813
+      },
+      "recall": {
+       "mean": 0.8211382113821138,
+       "std": 0.014081713882673748
+      },
+      "f1": {
+       "mean": 0.7682475394129432,
+       "std": 0.020671756893346986
+      },
+      "support": 41
+     },
+     "DIS": {
+      "precision": {
+       "mean": 0.795024302804712,
+       "std": 0.008758038000448626
+      },
+      "recall": {
+       "mean": 0.8326745718050065,
+       "std": 0.0034858383544987886
+      },
+      "f1": {
+       "mean": 0.8133995798691402,
+       "std": 0.005400027641009173
+      },
+      "support": 759
+     },
+     "EVE": {
+      "precision": {
+       "mean": 0.9575424536879034,
+       "std": 0.008436517908395473
+      },
+      "recall": {
+       "mean": 0.9810606060606061,
+       "std": 0.0032803992567592023
+      },
+      "f1": {
+       "mean": 0.969141218521063,
+       "std": 0.00407377713104135
+      },
+      "support": 352
+     },
+     "MEDIA": {
+      "precision": {
+       "mean": 0.9599731665978378,
+       "std": 0.0011440126508275063
+      },
+      "recall": {
+       "mean": 0.977438136826783,
+       "std": 0.002521180214801865
+      },
+      "f1": {
+       "mean": 0.9686252005328452,
+       "std": 0.001115641121557489
+      },
+      "support": 458
+     },
+     "ANIM": {
+      "precision": {
+       "mean": 0.7553937969494089,
+       "std": 0.001127580627729871
+      },
+      "recall": {
+       "mean": 0.807356608478803,
+       "std": 0.006508919269894343
+      },
+      "f1": {
+       "mean": 0.7805041329913455,
+       "std": 0.0033746475268363655
+      },
+      "support": 1604
+     },
+     "BIO": {
+      "precision": {
+       "mean": 0.769047619047619,
+       "std": 0.08028435857184459
+      },
+      "recall": {
+       "mean": 0.7916666666666666,
+       "std": 0.07216878364870322
+      },
+      "f1": {
+       "mean": 0.7759259259259258,
+       "std": 0.02505138751568271
+      },
+      "support": 8
+     },
+     "FOOD": {
+      "precision": {
+       "mean": 0.7164668035116998,
+       "std": 0.008572244892104161
+      },
+      "recall": {
+       "mean": 0.7449941107184923,
+       "std": 0.016320855666137817
+      },
+      "f1": {
+       "mean": 0.7303297171113262,
+       "std": 0.0056809760539972545
+      },
+      "support": 566
+     },
+     "PLANT": {
+      "precision": {
+       "mean": 0.6539010988024372,
+       "std": 0.016906253389751446
+      },
+      "recall": {
+       "mean": 0.7926920208799403,
+       "std": 0.01818605279382131
+      },
+      "f1": {
+       "mean": 0.7163603610812537,
+       "std": 0.0035868346344492385
+      },
+      "support": 894
+     },
+     "INST": {
+      "precision": {
+       "mean": 0.7632034632034633,
+       "std": 0.17104607728755974
+      },
+      "recall": {
+       "mean": 0.7222222222222222,
+       "std": 0.048112522432468836
+      },
+      "f1": {
+       "mean": 0.738725043072869,
+       "std": 0.10828669164938183
+      },
+      "support": 12
+     },
+     "MYTH": {
+      "precision": {
+       "mean": 0.8345238095238096,
+       "std": 0.03785265022758247
+      },
+      "recall": {
+       "mean": 0.8854166666666666,
+       "std": 0.018042195912175804
+      },
+      "f1": {
+       "mean": 0.8588308457711443,
+       "std": 0.02046577446754265
+      },
+      "support": 32
+     },
+     "TIME": {
+      "precision": {
+       "mean": 0.8293494989165429,
+       "std": 0.007410799714305807
+      },
+      "recall": {
+       "mean": 0.8627450980392157,
+       "std": 0.015982014372031214
+      },
+      "f1": {
+       "mean": 0.8456391448579325,
+       "std": 0.0071519529597584095
+      },
+      "support": 289
+     },
+     "VEHI": {
+      "precision": {
+       "mean": 0.8668564199873497,
+       "std": 0.06299362519621156
+      },
+      "recall": {
+       "mean": 0.8645833333333334,
+       "std": 0.018042195912175804
+      },
+      "f1": {
+       "mean": 0.8653198653198654,
+       "std": 0.040822746306337115
+      },
+      "support": 32
+     }
+    },
+    "errors": {
+     "korrekt": {
+      "mean": 0.9624748164034574,
+      "std": 0.001039270007546169
+     },
+     "typfehler": {
+      "mean": 0.0072008838630012355,
+      "std": 0.00022513170956897088
+     },
+     "grenzfehler": {
+      "mean": 0.006200038993955936,
+      "std": 0.00021710915823084512
+     },
+     "grenz_typ": {
+      "mean": 0.000935854942483915,
+      "std": 0.00020633662008692457
+     },
+     "auslassung": {
+      "mean": 0.02318840579710145,
+      "std": 0.0010780494853964498
+     },
+     "additions": {
+      "mean": 996.6666666666666,
+      "std": 37.44774136491189
+     },
+     "n_gold": 25645,
+     "confusion_top": [
+      [
+       "ANIM->PLANT",
+       50.333333333333336
+      ],
+      [
+       "LOC->ORG",
+       20.666666666666668
+      ],
+      [
+       "PLANT->ANIM",
+       14.0
+      ],
+      [
+       "FOOD->PLANT",
+       9.333333333333334
+      ],
+      [
+       "ORG->LOC",
+       9.0
+      ],
+      [
+       "PER->ORG",
+       6.333333333333333
+      ],
+      [
+       "MEDIA->EVE",
+       6.333333333333333
+      ],
+      [
+       "ORG->PER",
+       6.333333333333333
+      ],
+      [
+       "FOOD->ANIM",
+       5.666666666666667
+      ],
+      [
+       "ANIM->FOOD",
+       5.333333333333333
+      ],
+      [
+       "PLANT->FOOD",
+       5.333333333333333
+      ],
+      [
+       "LOC->PER",
+       4.0
+      ]
+     ],
+     "boundary_by_type": {
+      "ANIM": 39.666666666666664,
+      "PLANT": 30.0,
+      "DIS": 25.333333333333332,
+      "FOOD": 17.666666666666668,
+      "LOC": 14.666666666666666,
+      "ORG": 11.666666666666666,
+      "TIME": 10.333333333333334,
+      "PER": 4.666666666666667,
+      "CEL": 3.3333333333333335,
+      "EVE": 1.0,
+      "MYTH": 0.6666666666666666
+     },
+     "additions_by_type": {
+      "ANIM": 355.3333333333333,
+      "PLANT": 282.3333333333333,
+      "FOOD": 137.0,
+      "DIS": 135.0,
+      "TIME": 34.0,
+      "LOC": 13.666666666666666,
+      "ORG": 13.333333333333334,
+      "MEDIA": 9.0,
+      "CEL": 4.666666666666667,
+      "EVE": 3.3333333333333335,
+      "PER": 3.0,
+      "INST": 2.0,
+      "VEHI": 1.6666666666666667,
+      "MYTH": 1.3333333333333333,
+      "BIO": 1.0
+     }
+    },
+    "best_epochs": [
+     4.0,
+     5.0,
+     5.0
+    ],
+    "val_f1": [
+     0.9265433159573045,
+     0.9257395547422994,
+     0.926596068870943
+    ],
+    "epoch_results": [
+     null,
+     null,
+     null
+    ],
+    "train_lower_bound": false,
+    "resume_checkpoints": [
+     null,
+     null,
+     null
+    ],
+    "gpus": [
+     "NVIDIA H100 80GB HBM3"
+    ],
+    "commits": [
+     "179eed8c68b49f51fff5498e411db22c88ef3c9a"
+    ],
+    "total_params_reported": [
+     183855391,
+     183855391,
+     183855391
+    ]
+   },
+   "examples": [
+    {
+     "typfehler": [
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Southampton was settled in the same year .",
+       "gold": [
+        "Southampton",
+        "LOC"
+       ],
+       "pred": [
+        "Southampton",
+        "ORG"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "Bupropion-induced psychosis may develop in select populations , or worsen a pre-existing psychotic syndrome .",
+       "gold": [
+        "psychosis",
+        "DIS"
+       ],
+       "pred": [
+        "Bupropion-induced psychosis",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "Two or three ounces of white rum completed the mixture .",
+       "gold": [
+        "rum",
+        "FOOD"
+       ],
+       "pred": [
+        "white rum",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "avalanche rescue dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Until 2008 , the black-headed parrotbill was also considered as a subspecies of the grey-headed parrotbill .",
+       "gold": [
+        "black-headed parrotbill",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The mezze are typically followed by a selection of grilled meat or fish .",
+       "gold": [
+        "meat",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Scopolamine , which acts mainly on muscarinic receptors in the brain , can cause delirium and amnesia .",
+       "gold": [
+        "amnesia",
+        "DIS"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "southwestern fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "coconut sugar",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "pred": [
+        "Amphioctopus marginatus",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Until 2008 , the black-headed parrotbill was also considered as a subspecies of the grey-headed parrotbill .",
+       "pred": [
+        "grey-headed parrotbill",
+        "ANIM"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Southampton was settled in the same year .",
+       "gold": [
+        "Southampton",
+        "LOC"
+       ],
+       "pred": [
+        "Southampton",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "They also graze Bohmte and Hille to the north .",
+       "gold": [
+        "Bohmte",
+        "LOC"
+       ],
+       "pred": [
+        "Bohmte",
+        "PLANT"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "Bupropion-induced psychosis may develop in select populations , or worsen a pre-existing psychotic syndrome .",
+       "gold": [
+        "psychosis",
+        "DIS"
+       ],
+       "pred": [
+        "Bupropion-induced psychosis",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "Two or three ounces of white rum completed the mixture .",
+       "gold": [
+        "rum",
+        "FOOD"
+       ],
+       "pred": [
+        "white rum",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "It does not recognize the label Sea of Sardinia .",
+       "gold": [
+        "Sea of Sardinia",
+        "LOC"
+       ],
+       "pred": [
+        "Sea",
+        "LOC"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "gold": [
+        "rock squirrel",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The \" spot-breasted parrotbill \" ( \" Paradoxornis guttaticollis \" ) is a species of bird in the family Sylviidae .",
+       "gold": [
+        "Sylviidae",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The mezze are typically followed by a selection of grilled meat or fish .",
+       "gold": [
+        "meat",
+        "FOOD"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "southwestern fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The coconut is the national tree of the Maldives and is considered the most important plant in the country .",
+       "pred": [
+        "coconut",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "coconut sugar",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Southampton was settled in the same year .",
+       "gold": [
+        "Southampton",
+        "LOC"
+       ],
+       "pred": [
+        "Southampton",
+        "ORG"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "Bupropion-induced psychosis may develop in select populations , or worsen a pre-existing psychotic syndrome .",
+       "gold": [
+        "psychosis",
+        "DIS"
+       ],
+       "pred": [
+        "Bupropion-induced psychosis",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "avalanche rescue dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "She developed the technique for visualizing maize chromosomes and used microscopic analysis to demonstrate many fundamental genetic ideas .",
+       "gold": [
+        "maize chromosomes",
+        "PLANT"
+       ],
+       "pred": [
+        "maize",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The mezze are typically followed by a selection of grilled meat or fish .",
+       "gold": [
+        "meat",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The mezze are typically followed by a selection of grilled meat or fish .",
+       "gold": [
+        "fish",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "southwestern fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The coconut is the national tree of the Maldives and is considered the most important plant in the country .",
+       "pred": [
+        "coconut",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "coconut sugar",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    }
+   ],
+   "generation_settings": null
+  },
+  "deberta-large": {
+   "label": "DeBERTa-v3-large",
+   "regime": "Fine-Tuning",
+   "gpu": "H100",
+   "params": 434000000.0,
+   "agg": {
+    "precision": {
+     "mean": 0.9525530478145924,
+     "std": 0.0014611014223332986,
+     "values": [
+      0.9541887346812541,
+      0.9513771349438375,
+      0.9520932738186856
+     ]
+    },
+    "recall": {
+     "mean": 0.9638915968024956,
+     "std": 0.0012677534183668645,
+     "values": [
+      0.9624488204328329,
+      0.9643985182296744,
+      0.9648274517449795
+     ]
+    },
+    "f1": {
+     "mean": 0.9581875394276058,
+     "std": 0.000303581265216102,
+     "values": [
+      0.958300978412797,
+      0.9578435739044557,
+      0.9584180659655647
+     ]
+    },
+    "macro_f1": {
+     "mean": 0.8668708387074838,
+     "std": 0.004336378681309837,
+     "values": [
+      0.8619937636726499,
+      0.868327141835272,
+      0.8702916106145292
+     ]
+    },
+    "latency_mean": {
+     "mean": 16.45136119405228,
+     "std": 0.057325958631713136,
+     "values": [
+      16.389364734103207,
+      16.462269756324673,
+      16.502449091728952
+     ]
+    },
+    "latency_p50": {
+     "mean": 16.416737150090437,
+     "std": 0.056284736196586194,
+     "values": [
+      16.35653746780008,
+      16.42562448978424,
+      16.468049492686987
+     ]
+    },
+    "latency_p95": {
+     "mean": 16.96311407916558,
+     "std": 0.042743766093333746,
+     "values": [
+      16.916527465218678,
+      16.9722901948262,
+      17.00052457745187
+     ]
+    },
+    "vram_mb": {
+     "mean": 1724.94677734375,
+     "std": 0.0,
+     "values": [
+      1724.94677734375,
+      1724.94677734375,
+      1724.94677734375
+     ]
+    },
+    "throughput": {
+     "mean": null,
+     "std": null,
+     "values": [
+      null,
+      null,
+      null
+     ]
+    },
+    "train_seconds": {
+     "mean": 4110.4685548890075,
+     "std": 188.15681517527915,
+     "values": [
+      4108.195191817009,
+      4299.75175104104,
+      3923.4587218089728
+     ]
+    },
+    "per_type": {
+     "PER": {
+      "precision": {
+       "mean": 0.9969613999783443,
+       "std": 0.00019105165838338112
+      },
+      "recall": {
+       "mean": 0.9970876859765748,
+       "std": 0.0005802564982533302
+      },
+      "f1": {
+       "mean": 0.9970245130093206,
+       "std": 0.0003843383294891027
+      },
+      "support": 5265
+     },
+     "ORG": {
+      "precision": {
+       "mean": 0.9862479982920189,
+       "std": 0.0007510697684860831
+      },
+      "recall": {
+       "mean": 0.9897249924448474,
+       "std": 0.0006044122091266035
+      },
+      "f1": {
+       "mean": 0.9879833416246608,
+       "std": 0.0005699770517706639
+      },
+      "support": 3309
+     },
+     "LOC": {
+      "precision": {
+       "mean": 0.9970866926836269,
+       "std": 0.0002489612718648364
+      },
+      "recall": {
+       "mean": 0.9962297626968285,
+       "std": 0.00019206595781425185
+      },
+      "f1": {
+       "mean": 0.9966580269996449,
+       "std": 0.00015737524190135988
+      },
+      "support": 12024
+     },
+     "CEL": {
+      "precision": {
+       "mean": 0.7837679116748885,
+       "std": 0.053368804073624466
+      },
+      "recall": {
+       "mean": 0.8211382113821138,
+       "std": 0.037256712967120624
+      },
+      "f1": {
+       "mean": 0.8019461599901004,
+       "std": 0.045689895947433896
+      },
+      "support": 41
+     },
+     "DIS": {
+      "precision": {
+       "mean": 0.8011179389052576,
+       "std": 0.0026068544593958443
+      },
+      "recall": {
+       "mean": 0.8383838383838383,
+       "std": 0.01120540256668694
+      },
+      "f1": {
+       "mean": 0.8192906744630882,
+       "std": 0.004137573051572844
+      },
+      "support": 759
+     },
+     "EVE": {
+      "precision": {
+       "mean": 0.9611394192399779,
+       "std": 0.005222577134852686
+      },
+      "recall": {
+       "mean": 0.9829545454545454,
+       "std": 0.005681818181818177
+      },
+      "f1": {
+       "mean": 0.971909670312377,
+       "std": 0.0028201963137112077
+      },
+      "support": 352
+     },
+     "MEDIA": {
+      "precision": {
+       "mean": 0.9740530215252874,
+       "std": 0.007328929358116056
+      },
+      "recall": {
+       "mean": 0.982532751091703,
+       "std": 0.005776749587477307
+      },
+      "f1": {
+       "mean": 0.9782645678158722,
+       "std": 0.0054001483137092205
+      },
+      "support": 458
+     },
+     "ANIM": {
+      "precision": {
+       "mean": 0.7671927441235024,
+       "std": 0.0040902135513242
+      },
+      "recall": {
+       "mean": 0.8231504571903575,
+       "std": 0.0035450378448113
+      },
+      "f1": {
+       "mean": 0.7941868249085298,
+       "std": 0.003813961167988231
+      },
+      "support": 1604
+     },
+     "BIO": {
+      "precision": {
+       "mean": 0.7257575757575757,
+       "std": 0.025034411578573217
+      },
+      "recall": {
+       "mean": 0.875,
+       "std": 0.125
+      },
+      "f1": {
+       "mean": 0.7899610136452241,
+       "std": 0.047245828413709064
+      },
+      "support": 8
+     },
+     "FOOD": {
+      "precision": {
+       "mean": 0.7250701498939544,
+       "std": 0.018864883062759536
+      },
+      "recall": {
+       "mean": 0.7338044758539458,
+       "std": 0.019381016103538706
+      },
+      "f1": {
+       "mean": 0.7290769552225022,
+       "std": 0.0002954136804614071
+      },
+      "support": 566
+     },
+     "PLANT": {
+      "precision": {
+       "mean": 0.6857348584118496,
+       "std": 0.015738993574559115
+      },
+      "recall": {
+       "mean": 0.7714392244593586,
+       "std": 0.014207724745158598
+      },
+      "f1": {
+       "mean": 0.7258725469048838,
+       "std": 0.0045274246489587335
+      },
+      "support": 894
+     },
+     "INST": {
+      "precision": {
+       "mean": 0.8547785547785548,
+       "std": 0.04158536903953248
+      },
+      "recall": {
+       "mean": 0.8055555555555555,
+       "std": 0.0962250448649376
+      },
+      "f1": {
+       "mean": 0.8269301712779974,
+       "std": 0.049281505679760744
+      },
+      "support": 12
+     },
+     "MYTH": {
+      "precision": {
+       "mean": 0.7861232943469786,
+       "std": 0.05394033949069132
+      },
+      "recall": {
+       "mean": 0.8645833333333334,
+       "std": 0.018042195912175804
+      },
+      "f1": {
+       "mean": 0.8224264705882353,
+       "std": 0.021895843999011944
+      },
+      "support": 32
+     },
+     "TIME": {
+      "precision": {
+       "mean": 0.8317372806460049,
+       "std": 0.0068145594476442
+      },
+      "recall": {
+       "mean": 0.8662053056516724,
+       "std": 0.013100134592388147
+      },
+      "f1": {
+       "mean": 0.8485654433836182,
+       "std": 0.005897418588123625
+      },
+      "support": 289
+     },
+     "VEHI": {
+      "precision": {
+       "mean": 0.8995469399881165,
+       "std": 0.03291661420404388
+      },
+      "recall": {
+       "mean": 0.9270833333333334,
+       "std": 0.018042195912175804
+      },
+      "f1": {
+       "mean": 0.9129662004662005,
+       "std": 0.0228440272515949
+      },
+      "support": 32
+     }
+    },
+    "errors": {
+     "korrekt": {
+      "mean": 0.9638915968024956,
+      "std": 0.0012677534183668645
+     },
+     "typfehler": {
+      "mean": 0.005888087346461298,
+      "std": 3.899395593682988e-05
+     },
+     "grenzfehler": {
+      "mean": 0.005472151816468447,
+      "std": 0.00033619333609872165
+     },
+     "grenz_typ": {
+      "mean": 0.0008968609865470852,
+      "std": 0.00024351717677513742
+     },
+     "auslassung": {
+      "mean": 0.023851303048027555,
+      "std": 0.0017025376218194586
+     },
+     "additions": {
+      "mean": 920.6666666666666,
+      "std": 30.28751117760146
+     },
+     "n_gold": 25645,
+     "confusion_top": [
+      [
+       "ANIM->PLANT",
+       39.666666666666664
+      ],
+      [
+       "LOC->ORG",
+       19.333333333333332
+      ],
+      [
+       "PLANT->ANIM",
+       12.333333333333334
+      ],
+      [
+       "ORG->LOC",
+       9.666666666666666
+      ],
+      [
+       "FOOD->PLANT",
+       6.666666666666667
+      ],
+      [
+       "PLANT->FOOD",
+       6.333333333333333
+      ],
+      [
+       "MEDIA->EVE",
+       6.0
+      ],
+      [
+       "ORG->PER",
+       5.666666666666667
+      ],
+      [
+       "ANIM->FOOD",
+       5.333333333333333
+      ],
+      [
+       "FOOD->ANIM",
+       4.666666666666667
+      ],
+      [
+       "PER->MYTH",
+       4.666666666666667
+      ],
+      [
+       "PER->ORG",
+       4.333333333333333
+      ]
+     ],
+     "boundary_by_type": {
+      "ANIM": 33.666666666666664,
+      "DIS": 29.333333333333332,
+      "PLANT": 26.666666666666668,
+      "FOOD": 20.0,
+      "TIME": 11.0,
+      "LOC": 8.666666666666666,
+      "ORG": 5.0,
+      "PER": 2.3333333333333335,
+      "CEL": 2.0,
+      "MYTH": 1.0,
+      "MEDIA": 0.6666666666666666
+     },
+     "additions_by_type": {
+      "ANIM": 347.6666666666667,
+      "PLANT": 240.33333333333334,
+      "DIS": 127.33333333333333,
+      "FOOD": 125.33333333333333,
+      "TIME": 35.333333333333336,
+      "ORG": 11.333333333333334,
+      "LOC": 11.333333333333334,
+      "MEDIA": 6.0,
+      "CEL": 5.0,
+      "EVE": 2.6666666666666665,
+      "BIO": 2.3333333333333335,
+      "PER": 1.6666666666666667,
+      "VEHI": 1.6666666666666667,
+      "INST": 1.3333333333333333,
+      "MYTH": 1.3333333333333333
+     }
+    },
+    "best_epochs": [
+     3.0,
+     4.0,
+     4.0
+    ],
+    "val_f1": [
+     0.9308030993443696,
+     0.9289021857194579,
+     0.9305468079015173
+    ],
+    "epoch_results": [
+     null,
+     null,
+     null
+    ],
+    "train_lower_bound": false,
+    "resume_checkpoints": [
+     null,
+     null,
+     null
+    ],
+    "gpus": [
+     "NVIDIA H100 80GB HBM3"
+    ],
+    "commits": [
+     "179eed8c68b49f51fff5498e411db22c88ef3c9a"
+    ],
+    "total_params_reported": [
+     434043935,
+     434043935,
+     434043935
+    ]
+   },
+   "examples": [
+    {
+     "typfehler": [
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "For many centuries , from at least the time of Jerome ( c .",
+       "gold": [
+        "Jerome",
+        "MYTH"
+       ],
+       "pred": [
+        "Jerome",
+        "PER"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "Bupropion-induced psychosis may develop in select populations , or worsen a pre-existing psychotic syndrome .",
+       "gold": [
+        "psychosis",
+        "DIS"
+       ],
+       "pred": [
+        "Bupropion-induced psychosis",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "avalanche rescue dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The \" spot-breasted parrotbill \" ( \" Paradoxornis guttaticollis \" ) is a species of bird in the family Sylviidae .",
+       "gold": [
+        "Sylviidae",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The fruit is light reddish-brown , long-pointed capsules about 0.75 \" cm long .",
+       "gold": [
+        "capsules",
+        "FOOD"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Palm wine is distilled to produce \" arrack \" .",
+       "pred": [
+        "Palm wine",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "coconut sugar",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "pred": [
+        "Amphioctopus marginatus",
+        "ANIM"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "One of the significant understory elements of the floral palette is the fern \" Blechnum discolor \" .",
+       "gold": [
+        "Blechnum discolor",
+        "PLANT"
+       ],
+       "pred": [
+        "Blechnum discolor",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "Two or three ounces of white rum completed the mixture .",
+       "gold": [
+        "rum",
+        "FOOD"
+       ],
+       "pred": [
+        "white rum",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "avalanche rescue dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Until 2008 , the black-headed parrotbill was also considered as a subspecies of the grey-headed parrotbill .",
+       "gold": [
+        "black-headed parrotbill",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The \" spot-breasted parrotbill \" ( \" Paradoxornis guttaticollis \" ) is a species of bird in the family Sylviidae .",
+       "gold": [
+        "Sylviidae",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "southwestern fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "pred": [
+        "coconuts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The coconut is the national tree of the Maldives and is considered the most important plant in the country .",
+       "pred": [
+        "coconut",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "One of the significant understory elements of the floral palette is the fern \" Blechnum discolor \" .",
+       "gold": [
+        "Blechnum discolor",
+        "PLANT"
+       ],
+       "pred": [
+        "Blechnum discolor",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "Bupropion-induced psychosis may develop in select populations , or worsen a pre-existing psychotic syndrome .",
+       "gold": [
+        "psychosis",
+        "DIS"
+       ],
+       "pred": [
+        "Bupropion-induced psychosis",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "Two or three ounces of white rum completed the mixture .",
+       "gold": [
+        "rum",
+        "FOOD"
+       ],
+       "pred": [
+        "white rum",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "avalanche rescue dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The \" spot-breasted parrotbill \" ( \" Paradoxornis guttaticollis \" ) is a species of bird in the family Sylviidae .",
+       "gold": [
+        "Sylviidae",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "southwestern fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "pred": [
+        "coconuts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The coconut is the national tree of the Maldives and is considered the most important plant in the country .",
+       "pred": [
+        "coconut",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    }
+   ],
+   "generation_settings": null
+  },
+  "qwen08-qlora": {
+   "label": "Qwen3.5-0.8B",
+   "regime": "QLoRA",
+   "gpu": "H100",
+   "params": 752000000.0,
+   "agg": {
+    "precision": {
+     "mean": 0.937681476904617,
+     "std": 0.0012006050204036796,
+     "values": [
+      0.938740020551735,
+      0.9379274898193176,
+      0.9363769203427985
+     ]
+    },
+    "recall": {
+     "mean": 0.9252615844544095,
+     "std": 0.0008384456189183219,
+     "values": [
+      0.9261844414115812,
+      0.9250536166894131,
+      0.9245466952622343
+     ]
+    },
+    "f1": {
+     "mean": 0.9314300806378014,
+     "std": 0.0009979768294024695,
+     "values": [
+      0.9324199658468604,
+      0.9314460716950017,
+      0.9304242043715418
+     ]
+    },
+    "macro_f1": {
+     "mean": 0.8257987206054384,
+     "std": 0.010598951855332979,
+     "values": [
+      0.8290755200588341,
+      0.8343723098837452,
+      0.8139483318737359
+     ]
+    },
+    "latency_mean": {
+     "mean": 1875.7561351929735,
+     "std": 109.31993322145831,
+     "values": [
+      1794.3919244576402,
+      1832.8574610230796,
+      2000.0190200982008
+     ]
+    },
+    "latency_p50": {
+     "mean": 1292.3247783328407,
+     "std": 72.45772564829645,
+     "values": [
+      1236.172050004825,
+      1266.6863835183904,
+      1374.1159014753066
+     ]
+    },
+    "latency_p95": {
+     "mean": 4413.326302603429,
+     "std": 249.42023823779536,
+     "values": [
+      4228.238388156748,
+      4314.775248937075,
+      4696.965270716463
+     ]
+    },
+    "vram_mb": {
+     "mean": 944.7314453125,
+     "std": 0.0,
+     "values": [
+      944.7314453125,
+      944.7314453125,
+      944.7314453125
+     ]
+    },
+    "throughput": {
+     "mean": 0.5342944205835629,
+     "std": 0.03027412040431614,
+     "values": [
+      0.5572918526716246,
+      0.5455961640583943,
+      0.4999952450206699
+     ]
+    },
+    "train_seconds": {
+     "mean": 43399.404318666006,
+     "std": 1755.0911168142648,
+     "values": [
+      43642.85477875802,
+      41535.297461814014,
+      45020.06071542599
+     ]
+    },
+    "per_type": {
+     "PER": {
+      "precision": {
+       "mean": 0.9930176252006682,
+       "std": 0.000886370404643437
+      },
+      "recall": {
+       "mean": 0.9723963279518836,
+       "std": 0.0010800077308788846
+      },
+      "f1": {
+       "mean": 0.9825986093699833,
+       "std": 0.0008404776631349701
+      },
+      "support": 5265
+     },
+     "ORG": {
+      "precision": {
+       "mean": 0.9758956890530722,
+       "std": 0.0017903001872360917
+      },
+      "recall": {
+       "mean": 0.9746146872166818,
+       "std": 0.001384882349639088
+      },
+      "f1": {
+       "mean": 0.9752534801815461,
+       "std": 0.000821902284976668
+      },
+      "support": 3309
+     },
+     "LOC": {
+      "precision": {
+       "mean": 0.9933488333169932,
+       "std": 0.0001934355448363579
+      },
+      "recall": {
+       "mean": 0.9646817476158794,
+       "std": 0.0006459957971684694
+      },
+      "f1": {
+       "mean": 0.9788053274386717,
+       "std": 0.00027566739386431606
+      },
+      "support": 12024
+     },
+     "CEL": {
+      "precision": {
+       "mean": 0.7692307692307692,
+       "std": 0.025641025641025605
+      },
+      "recall": {
+       "mean": 0.7317073170731708,
+       "std": 0.024390243902439046
+      },
+      "f1": {
+       "mean": 0.75,
+       "std": 0.024999999999999967
+      },
+      "support": 41
+     },
+     "DIS": {
+      "precision": {
+       "mean": 0.7577368504930525,
+       "std": 0.007514610496815836
+      },
+      "recall": {
+       "mean": 0.7672375933245498,
+       "std": 0.015439961204432938
+      },
+      "f1": {
+       "mean": 0.762343663965162,
+       "std": 0.004061436696451344
+      },
+      "support": 759
+     },
+     "EVE": {
+      "precision": {
+       "mean": 0.9401085334418667,
+       "std": 0.005791867956675872
+      },
+      "recall": {
+       "mean": 0.9365530303030303,
+       "std": 0.007149464427339759
+      },
+      "f1": {
+       "mean": 0.9383269909585699,
+       "std": 0.006464672849365478
+      },
+      "support": 352
+     },
+     "MEDIA": {
+      "precision": {
+       "mean": 0.9715940158709525,
+       "std": 0.005659464445890189
+      },
+      "recall": {
+       "mean": 0.9701601164483261,
+       "std": 0.00549478488738772
+      },
+      "f1": {
+       "mean": 0.9708669823532831,
+       "std": 0.0041347096960445235
+      },
+      "support": 458
+     },
+     "ANIM": {
+      "precision": {
+       "mean": 0.7098629556606243,
+       "std": 0.007216067644169759
+      },
+      "recall": {
+       "mean": 0.7055278470490441,
+       "std": 0.002189454229603606
+      },
+      "f1": {
+       "mean": 0.707671174092883,
+       "std": 0.003086577245510737
+      },
+      "support": 1604
+     },
+     "BIO": {
+      "precision": {
+       "mean": 0.65,
+       "std": 0.043301270189221905
+      },
+      "recall": {
+       "mean": 0.7083333333333334,
+       "std": 0.14433756729740643
+      },
+      "f1": {
+       "mean": 0.6759259259259259,
+       "std": 0.08820629112619277
+      },
+      "support": 8
+     },
+     "FOOD": {
+      "precision": {
+       "mean": 0.5906746109778319,
+       "std": 0.009473932904981856
+      },
+      "recall": {
+       "mean": 0.5724381625441696,
+       "std": 0.004674472281032837
+      },
+      "f1": {
+       "mean": 0.5813575716878113,
+       "std": 0.002423308597259807
+      },
+      "support": 566
+     },
+     "PLANT": {
+      "precision": {
+       "mean": 0.6080477341797504,
+       "std": 0.00938405662850412
+      },
+      "recall": {
+       "mean": 0.7199850857568979,
+       "std": 0.005286147232944727
+      },
+      "f1": {
+       "mean": 0.6592918072128143,
+       "std": 0.007727081628256687
+      },
+      "support": 894
+     },
+     "INST": {
+      "precision": {
+       "mean": 0.9666666666666667,
+       "std": 0.05773502691896257
+      },
+      "recall": {
+       "mean": 0.75,
+       "std": 0.0
+      },
+      "f1": {
+       "mean": 0.8441558441558441,
+       "std": 0.022494166332063286
+      },
+      "support": 12
+     },
+     "MYTH": {
+      "precision": {
+       "mean": 0.8899147200593251,
+       "std": 0.04698140136101374
+      },
+      "recall": {
+       "mean": 0.8333333333333334,
+       "std": 0.018042195912175804
+      },
+      "f1": {
+       "mean": 0.8605368229905513,
+       "std": 0.03125829544772925
+      },
+      "support": 32
+     },
+     "TIME": {
+      "precision": {
+       "mean": 0.842803063512848,
+       "std": 0.012348933531796311
+      },
+      "recall": {
+       "mean": 0.7970011534025375,
+       "std": 0.001997751796503926
+      },
+      "f1": {
+       "mean": 0.8192325051836078,
+       "std": 0.00594578175411078
+      },
+      "support": 289
+     },
+     "VEHI": {
+      "precision": {
+       "mean": 0.921685470628741,
+       "std": 0.04764938901875747
+      },
+      "recall": {
+       "mean": 0.84375,
+       "std": 0.03125
+      },
+      "f1": {
+       "mean": 0.8806141035649232,
+       "std": 0.032753536191248045
+      },
+      "support": 32
+     }
+    },
+    "errors": {
+     "korrekt": {
+      "mean": 0.9252615844544095,
+      "std": 0.0008384456189183219
+     },
+     "typfehler": {
+      "mean": 0.008175732761421979,
+      "std": 0.0002382570063017267
+     },
+     "grenzfehler": {
+      "mean": 0.008851627997660363,
+      "std": 0.00025570046887510165
+     },
+     "grenz_typ": {
+      "mean": 0.0011178267368557873,
+      "std": 0.00012534803094811148
+     },
+     "auslassung": {
+      "mean": 0.056593228049652305,
+      "std": 0.0006434987350093762
+     },
+     "additions": {
+      "mean": 1112.0,
+      "std": 27.2213151776324
+     },
+     "n_gold": 25645,
+     "confusion_top": [
+      [
+       "ANIM->PLANT",
+       48.666666666666664
+      ],
+      [
+       "LOC->ORG",
+       29.0
+      ],
+      [
+       "ORG->LOC",
+       19.666666666666668
+      ],
+      [
+       "FOOD->PLANT",
+       13.666666666666666
+      ],
+      [
+       "FOOD->ANIM",
+       10.333333333333334
+      ],
+      [
+       "ORG->PER",
+       8.333333333333334
+      ],
+      [
+       "LOC->PER",
+       7.333333333333333
+      ],
+      [
+       "PLANT->ANIM",
+       7.0
+      ],
+      [
+       "PLANT->FOOD",
+       6.333333333333333
+      ],
+      [
+       "MEDIA->EVE",
+       6.0
+      ],
+      [
+       "ANIM->FOOD",
+       5.0
+      ],
+      [
+       "EVE->ORG",
+       4.666666666666667
+      ]
+     ],
+     "boundary_by_type": {
+      "ANIM": 46.666666666666664,
+      "DIS": 39.333333333333336,
+      "PLANT": 31.0,
+      "FOOD": 28.666666666666668,
+      "ORG": 24.666666666666668,
+      "LOC": 23.333333333333332,
+      "PER": 12.333333333333334,
+      "TIME": 11.333333333333334,
+      "EVE": 5.0,
+      "CEL": 4.0,
+      "MYTH": 0.6666666666666666
+     },
+     "additions_by_type": {
+      "ANIM": 391.0,
+      "PLANT": 319.6666666666667,
+      "FOOD": 180.33333333333334,
+      "DIS": 146.0,
+      "TIME": 24.333333333333332,
+      "LOC": 21.333333333333332,
+      "ORG": 10.0,
+      "MEDIA": 6.0,
+      "EVE": 3.6666666666666665,
+      "CEL": 3.6666666666666665,
+      "PER": 3.0,
+      "BIO": 2.3333333333333335,
+      "VEHI": 0.3333333333333333,
+      "MYTH": 0.3333333333333333
+     }
+    },
+    "form": {
+     "n": {
+      "mean": 16454.0,
+      "std": 0.0,
+      "values": [
+       16454,
+       16454,
+       16454
+      ]
+     },
+     "parse_ok": {
+      "mean": 16386.333333333332,
+      "std": 0.5773502691896257,
+      "values": [
+       16386,
+       16386,
+       16387
+      ]
+     },
+     "markdown": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "regex": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "failed": {
+      "mean": 67.66666666666667,
+      "std": 0.5773502691896257,
+      "values": [
+       68,
+       68,
+       67
+      ]
+     },
+     "failure_rate": {
+      "mean": 0.0041124751833394105,
+      "std": 3.50887485833007e-05,
+      "values": [
+       0.0041327336817795065,
+       0.0041327336817795065,
+       0.004071958186459219
+      ]
+     },
+     "wrong_schema": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "invalid_items": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "missing_fields": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "invalid_offsets": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "unknown_types": {
+      "mean": 0.3333333333333333,
+      "std": 0.5773502691896258,
+      "values": [
+       1,
+       0,
+       0
+      ]
+     },
+     "text_mismatches": {
+      "mean": 45.333333333333336,
+      "std": 5.686240703077327,
+      "values": [
+       50,
+       47,
+       39
+      ]
+     },
+     "overlaps": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "failed_no_close": {
+      "mean": 67.66666666666667,
+      "std": 0.5773502691896257,
+      "values": [
+       68,
+       68,
+       67
+      ]
+     },
+     "empty": {
+      "mean": 83.0,
+      "std": 5.291502622129181,
+      "values": [
+       89,
+       79,
+       81
+      ]
+     },
+     "unknown_examples": [
+      [
+       [
+        "GENE",
+        1
+       ]
+      ],
+      [],
+      []
+     ]
+    },
+    "best_epochs": [
+     3,
+     3,
+     3
+    ],
+    "val_f1": [
+     0.9225352112676055,
+     0.9314586994727592,
+     0.9363957597173145
+    ],
+    "epoch_results": [
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9160839160839161,
+       "dev_precision": 0.9065743944636678,
+       "dev_recall": 0.9257950530035336,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.9211908931698773,
+       "dev_precision": 0.9131944444444444,
+       "dev_recall": 0.9293286219081273,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.9225352112676055,
+       "dev_precision": 0.9192982456140351,
+       "dev_recall": 0.9257950530035336,
+       "parse_failure_rate": 0.0
+      }
+     ],
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9217391304347825,
+       "dev_precision": 0.9075342465753424,
+       "dev_recall": 0.9363957597173145,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.9244288224956064,
+       "dev_precision": 0.9195804195804196,
+       "dev_recall": 0.9293286219081273,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.9314586994727592,
+       "dev_precision": 0.9265734265734266,
+       "dev_recall": 0.9363957597173145,
+       "parse_failure_rate": 0.0
+      }
+     ],
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9113475177304965,
+       "dev_precision": 0.9145907473309609,
+       "dev_recall": 0.9081272084805654,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.9312169312169312,
+       "dev_precision": 0.9295774647887324,
+       "dev_recall": 0.9328621908127208,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.9363957597173145,
+       "dev_precision": 0.9363957597173145,
+       "dev_recall": 0.9363957597173145,
+       "parse_failure_rate": 0.0
+      }
+     ]
+    ],
+    "train_lower_bound": false,
+    "resume_checkpoints": [
+     null,
+     null,
+     null
+    ],
+    "truncation": {
+     "failed_sentences": [
+      67.66666666666667,
+      0.5773502691896257
+     ],
+     "lost_gold": [
+      664.3333333333334,
+      6.027713773341708
+     ],
+     "lost_share": [
+      0.02590498472736726,
+      0.0002350444052775093
+     ],
+     "mean_tokens_failed": [
+      44.18576236464735,
+      0.6329326512083875
+     ],
+     "recall_without_failed": [
+      0.9498679889962274,
+      0.0009736253411945955
+     ]
+    },
+    "gpus": [
+     "NVIDIA H100 80GB HBM3"
+    ],
+    "commits": [
+     "179eed8c68b49f51fff5498e411db22c88ef3c9a"
+    ],
+    "total_params_reported": [
+     509975360,
+     509975360,
+     509975360
+    ]
+   },
+   "examples": [
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "It was only surpassed by Cernăuți and Rădăuți , both located to the north .",
+       "gold": [
+        "Cernăuți",
+        "LOC"
+       ],
+       "pred": [
+        "Cernăuți",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "It was only surpassed by Cernăuți and Rădăuți , both located to the north .",
+       "gold": [
+        "Rădăuți",
+        "LOC"
+       ],
+       "pred": [
+        "Rădăuți",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "Two or three ounces of white rum completed the mixture .",
+       "gold": [
+        "rum",
+        "FOOD"
+       ],
+       "pred": [
+        "white rum",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "He is also the offensive coordinator at Trinity Christian School – Cedar Hill , which his sons attend .",
+       "gold": [
+        "Trinity Christian School – Cedar Hill",
+        "ORG"
+       ],
+       "pred": [
+        "Trinity Christian School",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "avalanche rescue dogs",
+        "ANIM"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Palm wine is distilled to produce \" arrack \" .",
+       "gold": [
+        "arrack",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The roots are used as a dye , a mouthwash , and a folk medicine for diarrhea and dysentery .",
+       "gold": [
+        "diarrhea",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "coyote",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "pred": [
+        "coconuts",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "Palm wine is distilled to produce \" arrack \" .",
+       "pred": [
+        "Palm wine",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ],
+       "pred": [
+        "whiptails",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "It was only surpassed by Cernăuți and Rădăuți , both located to the north .",
+       "gold": [
+        "Cernăuți",
+        "LOC"
+       ],
+       "pred": [
+        "Cernăuți",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "It was only surpassed by Cernăuți and Rădăuți , both located to the north .",
+       "gold": [
+        "Rădăuți",
+        "LOC"
+       ],
+       "pred": [
+        "Rădăuți",
+        "ORG"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "Two or three ounces of white rum completed the mixture .",
+       "gold": [
+        "rum",
+        "FOOD"
+       ],
+       "pred": [
+        "white rum",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "He was diagnosed with throat and liver cancer in 2014 .",
+       "gold": [
+        "liver cancer",
+        "DIS"
+       ],
+       "pred": [
+        "throat and liver cancer",
+        "DIS"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "English singer Imaani provided vocals on the song .",
+       "gold": [
+        "Imaani",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "gold": [
+        "palm sugar",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The roots are used as a dye , a mouthwash , and a folk medicine for diarrhea and dysentery .",
+       "gold": [
+        "diarrhea",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "coyote",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "coconut sugar",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "pred": [
+        "Amphioctopus marginatus",
+        "ANIM"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "It was only surpassed by Cernăuți and Rădăuți , both located to the north .",
+       "gold": [
+        "Cernăuți",
+        "LOC"
+       ],
+       "pred": [
+        "Cernăuți",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "It was only surpassed by Cernăuți and Rădăuți , both located to the north .",
+       "gold": [
+        "Rădăuți",
+        "LOC"
+       ],
+       "pred": [
+        "Rădăuți",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "Two or three ounces of white rum completed the mixture .",
+       "gold": [
+        "rum",
+        "FOOD"
+       ],
+       "pred": [
+        "white rum",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "He was diagnosed with throat and liver cancer in 2014 .",
+       "gold": [
+        "liver cancer",
+        "DIS"
+       ],
+       "pred": [
+        "liver",
+        "DIS"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Palm wine is distilled to produce \" arrack \" .",
+       "gold": [
+        "arrack",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Bupropion-induced psychosis may develop in select populations , or worsen a pre-existing psychotic syndrome .",
+       "gold": [
+        "psychosis",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "Until 2008 , the black-headed parrotbill was also considered as a subspecies of the grey-headed parrotbill .",
+       "gold": [
+        "black-headed parrotbill",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "coyote",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Palm wine is distilled to produce \" arrack \" .",
+       "pred": [
+        "Palm wine",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "coconut sugar",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    }
+   ],
+   "generation_settings": null
+  },
+  "qwen4-qlora": {
+   "label": "Qwen3.5-4B",
+   "regime": "QLoRA",
+   "gpu": "A100",
+   "params": 4206000000.0,
+   "agg": {
+    "precision": {
+     "mean": 0.9455921830675001,
+     "std": 0.0014281263132904696,
+     "values": [
+      0.9441686367218282,
+      0.947024845703434,
+      0.9455830667772381
+     ]
+    },
+    "recall": {
+     "mean": 0.9338402547605121,
+     "std": 0.000519269106529878,
+     "values": [
+      0.9344121661142523,
+      0.9333983232598947,
+      0.9337102749073893
+     ]
+    },
+    "f1": {
+     "mean": 0.9396788149112929,
+     "std": 0.0004526100618311652,
+     "values": [
+      0.939265066144047,
+      0.940162212053966,
+      0.9396091665358658
+     ]
+    },
+    "macro_f1": {
+     "mean": 0.8455524887087761,
+     "std": 0.009268009716690132,
+     "values": [
+      0.8377928419733213,
+      0.8558148598447831,
+      0.8430497643082236
+     ]
+    },
+    "latency_mean": {
+     "mean": 4684.691244731319,
+     "std": 142.70989581328817,
+     "values": [
+      4548.864020734415,
+      4671.800535811822,
+      4833.409177647719
+     ]
+    },
+    "latency_p50": {
+     "mean": 3245.4147040261887,
+     "std": 99.98300823095045,
+     "values": [
+      3145.587179053109,
+      3245.1044595218264,
+      3345.5524735036306
+     ]
+    },
+    "latency_p95": {
+     "mean": 10938.625657932907,
+     "std": 208.01746345387448,
+     "values": [
+      10719.753305503396,
+      10962.373823852977,
+      11133.749844442353
+     ]
+    },
+    "vram_mb": {
+     "mean": 3555.61376953125,
+     "std": 0.0,
+     "values": [
+      3555.61376953125,
+      3555.61376953125,
+      3555.61376953125
+     ]
+    },
+    "throughput": {
+     "mean": 0.21359288156743683,
+     "std": 0.0064830104879252766,
+     "values": [
+      0.2198351050815869,
+      0.21405023445125088,
+      0.20689330516947277
+     ]
+    },
+    "train_seconds": {
+     "mean": 226481.049154746,
+     "std": 5948.778645196056,
+     "values": [
+      230502.51450366504,
+      229293.05737163895,
+      219647.575588934
+     ]
+    },
+    "per_type": {
+     "PER": {
+      "precision": {
+       "mean": 0.9956647993048001,
+       "std": 0.0002250907938070525
+      },
+      "recall": {
+       "mean": 0.9742323520101298,
+       "std": 0.0005802564982533302
+      },
+      "f1": {
+       "mean": 0.9848319503446175,
+       "std": 0.00038694106206738516
+      },
+      "support": 5265
+     },
+     "ORG": {
+      "precision": {
+       "mean": 0.9855511651804054,
+       "std": 0.0012615829595287165
+      },
+      "recall": {
+       "mean": 0.9825727813035158,
+       "std": 0.001664421440702947
+      },
+      "f1": {
+       "mean": 0.9840595237933853,
+       "std": 0.0013766727240277607
+      },
+      "support": 3309
+     },
+     "LOC": {
+      "precision": {
+       "mean": 0.9950369667988239,
+       "std": 0.0008119782938013207
+      },
+      "recall": {
+       "mean": 0.9670104235972499,
+       "std": 0.00024008244726779878
+      },
+      "f1": {
+       "mean": 0.980823400117155,
+       "std": 0.000402798632380768
+      },
+      "support": 12024
+     },
+     "CEL": {
+      "precision": {
+       "mean": 0.7946985446985447,
+       "std": 0.06152186591419093
+      },
+      "recall": {
+       "mean": 0.7479674796747968,
+       "std": 0.028163427765347623
+      },
+      "f1": {
+       "mean": 0.7704178537511871,
+       "std": 0.043629837744878414
+      },
+      "support": 41
+     },
+     "DIS": {
+      "precision": {
+       "mean": 0.776925467676865,
+       "std": 0.006382996396989069
+      },
+      "recall": {
+       "mean": 0.7935880544576196,
+       "std": 0.005324706039957062
+      },
+      "f1": {
+       "mean": 0.7851432766133103,
+       "std": 0.0022761777710352668
+      },
+      "support": 759
+     },
+     "EVE": {
+      "precision": {
+       "mean": 0.9510559797171871,
+       "std": 0.006267663044557136
+      },
+      "recall": {
+       "mean": 0.9564393939393939,
+       "std": 0.0032803992567592023
+      },
+      "f1": {
+       "mean": 0.9537350263571035,
+       "std": 0.004235820950021947
+      },
+      "support": 352
+     },
+     "MEDIA": {
+      "precision": {
+       "mean": 0.9744918154191885,
+       "std": 0.0024913280597375037
+      },
+      "recall": {
+       "mean": 0.9730713245997089,
+       "std": 0.002521180214801865
+      },
+      "f1": {
+       "mean": 0.9737800158619437,
+       "std": 0.0021836570064606366
+      },
+      "support": 458
+     },
+     "ANIM": {
+      "precision": {
+       "mean": 0.7258017393536793,
+       "std": 0.0049912874097488855
+      },
+      "recall": {
+       "mean": 0.7271404821280133,
+       "std": 0.005792751398489777
+      },
+      "f1": {
+       "mean": 0.7264591585456778,
+       "std": 0.004105094026185022
+      },
+      "support": 1604
+     },
+     "BIO": {
+      "precision": {
+       "mean": 0.6318181818181818,
+       "std": 0.10591981997937314
+      },
+      "recall": {
+       "mean": 0.75,
+       "std": 0.0
+      },
+      "f1": {
+       "mean": 0.6827485380116958,
+       "std": 0.06082644462782085
+      },
+      "support": 8
+     },
+     "FOOD": {
+      "precision": {
+       "mean": 0.6592705809569649,
+       "std": 0.01268436168965793
+      },
+      "recall": {
+       "mean": 0.6537102473498233,
+       "std": 0.012740463870897471
+      },
+      "f1": {
+       "mean": 0.6564145796777607,
+       "std": 0.009897059506002078
+      },
+      "support": 566
+     },
+     "PLANT": {
+      "precision": {
+       "mean": 0.6551614576891779,
+       "std": 0.01688539359399133
+      },
+      "recall": {
+       "mean": 0.7550335570469798,
+       "std": 0.004875725887629399
+      },
+      "f1": {
+       "mean": 0.7015011630882101,
+       "std": 0.010958128673370916
+      },
+      "support": 894
+     },
+     "INST": {
+      "precision": {
+       "mean": 0.9666666666666667,
+       "std": 0.05773502691896257
+      },
+      "recall": {
+       "mean": 0.7777777777777778,
+       "std": 0.048112522432468836
+      },
+      "f1": {
+       "mean": 0.8614718614718614,
+       "std": 0.045608890704990177
+      },
+      "support": 12
+     },
+     "MYTH": {
+      "precision": {
+       "mean": 0.8538146441372247,
+       "std": 0.019036673266790868
+      },
+      "recall": {
+       "mean": 0.90625,
+       "std": 0.05412658773652741
+      },
+      "f1": {
+       "mean": 0.8783393954596764,
+       "std": 0.01950201297981442
+      },
+      "support": 32
+     },
+     "TIME": {
+      "precision": {
+       "mean": 0.8547853544846252,
+       "std": 0.005995878170056789
+      },
+      "recall": {
+       "mean": 0.8350634371395618,
+       "std": 0.005285554434781843
+      },
+      "f1": {
+       "mean": 0.8448087230924358,
+       "std": 0.005574515103634606
+      },
+      "support": 289
+     },
+     "VEHI": {
+      "precision": {
+       "mean": 0.9246168582375479,
+       "std": 0.04588382558485801
+      },
+      "recall": {
+       "mean": 0.875,
+       "std": 0.0
+      },
+      "f1": {
+       "mean": 0.8987528644456195,
+       "std": 0.021862309905851227
+      },
+      "support": 32
+     }
+    },
+    "errors": {
+     "korrekt": {
+      "mean": 0.9338402547605121,
+      "std": 0.000519269106529878
+     },
+     "typfehler": {
+      "mean": 0.00565412361084032,
+      "std": 0.0003840459271513397
+     },
+     "grenzfehler": {
+      "mean": 0.00748683953987132,
+      "std": 0.0003331645055690204
+     },
+     "grenz_typ": {
+      "mean": 0.001000844869045298,
+      "std": 8.117239225837909e-05
+     },
+     "auslassung": {
+      "mean": 0.05201793721973094,
+      "std": 0.0011488336800667763
+     },
+     "additions": {
+      "mean": 1023.0,
+      "std": 29.0516780926679
+     },
+     "n_gold": 25645,
+     "confusion_top": [
+      [
+       "ANIM->PLANT",
+       45.0
+      ],
+      [
+       "LOC->ORG",
+       16.0
+      ],
+      [
+       "ORG->LOC",
+       14.333333333333334
+      ],
+      [
+       "FOOD->PLANT",
+       7.666666666666667
+      ],
+      [
+       "FOOD->ANIM",
+       6.333333333333333
+      ],
+      [
+       "ANIM->FOOD",
+       6.333333333333333
+      ],
+      [
+       "MEDIA->EVE",
+       6.0
+      ],
+      [
+       "ORG->PER",
+       5.333333333333333
+      ],
+      [
+       "LOC->PER",
+       4.666666666666667
+      ],
+      [
+       "PLANT->ANIM",
+       4.333333333333333
+      ],
+      [
+       "PLANT->FOOD",
+       4.0
+      ],
+      [
+       "TIME->EVE",
+       3.6666666666666665
+      ]
+     ],
+     "boundary_by_type": {
+      "ANIM": 37.0,
+      "DIS": 36.0,
+      "PLANT": 28.0,
+      "FOOD": 23.666666666666668,
+      "LOC": 22.333333333333332,
+      "ORG": 16.0,
+      "TIME": 12.0,
+      "PER": 7.666666666666667,
+      "CEL": 4.0,
+      "EVE": 2.6666666666666665,
+      "MEDIA": 1.0,
+      "MYTH": 1.0,
+      "VEHI": 0.6666666666666666
+     },
+     "additions_by_type": {
+      "ANIM": 390.0,
+      "PLANT": 273.3333333333333,
+      "FOOD": 155.0,
+      "DIS": 136.33333333333334,
+      "TIME": 23.666666666666668,
+      "LOC": 16.333333333333332,
+      "ORG": 8.0,
+      "MEDIA": 6.333333333333333,
+      "PER": 4.666666666666667,
+      "CEL": 3.6666666666666665,
+      "BIO": 2.6666666666666665,
+      "EVE": 2.6666666666666665,
+      "VEHI": 0.3333333333333333
+     }
+    },
+    "form": {
+     "n": {
+      "mean": 16454.0,
+      "std": 0.0,
+      "values": [
+       16454,
+       16454,
+       16454
+      ]
+     },
+     "parse_ok": {
+      "mean": 16385.333333333332,
+      "std": 2.8867513459481287,
+      "values": [
+       16382,
+       16387,
+       16387
+      ]
+     },
+     "markdown": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "regex": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "failed": {
+      "mean": 68.66666666666667,
+      "std": 2.8867513459481287,
+      "values": [
+       72,
+       67,
+       67
+      ]
+     },
+     "failure_rate": {
+      "mean": 0.004173250678659698,
+      "std": 0.00017544374291650252,
+      "values": [
+       0.004375835663060654,
+       0.004071958186459219,
+       0.004071958186459219
+      ]
+     },
+     "wrong_schema": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "invalid_items": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "missing_fields": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "invalid_offsets": {
+      "mean": 0.3333333333333333,
+      "std": 0.5773502691896258,
+      "values": [
+       1,
+       0,
+       0
+      ]
+     },
+     "unknown_types": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "text_mismatches": {
+      "mean": 12.333333333333334,
+      "std": 5.033222956847166,
+      "values": [
+       7,
+       13,
+       17
+      ]
+     },
+     "overlaps": {
+      "mean": 0.3333333333333333,
+      "std": 0.5773502691896258,
+      "values": [
+       1,
+       0,
+       0
+      ]
+     },
+     "failed_no_close": {
+      "mean": 68.66666666666667,
+      "std": 2.8867513459481287,
+      "values": [
+       72,
+       67,
+       67
+      ]
+     },
+     "empty": {
+      "mean": 76.0,
+      "std": 2.0,
+      "values": [
+       78,
+       74,
+       76
+      ]
+     },
+     "unknown_examples": [
+      [],
+      [],
+      []
+     ]
+    },
+    "best_epochs": [
+     2,
+     3,
+     3
+    ],
+    "val_f1": [
+     0.9545454545454545,
+     0.9417989417989419,
+     0.950530035335689
+    ],
+    "epoch_results": [
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9377162629757785,
+       "dev_precision": 0.9186440677966101,
+       "dev_recall": 0.9575971731448764,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.9545454545454545,
+       "dev_precision": 0.9446366782006921,
+       "dev_recall": 0.9646643109540636,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.9527145359019265,
+       "dev_precision": 0.9444444444444444,
+       "dev_recall": 0.9611307420494699,
+       "parse_failure_rate": 0.0
+      }
+     ],
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9395509499136442,
+       "dev_precision": 0.918918918918919,
+       "dev_recall": 0.9611307420494699,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.9401408450704226,
+       "dev_precision": 0.9368421052631579,
+       "dev_recall": 0.9434628975265018,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.9417989417989419,
+       "dev_precision": 0.9401408450704225,
+       "dev_recall": 0.9434628975265018,
+       "parse_failure_rate": 0.0
+      }
+     ],
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9384885764499121,
+       "dev_precision": 0.9335664335664335,
+       "dev_recall": 0.9434628975265018,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.9486725663716815,
+       "dev_precision": 0.950354609929078,
+       "dev_recall": 0.9469964664310954,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.950530035335689,
+       "dev_precision": 0.950530035335689,
+       "dev_recall": 0.950530035335689,
+       "parse_failure_rate": 0.0
+      }
+     ]
+    ],
+    "train_lower_bound": false,
+    "resume_checkpoints": [
+     null,
+     null,
+     null
+    ],
+    "truncation": {
+     "failed_sentences": [
+      68.66666666666667,
+      2.8867513459481287
+     ],
+     "lost_gold": [
+      670.0,
+      14.730919862656235
+     ],
+     "lost_share": [
+      0.02612595047767596,
+      0.000574416840033387
+     ],
+     "mean_tokens_failed": [
+      44.73846047540078,
+      0.21411189032025021
+     ],
+     "recall_without_failed": [
+      0.9588926501008332,
+      0.0010890533785427245
+     ]
+    },
+    "gpus": [
+     "NVIDIA A100-SXM4-80GB"
+    ],
+    "commits": [
+     "179eed8c68b49f51fff5498e411db22c88ef3c9a"
+    ],
+    "total_params_reported": [
+     2442439680,
+     2442439680,
+     2442439680
+    ]
+   },
+   "examples": [
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "It is produced by Canada Dry Motts , a subsidiary of the Dr Pepper Snapple Group .",
+       "gold": [
+        "Canada Dry Motts",
+        "ORG"
+       ],
+       "pred": [
+        "Canada Dry Motts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "Downtown Dallas also has residential offerings in downtown , some of which are signature skyline buildings .",
+       "gold": [
+        "Downtown Dallas",
+        "LOC"
+       ],
+       "pred": [
+        "Dallas",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "She developed the technique for visualizing maize chromosomes and used microscopic analysis to demonstrate many fundamental genetic ideas .",
+       "gold": [
+        "maize chromosomes",
+        "PLANT"
+       ],
+       "pred": [
+        "maize",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "gold": [
+        "rock squirrel",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "gold": [
+        "palm sugar",
+        "FOOD"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "coyote",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "pred": [
+        "coconuts",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "It is produced by Canada Dry Motts , a subsidiary of the Dr Pepper Snapple Group .",
+       "gold": [
+        "Canada Dry Motts",
+        "ORG"
+       ],
+       "pred": [
+        "Canada Dry Motts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "Downtown Dallas also has residential offerings in downtown , some of which are signature skyline buildings .",
+       "gold": [
+        "Downtown Dallas",
+        "LOC"
+       ],
+       "pred": [
+        "Dallas",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "He was diagnosed with throat and liver cancer in 2014 .",
+       "gold": [
+        "liver cancer",
+        "DIS"
+       ],
+       "pred": [
+        "cancer",
+        "DIS"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "gold": [
+        "rock squirrel",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "gold": [
+        "palm sugar",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "coyote",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "jaggery",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "It is produced by Canada Dry Motts , a subsidiary of the Dr Pepper Snapple Group .",
+       "gold": [
+        "Canada Dry Motts",
+        "ORG"
+       ],
+       "pred": [
+        "Canada Dry Motts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "He is also the offensive coordinator at Trinity Christian School – Cedar Hill , which his sons attend .",
+       "gold": [
+        "Trinity Christian School – Cedar Hill",
+        "ORG"
+       ],
+       "pred": [
+        "Trinity Christian School",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "avalanche rescue dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "gold": [
+        "rock squirrel",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "pred": [
+        "coconuts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "coconut sugar",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    }
+   ],
+   "generation_settings": null
+  },
+  "qwen27-qlora": {
+   "label": "Qwen3.5-27B",
+   "regime": "QLoRA",
+   "gpu": "NVL",
+   "params": 26896000000.0,
+   "agg": {
+    "precision": {
+     "mean": 0.9518033725329494,
+     "std": 0.0009134179752071631,
+     "values": [
+      0.9527506039843162,
+      0.9509280145632989,
+      0.9517314990512334
+     ]
+    },
+    "recall": {
+     "mean": 0.9379346201338793,
+     "std": 0.0009013706868179892,
+     "values": [
+      0.9380386040163775,
+      0.9369857672060831,
+      0.9387794891791772
+     ]
+    },
+    "f1": {
+     "mean": 0.9448179678604386,
+     "std": 0.0007928157437843976,
+     "values": [
+      0.9453373678626164,
+      0.9439054091212634,
+      0.9452111265974362
+     ]
+    },
+    "macro_f1": {
+     "mean": 0.8685297814449561,
+     "std": 0.002503419650138493,
+     "values": [
+      0.869581369699706,
+      0.8656720929049728,
+      0.8703358817301893
+     ]
+    },
+    "latency_mean": {
+     "mean": 5504.89158169899,
+     "std": 11.406631736896333,
+     "values": [
+      5517.972762391744,
+      5499.682637455684,
+      5497.019345249544
+     ]
+    },
+    "latency_p50": {
+     "mean": 3792.3950388794765,
+     "std": 11.059569516077822,
+     "values": [
+      3805.1167980302125,
+      3785.068907542154,
+      3786.9994110660627
+     ]
+    },
+    "latency_p95": {
+     "mean": 12950.33978890472,
+     "std": 8.729999032283628,
+     "values": [
+      12940.30679324641,
+      12956.203123019073,
+      12954.509450448673
+     ]
+    },
+    "vram_mb": {
+     "mean": 19145.8798828125,
+     "std": 0.0,
+     "values": [
+      19145.8798828125,
+      19145.8798828125,
+      19145.8798828125
+     ]
+    },
+    "throughput": {
+     "mean": 0.18165713971426065,
+     "std": 0.00037598769633076913,
+     "values": [
+      0.1812259761076736,
+      0.18182867374736914,
+      0.18191676928773914
+     ]
+    },
+    "train_seconds": {
+     "mean": 181665.4002108414,
+     "std": 10326.955510621925,
+     "values": [
+      177161.0158068072,
+      174355.74630586198,
+      193479.43851985503
+     ]
+    },
+    "per_type": {
+     "PER": {
+      "precision": {
+       "mean": 0.9972841128162063,
+       "std": 0.0006965909126618461
+      },
+      "recall": {
+       "mean": 0.976258309591643,
+       "std": 0.0003798670465336995
+      },
+      "f1": {
+       "mean": 0.9866590414304501,
+       "std": 0.00024964340740909357
+      },
+      "support": 5265
+     },
+     "ORG": {
+      "precision": {
+       "mean": 0.9900104519840593,
+       "std": 0.0009025119586687057
+      },
+      "recall": {
+       "mean": 0.9883146972902187,
+       "std": 0.0007605353515937527
+      },
+      "f1": {
+       "mean": 0.9891617067615971,
+       "std": 0.0006975465357589753
+      },
+      "support": 3309
+     },
+     "LOC": {
+      "precision": {
+       "mean": 0.9964637161250683,
+       "std": 0.000130465813738335
+      },
+      "recall": {
+       "mean": 0.9686460412508318,
+       "std": 0.00050588510731024
+      },
+      "f1": {
+       "mean": 0.9823579434182864,
+       "std": 0.0002751081535095861
+      },
+      "support": 12024
+     },
+     "CEL": {
+      "precision": {
+       "mean": 0.8850165955429113,
+       "std": 0.014442384457579907
+      },
+      "recall": {
+       "mean": 0.8130081300813008,
+       "std": 0.014081713882673748
+      },
+      "f1": {
+       "mean": 0.8474521259331386,
+       "std": 0.012708063583545487
+      },
+      "support": 41
+     },
+     "DIS": {
+      "precision": {
+       "mean": 0.7891535308149527,
+       "std": 0.008943931638011951
+      },
+      "recall": {
+       "mean": 0.8115942028985508,
+       "std": 0.0045640337485345645
+      },
+      "f1": {
+       "mean": 0.8001865258040103,
+       "std": 0.003914770088118395
+      },
+      "support": 759
+     },
+     "EVE": {
+      "precision": {
+       "mean": 0.9695011645059676,
+       "std": 0.0014552618918464426
+      },
+      "recall": {
+       "mean": 0.9630681818181818,
+       "std": 0.004920598885138868
+      },
+      "f1": {
+       "mean": 0.9662669219931473,
+       "std": 0.0017600243860790012
+      },
+      "support": 352
+     },
+     "MEDIA": {
+      "precision": {
+       "mean": 0.9740304061635126,
+       "std": 0.002078701441157336
+      },
+      "recall": {
+       "mean": 0.982532751091703,
+       "std": 0.002183406113537123
+      },
+      "f1": {
+       "mean": 0.9782608182524153,
+       "std": 0.0010889070333970773
+      },
+      "support": 458
+     },
+     "ANIM": {
+      "precision": {
+       "mean": 0.7439081120102893,
+       "std": 0.0046802605172843416
+      },
+      "recall": {
+       "mean": 0.7356608478802992,
+       "std": 0.008152554133804234
+      },
+      "f1": {
+       "mean": 0.7397243407752923,
+       "std": 0.001780972452574673
+      },
+      "support": 1604
+     },
+     "BIO": {
+      "precision": {
+       "mean": 0.5917508417508418,
+       "std": 0.04105639191332388
+      },
+      "recall": {
+       "mean": 0.7916666666666666,
+       "std": 0.14433756729740643
+      },
+      "f1": {
+       "mean": 0.6750257997936017,
+       "std": 0.07738720234425928
+      },
+      "support": 8
+     },
+     "FOOD": {
+      "precision": {
+       "mean": 0.7088137388733978,
+       "std": 0.015745414353627293
+      },
+      "recall": {
+       "mean": 0.693168433451119,
+       "std": 0.009066433638598739
+      },
+      "f1": {
+       "mean": 0.7008396003825587,
+       "std": 0.009670578275873752
+      },
+      "support": 566
+     },
+     "PLANT": {
+      "precision": {
+       "mean": 0.669203790456014,
+       "std": 0.012504753932844706
+      },
+      "recall": {
+       "mean": 0.7360178970917226,
+       "std": 0.011016619465096295
+      },
+      "f1": {
+       "mean": 0.7010101868593591,
+       "std": 0.011363226712930437
+      },
+      "support": 894
+     },
+     "INST": {
+      "precision": {
+       "mean": 0.9722222222222222,
+       "std": 0.048112522432468836
+      },
+      "recall": {
+       "mean": 0.9722222222222222,
+       "std": 0.048112522432468836
+      },
+      "f1": {
+       "mean": 0.9722222222222222,
+       "std": 0.048112522432468836
+      },
+      "support": 12
+     },
+     "MYTH": {
+      "precision": {
+       "mean": 0.8494910494910495,
+       "std": 0.05237334564501222
+      },
+      "recall": {
+       "mean": 0.9270833333333334,
+       "std": 0.018042195912175804
+      },
+      "f1": {
+       "mean": 0.8861045940864241,
+       "std": 0.03207810493116767
+      },
+      "support": 32
+     },
+     "TIME": {
+      "precision": {
+       "mean": 0.8853969939379192,
+       "std": 0.006744616056124087
+      },
+      "recall": {
+       "mean": 0.8638985005767013,
+       "std": 0.005285554434781794
+      },
+      "f1": {
+       "mean": 0.8744919657789093,
+       "std": 0.002341200170342296
+      },
+      "support": 289
+     },
+     "VEHI": {
+      "precision": {
+       "mean": 0.919728595250417,
+       "std": 0.043677114858109094
+      },
+      "recall": {
+       "mean": 0.9375,
+       "std": 0.0
+      },
+      "f1": {
+       "mean": 0.928182928182928,
+       "std": 0.022092089718276264
+      },
+      "support": 32
+     }
+    },
+    "errors": {
+     "korrekt": {
+      "mean": 0.9379346201338793,
+      "std": 0.0009013706868179892
+     },
+     "typfehler": {
+      "mean": 0.004913238448040554,
+      "std": 0.00010316831004346254
+     },
+     "grenzfehler": {
+      "mean": 0.005875089361149021,
+      "std": 0.0003246895690335163
+     },
+     "grenz_typ": {
+      "mean": 0.0006628972509261066,
+      "std": 3.899395593682977e-05
+     },
+     "auslassung": {
+      "mean": 0.05061415480600507,
+      "std": 0.0006489887688474626
+     },
+     "additions": {
+      "mean": 930.6666666666666,
+      "std": 14.46835627614047
+     },
+     "n_gold": 25645,
+     "confusion_top": [
+      [
+       "ANIM->PLANT",
+       43.666666666666664
+      ],
+      [
+       "LOC->ORG",
+       11.0
+      ],
+      [
+       "PLANT->ANIM",
+       8.666666666666666
+      ],
+      [
+       "ORG->LOC",
+       8.0
+      ],
+      [
+       "ANIM->FOOD",
+       6.0
+      ],
+      [
+       "FOOD->ANIM",
+       5.0
+      ],
+      [
+       "FOOD->PLANT",
+       5.0
+      ],
+      [
+       "PER->MYTH",
+       4.333333333333333
+      ],
+      [
+       "EVE->MEDIA",
+       4.0
+      ],
+      [
+       "MEDIA->EVE",
+       3.6666666666666665
+      ],
+      [
+       "TIME->EVE",
+       3.3333333333333335
+      ],
+      [
+       "ORG->PER",
+       3.3333333333333335
+      ]
+     ],
+     "boundary_by_type": {
+      "ANIM": 35.0,
+      "DIS": 33.0,
+      "PLANT": 27.0,
+      "LOC": 17.666666666666668,
+      "FOOD": 13.666666666666666,
+      "ORG": 8.666666666666666,
+      "TIME": 8.333333333333334,
+      "CEL": 3.0,
+      "PER": 2.0,
+      "MEDIA": 1.0,
+      "MYTH": 0.6666666666666666,
+      "EVE": 0.6666666666666666
+     },
+     "additions_by_type": {
+      "ANIM": 355.3333333333333,
+      "PLANT": 248.33333333333334,
+      "FOOD": 137.66666666666666,
+      "DIS": 131.33333333333334,
+      "TIME": 18.0,
+      "LOC": 12.333333333333334,
+      "ORG": 8.666666666666666,
+      "MEDIA": 5.0,
+      "PER": 4.333333333333333,
+      "BIO": 4.0,
+      "VEHI": 2.0,
+      "EVE": 2.0,
+      "CEL": 1.3333333333333333,
+      "INST": 0.3333333333333333
+     }
+    },
+    "form": {
+     "n": {
+      "mean": 16454.0,
+      "std": 0.0,
+      "values": [
+       16454,
+       16454,
+       16454
+      ]
+     },
+     "parse_ok": {
+      "mean": 16389.0,
+      "std": 3.0,
+      "values": [
+       16389,
+       16386,
+       16392
+      ]
+     },
+     "markdown": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "regex": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "failed": {
+      "mean": 65.0,
+      "std": 3.0,
+      "values": [
+       65,
+       68,
+       62
+      ]
+     },
+     "failure_rate": {
+      "mean": 0.0039504071958186456,
+      "std": 0.00018232648596086054,
+      "values": [
+       0.0039504071958186456,
+       0.0041327336817795065,
+       0.0037680807098577854
+      ]
+     },
+     "wrong_schema": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "invalid_items": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "missing_fields": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "invalid_offsets": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "unknown_types": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "text_mismatches": {
+      "mean": 4.0,
+      "std": 1.7320508075688772,
+      "values": [
+       3,
+       3,
+       6
+      ]
+     },
+     "overlaps": {
+      "mean": 0.0,
+      "std": 0.0,
+      "values": [
+       0,
+       0,
+       0
+      ]
+     },
+     "failed_no_close": {
+      "mean": 65.0,
+      "std": 3.0,
+      "values": [
+       65,
+       68,
+       62
+      ]
+     },
+     "empty": {
+      "mean": 70.33333333333333,
+      "std": 3.214550253664318,
+      "values": [
+       69,
+       74,
+       68
+      ]
+     },
+     "unknown_examples": [
+      [],
+      [],
+      []
+     ]
+    },
+    "best_epochs": [
+     3,
+     3,
+     3
+    ],
+    "val_f1": [
+     0.9612676056338026,
+     0.946808510638298,
+     0.9557522123893806
+    ],
+    "epoch_results": [
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9462738301559792,
+       "dev_precision": 0.9285714285714286,
+       "dev_recall": 0.9646643109540636,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.9578947368421052,
+       "dev_precision": 0.9512195121951219,
+       "dev_recall": 0.9646643109540636,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.9612676056338026,
+       "dev_precision": 0.9578947368421052,
+       "dev_recall": 0.9646643109540636,
+       "parse_failure_rate": 0.0
+      }
+     ],
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9331046312178387,
+       "dev_precision": 0.9066666666666666,
+       "dev_recall": 0.9611307420494699,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.945518453427065,
+       "dev_precision": 0.9405594405594405,
+       "dev_recall": 0.950530035335689,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.946808510638298,
+       "dev_precision": 0.9501779359430605,
+       "dev_recall": 0.9434628975265018,
+       "parse_failure_rate": 0.0
+      }
+     ],
+     [
+      {
+       "epoch": 1,
+       "dev_f1": 0.9389179755671901,
+       "dev_precision": 0.9275862068965517,
+       "dev_recall": 0.950530035335689,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 2,
+       "dev_f1": 0.9471830985915494,
+       "dev_precision": 0.9438596491228071,
+       "dev_recall": 0.950530035335689,
+       "parse_failure_rate": 0.0
+      },
+      {
+       "epoch": 3,
+       "dev_f1": 0.9557522123893806,
+       "dev_precision": 0.9574468085106383,
+       "dev_recall": 0.9540636042402827,
+       "parse_failure_rate": 0.0
+      }
+     ]
+    ],
+    "train_lower_bound": true,
+    "resume_checkpoints": [
+     "checkpoint-7000",
+     "checkpoint-7000",
+     "checkpoint-6500"
+    ],
+    "truncation": {
+     "failed_sentences": [
+      65.0,
+      3.0
+     ],
+     "lost_gold": [
+      655.6666666666666,
+      20.404247923737188
+     ],
+     "lost_share": [
+      0.025567037109248066,
+      0.0007956423444623589
+     ],
+     "mean_tokens_failed": [
+      44.31600982824892,
+      0.196624571966905
+     ],
+     "recall_without_failed": [
+      0.9625439455517127,
+      0.00016277485368462852
+     ]
+    },
+    "gpus": [
+     "NVIDIA H100 NVL"
+    ],
+    "commits": [
+     "c01bcbe0f1be4356a2cf24b1bb501e03b7ab63be"
+    ],
+    "total_params_reported": [
+     14880103936,
+     14880103936,
+     14880103936
+    ]
+   },
+   "examples": [
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "The wine-growing region extends over the international border into Niagara and Orleans counties .",
+       "gold": [
+        "Orleans",
+        "LOC"
+       ],
+       "pred": [
+        "Orleans counties",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "gold": [
+        "rock squirrel",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "gold": [
+        "palm sugar",
+        "FOOD"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "pred": [
+        "coconuts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "jaggery",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "It is produced by Canada Dry Motts , a subsidiary of the Dr Pepper Snapple Group .",
+       "gold": [
+        "Canada Dry Motts",
+        "ORG"
+       ],
+       "pred": [
+        "Canada Dry Motts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "avalanche rescue dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "At New York Harbor it is approximately from Manhattan Island and extends eastward over into the Atlantic Ocean .",
+       "gold": [
+        "Manhattan Island",
+        "LOC"
+       ],
+       "pred": [
+        "Manhattan",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "gold": [
+        "palm sugar",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "pred": [
+        "coconuts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "jaggery",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "pred": [
+        "Amphioctopus marginatus",
+        "ANIM"
+       ]
+      }
+     ],
+     "unbekannt": []
+    },
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "He is also in the band Filthy Friends , playing bass and accordion .",
+       "gold": [
+        "Filthy Friends",
+        "PER"
+       ],
+       "pred": [
+        "Filthy Friends",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "perch",
+        "ANIM"
+       ],
+       "pred": [
+        "perch",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "The lake is home to perch , pike-perch , bream , roaches , whitefishes , smelt and other species of fish .",
+       "gold": [
+        "smelt",
+        "FOOD"
+       ],
+       "pred": [
+        "smelt",
+        "ANIM"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "The wilderness provides habitat for wild burro , desert tortoise , spotted bat and desert bighorn sheep .",
+       "gold": [
+        "burro",
+        "ANIM"
+       ],
+       "pred": [
+        "wild burro",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The search involved ground crews , air crews , avalanche rescue dogs , and trained dive-rescuers with specialized rubber suits .",
+       "gold": [
+        "rescue dogs",
+        "ANIM"
+       ],
+       "pred": [
+        "dogs",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Maize , tobacco , dried meat , and cassava flour are also produced locally .",
+       "gold": [
+        "cassava flour",
+        "PLANT"
+       ],
+       "pred": [
+        "cassava",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "It is located approximately west of the town of Custer in Black Hills of South Dakota .",
+       "gold": [
+        "Black Hills",
+        "LOC"
+       ],
+       "pred": [
+        "Black Hills of South Dakota",
+        "LOC"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "gold": [
+        "palm sugar",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "gold": [
+        "invertebrate",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "pred": [
+        "fence lizard",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "pred": [
+        "coconuts",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "It can be reduced further to yield coconut sugar also referred to as palm sugar or jaggery .",
+       "pred": [
+        "jaggery",
+        "FOOD"
+       ]
+      }
+     ],
+     "unbekannt": []
+    }
+   ],
+   "generation_settings": null
+  },
+  "qwen08-zs": {
+   "label": "Qwen3.5-0.8B",
+   "regime": "Zero-Shot",
+   "gpu": "A100",
+   "params": 752000000.0,
+   "agg": {
+    "precision": {
+     "mean": 0.16683848797250858,
+     "std": null,
+     "values": [
+      0.16683848797250858
+     ]
+    },
+    "recall": {
+     "mean": 0.03786313121466173,
+     "std": null,
+     "values": [
+      0.03786313121466173
+     ]
+    },
+    "f1": {
+     "mean": 0.061719370729381856,
+     "std": null,
+     "values": [
+      0.061719370729381856
+     ]
+    },
+    "macro_f1": {
+     "mean": 0.02503208972042596,
+     "std": null,
+     "values": [
+      0.02503208972042596
+     ]
+    },
+    "latency_mean": {
+     "mean": 3211.106640160556,
+     "std": null,
+     "values": [
+      3211.106640160556
+     ]
+    },
+    "latency_p50": {
+     "mean": null,
+     "std": null,
+     "values": [
+      null
+     ]
+    },
+    "latency_p95": {
+     "mean": 9185.881993192015,
+     "std": null,
+     "values": [
+      9185.881993192015
+     ]
+    },
+    "vram_mb": {
+     "mean": 1587.1455078125,
+     "std": null,
+     "values": [
+      1587.1455078125
+     ]
+    },
+    "throughput": {
+     "mean": 0.3114191187216379,
+     "std": null,
+     "values": [
+      0.3114191187216379
+     ]
+    },
+    "train_seconds": {
+     "mean": null,
+     "std": null,
+     "values": [
+      null
+     ]
+    },
+    "per_type": {
+     "PER": {
+      "precision": {
+       "mean": 0.03709508881922675,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.013485280151946819,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.019779913636996795,
+       "std": null
+      },
+      "support": 5265
+     },
+     "ORG": {
+      "precision": {
+       "mean": 0.15057283142389524,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.02780296161982472,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.04693877551020408,
+       "std": null
+      },
+      "support": 3309
+     },
+     "LOC": {
+      "precision": {
+       "mean": 0.4372146118721461,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.06370592149035263,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.11120789779326365,
+       "std": null
+      },
+      "support": 12024
+     },
+     "CEL": {
+      "precision": {
+       "mean": 0.0,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.0,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.0,
+       "std": null
+      },
+      "support": 41
+     },
+     "DIS": {
+      "precision": {
+       "mean": 0.21052631578947367,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.005270092226613966,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.010282776349614397,
+       "std": null
+      },
+      "support": 759
+     },
+     "EVE": {
+      "precision": {
+       "mean": 0.0625,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.002840909090909091,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.005434782608695653,
+       "std": null
+      },
+      "support": 352
+     },
+     "MEDIA": {
+      "precision": {
+       "mean": 0.041666666666666664,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.006550218340611353,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.011320754716981131,
+       "std": null
+      },
+      "support": 458
+     },
+     "ANIM": {
+      "precision": {
+       "mean": 0.10714285714285714,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.005610972568578554,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.010663507109004738,
+       "std": null
+      },
+      "support": 1604
+     },
+     "BIO": {
+      "precision": {
+       "mean": 0.0625,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.125,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.08333333333333333,
+       "std": null
+      },
+      "support": 8
+     },
+     "FOOD": {
+      "precision": {
+       "mean": 0.14035087719298245,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.014134275618374558,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.025682182985553772,
+       "std": null
+      },
+      "support": 566
+     },
+     "PLANT": {
+      "precision": {
+       "mean": 0.02826086956521739,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.0145413870246085,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.019202363367799114,
+       "std": null
+      },
+      "support": 894
+     },
+     "INST": {
+      "precision": {
+       "mean": 0.0,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.0,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.0,
+       "std": null
+      },
+      "support": 12
+     },
+     "MYTH": {
+      "precision": {
+       "mean": 0.0,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.0,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.0,
+       "std": null
+      },
+      "support": 32
+     },
+     "TIME": {
+      "precision": {
+       "mean": 0.00267379679144385,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.006920415224913495,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.003857280617164899,
+       "std": null
+      },
+      "support": 289
+     },
+     "VEHI": {
+      "precision": {
+       "mean": 0.025,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.03125,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.02777777777777778,
+       "std": null
+      },
+      "support": 32
+     }
+    },
+    "errors": {
+     "korrekt": {
+      "mean": 0.03786313121466173,
+      "std": null
+     },
+     "typfehler": {
+      "mean": 0.011893156560733087,
+      "std": null
+     },
+     "grenzfehler": {
+      "mean": 0.05006823942288945,
+      "std": null
+     },
+     "grenz_typ": {
+      "mean": 0.021134724117761745,
+      "std": null
+     },
+     "auslassung": {
+      "mean": 0.879040748683954,
+      "std": null
+     },
+     "additions": {
+      "mean": 1942,
+      "std": null
+     },
+     "n_gold": 25645,
+     "confusion_top": [
+      [
+       "ORG->LOC",
+       149.0
+      ],
+      [
+       "LOC->PLANT",
+       118.0
+      ],
+      [
+       "LOC->ORG",
+       117.0
+      ],
+      [
+       "LOC->PER",
+       104.0
+      ],
+      [
+       "ORG->PER",
+       64.0
+      ],
+      [
+       "ANIM->PER",
+       37.0
+      ],
+      [
+       "ANIM->PLANT",
+       28.0
+      ],
+      [
+       "ORG->PLANT",
+       26.0
+      ],
+      [
+       "EVE->ORG",
+       21.0
+      ],
+      [
+       "MEDIA->PER",
+       16.0
+      ],
+      [
+       "LOC->TIME",
+       11.0
+      ],
+      [
+       "EVE->LOC",
+       9.0
+      ]
+     ],
+     "boundary_by_type": {
+      "PER": 700.0,
+      "LOC": 338.0,
+      "ORG": 195.0,
+      "PLANT": 14.0,
+      "ANIM": 14.0,
+      "TIME": 12.0,
+      "FOOD": 4.0,
+      "DIS": 4.0,
+      "EVE": 2.0,
+      "MEDIA": 1.0
+     },
+     "additions_by_type": {
+      "TIME": 702.0,
+      "PER": 519.0,
+      "LOC": 271.0,
+      "PLANT": 171.0,
+      "ORG": 56.0,
+      "MEDIA": 50.0,
+      "ANIM": 48.0,
+      "FOOD": 38.0,
+      "VEHI": 35.0,
+      "INST": 13.0,
+      "EVE": 12.0,
+      "BIO": 11.0,
+      "DIS": 11.0,
+      "MYTH": 5.0
+     }
+    },
+    "form": {
+     "n": {
+      "mean": 16454,
+      "std": null,
+      "values": [
+       16454
+      ]
+     },
+     "parse_ok": {
+      "mean": 4430,
+      "std": null,
+      "values": [
+       4430
+      ]
+     },
+     "markdown": {
+      "mean": 9477,
+      "std": null,
+      "values": [
+       9477
+      ]
+     },
+     "regex": {
+      "mean": 195,
+      "std": null,
+      "values": [
+       195
+      ]
+     },
+     "failed": {
+      "mean": 2352,
+      "std": null,
+      "values": [
+       2352
+      ]
+     },
+     "failure_rate": {
+      "mean": 0.1429439649933147,
+      "std": null,
+      "values": [
+       0.1429439649933147
+      ]
+     },
+     "wrong_schema": {
+      "mean": 241,
+      "std": null,
+      "values": [
+       241
+      ]
+     },
+     "invalid_items": {
+      "mean": 190,
+      "std": null,
+      "values": [
+       190
+      ]
+     },
+     "missing_fields": {
+      "mean": 5616,
+      "std": null,
+      "values": [
+       5616
+      ]
+     },
+     "invalid_offsets": {
+      "mean": 6481,
+      "std": null,
+      "values": [
+       6481
+      ]
+     },
+     "unknown_types": {
+      "mean": 1882,
+      "std": null,
+      "values": [
+       1882
+      ]
+     },
+     "text_mismatches": {
+      "mean": 9895,
+      "std": null,
+      "values": [
+       9895
+      ]
+     },
+     "overlaps": {
+      "mean": 21,
+      "std": null,
+      "values": [
+       21
+      ]
+     },
+     "failed_no_close": {
+      "mean": 2304,
+      "std": null,
+      "values": [
+       2304
+      ]
+     },
+     "empty": {
+      "mean": 12632,
+      "std": null,
+      "values": [
+       12632
+      ]
+     },
+     "unknown_examples": [
+      [
+       [
+        "EVENT",
+        322
+       ],
+       [
+        "PLACE",
+        249
+       ],
+       [
+        "PERSON",
+        108
+       ],
+       [
+        "N/A",
+        107
+       ],
+       [
+        "PUNCT",
+        93
+       ],
+       [
+        "NOUN",
+        78
+       ],
+       [
+        "VERB",
+        64
+       ],
+       [
+        "INSTR",
+        49
+       ],
+       [
+        "LOCATION",
+        45
+       ],
+       [
+        "CONJ",
+        43
+       ]
+      ]
+     ]
+    },
+    "best_epochs": [
+     null
+    ],
+    "val_f1": [
+     null
+    ],
+    "epoch_results": [
+     null
+    ],
+    "train_lower_bound": false,
+    "resume_checkpoints": [
+     null
+    ],
+    "truncation": {
+     "failed_sentences": [
+      2352,
+      null
+     ],
+     "lost_gold": [
+      4142,
+      null
+     ],
+     "lost_share": [
+      0.161512965490349,
+      null
+     ],
+     "mean_tokens_failed": [
+      25.2984693877551,
+      null
+     ],
+     "recall_without_failed": [
+      0.04515648979212203,
+      null
+     ]
+    },
+    "gpus": [
+     "NVIDIA A100-SXM4-80GB"
+    ],
+    "commits": [
+     "137bffdd9b4351b35a31e4550bde0c15b3c53a19"
+    ],
+    "total_params_reported": [
+     752393024
+    ]
+   },
+   "examples": [
+    {
+     "typfehler": [
+      {
+       "sentence": "Among the locations they visit in this episode are Pisa , Pompeii , Tuscany , Rome and Venice .",
+       "gold": [
+        "Pisa",
+        "LOC"
+       ],
+       "pred": [
+        "Pisa",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "They are located near the former city of Lachine .",
+       "gold": [
+        "Lachine",
+        "LOC"
+       ],
+       "pred": [
+        "Lachine",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The road curves to the north through woodland and passes east of the community of Oakwood .",
+       "gold": [
+        "Oakwood",
+        "LOC"
+       ],
+       "pred": [
+        "Oakwood",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "Levittown became noted as a suburb , where housing construction was simplified to be produced on a large scale .",
+       "gold": [
+        "Levittown",
+        "LOC"
+       ],
+       "pred": [
+        "Levittown",
+        "PLANT"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "Bradley McIntosh , Jon Lee and Paul Cattermole provide backing vocals and additional vocals on the final chorus .",
+       "gold": [
+        "Bradley McIntosh",
+        "PER"
+       ],
+       "pred": [
+        "Bradley",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "The music video was directed by Dawn Shadforth and Sophie Muller and was filmed in London .",
+       "gold": [
+        "Sophie Muller",
+        "PER"
+       ],
+       "pred": [
+        "Sophie",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "He found himself playing at left full-back , covering for the long term absence through injury of Julian Bennett .",
+       "gold": [
+        "Julian Bennett",
+        "PER"
+       ],
+       "pred": [
+        "Julian",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "His work is published by Peermusic Classical and Meridian Records .",
+       "gold": [
+        "Peermusic Classical",
+        "ORG"
+       ],
+       "pred": [
+        "Classical and Meridian Records",
+        "ORG"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "His family moved to Ohio and settled near Cincinnati when he was a young boy .",
+       "gold": [
+        "Ohio",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "His family moved to Ohio and settled near Cincinnati when he was a young boy .",
+       "gold": [
+        "Cincinnati",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "His family moved to Covington during his term .",
+       "gold": [
+        "Covington",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Another product of the coconut is coconut oil .",
+       "pred": [
+        "Another",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "Another product of the coconut is coconut oil .",
+       "pred": [
+        "coconut",
+        "FOOD"
+       ]
+      },
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "pred": [
+        "Amphioctopus",
+        "BIO"
+       ]
+      },
+      {
+       "sentence": "A similar shutdown happened in Minnesota on July 1 , 2011 .",
+       "pred": [
+        "July",
+        "TIME"
+       ]
+      }
+     ],
+     "unbekannt": [
+      {
+       "sentence": "Amphioctopus marginatus \" is the first invertebrate known to be able to use tools .",
+       "raw": "```json\n[\n\t{\"start_token\": 0, \"end_token\": 1, \"text\": \"Amphioctopus\", \"type\": \"BIO\"},\n\t{\"start_token\": 11, \"end_token\": 12, \"text\": \"tools\", \"type\": \"INSTR\"},\n\t{\"start_token\": 0, \"end_token\": 1, \"text\": \"marginatus\", \"type\": \"PER\"}\n]\n```",
+       "gold": [
+        [
+         "invertebrate",
+         "ANIM"
+        ]
+       ]
+      },
+      {
+       "sentence": "The smallest municipality by population is Neringa Municipality with 2,879 residents .",
+       "raw": "```json\n[\n\t{\"start_token\": 6, \"end_token\": 7, \"text\": \"Neringa\", \"type\": \"PER\"},\n\t{\"start_token\": 8, \"end_token\": 9, \"text\": \"Municipality\", \"type\": \"ORG\"},\n\t{\"start_token\": 9, \"end_token\": 11, \"text\": \"with 2,879 residents\", \"type\": \"PLACE\"}\n]\n```",
+       "gold": [
+        [
+         "Neringa Municipality",
+         "LOC"
+        ]
+       ]
+      },
+      {
+       "sentence": "The game has been played in Shanghai since the 1960 s , using playing cards .",
+       "raw": "```json\n[\n\t{\"start_token\": 6, \"end_token\": 7, \"text\": \"Shanghai\", \"type\": \"LOC\"},\n\t{\"start_token\": 14, \"end_token\": 15, \"text\": \"playing\", \"type\": \"NOUN\"}\n]\n```",
+       "gold": [
+        [
+         "Shanghai",
+         "LOC"
+        ]
+       ]
+      },
+      {
+       "sentence": "Among the locations they visit in this episode are Pisa , Pompeii , Tuscany , Rome and Venice .",
+       "raw": "```json\n[\n\t{\"start_token\": 9, \"end_token\": 10, \"text\": \"Pisa\", \"type\": \"PLANT\"},\n\t{\"start_token\": 12, \"end_token\": 13, \"text\": \"Tuscany\", \"type\": \"LOCATION\"},\n\t{\"start_token\": 14, \"end_token\": 15, \"text\": \"Rome\", \"type\": \"LOCATION\"},\n\t{\"start_token\": 16, \"end_token\": 17, \"text\": \"Venice\", \"type\": \"L",
+       "gold": [
+        [
+         "Pisa",
+         "LOC"
+        ],
+        [
+         "Pompeii",
+         "LOC"
+        ],
+        [
+         "Tuscany",
+         "LOC"
+        ],
+        [
+         "Rome",
+         "LOC"
+        ],
+        [
+         "Venice",
+         "LOC"
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   "generation_settings": {
+    "do_sample": true,
+    "min_p": 0.0,
+    "temperature": 1.0,
+    "top_k": 20,
+    "top_p": 1.0
+   }
+  },
+  "qwen4-zs": {
+   "label": "Qwen3.5-4B",
+   "regime": "Zero-Shot",
+   "gpu": "A100",
+   "params": 4206000000.0,
+   "agg": {
+    "precision": {
+     "mean": 0.5683516483516483,
+     "std": null,
+     "values": [
+      0.5683516483516483
+     ]
+    },
+    "recall": {
+     "mean": 0.2520959251316046,
+     "std": null,
+     "values": [
+      0.2520959251316046
+     ]
+    },
+    "f1": {
+     "mean": 0.34927066450567257,
+     "std": null,
+     "values": [
+      0.34927066450567257
+     ]
+    },
+    "macro_f1": {
+     "mean": 0.15870954311994,
+     "std": null,
+     "values": [
+      0.15870954311994
+     ]
+    },
+    "latency_mean": {
+     "mean": 2015.0456553627128,
+     "std": null,
+     "values": [
+      2015.0456553627128
+     ]
+    },
+    "latency_p50": {
+     "mean": null,
+     "std": null,
+     "values": [
+      null
+     ]
+    },
+    "latency_p95": {
+     "mean": 6941.7013262500395,
+     "std": null,
+     "values": [
+      6941.7013262500395
+     ]
+    },
+    "vram_mb": {
+     "mean": 8351.4453125,
+     "std": null,
+     "values": [
+      8351.4453125
+     ]
+    },
+    "throughput": {
+     "mean": 0.4962666713474528,
+     "std": null,
+     "values": [
+      0.4962666713474528
+     ]
+    },
+    "train_seconds": {
+     "mean": null,
+     "std": null,
+     "values": [
+      null
+     ]
+    },
+    "per_type": {
+     "PER": {
+      "precision": {
+       "mean": 0.48135593220338985,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.2157644824311491,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.2979672131147541,
+       "std": null
+      },
+      "support": 5265
+     },
+     "ORG": {
+      "precision": {
+       "mean": 0.6423948220064725,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.23995164702326988,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.3493949394939494,
+       "std": null
+      },
+      "support": 3309
+     },
+     "LOC": {
+      "precision": {
+       "mean": 0.8149796787304044,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.35021623419827014,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.4899075097434704,
+       "std": null
+      },
+      "support": 12024
+     },
+     "CEL": {
+      "precision": {
+       "mean": 0.4117647058823529,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.17073170731707318,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.24137931034482757,
+       "std": null
+      },
+      "support": 41
+     },
+     "DIS": {
+      "precision": {
+       "mean": 0.44041450777202074,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.11198945981554677,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.17857142857142855,
+       "std": null
+      },
+      "support": 759
+     },
+     "EVE": {
+      "precision": {
+       "mean": 0.3357664233576642,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.13068181818181818,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.18813905930470345,
+       "std": null
+      },
+      "support": 352
+     },
+     "MEDIA": {
+      "precision": {
+       "mean": 0.44715447154471544,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.12008733624454149,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.18932874354561102,
+       "std": null
+      },
+      "support": 458
+     },
+     "ANIM": {
+      "precision": {
+       "mean": 0.3819444444444444,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.03428927680798005,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.06292906178489703,
+       "std": null
+      },
+      "support": 1604
+     },
+     "BIO": {
+      "precision": {
+       "mean": 0.010638297872340425,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.125,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.0196078431372549,
+       "std": null
+      },
+      "support": 8
+     },
+     "FOOD": {
+      "precision": {
+       "mean": 0.1792452830188679,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.03356890459363958,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.056547619047619055,
+       "std": null
+      },
+      "support": 566
+     },
+     "PLANT": {
+      "precision": {
+       "mean": 0.25882352941176473,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.049217002237136466,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.08270676691729323,
+       "std": null
+      },
+      "support": 894
+     },
+     "INST": {
+      "precision": {
+       "mean": 0.0,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.0,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.0,
+       "std": null
+      },
+      "support": 12
+     },
+     "MYTH": {
+      "precision": {
+       "mean": 0.10526315789473684,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.0625,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.0784313725490196,
+       "std": null
+      },
+      "support": 32
+     },
+     "TIME": {
+      "precision": {
+       "mean": 0.0027266530334014998,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.01384083044982699,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.004555808656036446,
+       "std": null
+      },
+      "support": 289
+     },
+     "VEHI": {
+      "precision": {
+       "mean": 0.11320754716981132,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.1875,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.14117647058823532,
+       "std": null
+      },
+      "support": 32
+     }
+    },
+    "errors": {
+     "korrekt": {
+      "mean": 0.2520959251316046,
+      "std": null
+     },
+     "typfehler": {
+      "mean": 0.010879313706375512,
+      "std": null
+     },
+     "grenzfehler": {
+      "mean": 0.053382725677519983,
+      "std": null
+     },
+     "grenz_typ": {
+      "mean": 0.006589978553324234,
+      "std": null
+     },
+     "auslassung": {
+      "mean": 0.6770520569311756,
+      "std": null
+     },
+     "additions": {
+      "mean": 2233,
+      "std": null
+     },
+     "n_gold": 25645,
+     "confusion_top": [
+      [
+       "ORG->LOC",
+       134.0
+      ],
+      [
+       "LOC->ORG",
+       44.0
+      ],
+      [
+       "ANIM->BIO",
+       27.0
+      ],
+      [
+       "TIME->EVE",
+       19.0
+      ],
+      [
+       "LOC->PER",
+       17.0
+      ],
+      [
+       "MYTH->PER",
+       17.0
+      ],
+      [
+       "ANIM->LOC",
+       16.0
+      ],
+      [
+       "ORG->PER",
+       16.0
+      ],
+      [
+       "ANIM->PLANT",
+       14.0
+      ],
+      [
+       "EVE->ORG",
+       14.0
+      ],
+      [
+       "ANIM->PER",
+       12.0
+      ],
+      [
+       "CEL->LOC",
+       8.0
+      ]
+     ],
+     "boundary_by_type": {
+      "PER": 614.0,
+      "LOC": 427.0,
+      "ORG": 236.0,
+      "EVE": 20.0,
+      "DIS": 18.0,
+      "PLANT": 18.0,
+      "ANIM": 17.0,
+      "MEDIA": 8.0,
+      "FOOD": 4.0,
+      "TIME": 3.0,
+      "VEHI": 2.0,
+      "INST": 1.0,
+      "CEL": 1.0
+     },
+     "additions_by_type": {
+      "TIME": 1447.0,
+      "PER": 106.0,
+      "DIS": 83.0,
+      "PLANT": 81.0,
+      "INST": 76.0,
+      "FOOD": 75.0,
+      "ANIM": 68.0,
+      "BIO": 62.0,
+      "LOC": 53.0,
+      "ORG": 52.0,
+      "EVE": 39.0,
+      "VEHI": 38.0,
+      "MEDIA": 38.0,
+      "MYTH": 9.0,
+      "CEL": 6.0
+     }
+    },
+    "form": {
+     "n": {
+      "mean": 16454,
+      "std": null,
+      "values": [
+       16454
+      ]
+     },
+     "parse_ok": {
+      "mean": 14675,
+      "std": null,
+      "values": [
+       14675
+      ]
+     },
+     "markdown": {
+      "mean": 1453,
+      "std": null,
+      "values": [
+       1453
+      ]
+     },
+     "regex": {
+      "mean": 38,
+      "std": null,
+      "values": [
+       38
+      ]
+     },
+     "failed": {
+      "mean": 288,
+      "std": null,
+      "values": [
+       288
+      ]
+     },
+     "failure_rate": {
+      "mean": 0.017503342652242616,
+      "std": null,
+      "values": [
+       0.017503342652242616
+      ]
+     },
+     "wrong_schema": {
+      "mean": 0,
+      "std": null,
+      "values": [
+       0
+      ]
+     },
+     "invalid_items": {
+      "mean": 20,
+      "std": null,
+      "values": [
+       20
+      ]
+     },
+     "missing_fields": {
+      "mean": 81,
+      "std": null,
+      "values": [
+       81
+      ]
+     },
+     "invalid_offsets": {
+      "mean": 228,
+      "std": null,
+      "values": [
+       228
+      ]
+     },
+     "unknown_types": {
+      "mean": 77,
+      "std": null,
+      "values": [
+       77
+      ]
+     },
+     "text_mismatches": {
+      "mean": 3930,
+      "std": null,
+      "values": [
+       3930
+      ]
+     },
+     "overlaps": {
+      "mean": 19,
+      "std": null,
+      "values": [
+       19
+      ]
+     },
+     "failed_no_close": {
+      "mean": 256,
+      "std": null,
+      "values": [
+       256
+      ]
+     },
+     "empty": {
+      "mean": 10021,
+      "std": null,
+      "values": [
+       10021
+      ]
+     },
+     "unknown_examples": [
+      [
+       [
+        "MED",
+        11
+       ],
+       [
+        "TITLE",
+        8
+       ],
+       [
+        "EVENT",
+        6
+       ],
+       [
+        "BIN",
+        6
+       ],
+       [
+        "MEDCA",
+        5
+       ],
+       [
+        "PERSON",
+        4
+       ],
+       [
+        "NONE",
+        4
+       ],
+       [
+        "MEDA",
+        4
+       ],
+       [
+        "None",
+        4
+       ],
+       [
+        "VER",
+        3
+       ]
+      ]
+     ]
+    },
+    "best_epochs": [
+     null
+    ],
+    "val_f1": [
+     null
+    ],
+    "epoch_results": [
+     null
+    ],
+    "train_lower_bound": false,
+    "resume_checkpoints": [
+     null
+    ],
+    "truncation": {
+     "failed_sentences": [
+      288,
+      null
+     ],
+     "lost_gold": [
+      1304,
+      null
+     ],
+     "lost_share": [
+      0.05084811854162605,
+      null
+     ],
+     "mean_tokens_failed": [
+      32.84027777777778,
+      null
+     ],
+     "recall_without_failed": [
+      0.26560124892157266,
+      null
+     ]
+    },
+    "gpus": [
+     "NVIDIA A100-SXM4-80GB"
+    ],
+    "commits": [
+     "137bffdd9b4351b35a31e4550bde0c15b3c53a19"
+    ],
+    "total_params_reported": [
+     4205751296
+    ]
+   },
+   "examples": [
+    {
+     "typfehler": [
+      {
+       "sentence": "north of the intersection is the community of Pineda .",
+       "gold": [
+        "Pineda",
+        "LOC"
+       ],
+       "pred": [
+        "Pineda",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "In the past they have commonly been included in \" Basileuterus \" .",
+       "gold": [
+        "Basileuterus",
+        "ANIM"
+       ],
+       "pred": [
+        "Basileuterus",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "In July 2007 , he was signed by Lecco , after spending the previous season with Novara .",
+       "gold": [
+        "Lecco",
+        "ORG"
+       ],
+       "pred": [
+        "Lecco",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "After a season at the club , he joined Prato in 2008 .",
+       "gold": [
+        "Prato",
+        "ORG"
+       ],
+       "pred": [
+        "Prato",
+        "LOC"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "The painter Jean-François Millet was also a native of the region .",
+       "gold": [
+        "Jean-François Millet",
+        "PER"
+       ],
+       "pred": [
+        "Jean-François",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "The smallest municipality by population is Neringa Municipality with 2,879 residents .",
+       "gold": [
+        "Neringa Municipality",
+        "LOC"
+       ],
+       "pred": [
+        "Neringa",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "The government initiated the bid in response to the state of assaults carried by Haftar ’s LNA .",
+       "gold": [
+        "LNA",
+        "ORG"
+       ],
+       "pred": [
+        "’s LNA",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "His work is published by Peermusic Classical and Meridian Records .",
+       "gold": [
+        "Peermusic Classical",
+        "ORG"
+       ],
+       "pred": [
+        "Peermusic",
+        "ORG"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "His family moved to Covington during his term .",
+       "gold": [
+        "Covington",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "gold": [
+        "rock squirrel",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "gold": [
+        "Gunnison 's prairie dog",
+        "ANIM"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "The coconut is the national tree of the Maldives and is considered the most important plant in the country .",
+       "pred": [
+        "coconut",
+        "PLANT"
+       ]
+      },
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "pred": [
+        "2000",
+        "TIME"
+       ]
+      },
+      {
+       "sentence": "Tuareg music and dance are popular in Ghadames and the south .",
+       "pred": [
+        "Tuareg",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "The \" great-billed seed finch \" ( \" Sporophila maximiliani \" ) is a species of bird in the family Thraupidae .",
+       "pred": [
+        "Thraupidae",
+        "ORG"
+       ]
+      }
+     ],
+     "unbekannt": [
+      {
+       "sentence": "The second capitol building was a classical design by architect William H. Willcox .",
+       "raw": "[{\"start_token\": 10, \"end_token\": 11, \"text\": \"William\", \"type\": \"PER\"}, {\"start_token\": 12, \"end_token\": 13, \"text\": \"H.\", \"type\": \"PERSON\"}]",
+       "gold": [
+        [
+         "William H. Willcox",
+         "PER"
+        ]
+       ]
+      },
+      {
+       "sentence": "Pingry fencing has produced at least two Olympians , Lee Shelley and Dan Kellner .",
+       "raw": "[\n  {\n    \"start_token\": 7,\n    \"end_token\": 9,\n    \"text\": \"Olympians\",\n    \"type\": \"EVENT\"\n  },\n  {\n    \"start_token\": 9,\n    \"end_token\": 11,\n    \"text\": \"Lee Shelley\",\n    \"type\": \"PER\"\n  },\n  {\n    \"start_token\": 11,\n    \"end_token\": 13,\n    \"text\": \"and Dan\",\n    \"type\": \"PER\"\n  },\n  {\n    \"st",
+       "gold": [
+        [
+         "Lee Shelley",
+         "PER"
+        ],
+        [
+         "Dan Kellner",
+         "PER"
+        ]
+       ]
+      },
+      {
+       "sentence": "He has a Bachelor degree from University of the Thai Chamber of Commerce .",
+       "raw": "[{\"start_token\": 3, \"end_token\": 13, \"text\": \"Bachelor degree from University of the Thai Chamber of Commerce\", \"type\": \"MEDA\"}]",
+       "gold": [
+        [
+         "University of the Thai Chamber of Commerce",
+         "ORG"
+        ]
+       ]
+      },
+      {
+       "sentence": "The red-legged cormorant is native to the coast of South America .",
+       "raw": "[{\"start_token\": 1, \"end_token\": 2, \"text\": \"red-legged\", \"type\": \"PLANT\"}, {\"start_token\": 2, \"end_token\": 3, \"text\": \"cormorant\", \"type\": \"ANA\"}]",
+       "gold": [
+        [
+         "South America",
+         "LOC"
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   "generation_settings": {
+    "do_sample": true,
+    "min_p": 0.0,
+    "temperature": 1.0,
+    "top_k": 20,
+    "top_p": 1.0
+   }
+  },
+  "qwen27-zs": {
+   "label": "Qwen3.5-27B",
+   "regime": "Zero-Shot",
+   "gpu": "NVL",
+   "params": 26896000000.0,
+   "agg": {
+    "precision": {
+     "mean": 0.6558304132116712,
+     "std": null,
+     "values": [
+      0.6558304132116712
+     ]
+    },
+    "recall": {
+     "mean": 0.7371027490738935,
+     "std": null,
+     "values": [
+      0.7371027490738935
+     ]
+    },
+    "f1": {
+     "mean": 0.6940956157743996,
+     "std": null,
+     "values": [
+      0.6940956157743996
+     ]
+    },
+    "macro_f1": {
+     "mean": 0.43936843666310743,
+     "std": null,
+     "values": [
+      0.43936843666310743
+     ]
+    },
+    "latency_mean": {
+     "mean": 3782.898893707289,
+     "std": null,
+     "values": [
+      3782.898893707289
+     ]
+    },
+    "latency_p50": {
+     "mean": null,
+     "std": null,
+     "values": [
+      null
+     ]
+    },
+    "latency_p95": {
+     "mean": 8597.248668901007,
+     "std": null,
+     "values": [
+      8597.248668901007
+     ]
+    },
+    "vram_mb": {
+     "mean": 51923.0166015625,
+     "std": null,
+     "values": [
+      51923.0166015625
+     ]
+    },
+    "throughput": {
+     "mean": 0.26434753560647967,
+     "std": null,
+     "values": [
+      0.26434753560647967
+     ]
+    },
+    "train_seconds": {
+     "mean": null,
+     "std": null,
+     "values": [
+      null
+     ]
+    },
+    "per_type": {
+     "PER": {
+      "precision": {
+       "mean": 0.9047714514835605,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.8571699905033239,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.8803277089632303,
+       "std": null
+      },
+      "support": 5265
+     },
+     "ORG": {
+      "precision": {
+       "mean": 0.8768540876164195,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.7682079177999396,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.818943298969072,
+       "std": null
+      },
+      "support": 3309
+     },
+     "LOC": {
+      "precision": {
+       "mean": 0.9198508853681268,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.8208582834331337,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.8675397732266854,
+       "std": null
+      },
+      "support": 12024
+     },
+     "CEL": {
+      "precision": {
+       "mean": 0.625,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.4878048780487805,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.547945205479452,
+       "std": null
+      },
+      "support": 41
+     },
+     "DIS": {
+      "precision": {
+       "mean": 0.5742725880551302,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.49407114624505927,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.5311614730878187,
+       "std": null
+      },
+      "support": 759
+     },
+     "EVE": {
+      "precision": {
+       "mean": 0.374805598755832,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.6846590909090909,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.48442211055276385,
+       "std": null
+      },
+      "support": 352
+     },
+     "MEDIA": {
+      "precision": {
+       "mean": 0.6291390728476821,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.4148471615720524,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.5,
+       "std": null
+      },
+      "support": 458
+     },
+     "ANIM": {
+      "precision": {
+       "mean": 0.5395996518711923,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.3865336658354115,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.45041772611696335,
+       "std": null
+      },
+      "support": 1604
+     },
+     "BIO": {
+      "precision": {
+       "mean": 0.016359918200409,
+       "std": null
+      },
+      "recall": {
+       "mean": 1.0,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.03219315895372234,
+       "std": null
+      },
+      "support": 8
+     },
+     "FOOD": {
+      "precision": {
+       "mean": 0.27569331158238175,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.29858657243816256,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.2866836301950806,
+       "std": null
+      },
+      "support": 566
+     },
+     "PLANT": {
+      "precision": {
+       "mean": 0.4444444444444444,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.28635346756152125,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.34829931972789113,
+       "std": null
+      },
+      "support": 894
+     },
+     "INST": {
+      "precision": {
+       "mean": 0.04938271604938271,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.3333333333333333,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.08602150537634408,
+       "std": null
+      },
+      "support": 12
+     },
+     "MYTH": {
+      "precision": {
+       "mean": 0.5128205128205128,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.625,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.5633802816901409,
+       "std": null
+      },
+      "support": 32
+     },
+     "TIME": {
+      "precision": {
+       "mean": 0.00996309963099631,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.18685121107266436,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.018917498686284815,
+       "std": null
+      },
+      "support": 289
+     },
+     "VEHI": {
+      "precision": {
+       "mean": 0.10047846889952153,
+       "std": null
+      },
+      "recall": {
+       "mean": 0.65625,
+       "std": null
+      },
+      "f1": {
+       "mean": 0.17427385892116184,
+       "std": null
+      },
+      "support": 32
+     }
+    },
+    "errors": {
+     "korrekt": {
+      "mean": 0.7371027490738935,
+      "std": null
+     },
+     "typfehler": {
+      "mean": 0.023825307077403,
+      "std": null
+     },
+     "grenzfehler": {
+      "mean": 0.048079547670111134,
+      "std": null
+     },
+     "grenz_typ": {
+      "mean": 0.004445310976798596,
+      "std": null
+     },
+     "auslassung": {
+      "mean": 0.18654708520179372,
+      "std": null
+     },
+     "additions": {
+      "mean": 8048,
+      "std": null
+     },
+     "n_gold": 25645,
+     "confusion_top": [
+      [
+       "ORG->LOC",
+       113.0
+      ],
+      [
+       "TIME->EVE",
+       89.0
+      ],
+      [
+       "ANIM->BIO",
+       88.0
+      ],
+      [
+       "LOC->ORG",
+       85.0
+      ],
+      [
+       "PLANT->FOOD",
+       59.0
+      ],
+      [
+       "MEDIA->ORG",
+       50.0
+      ],
+      [
+       "ANIM->PLANT",
+       39.0
+      ],
+      [
+       "LOC->VEHI",
+       18.0
+      ],
+      [
+       "EVE->ORG",
+       16.0
+      ],
+      [
+       "ANIM->FOOD",
+       15.0
+      ],
+      [
+       "MEDIA->EVE",
+       14.0
+      ],
+      [
+       "FOOD->ORG",
+       8.0
+      ]
+     ],
+     "boundary_by_type": {
+      "LOC": 628.0,
+      "PER": 364.0,
+      "ORG": 76.0,
+      "ANIM": 36.0,
+      "DIS": 36.0,
+      "PLANT": 25.0,
+      "MEDIA": 23.0,
+      "FOOD": 17.0,
+      "TIME": 11.0,
+      "EVE": 10.0,
+      "MYTH": 3.0,
+      "CEL": 3.0,
+      "VEHI": 1.0
+     },
+     "additions_by_type": {
+      "TIME": 5354.0,
+      "ANIM": 489.0,
+      "BIO": 377.0,
+      "FOOD": 351.0,
+      "EVE": 273.0,
+      "PLANT": 253.0,
+      "DIS": 242.0,
+      "LOC": 179.0,
+      "VEHI": 160.0,
+      "ORG": 115.0,
+      "PER": 82.0,
+      "MEDIA": 80.0,
+      "INST": 75.0,
+      "MYTH": 10.0,
+      "CEL": 8.0
+     }
+    },
+    "form": {
+     "n": {
+      "mean": 16454,
+      "std": null,
+      "values": [
+       16454
+      ]
+     },
+     "parse_ok": {
+      "mean": 16261,
+      "std": null,
+      "values": [
+       16261
+      ]
+     },
+     "markdown": {
+      "mean": 12,
+      "std": null,
+      "values": [
+       12
+      ]
+     },
+     "regex": {
+      "mean": 6,
+      "std": null,
+      "values": [
+       6
+      ]
+     },
+     "failed": {
+      "mean": 175,
+      "std": null,
+      "values": [
+       175
+      ]
+     },
+     "failure_rate": {
+      "mean": 0.0106357116810502,
+      "std": null,
+      "values": [
+       0.0106357116810502
+      ]
+     },
+     "wrong_schema": {
+      "mean": 1,
+      "std": null,
+      "values": [
+       1
+      ]
+     },
+     "invalid_items": {
+      "mean": 4,
+      "std": null,
+      "values": [
+       4
+      ]
+     },
+     "missing_fields": {
+      "mean": 25,
+      "std": null,
+      "values": [
+       25
+      ]
+     },
+     "invalid_offsets": {
+      "mean": 34,
+      "std": null,
+      "values": [
+       34
+      ]
+     },
+     "unknown_types": {
+      "mean": 22,
+      "std": null,
+      "values": [
+       22
+      ]
+     },
+     "text_mismatches": {
+      "mean": 3397,
+      "std": null,
+      "values": [
+       3397
+      ]
+     },
+     "overlaps": {
+      "mean": 109,
+      "std": null,
+      "values": [
+       109
+      ]
+     },
+     "failed_no_close": {
+      "mean": 139,
+      "std": null,
+      "values": [
+       139
+      ]
+     },
+     "empty": {
+      "mean": 1887,
+      "std": null,
+      "values": [
+       1887
+      ]
+     },
+     "unknown_examples": [
+      [
+       [
+        "OR",
+        4
+       ],
+       [
+        "MED",
+        4
+       ],
+       [
+        "DRUG",
+        4
+       ],
+       [
+        "PRODUCT",
+        3
+       ],
+       [
+        "ORIG",
+        2
+       ],
+       [
+        "PROC",
+        1
+       ],
+       [
+        "TME",
+        1
+       ],
+       [
+        "PERSON",
+        1
+       ],
+       [
+        "O",
+        1
+       ],
+       [
+        "EVENT",
+        1
+       ]
+      ]
+     ]
+    },
+    "best_epochs": [
+     null
+    ],
+    "val_f1": [
+     null
+    ],
+    "epoch_results": [
+     null
+    ],
+    "train_lower_bound": false,
+    "resume_checkpoints": [
+     null
+    ],
+    "truncation": {
+     "failed_sentences": [
+      175,
+      null
+     ],
+     "lost_gold": [
+      982,
+      null
+     ],
+     "lost_share": [
+      0.03829206472996686,
+      null
+     ],
+     "mean_tokens_failed": [
+      39.87428571428571,
+      null
+     ],
+     "recall_without_failed": [
+      0.7664517698576816,
+      null
+     ]
+    },
+    "gpus": [
+     "NVIDIA H100 NVL"
+    ],
+    "commits": [
+     "137bffdd9b4351b35a31e4550bde0c15b3c53a19"
+    ],
+    "total_params_reported": [
+     26895998464
+    ]
+   },
+   "examples": [
+    {
+     "typfehler": [
+      {
+       "sentence": "In 2000 , the entire campus was designated as an arboretum , the University of Georgia Campus Arboretum .",
+       "gold": [
+        "University of Georgia Campus Arboretum",
+        "ORG"
+       ],
+       "pred": [
+        "University of Georgia Campus Arboretum",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "According to \" Baseball America \" , he was the 39th best prospect in 1993 .",
+       "gold": [
+        "Baseball America",
+        "MEDIA"
+       ],
+       "pred": [
+        "Baseball America",
+        "ORG"
+       ]
+      },
+      {
+       "sentence": "The plant was purchased by Idaho Power in 1916 .",
+       "gold": [
+        "Idaho Power",
+        "ORG"
+       ],
+       "pred": [
+        "Idaho Power",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "It crosses over I-95 and heads to the city of Sumter .",
+       "gold": [
+        "I-95",
+        "LOC"
+       ],
+       "pred": [
+        "I-95",
+        "VEHI"
+       ]
+      }
+     ],
+     "grenzfehler": [
+      {
+       "sentence": "L \" , was a railroad that operated in the mid-central United States .",
+       "gold": [
+        "United States",
+        "LOC"
+       ],
+       "pred": [
+        "mid-central United States",
+        "LOC"
+       ]
+      },
+      {
+       "sentence": "The government initiated the bid in response to the state of assaults carried by Haftar ’s LNA .",
+       "gold": [
+        "Haftar",
+        "PER"
+       ],
+       "pred": [
+        "Haftar ’s",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "President Mohammed el-Megarif promised that empowering the army and police force is the government 's biggest priority .",
+       "gold": [
+        "Mohammed el-Megarif",
+        "PER"
+       ],
+       "pred": [
+        "President Mohammed el-Megarif",
+        "PER"
+       ]
+      },
+      {
+       "sentence": "Many roads in the Camden area were washed out .",
+       "gold": [
+        "Camden",
+        "LOC"
+       ],
+       "pred": [
+        "Camden area",
+        "LOC"
+       ]
+      }
+     ],
+     "auslassung": [
+      {
+       "sentence": "Within city limits , the southwestern fence lizard and whiptails are common .",
+       "gold": [
+        "whiptails",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "gold": [
+        "Gunnison 's prairie dog",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "The waters are volcanically heated and are said to contain many healing properties , particularly for those suffering from arthritic ailments .",
+       "gold": [
+        "arthritic",
+        "DIS"
+       ]
+      },
+      {
+       "sentence": "It takes around 6,000 full-grown coconuts to produce one tonne of copra .",
+       "gold": [
+        "copra",
+        "FOOD"
+       ]
+      }
+     ],
+     "zusatz": [
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "coyote",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "Commonly seen mammals include the coyote , rock squirrel , Gunnison 's prairie dog , desert cottontail , and black-tailed jackrabbit .",
+       "pred": [
+        "desert cottontail",
+        "ANIM"
+       ]
+      },
+      {
+       "sentence": "That led to his being hired by Delaware State University in August 2005 .",
+       "pred": [
+        "August 2005",
+        "TIME"
+       ]
+      },
+      {
+       "sentence": "He married swimmer Suzu Chiba in 2002 .",
+       "pred": [
+        "2002",
+        "TIME"
+       ]
+      }
+     ],
+     "unbekannt": [
+      {
+       "sentence": "The municipal holiday is Easter Monday .",
+       "raw": "[{\"start_token\": 4, \"end_token\": 6, \"text\": \"Easter Monday\", \"type\": \"TME\"}]",
+       "gold": [
+        [
+         "Easter Monday",
+         "TIME"
+        ]
+       ]
+      },
+      {
+       "sentence": "The city has an oceanic climate ( Köppen : \" Cfb \" , mild in relation to East Germany ) .",
+       "raw": "[{\"start_token\": 7, \"end_token\": 8, \"text\": \"Köppen\", \"type\": \"PERSON\"}, {\"start_token\": 10, \"end_token\": 11, \"text\": \"Cfb\", \"type\": \"TIME\"}, {\"start_token\": 17, \"end_token\": 19, \"text\": \"East Germany\", \"type\": \"LOC\"}]",
+       "gold": [
+        [
+         "East Germany",
+         "LOC"
+        ]
+       ]
+      },
+      {
+       "sentence": "Propranolol is a beta blocker that is mainly used to treat hypertension , but also prevents trembling .",
+       "raw": "[{\"start_token\": 0, \"end_token\": 1, \"text\": \"Propranolol\", \"type\": \"MED\"}, {\"start_token\": 11, \"end_token\": 12, \"text\": \"hypertension\", \"type\": \"DIS\"}]",
+       "gold": [
+        [
+         "hypertension",
+         "DIS"
+        ]
+       ]
+      },
+      {
+       "sentence": "This past weekend , a \" Cartoons country \" festival started in Moscow in cinema .",
+       "raw": "[{\"start_token\": 0, \"end_token\": 3, \"text\": \"This past weekend\", \"type\": \"TIME\"}, {\"start_token\": 5, \"end_token\": 9, \"text\": \"\\\" Cartoons country \\\"\", \"type\": \"EVENT\"}, {\"start_token\": 12, \"end_token\": 13, \"text\": \"Moscow\", \"type\": \"LOC\"}]",
+       "gold": [
+        [
+         "Moscow",
+         "LOC"
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   "generation_settings": {
+    "do_sample": true,
+    "min_p": 0.0,
+    "temperature": 1.0,
+    "top_k": 20,
+    "top_p": 1.0
+   }
+  }
+ },
+ "comparisons": {
+  "deberta-base->deberta-large": {
+   "diff": 0.315445485917909,
+   "sd_sum": 0.0698004426090703,
+   "distinguishable": true
+  },
+  "qwen08-qlora->qwen4-qlora": {
+   "diff": 0.8248734273491487,
+   "sd_sum": 0.14505868912336348,
+   "distinguishable": true
+  },
+  "qwen4-qlora->qwen27-qlora": {
+   "diff": 0.5139152949145687,
+   "sd_sum": 0.12454258056155626,
+   "distinguishable": true
+  },
+  "qwen27-qlora->deberta-large": {
+   "diff": 1.3369571567167227,
+   "sd_sum": 0.10963970090004996,
+   "distinguishable": true
+  },
+  "deberta-base->qwen4-qlora": {
+   "diff": -1.5354269657133823,
+   "sd_sum": 0.08470332227057663,
+   "distinguishable": true
+  },
+  "qwen08-qlora->deberta-base": {
+   "diff": 2.360300393062531,
+   "sd_sum": 0.13923999902770706,
+   "distinguishable": true
+  },
+  "qwen27-zs->qwen27-qlora": {
+   "diff": 25.0722352086039,
+   "sd_sum": 0.07928157437843976,
+   "distinguishable": true
+  },
+  "qwen4-zs->qwen4-qlora": {
+   "diff": 59.04081504056203,
+   "sd_sum": 0.045261006183116514,
+   "distinguishable": true
+  },
+  "qwen08-zs->qwen08-qlora": {
+   "diff": 86.97107099084195,
+   "sd_sum": 0.09979768294024695,
+   "distinguishable": true
+  },
+  "qwen08-qlora->deberta-large": {
+   "diff": 2.67574587898044,
+   "sd_sum": 0.13015580946185715,
+   "distinguishable": true
+  },
+  "deberta-base->qwen27-qlora": {
+   "diff": -1.0215116707988137,
+   "sd_sum": 0.11872389046589985,
+   "distinguishable": true
+  }
+ },
+ "crossner": {
+  "aggregate": {
+   "deberta-large": {
+    "ai": {
+     "model": "deberta-v3-large",
+     "domain": "ai",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.7805154734653366,
+     "precision_std": 0.009665966172765517,
+     "recall_mean": 0.8633540372670807,
+     "recall_std": 0.005477745985641019,
+     "f1_mean": 0.8198086991472714,
+     "f1_std": 0.004412868922539523,
+     "baseline_f1_mean": 0.9953557698384189,
+     "baseline_f1_std": 0.00020327558085824913,
+     "delta_f1_mean": -0.17554707069114747,
+     "delta_f1_std": 0.004540829124341095
+    },
+    "literature": {
+     "model": "deberta-v3-large",
+     "domain": "literature",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.8663433627900412,
+     "precision_std": 0.006951174782979922,
+     "recall_mean": 0.8152724968314322,
+     "recall_std": 0.0087809926872947,
+     "f1_mean": 0.8400186555351893,
+     "f1_std": 0.006852882741074042,
+     "baseline_f1_mean": 0.9953557698384189,
+     "baseline_f1_std": 0.00020327558085824913,
+     "delta_f1_mean": -0.15533711430322975,
+     "delta_f1_std": 0.0070267856823123705
+    },
+    "music": {
+     "model": "deberta-v3-large",
+     "domain": "music",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.8709557453434833,
+     "precision_std": 0.0074175087089525275,
+     "recall_mean": 0.8310708898944194,
+     "recall_std": 0.010987030380342003,
+     "f1_mean": 0.8505404229841057,
+     "f1_std": 0.009120175927280165,
+     "baseline_f1_mean": 0.9953557698384189,
+     "baseline_f1_std": 0.00020327558085824913,
+     "delta_f1_mean": -0.14481534685431327,
+     "delta_f1_std": 0.009182094848985063
+    },
+    "politics": {
+     "model": "deberta-v3-large",
+     "domain": "politics",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.8641470558679655,
+     "precision_std": 0.007453335751634375,
+     "recall_mean": 0.874473208910295,
+     "recall_std": 0.009184916497526991,
+     "f1_mean": 0.8692780842635393,
+     "f1_std": 0.008242201637709156,
+     "baseline_f1_mean": 0.9953557698384189,
+     "baseline_f1_std": 0.00020327558085824913,
+     "delta_f1_mean": -0.12607768557487975,
+     "delta_f1_std": 0.008426640425528565
+    },
+    "science": {
+     "model": "deberta-v3-large",
+     "domain": "science",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.7795323229397128,
+     "precision_std": 0.010325482799797142,
+     "recall_mean": 0.865488086087625,
+     "recall_std": 0.006100886958642448,
+     "f1_mean": 0.820222311588147,
+     "f1_std": 0.0051462242970969786,
+     "baseline_f1_mean": 0.9953557698384189,
+     "baseline_f1_std": 0.00020327558085824913,
+     "delta_f1_mean": -0.17513345825027213,
+     "delta_f1_std": 0.005007622839969082
+    },
+    "pooled_micro": {
+     "model": "deberta-v3-large",
+     "domain": "pooled_micro",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.8450037617806084,
+     "precision_std": 0.0037167797229946046,
+     "recall_mean": 0.8547817310118596,
+     "recall_std": 0.005791328497364909,
+     "f1_mean": 0.849863470209955,
+     "f1_std": 0.0046932886008999135,
+     "baseline_f1_mean": 0.9953557698384189,
+     "baseline_f1_std": 0.00020327558085824913,
+     "delta_f1_mean": -0.14549229962846397,
+     "delta_f1_std": 0.0048659731425163165
+    },
+    "domain_mean": {
+     "model": "deberta-v3-large",
+     "domain": "domain_mean",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.8322987920813079,
+     "precision_std": 0.003668220410814629,
+     "recall_mean": 0.8499317437981705,
+     "recall_std": 0.004474520524368352,
+     "f1_mean": 0.8399736347036505,
+     "f1_std": 0.0034610631252661376,
+     "baseline_f1_mean": 0.9953557698384189,
+     "baseline_f1_std": 0.00020327558085824913,
+     "delta_f1_mean": -0.15538213513476842,
+     "delta_f1_std": 0.0036401791671190195
+    }
+   },
+   "qwen27-qlora": {
+    "ai": {
+     "model": "qwen35-27b-qlora-3ep",
+     "domain": "ai",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.7853158959947729,
+     "precision_std": 0.0036715375275007704,
+     "recall_mean": 0.7142857142857143,
+     "recall_std": 0.009024635493873017,
+     "f1_mean": 0.7480846430418175,
+     "f1_std": 0.003850120423267582,
+     "baseline_f1_mean": 0.98456202127034,
+     "baseline_f1_std": 8.756607680913222e-05,
+     "delta_f1_mean": -0.23647737822852255,
+     "delta_f1_std": 0.0037811849342682725
+    },
+    "literature": {
+     "model": "qwen35-27b-qlora-3ep",
+     "domain": "literature",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.895268638389623,
+     "precision_std": 0.008521290590232988,
+     "recall_mean": 0.6850443599493029,
+     "recall_std": 0.012369595244577421,
+     "f1_mean": 0.7761309063263022,
+     "f1_std": 0.009249850307455133,
+     "baseline_f1_mean": 0.98456202127034,
+     "baseline_f1_std": 8.756607680913222e-05,
+     "delta_f1_mean": -0.20843111494403774,
+     "delta_f1_std": 0.009336758109901656
+    },
+    "music": {
+     "model": "qwen35-27b-qlora-3ep",
+     "domain": "music",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.9004968338301671,
+     "precision_std": 0.012254155694369441,
+     "recall_mean": 0.4841628959276018,
+     "recall_std": 0.0029929313473581235,
+     "f1_mean": 0.629728971933174,
+     "f1_std": 0.005110748871508563,
+     "baseline_f1_mean": 0.98456202127034,
+     "baseline_f1_std": 8.756607680913222e-05,
+     "delta_f1_mean": -0.3548330493371661,
+     "delta_f1_std": 0.005198297624898574
+    },
+    "politics": {
+     "model": "qwen35-27b-qlora-3ep",
+     "domain": "politics",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.9008498412199758,
+     "precision_std": 0.009435599354388613,
+     "recall_mean": 0.594019666867349,
+     "recall_std": 0.009230841366331052,
+     "f1_mean": 0.7159081879679041,
+     "f1_std": 0.007583020731967711,
+     "baseline_f1_mean": 0.98456202127034,
+     "baseline_f1_std": 8.756607680913222e-05,
+     "delta_f1_mean": -0.26865383330243586,
+     "delta_f1_std": 0.00767052844597073
+    },
+    "science": {
+     "model": "qwen35-27b-qlora-3ep",
+     "domain": "science",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.8601061361019017,
+     "precision_std": 0.01059815778807755,
+     "recall_mean": 0.6830643095055086,
+     "recall_std": 0.001934367008780669,
+     "f1_mean": 0.7614010357432025,
+     "f1_std": 0.002961419992369047,
+     "baseline_f1_mean": 0.98456202127034,
+     "baseline_f1_std": 8.756607680913222e-05,
+     "delta_f1_mean": -0.22316098552713745,
+     "delta_f1_std": 0.00291033052404015
+    },
+    "pooled_micro": {
+     "model": "qwen35-27b-qlora-3ep",
+     "domain": "pooled_micro",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.8827804913640325,
+     "precision_std": 0.0065334316386345456,
+     "recall_mean": 0.6035410884010429,
+     "recall_std": 0.00576009331260346,
+     "f1_mean": 0.7169171611479056,
+     "f1_std": 0.005053390819465037,
+     "baseline_f1_mean": 0.98456202127034,
+     "baseline_f1_std": 8.756607680913222e-05,
+     "delta_f1_mean": -0.2676448601224345,
+     "delta_f1_std": 0.005140664062587172
+    },
+    "domain_mean": {
+     "model": "qwen35-27b-qlora-3ep",
+     "domain": "domain_mean",
+     "successful_seeds": 3,
+     "expected_seeds": 3,
+     "seeds": "42,123,456",
+     "complete": true,
+     "precision_mean": 0.868407469107288,
+     "precision_std": 0.005257986420790229,
+     "recall_mean": 0.6321153893070953,
+     "recall_std": 0.0037013797626418415,
+     "f1_mean": 0.7262507490024802,
+     "f1_std": 0.0034266419333999856,
+     "baseline_f1_mean": 0.98456202127034,
+     "baseline_f1_std": 8.756607680913222e-05,
+     "delta_f1_mean": -0.25831127226785994,
+     "delta_f1_std": 0.0035138580222026194
+    }
+   }
+  },
+  "sensitivity": {
+   "deberta-large": {
+    "full": {
+     "precision": [
+      0.8450037617806084,
+      0.0037167797229946046
+     ],
+     "recall": [
+      0.8547817310118596,
+      0.005791328497364909
+     ],
+     "f1": [
+      0.849863470209955,
+      0.0046932886008999135
+     ]
+    },
+    "excluded": {
+     "precision": [
+      0.8433626297441393,
+      0.0037595744060090817
+     ],
+     "recall": [
+      0.8533350337967095,
+      0.0058541091276768705
+     ],
+     "f1": [
+      0.848318350328218,
+      0.004745425498749657
+     ]
+    },
+    "n_full": 2506,
+    "n_excluded": 2485
+   },
+   "qwen27-qlora": {
+    "full": {
+     "precision": [
+      0.8827804913640325,
+      0.0065334316386345456
+     ],
+     "recall": [
+      0.6035410884010429,
+      0.00576009331260346
+     ],
+     "f1": [
+      0.7169171611479056,
+      0.005053390819465036
+     ]
+    },
+    "excluded": {
+     "precision": [
+      0.8809350731133962,
+      0.0066261476020592494
+     ],
+     "recall": [
+      0.59937082855078,
+      0.005822535339331098
+     ],
+     "f1": [
+      0.7133620196750772,
+      0.005124201509964694
+     ]
+    },
+    "n_full": 2506,
+    "n_excluded": 2485
+   }
+  },
+  "parse": {
+   "qwen27-qlora": {
+    "failed": [
+     250.33333333333334,
+     6.429100507328636
+    ],
+    "failed_no_close": [
+     250.33333333333334,
+     6.429100507328636
+    ],
+    "n": 2506,
+    "rate": [
+     0.09989358872040437,
+     0.0025654830436267497
+    ]
+   }
+  },
+  "latency": {
+   "deberta-large": {
+    "mean": [
+     25.734766340861853,
+     2.8641022030885424
+    ],
+    "median": [
+     26.87855778882901,
+     2.903508221588624
+    ]
+   },
+   "qwen27-qlora": {
+    "mean": [
+     14691.29277950281,
+     961.1361809348905
+    ],
+    "median": [
+     13762.836401040355,
+     823.4002242467794
+    ]
+   }
+  },
+  "gpus": {
+   "deberta-large": [
+    "NVIDIA H100 80GB HBM3"
+   ],
+   "qwen27-qlora": [
+    "NVIDIA H100 80GB HBM3"
+   ]
+  },
+  "sentence_stats": {
+   "deberta-large": {
+    "tokens_mean": 38.23822825219473,
+    "entities_mean": 3.162809257781325,
+    "tokens_max": 84
+   },
+   "qwen27-qlora": {
+    "tokens_mean": 38.23822825219473,
+    "entities_mean": 3.162809257781325,
+    "tokens_max": 84
+   }
+  },
+  "per_seed": {
+   "deberta-large": {
+    "deberta-v3-large-canonical/ai": [
+     0.7885714285714286,
+     0.8571428571428571,
+     0.8214285714285714
+    ],
+    "deberta-v3-large-canonical/literature": [
+     0.8625254582484725,
+     0.8051330798479087,
+     0.8328416912487709
+    ],
+    "deberta-v3-large-canonical/music": [
+     0.8746321365509123,
+     0.8404977375565611,
+     0.8572252668012691
+    ],
+    "deberta-v3-large-canonical/politics": [
+     0.8617210682492582,
+     0.8741721854304636,
+     0.8679019725044831
+    ],
+    "deberta-v3-large-canonical/science": [
+     0.782761037140855,
+     0.8585703305149884,
+     0.8189149560117303
+    ],
+    "deberta-v3-large-canonical-seed123/ai": [
+     0.7697974217311234,
+     0.865424430641822,
+     0.8148148148148149
+    ],
+    "deberta-v3-large-canonical-seed123/literature": [
+     0.8621378621378621,
+     0.8203422053231939,
+     0.8407208962493911
+    ],
+    "deberta-v3-large-canonical-seed123/music": [
+     0.8624181060154854,
+     0.8190045248868778,
+     0.8401508558166522
+    ],
+    "deberta-v3-large-canonical-seed123/politics": [
+     0.8582089552238806,
+     0.8654425045153522,
+     0.8618105515587531
+    ],
+    "deberta-v3-large-canonical-seed123/science": [
+     0.787857641311933,
+     0.8677940046118371,
+     0.8258961228968544
+    ],
+    "deberta-v3-large-canonical-seed456/ai": [
+     0.7831775700934579,
+     0.8674948240165632,
+     0.8231827111984282
+    ],
+    "deberta-v3-large-canonical-seed456/literature": [
+     0.8743667679837892,
+     0.8203422053231939,
+     0.8464933791074056
+    ],
+    "deberta-v3-large-canonical-seed456/music": [
+     0.8758169934640523,
+     0.833710407239819,
+     0.8542451463343959
+    ],
+    "deberta-v3-large-canonical-seed456/politics": [
+     0.8725111441307578,
+     0.8838049367850692,
+     0.8781217287273815
+    ],
+    "deberta-v3-large-canonical-seed456/science": [
+     0.76797829036635,
+     0.8700999231360492,
+     0.8158558558558558
+    ]
+   },
+   "qwen27-qlora": {
+    "qwen35-27b-qlora-3ep/ai": [
+     0.7855530474040632,
+     0.7204968944099379,
+     0.7516198704103672
+    ],
+    "qwen35-27b-qlora-3ep/literature": [
+     0.8856088560885609,
+     0.6844106463878327,
+     0.7721179624664879
+    ],
+    "qwen35-27b-qlora-3ep/music": [
+     0.9015873015873016,
+     0.4819004524886878,
+     0.6280869885735348
+    ],
+    "qwen35-27b-qlora-3ep/politics": [
+     0.890139576767222,
+     0.5951234196267309,
+     0.7133321306151904
+    ],
+    "qwen35-27b-qlora-3ep/science": [
+     0.8518164435946463,
+     0.684857801691007,
+     0.7592671495526203
+    ],
+    "qwen35-27b-qlora-3ep-seed123/ai": [
+     0.7888631090487239,
+     0.7039337474120083,
+     0.7439824945295405
+    ],
+    "qwen35-27b-qlora-3ep-seed123/literature": [
+     0.9017199017199017,
+     0.6977186311787072,
+     0.7867095391211146
+    ],
+    "qwen35-27b-qlora-3ep-seed123/music": [
+     0.9121693121693122,
+     0.48755656108597284,
+     0.6354589015849613
+    ],
+    "qwen35-27b-qlora-3ep-seed123/politics": [
+     0.9079365079365079,
+     0.6026490066225165,
+     0.7244436403111995
+    ],
+    "qwen35-27b-qlora-3ep-seed123/science": [
+     0.8564547206165704,
+     0.6833205226748655,
+     0.7601539119281744
+    ],
+    "qwen35-27b-qlora-3ep-seed456/ai": [
+     0.7815315315315315,
+     0.7184265010351967,
+     0.7486515641855448
+    ],
+    "qwen35-27b-qlora-3ep-seed456/literature": [
+     0.8984771573604061,
+     0.6730038022813688,
+     0.7695652173913043
+    ],
+    "qwen35-27b-qlora-3ep-seed456/music": [
+     0.8877338877338877,
+     0.4830316742081448,
+     0.6256410256410257
+    ],
+    "qwen35-27b-qlora-3ep-seed456/politics": [
+     0.9044734389561976,
+     0.5842865743527995,
+     0.7099487929773226
+    ],
+    "qwen35-27b-qlora-3ep-seed456/science": [
+     0.8720472440944882,
+     0.6810146041506533,
+     0.764782045748813
+    ]
+   }
+  },
+  "output_limit": {
+   "music": {
+    "n": 25,
+    "limit256": {
+     "precision": 0.9444444444444444,
+     "recall": 0.2595419847328244,
+     "f1": 0.40718562874251496,
+     "failed": 9,
+     "latency_mean": 18133.591991998255
+    },
+    "limit1024": {
+     "precision": 0.9512195121951219,
+     "recall": 0.8931297709923665,
+     "f1": 0.9212598425196851,
+     "failed": 0,
+     "latency_mean": 21638.481406867504
+    },
+    "tokens_mean": 46.44
+   },
+   "politics": {
+    "n": 25,
+    "limit256": {
+     "precision": 0.9347826086956522,
+     "recall": 0.6466165413533834,
+     "f1": 0.7644444444444445,
+     "failed": 4,
+     "latency_mean": 15979.292763322592
+    },
+    "limit1024": {
+     "precision": 0.9312977099236641,
+     "recall": 0.9172932330827067,
+     "f1": 0.9242424242424241,
+     "failed": 0,
+     "latency_mean": 15999.831362366676
+    },
+    "tokens_mean": 36.64
+   }
+  }
+ },
+ "multinerd_sentence_stats": {
+  "tokens_mean": 21.09061626352255,
+  "entities_mean": 1.5585875774887565,
+  "coarse_entities_mean": 1.2518536526072688,
+  "n_sentences": 16454,
+  "gold_empty_sentences": 8
+ },
+ "greedy_control_08b": {
+  "f1": 0.004638783269961977,
+  "precision": 0.09312977099236641,
+  "recall": 0.002378631312146617,
+  "empty_arrays": 16052,
+  "n": 16454,
+  "parse_failure_rate": 0.006624528989911268
+ }
+}

@@ -1,0 +1,9 @@
+key short regime family latency_ms vram_gb f1 sd gpu
+deberta-base D-base Fine-Tuning DeBERTa-v3 8.92 0.74 95.50 0.04 H100
+deberta-large D-large Fine-Tuning DeBERTa-v3 16.45 1.68 95.82 0.03 H100
+qwen08-zs Q0.8B Zero-Shot Qwen3.5 3211.11 1.55 6.17 0.00 A100
+qwen4-zs Q4B Zero-Shot Qwen3.5 2015.05 8.16 34.93 0.00 A100
+qwen27-zs Q27B Zero-Shot Qwen3.5 3782.90 50.71 69.41 0.00 NVL
+qwen08-qlora Q0.8B QLoRA Qwen3.5 1875.76 0.92 93.14 0.10 H100
+qwen4-qlora Q4B QLoRA Qwen3.5 4684.69 3.47 93.97 0.05 A100
+qwen27-qlora Q27B QLoRA Qwen3.5 5504.89 18.70 94.48 0.08 NVL

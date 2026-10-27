@@ -1,9 +1,9 @@
 % chapters/06_fazit_und_ausblick.tex
 %
-% Erstentwurf vom 27.10.2026 (KI-gestützt erstellt, siehe Erklärung).
-% 6.1 folgt den Forschungsfragen FF1 bis FF3 aus Abschnitt 1.2; die
-% Antworten enthalten \PH{...}-Platzhalter, die nach Kapitel 5 zu füllen
-% sind. 6.2 und 6.3 sind aus Kapitel 4 und 5 ableitbar und ausformuliert.
+% Entwurf vom 27.10.2026 (KI-gestützt erstellt, siehe Erklärung), gefüllt
+% mit den Messwerten aus Kapitel 5 (thesis/generated/summary.json).
+% 6.1 folgt den Forschungsfragen FF1 bis FF3 aus Abschnitt 1.2; es werden
+% keine Ergebnisse eingeführt, die nicht in Kapitel 5 stehen.
 \providecommand{\PH}[1]{\textcolor{red}{\textbf{[#1]}}}
 
 \chapter{Fazit und Ausblick}
@@ -26,72 +26,69 @@ Abschnitt~\ref{sec:ausblick} skizziert weiterführende Arbeiten.
 \section{Zusammenfassung der zentralen Ergebnisse}
 \label{sec:fazit-zusammenfassung}
 
-% TODO: Zahlen aus tab:haupt, tab:effizienz und tab:formtreue-erg
-% übernehmen; die Richtung der Aussagen an Abschnitt 5.7 angleichen.
-% Keine neuen Ergebnisse einführen, die nicht in Kapitel 5 stehen.
-% Nach dem Füllen jeden FF-Absatz auf sechs bis acht Sätze kürzen; Typ-
-% und Formtreue-Details bleiben in Kapitel 5.
-
 \paragraph{FF1: Erkennungsleistung und Formtreue.}
-Auf dem englischen MultiNERD-Testsplit erreicht das beste LLM,
-Qwen3.5-27B im QLoRA-Regime, einen Micro-F$_1$ von \PH{xx,x} Punkten,
-der beste Encoder, DeBERTa-v3-large, einen von \PH{xx,x}.
-Der Abstand von \PH{x,x} Punkten ist \PH{größer / kleiner} als die
-Streuung über die Seeds; \PH{das LLM / der Encoder / keine der beiden
-Klassen} ist damit unterscheidbar besser.
-Die kleineren LLMs erreichen nach der Anpassung \PH{xx,x} (4B) und
-\PH{xx,x} Punkte (0.8B) und liegen damit \PH{über / unter / auf dem
-Niveau von} DeBERTa-v3-base mit \PH{xx,x}.
-Ohne Training fallen die LLMs auf \PH{xx} bis \PH{xx} Punkte zurück;
-\PH{die Anpassung mit QLoRA ist damit der mit Abstand wirksamste Faktor
-im Vergleich, nicht die Modellklasse und nicht die Modellgröße}.
+Auf dem englischen MultiNERD-Testsplit erreicht der beste Encoder,
+DeBERTa-v3-large, einen Micro-F$_1$ von 95,8 Punkten, das beste LLM,
+Qwen3.5-27B im QLoRA-Regime, einen von 94,5.
+Der Abstand von 1,3 Punkten ist ein Vielfaches der Streuung über die
+Seeds; der Encoder ist damit unterscheidbar besser, und auch
+DeBERTa-v3-base liegt mit 95,5 Punkten vor allen LLM-Konfigurationen,
+deren kleinere Vertreter 94,0 (4B) und 93,1 Punkte (0.8B) erreichen.
+Ohne Training fallen die LLMs auf 6,2 bis 69,4 Punkte zurück; die
+Anpassung mit QLoRA ist damit der mit Abstand wirksamste Faktor im
+Vergleich, nicht die Modellklasse und nicht die Modellgröße.
+Der Vorsprung des Encoders stammt vollständig aus dem Recall; etwa die
+Hälfte des Recall-Rückstands des LLM geht auf Antworten zurück, die am
+Limit von 256 Ausgabetokens abgeschnitten wurden, sodass der gemessene
+Abstand eine Obergrenze des Klassenunterschieds darstellt.
 Bei den drei häufigen Typen PER, ORG und LOC unterscheiden sich die
-trainierten Konfigurationen um \PH{höchstens x,x} Punkte; die
-Unterschiede konzentrieren sich auf \PH{die verrauschten Typen ANIM, FOOD
-und PLANT sowie auf DIS, EVE und MEDIA}.
-Die Formtreue ist nach dem Fine-Tuning \PH{hoch}: Weniger als
-\PH{x}\,\% der Antworten sind nicht parsebar, unbekannte Typen und
-Text-Abweichungen treten \PH{praktisch nicht mehr} auf, und die
-verbleibenden Parse-Fehler gehen \PH{nahezu vollständig} auf das Limit
-von 256 Ausgabetokens zurück.
-Im Zero-Shot-Regime ist die Formtreue \PH{deutlich schwächer} und
-\PH{beim 0.8B-Modell der begrenzende Faktor}.
-Das JSON-Format mit expliziten Wortindizes hat sich als \PH{tragfähig}
-erwiesen.
+trainierten Konfigurationen um höchstens 1,8 Punkte; der Encoder liegt
+bei ANIM, FOOD, PLANT und DIS vorn, das LLM bei seltenen Typen wie INST,
+MYTH, CEL und TIME, sodass beide im Makro-F$_1$ gleichauf liegen.
+Die Formtreue ist nach dem Fine-Tuning hoch: 0,4\,\% der Antworten sind
+nicht parsebar, alle wegen des Ausgabelimits; unbekannte Typen und
+unzulässige Indizes treten nicht mehr auf.
+Im Zero-Shot-Regime ist die Formtreue der begrenzende Faktor des
+0.8B-Modells, während 4B und 27B gültiges JSON erzeugen, aber Wortindizes
+falsch zählen.
+Das JSON-Format mit expliziten Wortindizes hat sich nach einem
+Fine-Tuning als tragfähig erwiesen.
 
 \paragraph{FF2: Modellgröße und Ressourcen.}
 Innerhalb der Encoder-Familie bringt der Schritt von 184 auf 434~Mio.
-Parameter \PH{x,x} Punkte, innerhalb der LLM-Familie im QLoRA-Regime der
-Schritt von 0{,}75 auf 4{,}21~Mrd. \PH{x,x} Punkte und der von 4{,}21 auf
-26{,}90~Mrd. weitere \PH{x,x} Punkte.
-\PH{Die Zugewinne nehmen mit der Größe ab / Der Schritt auf 27B ist nicht
-unterscheidbar.}
-Dem stehen Ressourcen gegenüber, die mit der Größe \PH{nahezu linear}
-wachsen: Die Inferenzlatenz je Satz steigt von \PH{8,7}~ms
-(DeBERTa-v3-base) über \PH{xx,x}~ms (DeBERTa-v3-large) und \PH{xxx}~ms
-(Qwen3.5-0.8B) auf \PH{xxxx}~ms (Qwen3.5-27B), der GPU-Spitzenspeicher
-der Inferenz von \PH{x,x} auf \PH{xx,x}~GB, die Trainingsdauer von
-\PH{x,x} auf mindestens \PH{xx} Stunden.
-Im Zero-Shot-Regime ist der Größeneffekt \PH{größer}: \PH{Erst ab 4B /
-27B} erzeugen die Modelle in nennenswertem Umfang gültige Ausgaben.
+Parameter 0,3 Punkte, innerhalb der LLM-Familie im QLoRA-Regime der
+Schritt von 0{,}75 auf 4{,}21~Mrd. 0,8 Punkte und der von 4{,}21 auf
+26{,}90~Mrd. weitere 0,5 Punkte; die Zugewinne sind unterscheidbar,
+nehmen aber mit der Größe ab.
+Dem stehen Ressourcen gegenüber, die mit der Größe steil wachsen: Die
+Inferenzlatenz je Satz steigt von 8,9~ms (DeBERTa-v3-base) über 16,5~ms
+(DeBERTa-v3-large) und 1\,876~ms (Qwen3.5-0.8B) auf 5\,505~ms
+(Qwen3.5-27B), der GPU-Spitzenspeicher der Inferenz von 0,7 auf
+18,7~GB, die Trainingsdauer von 0,4 auf mindestens 50 Stunden.
+Im Zero-Shot-Regime ist der Größeneffekt mit rund 30 Punkten je Schritt
+um Größenordnungen größer, weil erst das 27B-Modell Format und
+Typinventar weitgehend einhält.
 Über die Familien hinweg erklärt die Parameterzahl die Leistung nicht:
-DeBERTa-v3-base erreicht mit 184~Mio. Parametern \PH{mehr / ebenso viel}
-wie Qwen3.5-0.8B mit dem Vierfachen.
+DeBERTa-v3-base erreicht mit 184~Mio. Parametern mehr als jedes
+Qwen3.5-Modell mit dem Vier- bis 146-Fachen.
 
 \paragraph{FF3: Empfehlungen.}
-\PH{Unter Latenz- oder Speicherbeschränkungen ist DeBERTa-v3 die
-effizientere Wahl}: \PH{DeBERTa-v3-large} erreicht \PH{xx,x} Punkte bei \PH{xx}~ms je
-Satz und \PH{x,x}~GB GPU-Speicher und verliert gegenüber dem besten LLM
-\PH{höchstens x,x} Punkte, bei einem \PH{xx}-fach geringeren
-Latenz- und einem \PH{x}-fach geringeren Speicherbedarf.
-Ein LLM rechtfertigt den Mehraufwand nur, wenn \PH{der Leistungsvorsprung
-von x,x Punkten für die Anwendung zählt und} Latenzen von \PH{rund x}
-Sekunden je Satz sowie \PH{xx}~GB GPU-Speicher akzeptabel sind; dann ist
-Qwen3.5-27B mit QLoRA die beste Konfiguration, \PH{während das 4B-Modell
-einen Mittelweg bietet / während das 4B-Modell von DeBERTa-v3-large
-dominiert wird}.
-Das Zero-Shot-Regime ist bei 15 Typen \PH{nicht konkurrenzfähig} und nur
-dann sinnvoll, wenn keine annotierten Daten vorliegen.
+Mit annotierten Trainingsdaten im Umfang von MultiNERD ist DeBERTa-v3
+die bessere und zugleich effizientere Wahl, unabhängig von Latenz- oder
+Speicherbeschränkungen: Die beiden Encoder bilden allein die
+Pareto-Front aus Erkennungsleistung, Latenz und Speicher.
+Ein LLM rechtfertigt den Mehraufwand von rund 5,5 Sekunden je Satz,
+24~GB GPU-Speicher und mindestens 50 Stunden Training nur, wenn seine
+spezifischen Vorteile zählen: die gleichwertige Makro-Leistung mit
+Vorsprüngen bei seltenen Typen oder die hier nicht gemessene
+Möglichkeit, das Typinventar per Prompt zu ändern; dann ist Qwen3.5-27B
+mit QLoRA und einem Ausgabelimit oberhalb von 256 Tokens die beste
+Konfiguration, während das 4B-Modell von beiden Encodern dominiert wird.
+Das Zero-Shot-Regime ist bei 15 Typen nicht konkurrenzfähig und nur
+ohne annotierte Daten sinnvoll, dann allein mit dem 27B-Modell.
+Beim Transfer auf die CrossNER-Domänen ohne Nachtraining verliert der
+Encoder 14,5 Punkte, das LLM 26,8, wobei ein Teil des LLM-Rückstands
+wiederum auf das Ausgabelimit zurückgeht.
 Diese Empfehlungen gelten für die Verarbeitung einzelner Sätze auf den
 verwendeten GPU-Typen; für Offline-Verarbeitung mit Batching verschieben
 sich die Faktoren zugunsten der LLMs, ohne dass dies hier gemessen wurde.
@@ -112,8 +109,10 @@ Originalarbeit beziffert die Qualität der Annotation für ANIM, BIO, FOOD
 und PLANT mit F$_1$-Werten zwischen 0{,}52 und 0{,}71 gegenüber einer
 manuellen Prüfung \cite{tedeschi2022multinerd}.
 Ein Teil der gemessenen Fehler bei diesen Typen kann daher auf die
-Referenz zurückgehen, und ein Modell, das die Silberannotation
-\enquote{zu gut} reproduziert, lernt auch deren Fehler.
+Referenz zurückgehen; die Fehleranalyse zeigt, dass die häufigsten
+Zusätze beider Modellklassen plausible Tiere, Pflanzen und Lebensmittel
+sind, die in der Referenz fehlen, und ein Modell, das die
+Silberannotation \enquote{zu gut} reproduziert, lernt auch deren Fehler.
 Die Untersuchung beschränkt sich zudem auf einen Datensatz, eine Sprache
 und ein Genre; Wikipedia- und Wikinews-Texte sind mit hoher
 Wahrscheinlichkeit Teil der Vortrainingsdaten der LLMs, und eine
@@ -142,6 +141,13 @@ vollständigen Validierungssplit ausgewählt, die LLM-Adapter anhand von
 200 Validierungssätzen.
 Der Trainingsverlust der LLMs umfasst den konstanten Prompt, sodass ein
 Teil des Lernsignals auf dessen Reproduktion entfällt.
+Das Limit von 256 Ausgabetokens schließlich benachteiligt die LLMs
+messbar: Auf MultiNERD liegen 2,6\,\% der Referenzentitäten in
+abgeschnittenen Antworten, auf CrossNER sind 10\,\% der Antworten
+betroffen, und die Sensitivitätsanalyse auf 50 Sätzen zeigt, dass ein
+höheres Limit den Recall dort auf das Niveau der Precision hebt.
+Der gemessene Abstand zwischen den Modellklassen ist deshalb eine
+Obergrenze.
 
 \paragraph{Zero-Shot-Regime.}
 Die Zero-Shot-Ergebnisse beruhen auf je einem Lauf mit Sampling bei
@@ -152,28 +158,29 @@ Testsplit festgelegt, und die Zero-Shot-Läufe verwenden einen anderen
 Prompt, eine andere Präzision und ein anderes Decoding als die
 QLoRA-Läufe.
 Die Zero-Shot-Werte sind deshalb als optimistische Einzelwerte für genau
-dieses Format zu lesen; mit Demonstrationsbeispielen oder Constrained
-Decoding wären höhere Werte zu erwarten.
+dieses Format zu lesen; mit Demonstrationsbeispielen, einer an den
+Datensatz angepassten Definition von TIME oder Constrained Decoding
+wären höhere Werte zu erwarten.
 
 \paragraph{Effizienzmessung.}
 Die Konfigurationen liefen auf drei GPU-Typen; Latenz- und
 Speicherwerte verschiedener Konfigurationen enthalten daher
 Hardwareeffekte, die den gemessenen Unterschied zwischen A100 und H100
-beim Encoder (17{,}6 gegenüber 8{,}7~ms) erreichen können.
+beim Encoder (17{,}6 gegenüber 8{,}9~ms) erreichen können.
 Gemessen wurde die Latenz bei Batchgröße~1 und einem Satz je Anfrage;
 der mit Batching erreichbare Durchsatz, der Speicherbedarf während des
 Trainings sowie Energieverbrauch und Kosten wurden nicht erfasst.
-Die Trainingsdauer des 27B-Modells ist nur als Untergrenze bekannt.
-Das Limit von 256 Ausgabetokens führt bei langen Sätzen zu
-abgeschnittenen, nicht parsebaren Antworten und unterschätzt Recall und
-F$_1$ der LLMs\PH{, auf CrossNER stärker als auf MultiNERD}.
+Die Trainingsdauer des 27B-Modells ist nur als Untergrenze bekannt, weil
+alle drei Läufe nach einem Neustart aus einem Checkpoint wieder
+aufgenommen wurden.
 
 \paragraph{Statistische Absicherung.}
 Jede trainierte Konfiguration wurde mit drei Seeds trainiert; auf
 inferenzstatistische Tests wurde verzichtet.
-Unterschiede in der Größenordnung der Standardabweichungen, darunter
-\PH{der Vergleich der beiden Encoder und der Schritt von 4B auf 27B},
-lassen sich mit diesem Umfang nicht belegen.
+Die Unterschiede im Micro-F$_1$ übersteigen die Summe der
+Standardabweichungen durchweg deutlich, der Makro-F$_1$ der beiden
+besten Modelle und die Werte seltener Typen sind mit diesem Umfang
+dagegen nicht zu trennen.
 Der Testsplit wurde außerdem bereits in den explorativen Vorläufen
 ausgewertet; für die trainierten Konfigurationen blieben die
 Hyperparameter danach bis auf die Epochenzahl des 27B-Modells
@@ -186,14 +193,23 @@ nicht gegeben.
 Aus den Ergebnissen und ihren Grenzen ergeben sich mehrere
 Anschlussfragen.
 
+\paragraph{Ausgabelimit.}
+Die naheliegendste Ergänzung ist eine Wiederholung der LLM-Inferenz mit
+einem Ausgabelimit von 1\,024 Tokens auf dem vollständigen Testsplit und
+allen Seeds.
+Die Hochrechnung in Abschnitt~\ref{sec:disk-leistung} und die
+Sensitivitätsanalyse auf CrossNER lassen erwarten, dass der Abstand zum
+Encoder damit auf wenige Zehntelpunkte schrumpft; ob er verschwindet,
+ist eine offene empirische Frage, deren Beantwortung nur Rechenzeit
+kostet.
+
 \paragraph{Gold-Referenz.}
-Die wichtigste Ergänzung wäre eine manuell geprüfte Teststichprobe,
-etwa im Umfang der 1\,000 Sätze, die \textcite{tedeschi2022multinerd}
-für ihre Qualitätsmessung verwendet haben.
-Damit ließe sich trennen, ob die Unterschiede zwischen den Modellklassen
+Eine manuell geprüfte Teststichprobe, etwa im Umfang der 1\,000 Sätze,
+die \textcite{tedeschi2022multinerd} für ihre Qualitätsmessung verwendet
+haben, würde trennen, ob die Unterschiede zwischen den Modellklassen
 bei ANIM, FOOD und PLANT Modellfehler oder Annotationsfehler sind, und
-ob ein Modell, das von der Silberreferenz abweicht, in Wahrheit die
-bessere Annotation liefert.
+ob ein Modell, das wie bei \enquote{desert cottontail} von der
+Silberreferenz abweicht, in Wahrheit die bessere Annotation liefert.
 
 \paragraph{Anpassungsverfahren.}
 Der Vergleich zwischen vollständigem Fine-Tuning und Adaptern ließe sich
@@ -213,14 +229,13 @@ verbinden.
 Für das Zero-Shot-Regime wären mehrere Samples je Satz oder ein
 Greedy-Kontrolllauf bei allen Größen nötig, um die Streuung zu
 beziffern; Few-Shot-Prompting mit Demonstrationsbeispielen und
-Constrained Decoding, etwa das LogitMatch-Verfahren von
-\textcite{semin2026spanLabeling}, sind die naheliegenden Erweiterungen.
+Verfahren, die die Wortindizes nicht erzeugen, sondern aus den Logits
+ableiten, etwa LogitMatch von \textcite{semin2026spanLabeling}, setzen
+genau an dem Fehler an, der hier dominiert.
 Für das Ausgabeformat steht ein Vergleich der Wortindex-Variante mit
 Inline- und Matching-Formaten unter gleichen Trainingsbedingungen aus,
 der zugleich den Einfluss der Ausgabelänge auf die Latenz beziffern
 würde \cite{zhan2026generativeNER,lu2024padellm}.
-Ein höheres Ausgabelimit würde die Abbrüche bei langen Sätzen
-beseitigen.
 
 \paragraph{Effizienz.}
 Eine Messung auf einheitlicher Hardware, mit Batching und mit
@@ -228,7 +243,8 @@ Energieverbrauch würde die Empfehlungen aus FF3 auf
 Offline-Verarbeitung ausweiten.
 Für die Inferenz der LLMs bieten sich zudem spezialisierte
 Inferenzsysteme und das Zusammenführen der Adapter mit dem Basismodell
-an, die hier nicht verwendet wurden.
+an, die hier nicht verwendet wurden und die den Dequantisierungsaufwand
+der NF4-Gewichte vermeiden würden.
 
 \paragraph{Übertragbarkeit.}
 MultiNERD umfasst zehn Sprachen mit demselben Typinventar.
