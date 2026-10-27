@@ -244,3 +244,10 @@ Thumbs.db
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# LaTeX (thesis/)
+thesis/main.pdf
+thesis/*.synctex.gz
+*.fdb_latexmk
+*.fls
+thesis/literatur/

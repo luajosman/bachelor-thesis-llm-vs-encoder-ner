@@ -1,0 +1,75 @@
+\begin{titlepage}
+\thispagestyle{empty}
+
+\begin{tikzpicture}[remember picture, overlay]
+
+    % --- Logos oben ---
+    \node[anchor=north west] at ([xshift=1.9cm,yshift=-0.6cm]current page.north west)
+        {\includegraphics[width=5.1cm]{frontmatter/logos/tu_berlin.png}};
+
+    \node[anchor=north east] at ([xshift=-1.9cm,yshift=-1.25cm]current page.north east)
+        {\includegraphics[width=7.4cm]{frontmatter/logos/dfki.jpg}};
+
+
+    % --- 1. Block ---
+    \node[
+        anchor=center,
+        align=center,
+        text width=14cm
+    ] (block1) at ([yshift=5.6cm]current page.center) {%
+        \fontsize{23}{27}\selectfont
+        \textbf{Bachelorarbeit}\\[0.5cm]
+        {\fontsize{19}{23}\selectfont an der Technischen Universität Berlin}
+    };
+
+    % --- 2. Block ---
+    \node[
+        anchor=north,
+        align=center,
+        text width=15.5cm
+    ] (block2) at ([yshift=-1.4cm]block1.south) {%
+        \bfseries\fontsize{21}{25}\selectfont
+        \\[0.5cm]Fine-Tuning für Named Entity Recognition:\\[0.1cm]
+        Ein Vergleich von BERT-basierten \\[0.5cm] Modellen und LLMs mit LoRA 
+    };
+
+    % --- 3. Block ---
+    \node[
+        anchor=north,
+        align=center,
+        text width=13cm
+    ] (block3) at ([yshift=-2.1cm]block2.south) {%
+        \fontsize{19}{23}\selectfont
+        Fakultät IV,\\[0.35cm]
+        {\fontsize{17}{20}\selectfont Fachgebiet Quality \& Usability}
+    };
+
+    % --- Linker Block unten ---
+    \node[
+        anchor=north west,
+        align=left,
+        text width=6.2cm
+    ] at ([xshift=3.3cm,yshift=5.1cm]current page.south west) {%
+        \fontsize{14}{18}\selectfont
+        Verfasser: \\[0.10cm]
+        Luaj Osman \\[0.10cm]
+        B.Sc. Wirtschaftsinformatik \\[0.10cm]
+        Matrikelnummer: 456094
+    };
+
+    % --- Rechter Block unten ---
+    \node[
+        anchor=north east,
+        align=left,
+        text width=7.1cm
+    ] at ([xshift=-2.7cm,yshift=5.1cm]current page.south east) {%
+        \fontsize{14}{18}\selectfont
+        Prüfer: \\[0.10cm]
+        Prof.\ Dr.\ Sebastian Möller \\[0.10cm]
+        Prof.\ Dr.\ Axel Küpper \\[0.10cm]
+        Betreuer: Dr.\ Philippe Thomas
+    };
+
+\end{tikzpicture}
+
+\end{titlepage}
