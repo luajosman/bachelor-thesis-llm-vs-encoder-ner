@@ -1,0 +1,24 @@
+% Abbildung 2.3: Aufbau eines LoRA-Adapters (TikZ)
+\begin{tikzpicture}[
+  >=Latex, font=\small,
+  frozen/.style={draw, rounded corners=2pt, fill=gray!15, minimum width=2.6cm, minimum height=1.1cm, align=center},
+  train/.style={draw, rounded corners=2pt, fill=blue!10, minimum width=1.6cm, minimum height=0.9cm, align=center},
+  io/.style={draw, circle, minimum size=0.75cm, inner sep=0pt},
+  sum/.style={draw, circle, minimum size=0.5cm, inner sep=0pt},
+  arr/.style={->, thick}]
+  \node[io] (x) at (0,0) {$x$};
+  \node[frozen] (w) at (3.4,1.1) {$W_0 \in \mathbb{R}^{d \times k}$\\[1pt]{\footnotesize eingefroren}};
+  \node[train] (a) at (2.5,-1.2) {$A \in \mathbb{R}^{r \times k}$};
+  \node[train] (b) at (4.7,-1.2) {$B \in \mathbb{R}^{d \times r}$};
+  \node[sum] (plus) at (6.6,0) {$+$};
+  \node[io] (h) at (8.3,0) {$h$};
+  \draw[arr] (x) -- (1.1,0) |- (w);
+  \draw[arr] (x) -- (1.1,0) |- (a);
+  \draw[arr] (a) -- (b);
+  \draw[arr] (w) -| (plus);
+  \draw[arr] (b) -| (plus);
+  \draw[arr] (plus) -- (h);
+  \node[font=\footnotesize, anchor=south] at (3.6,-0.55) {Rang $r \ll \min(d,k)$};
+  \node[font=\footnotesize, anchor=north] at (3.6,-1.72) {trainierbarer Low-Rank-Pfad $\Delta W = BA$};
+  \node[font=\footnotesize, anchor=south] at (6.6,0.35) {$h = W_0 x + \tfrac{\alpha}{r} B A x$};
+\end{tikzpicture}

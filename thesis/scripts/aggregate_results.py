@@ -1075,10 +1075,10 @@ def tab_effizienz(G):
         if a["inference_seconds_source"] != "phase_history":
             inf += "$^{c}$"
         nd = 1 if enc else 0
-        lat = de(a["latency_mean"]["mean"], nd)
-        med = de(a["latency_p50"]["mean"], nd) if a["latency_p50"]["mean"] is not None else "--$^{b}$"
-        p95 = de(a["latency_p95"]["mean"], nd)
-        thr = "--" if enc else de(a["throughput"]["mean"], 2)
+        lat = de_sep(a["latency_mean"]["mean"], nd)
+        med = de_sep(a["latency_p50"]["mean"], nd) if a["latency_p50"]["mean"] is not None else "--$^{b}$"
+        p95 = de_sep(a["latency_p95"]["mean"], nd)
+        thr = "--$^{d}$" if enc else de(a["throughput"]["mean"], 2)
         mem = de(a["vram_mb"]["mean"] / 1024, 1)
         lines.append(f"    {g['label']} & {g['regime']} & {g['gpu']} & {train} & {inf} & {lat} & {med} & {p95} & "
                      f"{thr} & {mem} \\\\")
@@ -1101,12 +1101,13 @@ def tab_formtreue(G):
             return de(v * 100, 2)
         return f"{round(v):,}".replace(",", "\\,")
 
-    lines = ["\\begin{tabular}{>{\\raggedright\\arraybackslash}p{4.4cm}rrrrrr}", "    \\toprule",
+    lines = ["\\begin{tabular}{>{\\raggedright\\arraybackslash}p{5.8cm}rrrrrr}", "    \\toprule",
              "    & \\multicolumn{3}{c}{\\textbf{Zero-Shot}} &", "      \\multicolumn{3}{c}{\\textbf{QLoRA}} \\\\",
              "    \\cmidrule(lr){2-4}\\cmidrule(lr){5-7}",
              "    \\textbf{Kennzahl} & \\textbf{0.8B} & \\textbf{4B} & \\textbf{27B} &",
              "      \\textbf{0.8B} & \\textbf{4B} & \\textbf{27B} \\\\", "    \\midrule"]
-    rows = [("Parse-Fehlerrate [\\%]", lambda k: val(k, "failure_rate", pct=True)),
+    rows = [("Nicht parsebare Antworten", lambda k: val(k, "failed")),
+            ("\\quad Anteil an allen Antworten [\\%]", lambda k: val(k, "failure_rate", pct=True)),
             ("\\quad davon ohne schlie\\ss{}ende Klammer", lambda k: val(k, "failed_no_close")),
             ("Referenzentit\\\"aten in nicht parsebaren Antworten [\\%]",
              lambda k: de(G[k]["agg"]["truncation"]["lost_share"][0] * 100, 2)),
@@ -1152,7 +1153,7 @@ def tab_fehlertypen(G):
 def tab_crossner(C):
     agg = C["aggregate"]
     sens = C["sensitivity"]
-    lines = ["\\begin{tabular}{>{\\raggedright\\arraybackslash}p{3.2cm}rcccccc}", "    \\toprule",
+    lines = ["\\begin{tabular}{>{\\raggedright\\arraybackslash}p{4.6cm}rcccccc}", "    \\toprule",
              "    & & \\multicolumn{3}{c}{\\textbf{DeBERTa-v3-large}} &",
              "      \\multicolumn{3}{c}{\\textbf{Qwen3.5-27B (QLoRA)}} \\\\",
              "    \\cmidrule(lr){3-5}\\cmidrule(lr){6-8}",

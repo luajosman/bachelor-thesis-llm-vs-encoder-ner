@@ -328,7 +328,7 @@ Vorverarbeitet wird nur, was die technische Integration erfordert; eine
 Textbereinigung oder Normalisierung auf Datensatzebene findet nicht
 statt.
 Der Datensatz wird über die \emph{Datasets}-Bibliothek in einer festen
-Revision (Anhang~\ref{app:reproduzierbarkeit}) aus dem
+Revision (Tabelle~\ref{tab:app-revisionen}) aus dem
 Hugging-Face-Repository \texttt{Babelscape/\allowbreak multinerd} geladen,
 über das Sprachfeld auf \texttt{en} gefiltert und auf vorhandene Splits
 und Spalten sowie exakte Splitgrößen geprüft.
@@ -530,7 +530,7 @@ Die Zero-Shot-Ausgaben entstehen zudem durch Sampling; ihre exakte
 Wiederholung setzt daher auch eine ununterbrochene Ausführung voraus, da
 der Zustand des Zufallszahlengenerators bei einer Wiederaufnahme nicht
 wiederhergestellt wird.
-Anhang~\ref{app:reproduzierbarkeit} ordnet jedem Lauf Konfiguration,
+Tabelle~\ref{tab:app-laeufe} ordnet jedem Lauf Konfiguration,
 Commit, Revisionen und Ausgabeverzeichnis zu und dokumentiert
 nachrangige Einstellungen wie Validierungs-Batchgrößen und
 Checkpoint-Intervalle.
@@ -573,7 +573,7 @@ per argmax bestimmt.
   \small
   \caption[Hyperparameter der Encoder-Pipeline]{Hyperparameter der Encoder-Pipeline.
   Weitere Einstellungen (Adam-Parameter, Gradient Clipping,
-  Checkpoint-Intervalle) enthält Anhang~\ref{app:reproduzierbarkeit}.}
+  Checkpoint-Intervalle) enthält Tabelle~\ref{tab:app-einstellungen}.}
   \label{tab:encoder-hyperparams}
   \begin{tabular}{lll}
     \toprule
@@ -708,8 +708,7 @@ Das Glossar-Profil (\texttt{multinerd\_\allowbreak glossary\_\allowbreak v2})
 wird ausschließlich im Zero-Shot-Regime eingesetzt; es ergänzt die
 Systemnachricht um eine Definition benannter Entitäten, die
 ausgeschriebenen Typbezeichnungen und die Aufforderung, die gesamte
-Tokenliste zu prüfen (Listing~\ref{lst:prompt-glossar} in
-Anhang~\ref{app:reproduzierbarkeit}).
+Tokenliste zu prüfen (Listing~\ref{lst:prompt-glossar} im Anhang).
 Keines der Profile enthält Demonstrationsbeispiele.
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true,
@@ -829,7 +828,7 @@ Ein systematischer Hyperparameter-Suchlauf fand nicht statt.
   \caption[LoRA-/QLoRA-Hyperparameter]{LoRA-/QLoRA-Hyperparameter.
   Der Anteil trainierbarer Parameter bezieht sich auf die Gesamtzahl aus
   Basismodell und Adaptern (0,759, 4,227 bzw. 27,055~Mrd.).
-  Weitere Einstellungen enthält Anhang~\ref{app:reproduzierbarkeit}.}
+  Weitere Einstellungen enthält Tabelle~\ref{tab:app-einstellungen}.}
   \label{tab:lora-hyperparams}
   \begin{tabular}{lrrr}
     \toprule
@@ -993,20 +992,22 @@ Für praxisnahe NER-Systeme ist neben der Erkennungsleistung die Effizienz
 von Training und Inferenz zentral \cite{han2024parameter,obeidat2025llm}.
 
 \paragraph{Trainingsdauer.}
-Gemessen wird die Wall-Clock-Zeit des Trainingsaufrufs einschließlich der
-Validierung nach jeder Epoche (bei den LLMs inklusive generativer
-Validierung) und des Speicherns von Checkpoints, jedoch ohne Laden von
-Modell und Daten, Vorverarbeitung und Export.
+Berichtet wird für alle Konfigurationen die Wall-Clock-Dauer der
+Slurm-Trainingsjobs laut Abrechnung (\texttt{sacct}); sie umfasst Laden
+von Modell und Daten, Training, Validierung nach jeder Epoche (bei den
+LLMs inklusive generativer Validierung), Speichern von Checkpoints und
+Export.
+Die vom Trainer zusätzlich protokollierte Dauer ohne Laden und Export
+liegt bei den ununterbrochenen Läufen um höchstens 1 Minuten darunter.
 Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
 Tagen und wurden vom Scheduler dreimal neu eingereiht; jeder Lauf
 bestand damit aus vier Zuteilungen (Start am 7., 12., 15. und
 18.~August 2026, Abschluss am 20.~August), und der vom Trainer
 gespeicherte Wert erfasst nur die letzte Zuteilung ab Schritt 20\,000
 bzw. 19\,500 von 24\,615.
-Für diese Läufe wird die Trainingsdauer daher als Summe der vier
-Zuteilungen aus der Slurm-Abrechnung (\texttt{sacct}) angegeben; sie
-schließt das erneute Laden von Modell und Daten je Zuteilung ein und ist
-mit den übrigen Läufen nur näherungsweise vergleichbar.
+Für diese Läufe ist die Trainingsdauer die Summe der vier Zuteilungen;
+sie schließt das erneute Laden von Modell und Daten je Zuteilung ein und
+ist mit den übrigen Läufen nur näherungsweise vergleichbar.
 Als Plausibilitätsprüfung dient die Hochrechnung der Schrittrate des
 letzten Abschnitts auf alle Schritte.
 Die Trainingsdauer hängt zudem von der Auslastung des Knotens ab: Die

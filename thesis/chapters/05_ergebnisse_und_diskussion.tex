@@ -96,7 +96,7 @@ Die beiden Encoder stehen in den ersten beiden Zeilen.
   über drei Seeds; Zero-Shot: Einzellauf mit Sampling.
   Makro-F$_1$: ungewichtetes Mittel der typbezogenen F$_1$-Werte über
   15 Typen.
-  Seed-Einzelwerte in Anhang~\ref{app:ergebnistabellen}.}
+  Seed-Einzelwerte in Tabelle~\ref{tab:app-seeds}.}
   \label{tab:haupt}
   \setlength{\tabcolsep}{4pt}
   \input{generated/tab-haupt}
@@ -150,7 +150,7 @@ Der Zugewinn gegenüber dem Zero-Shot-Regime beträgt damit 87,0, 59,0 bzw.
 die Streuung über die Seeds, die bei 0,10, 0,05 und 0,08 Punkten liegt.
 Der Makro-F$_1$ der QLoRA-Modelle beträgt 82,6, 84,6 und 86,9.
 Ausgewählt wurde in acht der neun Läufe der Adapter der dritten Epoche,
-beim 4B-Modell mit Seed~42 der der zweiten
+beim 4B-Modell mit Seed~42 der Adapter der zweiten
 (Abschnitt~\ref{sec:llm-pipeline}); die generative Validierung auf 200
 Sätzen ergab für die gewählten Adapter F$_1$-Werte von 92,3 bis 93,6
 (0.8B), 94,2 bis 95,5 (4B) und 94,7 bis 96,1 (27B).
@@ -197,7 +197,7 @@ abgeschnittene Antworten.
   (Tabelle~\ref{tab:datensplits}).
   Die Typen sind nach der Zuverlässigkeit ihrer Annotation gruppiert
   (Abschnitt~\ref{sec:datenauswahl}).
-  Precision und Recall je Typ in Anhang~\ref{app:ergebnistabellen}.}
+  Precision und Recall je Typ in Tabelle~\ref{tab:app-typen-prf}.}
   \label{tab:typen}
   \setlength{\tabcolsep}{3pt}
   \input{generated/tab-typen}
@@ -240,7 +240,7 @@ Für BIO (8 Referenzentitäten), INST (12), MYTH (32), VEHI (32) und CEL
 Fehler den F$_1$ um zweistellige Beträge verändern; die
 Standardabweichungen des Makro-F$_1$ (0,25 bis 1,06 Punkte) sind
 entsprechend größer als die des Mikro-F$_1$, und
-Anhang~\ref{app:ergebnistabellen} nennt Precision und Recall je Typ.
+Tabelle~\ref{tab:app-typen-prf} nennt Precision und Recall je Typ.
 
 Im Zero-Shot-Regime erkennt das 27B-Modell ohne Training die Typen PER
 (88,0), LOC (86,8) und ORG (81,9) brauchbar, MYTH, CEL, DIS, MEDIA, EVE
@@ -252,7 +252,7 @@ während MultiNERD unter diesem Typ Epochen und Zeitabschnitte wie
 \enquote{Middle Ages} oder \enquote{Great Depression} versteht; von den
 5\,354 TIME-Zusätzen enthalten 4\,190 eine Ziffer.
 Der niedrige Wert zeigt also vor allem eine abweichende Typdefinition;
-der Recall von 18,7 (Anhang~\ref{app:ergebnistabellen}) zeigt zugleich,
+der Recall von 18,7 (Tabelle~\ref{tab:app-typen-prf}) zeigt zugleich,
 dass auch die vom Datensatz gemeinten Zeitabschnitte nur selten gefunden
 werden.
 
@@ -301,8 +301,9 @@ aus Tabelle~\ref{tab:formtreue} für die sechs LLM-Konfigurationen.
   \footnotesize
   \caption[Formtreue der LLM-Ausgaben auf dem Testsplit]{Formtreue der LLM-Ausgaben auf dem Testsplit (16\,454
   Antworten).
-  Parse-Fehlerrate in Prozent der Antworten; übrige Werte absolute
-  Häufigkeiten (QLoRA: Mittel über drei Seeds, gerundet).
+  Nicht parsebare Antworten absolut und in Prozent aller Antworten;
+  übrige Werte absolute Häufigkeiten (QLoRA: Mittel über drei Seeds,
+  gerundet).
   Jedes verworfene Element zählt nur bei der ersten verletzten Regel
   (Abschnitt~\ref{sec:robustheit-ausgaben}).
   Referenzentitäten in nicht parsebaren Antworten: Anteil der
@@ -538,7 +539,7 @@ die längeren Sequenzen mit Prompt.
 Die LLM-Läufe schließen die generative Validierung auf 200 Sätzen je
 Epoche ein, die bei der Encoder-Validierung entfällt.
 Auch die Testinferenz über die 16\,454 Sätze ist aufwendig: Sie dauerte
-für die Encoder 3 bzw. 5 Minuten, für die QLoRA-Modelle 8,6, 21,4 und
+für die Encoder rund 3 bzw. 5,5 Minuten, für die QLoRA-Modelle 8,6, 21,4 und
 25,2~h (Tabelle~\ref{tab:effizienz}).
 
 \paragraph{Inferenzlatenz.}
@@ -783,7 +784,8 @@ leichteste; für das LLM ist Musik mit 63,0 und einem Recall von 48,4 die
 schwerste und Literatur (77,6) die leichteste.
 Der Ausschluss der 21 mit MultiNERD-Trainingssätzen übereinstimmenden
 Sätze verändert die gepoolten Werte um 0,2 bzw. 0,4 Punkte; die Werte der
-einzelnen Seeds und je Grobtyp stehen in Anhang~\ref{app:ergebnistabellen}.
+einzelnen Seeds und je Grobtyp stehen in den Tabellen~\ref{tab:app-crossner-seeds}
+und~\ref{tab:app-crossner-typen}.
 
 Der Recall-Verlust des LLM hängt mit dem Ausgabelimit zusammen.
 CrossNER-Sätze sind mit im Mittel 38 Tokens und 3,2 Referenzentitäten
@@ -1098,6 +1100,10 @@ und 0,3), ebenso einzelne typbezogene Werte der seltenen Typen.
 Die explorativen Vorläufe mit Seed~42, die nicht in die Auswertung
 eingehen, weichen von den kanonischen Läufen desselben Seeds um höchstens
 0,12 Punkte Mikro-F$_1$ ab, was die Streuung über die Seeds bestätigt.
+Die Zero-Shot-Werte beruhen dagegen auf je einem Lauf mit Sampling,
+dessen Streuung nicht gemessen wurde; die Abstände zwischen den Größen
+(28,8 und 34,5 Punkte) und zum QLoRA-Regime liegen jedoch um
+Größenordnungen über jeder plausiblen Sampling-Streuung.
 
 Tabelle~\ref{tab:ci} ergänzt die Seed-Streuung um die Unsicherheit durch
 die Auswahl der Testsätze (gepaartes Satz-Bootstrap,
@@ -1120,14 +1126,13 @@ ebenfalls.
 
 \begin{table}[htbp]
   \centering
-  \footnotesize
   \caption[Bootstrap-Konfidenzintervalle für Mikro- und Makro-F$_1$]{Gepaartes
   Satz-Bootstrap über die 16\,454 Testsätze ($B = 2\,000$,
   Perzentilintervalle 2,5 und 97,5\,\%): Differenzen zwischen
   Konfigurationen (A $-$ B, seedgleiche Paare, über die drei Seeds
-  gemittelt; Zero-Shot-Läufe gegen jeden Seed) und Intervalle der
-  einzelnen Konfigurationen (Seed-Mittel).
-  Werte in Punkten; Dolch: Intervall schließt null ein.}
+  gemittelt) und Intervalle der einzelnen Konfigurationen (Seed-Mittel;
+  Zero-Shot-Läufe: Einzellauf).
+  Werte in Punkten.}
   \label{tab:ci}
   \scriptsize
   \setlength{\tabcolsep}{3pt}
