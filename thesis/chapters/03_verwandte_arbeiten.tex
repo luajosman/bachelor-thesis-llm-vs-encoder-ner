@@ -334,8 +334,9 @@ Informationsextraktionsaufgaben feinjustiert, deren Schemata samt
 Richtlinien als Python-Klassen im Prompt stehen.
 Im Zero-Shot-Setting auf nicht im Training enthaltenen Datensätzen hebt
 das Richtlinientraining den mittleren F$_1$ gegenüber einer Baseline mit
-demselben Backbone ohne Richtlinien um rund 13 Punkte auf 55{,}3 für das
-7B-Modell; die größeren Modelle legen nur wenig zu.
+demselben Backbone ohne Richtlinien (und ohne die zugehörigen
+Kandidatenlisten und Regularisierung) um rund 13 Punkte auf 55{,}3 für
+das 7B-Modell; die größeren Modelle legen nur wenig zu.
 Im überwachten Setting dagegen unterscheiden sich GoLLIE und Baseline
 kaum.
 Auf den fünf CrossNER-Domänen erreicht GoLLIE-7B Werte zwischen 55{,}5
@@ -426,9 +427,10 @@ gewählt, dass die trainierbaren Parameter der LLMs etwa der Größe der
 Encoder entsprechen.
 Beide Modellklassen geben BIO-Tags aus und werden strikt auf
 Entitätsebene bewertet.
-Die LLMs liegen auf vier Datensätzen um 2 bis 8 F$_1$-Punkte vorn und auf
-dem fünften gleichauf; der Vorsprung ist bei Entitäten ab drei Tokens am
-größten und geht vor allem auf eine höhere Precision zurück.
+Die LLMs liegen auf vier Datensätzen um 2 bis 8 F$_1$-Punkte vorn, auf
+dem fünften knapp (0{,}5 Punkte) hinter dem besten Encoder; der Vorsprung
+ist bei Entitäten ab drei Tokens am größten und geht vor allem auf eine
+höhere Precision zurück.
 Dem stehen Inferenzzeiten gegenüber, die je Testbeispiel um das 40- bis
 220-Fache über denen des besten Encoders liegen; die LLMs benötigten
 zudem zwei statt einer H100-GPU.
@@ -526,8 +528,8 @@ Kapazität des eingefrorenen Basismodells als auf die Zahl angepasster
 Parameter zurückgehen.
 Bei Encodern selbst ist die größere Variante nicht durchgehend besser:
 In der Vergleichsstudie von \textcite{keraghel2024recent} liegt
-DeBERTa-v3-base auf CoNLL-2003 knapp vor DeBERTa-v3-large, auf anderen
-Datensätzen ist es umgekehrt.
+DeBERTa-v3-base auf CoNLL-2003 und NCBI Disease knapp vor
+DeBERTa-v3-large, auf den meisten anderen Datensätzen ist es umgekehrt.
 Und \textcite{dukic2024lookingright} beobachten, dass ihre
 Maskenentfernung erst ab einer gewissen Modellgröße wirkt.
 
