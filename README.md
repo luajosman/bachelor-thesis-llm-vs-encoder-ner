@@ -327,9 +327,11 @@ checkpoint achieving the highest generative validation F1 selected for test
 evaluation.” DeBERTa retains its existing reference epoch limits (five for base
 and four for large).
 
-The three zero-shot Qwen experiments are not repeated. Their inference is
-greedy with `do_sample=false`, so seed count and standard deviation are reported
-as `not_applicable`, not as an artificial zero.
+The three zero-shot Qwen experiments are not repeated. The evaluated runs
+(commit `137bffd`, tag `zeroshot-runs-137bffd`) decoded with sampling
+(temperature 1.0, top-k 20, top-p 1.0, min-p 0, seed 42) and the glossary
+prompt profile; the current `main` uses greedy decoding instead. Seed count and
+standard deviation are reported as `not_applicable`, not as an artificial zero.
 
 ### Validation and orchestration commands
 
@@ -547,6 +549,91 @@ Longer outputs can increase runtime. Interrupted runs resume from verified
 per-example checkpoints with `--resume-failed`; smoke results never contribute
 to complete comparison reports.
 
+### MultiNERD output-limit re-generation (1,024 tokens)
+
+The canonical Qwen3.5 QLoRA test predictions were generated with a 256-token
+output limit. Every stored parse failure in the nine canonical runs (0.8B, 4B
+and 27B for seeds 42, 123 and 456; 62 to 72 sentences per run, holding 2.5 % to
+2.7 % of the gold entities) is a JSON array that was cut off at that limit.
+This post-hoc, inference-only evaluation re-generates exactly those sentences
+with the same frozen adapter, pinned base-model revision, prompt, parser and
+greedy non-thinking 4-bit settings at `max_new_tokens=1024`, keeps every other
+stored answer untouched, and scores the merged 16,454-sentence test set again
+with the original metric code. It performs no training; the canonical
+artifacts, the hashed scientific code and the CrossNER evaluators are unchanged.
+
+Selection rule: `parse_status == failed` in the stored `test_predictions.json`.
+Untouched sentences keep their stored answers under the assumption that greedy
+decoding with an EOS stop does not depend on the limit once the answer ended
+before 256 tokens. The assumption is checked rather than trusted: every
+re-generated sentence records `stored_prefix_match` (its first 256 generated
+tokens decode to the stored 256-token answer), each run records whether the
+package versions and GPU match the source run (`environment`), and a smoke run
+can re-generate stored `ok` sentences as a control sample (`--control-limit`,
+written to `control_predictions.json`, never merged).
+
+Run from `ba-ner/` with the project environment active and a clean, committed
+checkout:
+
+```bash
+export BA_NER_RESULTS_ROOT=/netscratch/losman/ba-ner/results
+export HF_HOME=/netscratch/losman/ba-ner/hf-cache HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1
+python -m pytest tests/test_multinerd_output_limit.py
+
+# 1. CPU preflight: source contracts, selections, cached base models, locks;
+#    --verify-dataset also aligns every stored sentence with the pinned dataset.
+python -m src.evaluate.multinerd_output_limit --preflight --verify-dataset \
+  --source-results-root "$BA_NER_RESULTS_ROOT" \
+  --output-root "$BA_NER_RESULTS_ROOT/multinerd_output_limit_1024"
+
+# 2. GPU smoke: two sentences of the 27B seed-42 run plus five control sentences
+#    -> multinerd_output_limit_1024/smoke/qwen35-27b-qlora-3ep/
+scripts/cluster/submit_multinerd_output_limit.sh --smoke-limit 2 --control-limit 5 \
+  configs/qwen35_27b_3ep.yaml
+
+# 3. Nine GPU jobs, one model load each (160G for 27B, 64G for 0.8B and 4B).
+scripts/cluster/submit_multinerd_output_limit.sh configs/qwen35_27b_3ep.yaml \
+  configs/qwen35_27b_3ep_seed123.yaml configs/qwen35_27b_3ep_seed456.yaml
+scripts/cluster/submit_multinerd_output_limit.sh configs/qwen35_08b_canonical.yaml \
+  configs/qwen35_08b_seed123.yaml configs/qwen35_08b_seed456.yaml \
+  configs/qwen35_4b_canonical.yaml configs/qwen35_4b_seed123.yaml \
+  configs/qwen35_4b_seed456.yaml
+squeue -u "$USER"; grep -h "MNOL_RESULT\|SKIP_COMPLETED" logs/mnol-*.out
+# Interrupted job: scripts/cluster/submit_multinerd_output_limit.sh --resume-failed <config>
+
+# 4. CPU aggregation: re-verifies every artifact; exit code 1 if a run is missing.
+python -m src.evaluate.multinerd_output_limit --aggregate \
+  --source-results-root "$BA_NER_RESULTS_ROOT" \
+  --output-root "$BA_NER_RESULTS_ROOT/multinerd_output_limit_1024"
+```
+
+Each job verifies the source run exactly as the CrossNER evaluators do
+(configuration, scientific contract, adapter and tokenizer hashes, frozen
+inference settings), recomputes the stored 256-token metrics and refuses to
+continue if they differ, aligns the stored sentences with the pinned MultiNERD
+revision before loading the model, and writes a regeneration contract
+(selection, limits, adapter identity, code hashes). Interrupted jobs resume
+from a per-sentence checkpoint; a completed folder is skipped only with an
+identical contract and is never overwritten. A `--requeue` restart of the same
+SLURM job recovers its own lock automatically.
+
+Outputs below `<source-results-root>/multinerd_output_limit_1024/` (smoke runs
+in `smoke/`): `test_predictions.json` keeps the stored record order with
+`regenerated: false` for untouched sentences and, for re-generated ones, the
+new answer plus `generated_token_count`, `token_limit_reached`, `stop_reason`,
+`json_complete`, `latency_ms`, `stored_prefix_match` and the previous answer
+under `baseline_256`. `inference_metrics.yaml` mirrors the canonical metrics
+file (merged `f1`, `precision`, `recall`, parse diagnostics, 15-type
+`per_entity`, `macro_f1`, `vram_peak_mb`) and adds `baseline_256`,
+`delta_vs_256`, a `regeneration` block (subset metrics before and after, stop
+reasons, token and latency distributions of the re-generated sentences only,
+prefix-match counts) and `environment`. There are no full-set latency figures:
+the canonical runs did not store per-sentence latencies, and the re-generation
+latencies cover long, hard sentences only. `aggregate/comparison.{yaml,csv,md}`
+report mean and sample standard deviation (`ddof=1`) over the three seeds for
+the 256-token baseline and the 1,024-token result, Δ in percentage points,
+parse failures remaining at 1,024 tokens, limit hits and per-entity F1.
+
 The repository includes SLURM scripts for running the matrix on a GPU cluster.
 They support either a project-local `.venv` or a Conda environment named
 `ba-ner`.
@@ -590,6 +677,13 @@ results/multinerd/<experiment_name>/
   test_predictions.json     # per-sample predictions
   best_model/               # encoder checkpoints
   best_lora_adapter/        # decoder LoRA adapters
+results/multinerd_output_limit_1024/<experiment_name>/
+  contract.json             # regeneration contract: selection, limits, adapter identity, code hashes
+  test_predictions.json     # merged test set; regenerated: true/false per sentence
+  inference_metrics.yaml    # merged metrics, baseline_256, delta_vs_256, regeneration, environment
+  status.json
+results/multinerd_output_limit_1024/aggregate/
+  comparison.{yaml,csv,md}  # verified seed means and sample standard deviations
 ```
 
 The codebase uses config-validated runs, fixed seeds where supported, and
@@ -612,6 +706,13 @@ python -m pytest
 The tests cover config validation, the MultiNERD dataset contract, decoder
 prompt formatting, token-offset JSON parsing, BIO conversion, result
 aggregation, and reproducibility metadata collection.
+
+`tests/test_multinerd_output_limit.py` covers the MultiNERD output-limit
+re-generation on CPU with toy source trees and a fake predictor: run and
+failure selection, merging, metric recomputation against the stored 256-token
+metrics, checkpoint resume and idempotent skips, output-path safety, dataset
+alignment, greedy generation settings with the stored-prefix comparison, lock
+recovery, preflight, aggregation (`ddof=1`) and CLI validation.
 
 ## Author and Thesis Context
 

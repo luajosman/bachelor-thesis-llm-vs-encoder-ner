@@ -187,6 +187,29 @@ and reject any dirty worktree before running. Commit and freeze the experiment
 definition before submission, and do not edit the checkout while the matrix is
 active. The configured scratch filesystem must also have at least 500 GiB free.
 
+### MultiNERD output-limit re-generation
+
+The post-hoc output-limit evaluation re-generates only the stored 256-token
+parse failures of the nine canonical Qwen QLoRA runs at 1,024 tokens. It has a
+CPU preflight, a submission helper that sets memory, job names and the frozen
+commit, and a CPU aggregation; see the README section "MultiNERD output-limit
+re-generation (1,024 tokens)" for the full sequence.
+
+```bash
+export BA_NER_RESULTS_ROOT=/netscratch/losman/ba-ner/results
+python -m src.evaluate.multinerd_output_limit --preflight \
+  --source-results-root "$BA_NER_RESULTS_ROOT" \
+  --output-root "$BA_NER_RESULTS_ROOT/multinerd_output_limit_1024"
+scripts/cluster/submit_multinerd_output_limit.sh --smoke-limit 2 --control-limit 5 configs/qwen35_27b_3ep.yaml
+scripts/cluster/submit_multinerd_output_limit.sh configs/qwen35_27b_3ep.yaml configs/qwen35_27b_3ep_seed123.yaml
+python -m src.evaluate.multinerd_output_limit --aggregate \
+  --source-results-root "$BA_NER_RESULTS_ROOT" \
+  --output-root "$BA_NER_RESULTS_ROOT/multinerd_output_limit_1024"
+```
+
+Logs are written to `logs/mnol-<size>-s<seed>[-smoke]-<job>.{out,err}`; the
+`.out` file ends with an `MNOL_RESULT` or `SKIP_COMPLETED` line.
+
 ## 4. Monitor jobs
 
 List all of your queued and running jobs:

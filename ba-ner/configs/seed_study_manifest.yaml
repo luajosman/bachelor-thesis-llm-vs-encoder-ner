@@ -14,7 +14,7 @@ zero_shot:
   seed: not_applicable
   number_of_runs: 1
   standard_deviation: not_applicable
-  reason: deterministic greedy decoding with do_sample=false
+  reason: single sampled run per size (temperature 1.0, top-k 20, seed 42; commit 137bffd, tag zeroshot-runs-137bffd), not repeated
 
 groups:
   - key: deberta-v3-base
