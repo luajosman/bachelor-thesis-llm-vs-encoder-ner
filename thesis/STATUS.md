@@ -1,34 +1,48 @@
-# Stand der Bachelorarbeit (27.10.2026, abends)
+# Stand der Bachelorarbeit (28.10.2026, nachmittags)
 
-Abgabe: 26.11.2026; Verlängerung um ein bis zwei Wochen mit Attest möglich (Entscheidung bis 6.11.). Abstract nur deutsch. Der angemeldete Titel ("Fine-Tuning für NER: Ein Vergleich von BERT-basierten Modellen und LLMs mit LoRA") ist vermutlich fix; die Abweichung zu DeBERTa/QLoRA/Zero-Shot wird im Text (1.3) erklärt, nicht durch Umbenennen.
+Abgabe: 26.11.2026 (geplant 25.11.); mit zweiwöchigem Attest (Entscheidung bis 6.11.) verschiebt sich die Abgabe auf ca. 10.12.2026 (geplant 8.12.). Abstract nur deutsch (Entwurf steht). Angemeldeter Titel laut Anmeldung vermutlich „Fine-Tuning für NER: Ein Vergleich von BERT-basierten Modellen und LLMs mit LoRA“; das Deckblatt schreibt „Named Entity Recognition“ aus – **exakten Wortlaut prüfen**. Die Abweichung zu DeBERTa/QLoRA/Zero-Shot ist jetzt in 1.3 erklärt.
 
-## Ablage
+Der ausführliche Plan mit Bewertung je Kapitel, Audit-Listen und beiden Zeitplänen liegt unter `~/.claude/plans/guck-dir-bitte-kapitel-quiet-fairy.md` (Kopie der Kernpunkte unten).
 
-- LaTeX: `thesis/` in diesem Repo. Bauen: `cd thesis && latexmk -pdf main.tex` (103 Seiten, keine Overfull-Boxen, keine offenen Verweise, keine `\PH`-Platzhalter mehr).
-- Ergebnisse: `ba-ner/results/` (in Git ignoriert; liegt auf dem MacBook Air und auf dem Cluster unter `/netscratch/losman/ba-ner/results/`). Auf einem neuen Rechner per `bash sync_from_cluster.sh` holen.
-- Aggregation: `thesis/scripts/aggregate_results.py` (benötigt PyYAML) liest `ba-ner/results/` und schreibt `thesis/generated/` (Tabellenkörper `tab-*.tex`, Abbildungsdaten `fig-*.dat`, Kennzahlen `summary.json`). Die Kapitel binden die Tabellenkörper per `\input` ein; die Zahlen im Fließtext von Kapitel 5 und 6 stammen aus `summary.json`. Das Skript prüft seine strikte Auswertung gegen die gespeicherten Werte und bricht bei Abweichung ab.
-- Cluster: `losman@login1.pegasus.kl.dfki.de`; Repo dort `/home/losman/bachelor-thesis-llm-vs-encoder-ner`; Commit 137bffd (Zero-Shot-Läufe, Anhang A.1) liegt nur in der Beweiskopie `.../bachelor-thesis-llm-vs-encoder-ner-1` auf dem Cluster.
+## Ablage und Bauen
 
-## Kapitelstatus
+- LaTeX: `thesis/` in diesem Repo. Auf diesem Mac ist kein TeX installiert; Build über Docker Desktop:
+  `cd thesis && docker run --rm -v "$PWD":/work -w /work texlive/texlive:latest latexmk -pdf main.tex`
+  (Image `texlive/texlive:latest`, 9 GB, einmal gezogen). Hilfsdateien in `thesis/build/`, PDF `thesis/main.pdf`. Stand: 106 Seiten, 0 Overfull-Boxen, 0 offene Verweise. Seiten rendern: `gs -sDEVICE=png16m -r80 -dFirstPage=N -dLastPage=N -o build/pages/p.png main.pdf` im selben Container. Achtung: die Shell-Funktion `grep` schweigt bei der ISO-8859-Logdatei, `/usr/bin/grep -a` benutzen.
+- Ergebnisse: `ba-ner/results/` (in Git ignoriert), seit 28.10. vollständig vom Cluster synchronisiert (alle YAML/JSON/CSV/MD/TXT/OUT, keine Gewichte; `bash sync_from_cluster.sh`). Zusätzlich dort: `slurm_accounting_2026-08.csv` (sacct-Export aller Jobs Aug.–Okt.), `crossner_overlap_check_2026-10-05.json`, `METHODIK_FACTS.md` (Beweis-Audit vom 8.10.).
+- Aggregation: `/Users/luajosman/miniforge3/bin/python3 thesis/scripts/aggregate_results.py` (braucht PyYAML und numpy; das Repo-`.venv` hat beides nicht). Schreibt `thesis/generated/` (Tabellenkörper, Abbildungsdaten, `summary.json`), prüft strikte Werte gegen die gespeicherten, bricht bei Abweichung ab; Bootstrap mit festem Seed, Ausgabe byte-reproduzierbar. Erzeugt `tab-limit.tex` und `tab-limit-multinerd.tex` erst, wenn die 1024-Läufe vollständig vorliegen.
+- Cluster: `losman@login1.pegasus.kl.dfki.de`, Repo `/home/losman/bachelor-thesis-llm-vs-encoder-ner`, Ergebnisse `/netscratch/losman/ba-ner/results`. Commit 137bffd (Zero-Shot) liegt jetzt als Tag `zeroshot-runs-137bffd` auf GitHub. `METHODIK_FACTS.md` wurde aus dem Cluster-Repo nach `/home/losman/` verschoben (Orchestrator verlangt sauberen Baum).
 
-- Kapitel 1 bis 4: überarbeitete Fassungen. Am 27.10. ergänzt: Unterscheidbarkeitsregel und Fehlerklassen in 4.5.1, Greedy-Kontrolllauf (0,5 Punkte) in 4.4.3, Encoder-Latenz 8,9 ms in 4.5.2, Sensitivitätsanalyse zum Ausgabelimit in 4.6, Kapitelbeschreibung in 1.4.
-- Kapitel 5: vollständig mit Messwerten gefüllt (KI-gestützt erstellt, in der Erklärung anzugeben). Struktur: 5.1 Erkennungsleistung (5.1.1 Gesamt, 5.1.2 je Typ, Abb. 5.1), 5.2 Formtreue, 5.3 Modellgröße (Abb. 5.2), 5.4 Effizienz (Abb. 5.3), 5.5 Fehleranalyse, 5.6 CrossNER mit Tab. 5.8 (Ausgabelimit), 5.7 Diskussion.
-- Kapitel 6: vollständig gefüllt; 6.1 entlang FF1 bis FF3.
-- Anhang: A.1 vollständig (DeBERTa-Revisionen eingetragen), A.2 mit Seed-Einzelwerten, P/R/F1 je Typ und Fehlerbeispielen.
+## Heute erledigt (28.10.)
 
-## Zentrale Befunde (Kurzfassung)
-
-- Micro-F1 (Mittel ± SD über Seeds 42/123/456): DeBERTa-v3-base 95,50 ± 0,04; DeBERTa-v3-large 95,82 ± 0,03; Qwen3.5-0.8B/4B/27B QLoRA 93,14 ± 0,10 / 93,97 ± 0,05 / 94,48 ± 0,08; Zero-Shot 6,17 / 34,93 / 69,41 (Einzelläufe).
-- Encoder vorn (1,3 Punkte, unterscheidbar); Vorsprung ausschließlich im Recall; rund die Hälfte davon durch das 256-Token-Ausgabelimit (65 abgeschnittene Antworten mit 656 Referenzentitäten). Makro-F1 gleichauf (86,7 vs. 86,9).
-- Effizienz: Latenz 8,9/16,5 ms (Encoder) gegenüber 1 876 bis 5 505 ms (QLoRA); Speicher 0,7/1,7 GB gegenüber 0,9 bis 18,7 GB; Training 0,4/1,1 h gegenüber 12,1/62,9/≥50,5 h.
-- CrossNER (PER/ORG/LOC): DeBERTa-large 85,0, Qwen-27B 71,7; 1024-Token-Stichprobe hebt Recall des LLM auf ~90.
+- Rohdaten vollständig lokal; Zahlen-Audit von Kapitel 5/6 gegen `summary.json` und Rohdaten; Kapitel-4-Audit gegen Code/Configs.
+- Faktenfehler korrigiert: Trainingsdauer 27B (vier Slurm-Zuteilungen, 265,0/264,2/269,5 h statt „≥ 50,5 h, rund 70 h“), „Hälfte des Recall-Rückstands“ (tatsächlich fast der ganze), „in keinem der neun Läufe“ (Einzelfälle), Speicher-„Größenordnungen“, CrossNER-Latenz/GPU, Validierungssplit-Anteil, SD-Regel bei CEL/VEHI/EVE, Latenzfaktoren, Rundungen, Adapter-Präzision (27B FP32), vierte Fehlerklasse, Kontamination, LogitMatch, FF2.
+- Terminologie vereinheitlicht (Mikro-/Makro-F$_1$, F$_1$ mit Index, QLoRA-Regime, IOB2, Formtreue, Entity-Level), alle Tabellen booktabs, Kurztitel, Abbildungs- und Tabellenverzeichnis, Leerseite beseitigt, Abb. 2.1/2.2 als TikZ neu.
+- Abstract-Entwurf, Erklärung mit KI-Angabe und Unterschriftszeile, Titelabsatz in 1.3, A.1 ergänzt (Tag, Vorlauf-Commits, Artefakte, Adaptergrößen).
+- Aggregationsskript: sacct-Trainingszeiten, Testinferenzdauer, gepaartes Satz-Bootstrap (Tab. 5.9), Span-Zähler, CrossNER-Anhangstabellen, Hooks für die 1024-Auswertungen.
+- Experimente gestartet: CrossNER mit 1024 Tokens komplett (Jobs 3672273–3672275, Aggregation 3672276); Modul für die MultiNERD-Nachinferenz der abgeschnittenen Antworten in Arbeit (`ba-ner/src/evaluate/multinerd_output_limit.py`).
 
 ## Offene Punkte (Pflicht vor Abgabe)
 
-1. Kapitel 5 und 6 kritisch lesen und in eigene Sprache bringen; Richtung der Aussagen ist festgelegt (Encoder vorn, Ausgabelimit als Obergrenzen-Argument).
-2. Abstract (deutsch), Erklärung mit Datum und KI-Angabe (Produkt, Hersteller, Version, Art der Nutzung), Titelabsatz in 1.3.
-3. Abb. 2.1 (doppelte Beschriftung, deutsches Beispiel gegen englische Tab. 2.1), Abb. 2.2 (Beschriftung berührt Linie), "Full-FT" in Tab. 3.1 definieren.
-4. Terminologie (LoRA-/QLoRA-Regime; Formtreue/Strukturtreue/Robustheit; Micro/Mikro; BIO/IOB2), Leerseite 4, Abbildungs- und Tabellenverzeichnis, Tabellenstil Kapitel 4 und A.1 auf booktabs.
-5. Anhang A.1: Hinweis ergänzen, dass Commit 137bffd nur in der Beweiskopie auf dem Cluster liegt (oder diese pushen); TODO zu 137bffd auflösen.
-6. Literaturangaben stichprobenartig prüfen (GPT-4o-Wert bei Keraghel et al. unverifiziert).
-7. Zeitplan: Entwurf an Betreuung bis 11.11.; Formalia und Kapitel 1 bis 4 bis 16.11.; Feedback und Gesamtkorrektur bis 23.11.; Abgabe 25.11.
+1. **Experimente einarbeiten:** CrossNER-1024 (Tab. 5.8 wird durch `generated/tab-limit` ersetzt; 4.6, 5.6, 5.7.1, 6.1–6.3 anpassen) und MultiNERD-Nachinferenz (Modul testen, Smoke, 9 Jobs, `tab-limit-multinerd`; Hochrechnung in 5.7.1 durch Messwert ersetzen; Abstract-Satz zum Ausgabelimit anpassen).
+2. **Kapitel 5 und 6 in eigene Sprache bringen** (Nutzeraufgabe; Stilmuster „nicht X, sondern Y“ und Redundanz 5.7.4/6.1 reduzieren).
+3. Datensatzstatistik Tab. 4.3 und Kürzungszahlen (48/11) auf dem Cluster nachrechnen; Lizenzen/Modellkarten und Literaturzahlen prüfen (Rechercheagent läuft).
+4. README/Manifest-Kommentare, die Greedy-Zero-Shot behaupten, berichtigen.
+5. Frontmatter: Titelwortlaut, Überschrift „Abstract“ vs. „Zusammenfassung“, KI-Angabe bestätigen, Datum/Unterschrift bei Abgabe.
+6. Betreuer-Feedback (Entwurf bis 8.11. bzw. 11.11. versenden), externes Korrekturlesen, Umfang (106 Seiten) mit Fachgebiet klären.
+
+## Bewertung (28.10., 1–10, 10 = abgabefertig)
+
+Frontmatter 7 (war 3; Abstract/Erklärung Entwurf, Titel offen) · Kap. 1: 8 · Kap. 2: 9 · Kap. 3: 8 · Kap. 4: 8 (war 7; 1024-Methodik fehlt noch) · Kap. 5: 7 (war 6; Audit-Fehler behoben, 1024-Ergebnisse und eigene Sprache offen) · Kap. 6: 7 · Anhang 8 · Gesamt 7–8.
+
+## Zeitplan (Kurzform; Details im Plan)
+
+- **A (Abgabe 25./26.11.):** bis 1.11. Experimente laufen, Text-Korrekturen (erledigt); 2.–8.11. Experimente einarbeiten, Abstract final, **8.11. Gesamtentwurf an Betreuer**, 6.11. Attest-Entscheidung; 9.–15.11. Kap. 1–4 gegenlesen, Formalien klären; 16.–22.11. Feedback einarbeiten, Korrekturlesen; 23.–25.11. finaler Build, Abgabe.
+- **B (Attest, Abgabe 8./10.12.):** gleiche ersten zwölf Tage, **11.11. Entwurf an Betreuer**; 9.–22.11. eigene Sprache in Ruhe, optionale Zero-Shot-Greedy-Kontrollläufe; 23.–29.11. Feedback, zweite Runde bis 27.11.; 30.11.–6.12. zweites Feedback, finaler Build; 7./8.12. Abgabe.
+
+## Zentrale Befunde (Kurzfassung, Stand 256-Token-Hauptauswertung)
+
+- Mikro-F$_1$ (Mittel ± SD über Seeds 42/123/456): DeBERTa-v3-base 95,50 ± 0,04; DeBERTa-v3-large 95,82 ± 0,03; Qwen3.5-0.8B/4B/27B QLoRA 93,14 ± 0,10 / 93,97 ± 0,05 / 94,48 ± 0,08; Zero-Shot 6,17 / 34,93 / 69,41 (Einzelläufe).
+- Encoder vorn (1,34 Punkte, Bootstrap-KI 0,99–1,68); Vorsprung fast ausschließlich im Recall; der größte Teil des Recall-Rückstands liegt in den 65 am 256-Token-Limit abgeschnittenen Antworten (2,6 % der Referenzentitäten). Makro-F$_1$ gleichauf (86,7 vs. 86,9; KI schließt 0 ein).
+- Effizienz: Latenz 8,9/16,5 ms (Encoder) gegenüber 1 876 bis 5 505 ms (QLoRA); Speicher 0,7/1,7 GB gegenüber 0,9 bis 18,7 GB; Training 0,4/1,2 h gegenüber 12,1/62,9/266 h; Testinferenz 3–5 min gegenüber 8,6/21,4/25,2 h.
+- CrossNER (PER/ORG/LOC): DeBERTa-large 85,0, Qwen-27B 71,7; Vorstudie mit 1024 Tokens hebt den Recall auf ~90 (vollständiger Lauf läuft).
