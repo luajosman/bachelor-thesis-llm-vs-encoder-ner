@@ -1,5 +1,36 @@
 \chapter*{Abstract}
 \thispagestyle{empty}
 
-% Hier später Abstract einfügen
-\vspace{1cm}
+% Entwurf vom 28.10.2026; Zahlen aus thesis/generated/summary.json
+% (256-Token-Hauptauswertung). Nach der Nachinferenz mit 1 024 Tokens
+% den Satz zum Ausgabelimit anpassen.
+
+Named Entity Recognition (NER) lässt sich heute mit zwei Klassen
+vortrainierter Sprachmodelle lösen: mit Encodern, die jedem Token ein Label
+zuweisen, und mit generativen Large Language Models (LLMs), die die
+Entitäten als strukturierten Text ausgeben.
+Diese Arbeit vergleicht beide Klassen in einer gemeinsamen Pipeline auf dem
+englischen Teil des feingranularen Datensatzes MultiNERD mit 15
+Entitätstypen: DeBERTa-v3-base und DeBERTa-v3-large mit vollständigem
+Fine-Tuning sowie Qwen3.5-0.8B, -4B und -27B im Zero-Shot-Einsatz und nach
+einer Anpassung mit QLoRA, die trainierten Konfigurationen jeweils mit drei
+Seeds.
+Bewertet werden strikte Entity-Level-Metriken, die Formtreue der generierten
+JSON-Ausgaben, Trainingsdauer, Inferenzlatenz und GPU-Spitzenspeicher; ein
+Transfertest auf CrossNER ergänzt den Vergleich.
+
+Der beste Encoder erreicht einen Mikro-F$_1$ von 95,8 Punkten, das beste
+LLM 94,5; der Abstand liegt weit über der Streuung der Seeds und stammt fast
+ausschließlich aus dem Recall, dessen Rückstand überwiegend auf Antworten
+entfällt, die am Ausgabelimit von 256 Tokens abgeschnitten wurden.
+Im Makro-F$_1$ sind beide Klassen gleichauf.
+Ohne Anpassung erreichen die LLMs nur 6,2 bis 69,4 Punkte; die Anpassung
+wirkt damit stärker als Modellklasse und Modellgröße.
+Die Encoder benötigen je Satz 9 bis 17~ms und unter 2~GB GPU-Speicher, die
+angepassten LLMs 1,9 bis 5,5~s und bis zu 19~GB; beim Training stehen
+Stunden gegen Tage bis Wochen.
+Beim Transfer auf CrossNER verliert der Encoder 14,5, das LLM 26,8 Punkte.
+Für NER mit ausreichend annotierten Daten ist DeBERTa-v3 damit die bessere
+und zugleich effizientere Wahl; ein LLM lohnt sich nur, wenn seine Stärken
+bei seltenen Typen oder die Änderbarkeit des Typinventars per Prompt den
+Mehraufwand rechtfertigen.

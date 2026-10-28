@@ -185,6 +185,18 @@ Bestwerten der Literatur.
 \section{Abgrenzung der Arbeit}
 \label{sec:abgrenzung}
 
+Der angemeldete Titel der Arbeit nennt BERT-basierte Modelle und LoRA.
+Auf der Encoder-Seite werden mit DeBERTa-v3-base und DeBERTa-v3-large
+zwei Weiterentwicklungen von BERT untersucht, die sich in vergleichenden
+NER-Studien als besonders leistungsfähig erwiesen haben
+(Abschnitt~\ref{sec:encoder_ner}); auf der LLM-Seite wird LoRA in seiner
+speicheroptimierten Form QLoRA eingesetzt, die das Training des
+27B-Modells auf einer einzelnen GPU erst möglich macht
+(Abschnitt~\ref{sec:lora}), und das Zero-Shot-Regime kommt als
+Bezugspunkt ohne Training hinzu.
+Im Folgenden werden die Verfahren daher mit diesen präziseren
+Bezeichnungen benannt.
+
 Die Untersuchung beschränkt sich auf NER in englischsprachigen Texten.
 Hauptdatenbasis sind die offiziellen Splits des englischen Teils von
 MultiNERD mit Texten aus Wikipedia und Wikinews~\cite{tedeschi2022multinerd}.
