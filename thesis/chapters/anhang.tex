@@ -1,17 +1,9 @@
-% Anhang der Arbeit (ersetzt den bisherigen Inhalt der Anhangsdatei vollständig)
+% chapters/anhang.tex
 %
-% Abschnitt A.1 dokumentiert die Reproduzierbarkeit der in Kapitel 4
-% beschriebenen Läufe. Kapitel 4 verweist über die Labels
-% app:reproduzierbarkeit und lst:prompt-glossar auf diesen Abschnitt.
-%
-% Benötigte Pakete in der Präambel: xcolor, tabularx, listings
-%
-% TODO vor Abgabe:
-%  - Commit 137bffd (Zero-Shot-Läufe) liegt laut Audit in einer separaten
-%    Arbeitskopie und nicht in der Historie des Hauptzweigs. Sicherstellen,
-%    dass er im öffentlichen Repository erreichbar ist (z. B. als Tag).
-%  - DeBERTa-Revisionen aus MODEL_REVISIONS (src/config.py) eintragen.
-\providecommand{\PH}[1]{\textcolor{red}{\textbf{[#1]}}}
+% A.1 dokumentiert die Reproduzierbarkeit der in Kapitel 4 beschriebenen
+% Läufe (Labels app:reproduzierbarkeit, lst:prompt-glossar), A.2 ergänzende
+% Ergebnistabellen (Tabellenkörper aus thesis/generated/).
+% Benötigte Pakete in der Präambel: xcolor, tabularx, listings, booktabs.
 
 \chapter{Anhang}
 \label{chap:anhang}
@@ -63,10 +55,10 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
   \label{tab:app-laeufe}
   \setlength{\tabcolsep}{3pt}
   \begin{tabular}{llll}
-    \hline
+    \toprule
     \textbf{Konfiguration} & \textbf{Konfigurationsdatei} &
     \textbf{Ausgabeverzeichnis} & \textbf{Commit} \\
-    \hline
+    \midrule
     DeBERTa base       & \texttt{deberta\_base\_canonical}  & \texttt{deberta-v3-base-canonical}  & \texttt{179eed8} \\
     DeBERTa large      & \texttt{deberta\_large\_canonical} & \texttt{deberta-v3-large-canonical} & \texttt{179eed8} \\
     Qwen 0.8B QLoRA    & \texttt{qwen35\_08b\_canonical}    & \texttt{qwen35-08b-qlora-canonical} & \texttt{179eed8} \\
@@ -76,7 +68,7 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
     Qwen 4B Zero-Shot  & \texttt{qwen35\_4b\_zeroshot}$^{b}$  & \texttt{qwen35-4b-zeroshot}      & \texttt{137bffd} \\
     Qwen 27B Zero-Shot & \texttt{qwen35\_27b\_zeroshot}$^{b}$ & \texttt{qwen35-27b-zeroshot}     & \texttt{137bffd} \\
     CrossNER           & wie Hauptstudie                    & \texttt{results/crossner/}\dots      & \texttt{b620041} \\
-    \hline
+    \bottomrule
     \multicolumn{4}{@{}l}{\scriptsize $^{a}$ Start mit \texttt{179eed8};
       Fortsetzung nach der Unterbrechung und Testinferenz mit
       \texttt{c01bcbe}.} \\
@@ -95,9 +87,9 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
   und Datensatz ohne explizite Revisionsangabe.}
   \label{tab:app-revisionen}
   \begin{tabular}{ll}
-    \hline
+    \toprule
     \textbf{Komponente} & \textbf{Commit bzw. Revision} \\
-    \hline
+    \midrule
     Code: Trainingsläufe der Hauptstudie     & \texttt{179eed8c68b49f51fff5498e411db22c88ef3c9a} \\
     Code: Fortsetzung und Inferenz 27B-QLoRA & \texttt{c01bcbe0f1be4356a2cf24b1bb501e03b7ab63be} \\
     Code: Zero-Shot-Läufe                    & \texttt{137bffdd9b4351b35a31e4550bde0c15b3c53a19} \\
@@ -109,7 +101,7 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
     \texttt{Qwen/Qwen3.5-27B}                & \texttt{fc05daec18b0a78c049392ed2e771dde82bdf654} \\
     \texttt{microsoft/deberta-v3-base}       & \texttt{8ccc9b6f36199bec6961081d44eb72fb3f7353f3} \\
     \texttt{microsoft/deberta-v3-large}      & \texttt{64a8c8eab3e352a784c658aef62be1662607476f} \\
-    \hline
+    \bottomrule
   \end{tabular}
 \end{table}
 
@@ -126,12 +118,12 @@ mittelbar betreffen oder die Ausführung auf dem Cluster beschreiben.
   \label{tab:app-einstellungen}
   \setlength{\tabcolsep}{4pt}
   \begin{tabular}{lccccc}
-    \hline
+    \toprule
     & \multicolumn{2}{c}{\textbf{DeBERTa-v3}} &
       \multicolumn{3}{c}{\textbf{Qwen3.5 (QLoRA)}} \\
     \textbf{Einstellung} & \textbf{base} & \textbf{large} &
       \textbf{0.8B} & \textbf{4B} & \textbf{27B} \\
-    \hline
+    \midrule
     Batchgröße Validierung & 32 & 16 & 8 & 4 & 1 \\
     Generative Validierung & -- & -- &
       \multicolumn{3}{c}{200 Sätze, Batchgröße 1, greedy} \\
@@ -151,7 +143,7 @@ mittelbar betreffen oder die Ausführung auf dem Cluster beschreiben.
     SLURM-Partition & H100 & H100 & H100 & A100-80GB & H100-Trails \\
     Angeforderter Hauptspeicher & 32\,GB & 48\,GB & 64\,GB & 96\,GB &
       160\,GB \\
-    \hline
+    \bottomrule
   \end{tabular}
 \end{table}
 
@@ -192,7 +184,7 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
 \begin{table}[ht]
   \centering
   \footnotesize
-  \caption{Micro-F$_1$ (strikt, in Punkten) der einzelnen Seeds auf dem
+  \caption{Mikro-F$_1$ (strikt, in Punkten) der einzelnen Seeds auf dem
   MultiNERD-Testsplit sowie Validierungs-F$_1$ des gewählten Checkpoints
   mit Epoche in Klammern (Encoder: vollständiger Validierungssplit;
   QLoRA: generative Validierung auf 200 Sätzen).}

@@ -1,10 +1,8 @@
 % chapters/05_ergebnisse_und_diskussion.tex
 %
-% Entwurf vom 27.10.2026 (KI-gestützt erstellt, siehe Erklärung), gefüllt
-% mit den Messwerten der Laufartefakte. Alle Tabellenkörper und
-% Abbildungsdaten liegen in thesis/generated/ und werden von
-% thesis/scripts/aggregate_results.py aus ba-ner/results/ erzeugt; die
-% Zahlen im Fließtext sind aus thesis/generated/summary.json übernommen
+% Alle Tabellenkörper und Abbildungsdaten liegen in thesis/generated/ und
+% werden von thesis/scripts/aggregate_results.py aus ba-ner/results/
+% erzeugt; die Zahlen im Fließtext stammen aus thesis/generated/summary.json
 % (im Text auf eine Nachkommastelle gerundet, in Tabellen mit Streuung auf
 % zwei).
 %
@@ -12,7 +10,6 @@
 % Mittelwert +- Stichprobenstandardabweichung über die Seeds 42, 123, 456;
 % Zero-Shot als Einzellauf (Seed 42, Sampling). Abschnitte 5.1 bis 5.6
 % berichten, 5.7 interpretiert.
-\providecommand{\PH}[1]{\textcolor{red}{\textbf{[#1]}}}
 \pgfplotsset{
   discard if not/.style 2 args={
     x filter/.append code={
@@ -104,7 +101,7 @@ Die beiden Encoder stehen in den ersten beiden Zeilen.
   \input{generated/tab-haupt}
 \end{table}
 
-DeBERTa-v3-base erreicht einen Micro-F$_1$ von 95,5, DeBERTa-v3-large
+DeBERTa-v3-base erreicht einen Mikro-F$_1$ von 95,5, DeBERTa-v3-large
 einen von 95,8.
 Die Differenz von 0,3 Punkten ist größer als die Summe der beiden
 Standardabweichungen (0,04 und 0,03); die größere Variante ist damit
@@ -112,7 +109,7 @@ unterscheidbar besser.
 Bei beiden Modellen liegt der Recall etwa einen Punkt über der Precision
 (base: 96,3 gegenüber 94,8; large: 96,4 gegenüber 95,3).
 Der Makro-F$_1$ liegt mit 85,4 bzw. 86,7 rund zehn bzw. neun Punkte unter
-dem Micro-F$_1$, was auf die deutlich schwächeren Werte bei den seltenen
+dem Mikro-F$_1$, was auf die deutlich schwächeren Werte bei den seltenen
 und verrauschten Typen zurückgeht (Tabelle~\ref{tab:typen} in
 Abschnitt~\ref{sec:erg-typen}).
 
@@ -132,7 +129,7 @@ und der mikro-gemittelte Wert folgt der Typverteilung.
 
 Die Zeilen drei bis acht in Tabelle~\ref{tab:haupt} zeigen die
 LLM-Konfigurationen.
-Im Zero-Shot-Regime erreichen die drei Qwen3.5-Modelle Micro-F$_1$-Werte
+Im Zero-Shot-Regime erreichen die drei Qwen3.5-Modelle Mikro-F$_1$-Werte
 von 6,2 (0.8B), 34,9 (4B) und 69,4 (27B).
 Die Profile unterscheiden sich nach Größe: Das 0.8B-Modell erkennt fast
 nichts (Precision 16,7, Recall 3,8), das 4B-Modell übersieht die meisten
@@ -144,7 +141,7 @@ Testsplit gewählt wurden (Abschnitt~\ref{sec:datenaufteilung}); sie sind
 daher als obere Abschätzung dessen zu lesen, was die unveränderten
 Checkpoints mit diesem Format leisten.
 
-Nach der Anpassung mit QLoRA steigt der Micro-F$_1$ auf 93,1 (0.8B), 94,0
+Nach der Anpassung mit QLoRA steigt der Mikro-F$_1$ auf 93,1 (0.8B), 94,0
 (4B) und 94,5 (27B).
 Der Zugewinn gegenüber dem Zero-Shot-Regime beträgt damit 87,0, 59,0 bzw.
 25,1 Punkte und ist bei allen drei Größen um Größenordnungen größer als
@@ -160,7 +157,7 @@ Validierungs-F$_1$ des 27B-Modells von 94,6 über 95,8 auf 96,1, der des
 0.8B-Modells von 91,6 über 92,1 auf 92,3; beim 4B-Modell liegt die zweite
 Epoche mit 95,5 bereits über der dritten mit 95,3.
 
-Der beste Encoder, DeBERTa-v3-large, erreicht einen Micro-F$_1$ von 95,8;
+Der beste Encoder, DeBERTa-v3-large, erreicht einen Mikro-F$_1$ von 95,8;
 das beste LLM, Qwen3.5-27B im QLoRA-Regime, einen von 94,5.
 Der Abstand beträgt 1,3 Punkte zugunsten des Encoders und ist mit dem
 Zwölffachen der Summe der Standardabweichungen (0,11) unterscheidbar.
@@ -234,7 +231,7 @@ Für BIO (8 Referenzentitäten), INST (12), MYTH (32), VEHI (32) und CEL
 (41) sind die Werte mit erheblicher Unsicherheit behaftet, da wenige
 Fehler den F$_1$ um zweistellige Beträge verändern; sie werden nicht
 einzeln interpretiert, und die Standardabweichungen des Makro-F$_1$
-(0,25 bis 1,06 Punkte) sind entsprechend größer als die des Micro-F$_1$.
+(0,25 bis 1,06 Punkte) sind entsprechend größer als die des Mikro-F$_1$.
 
 Im Zero-Shot-Regime erkennt das 27B-Modell ohne Training die Typen PER
 (88,0), LOC (86,8) und ORG (81,9) brauchbar, MYTH, CEL, DIS, MEDIA, EVE
@@ -364,7 +361,7 @@ Abschnitt~\ref{sec:groessenklassen} getrennt nach Familie und Regime dar.
 \begin{table}[htbp]
   \centering
   \small
-  \caption{Micro-F$_1$ (in Punkten) nach Größenklasse und Regime.
+  \caption{Mikro-F$_1$ (in Punkten) nach Größenklasse und Regime.
   S/M/L bezeichnen die relative Größe innerhalb der Familie
   (Tabelle~\ref{tab:experiment-matrix}); $\Delta$ ist die Differenz zur
   nächstkleineren Klasse.
@@ -384,7 +381,7 @@ Abschnitt~\ref{sec:groessenklassen} getrennt nach Familie und Regime dar.
       xmode=log, xmin=1e8, xmax=6e10,
       ymin=0, ymax=100,
       xlabel={Parameter des Textmodells},
-      ylabel={Micro-F$_1$ [Punkte]},
+      ylabel={Mikro-F$_1$ [Punkte]},
       label style={font=\footnotesize}, tick label style={font=\footnotesize},
       ymajorgrids, grid style={gray!30},
       title={\footnotesize Alle Regime},
@@ -431,7 +428,7 @@ Abschnitt~\ref{sec:groessenklassen} getrennt nach Familie und Regime dar.
 
 Innerhalb der Encoder-Familie bringt der Schritt von 184 auf 434~Mio.
 Parameter 0,3 Punkte.
-Innerhalb der LLM-Familie wächst der Micro-F$_1$ im QLoRA-Regime von
+Innerhalb der LLM-Familie wächst der Mikro-F$_1$ im QLoRA-Regime von
 93,1 (0.8B) über 94,0 (4B) auf 94,5 (27B); der Zugewinn von 0.8B auf 4B
 beträgt 0,8 Punkte, der von 4B auf 27B 0,5 Punkte.
 Beide Schritte sind unterscheidbar (Summe der Standardabweichungen 0,15
@@ -538,7 +535,7 @@ eine GPU mit 16~GB, das 27B-Modell im QLoRA-Regime benötigt eine GPU mit
 mindestens 24~GB, das 27B-Modell in BF16 eine mit mindestens 64~GB.
 
 \paragraph{Trade-off.}
-Abbildung~\ref{fig:tradeoff} stellt den Micro-F$_1$ der Latenz und dem
+Abbildung~\ref{fig:tradeoff} stellt den Mikro-F$_1$ der Latenz und dem
 GPU-Speicher gegenüber.
 Die Pareto-Front besteht in beiden Teilbildern allein aus den beiden
 Encodern: Jede LLM-Konfiguration ist zugleich langsamer,
@@ -558,7 +555,7 @@ was auch auf den GPU-Typ zurückgehen kann.
       xmode=log, xmin=4, xmax=20000,
       ymin=0, ymax=100,
       xlabel={Latenz je Satz [ms]},
-      ylabel={Micro-F$_1$ [Punkte]},
+      ylabel={Mikro-F$_1$ [Punkte]},
       label style={font=\footnotesize}, tick label style={font=\footnotesize},
       ymajorgrids, grid style={gray!30},
       legend style={at={(1.1,-0.28)}, anchor=north, legend columns=3,
@@ -1023,7 +1020,7 @@ Fall wurde nicht gemessen (Abschnitt~\ref{sec:abgrenzung}).
 
 Welche der berichteten Unterschiede tragen, bestimmt sich aus der
 Streuung und aus den Abweichungen in Tabelle~\ref{tab:abweichungen}.
-Die Standardabweichungen des Micro-F$_1$ über die Seeds liegen bei 0,03
+Die Standardabweichungen des Mikro-F$_1$ über die Seeds liegen bei 0,03
 bis 0,10 Punkten; alle Unterschiede zwischen trainierten
 Konfigurationen, der kleinste davon 0,3 Punkte zwischen den beiden
 Encodern, übersteigen die Summe der beteiligten Standardabweichungen um

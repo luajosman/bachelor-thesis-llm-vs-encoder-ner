@@ -1,10 +1,7 @@
 % chapters/06_fazit_und_ausblick.tex
 %
-% Entwurf vom 27.10.2026 (KI-gestützt erstellt, siehe Erklärung), gefüllt
-% mit den Messwerten aus Kapitel 5 (thesis/generated/summary.json).
 % 6.1 folgt den Forschungsfragen FF1 bis FF3 aus Abschnitt 1.2; es werden
 % keine Ergebnisse eingeführt, die nicht in Kapitel 5 stehen.
-\providecommand{\PH}[1]{\textcolor{red}{\textbf{[#1]}}}
 
 \chapter{Fazit und Ausblick}
 \label{chap:fazit}
@@ -28,7 +25,7 @@ Abschnitt~\ref{sec:ausblick} skizziert weiterführende Arbeiten.
 
 \paragraph{FF1: Erkennungsleistung und Formtreue.}
 Auf dem englischen MultiNERD-Testsplit erreicht der beste Encoder,
-DeBERTa-v3-large, einen Micro-F$_1$ von 95,8 Punkten, das beste LLM,
+DeBERTa-v3-large, einen Mikro-F$_1$ von 95,8 Punkten, das beste LLM,
 Qwen3.5-27B im QLoRA-Regime, einen von 94,5.
 Der Abstand von 1,3 Punkten ist ein Vielfaches der Streuung über die
 Seeds; der Encoder ist damit unterscheidbar besser, und auch
@@ -177,7 +174,7 @@ aufgenommen wurden.
 \paragraph{Statistische Absicherung.}
 Jede trainierte Konfiguration wurde mit drei Seeds trainiert; auf
 inferenzstatistische Tests wurde verzichtet.
-Die Unterschiede im Micro-F$_1$ übersteigen die Summe der
+Die Unterschiede im Mikro-F$_1$ übersteigen die Summe der
 Standardabweichungen durchweg deutlich, der Makro-F$_1$ der beiden
 besten Modelle und die Werte seltener Typen sind mit diesem Umfang
 dagegen nicht zu trennen.

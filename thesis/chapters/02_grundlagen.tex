@@ -1,8 +1,6 @@
 % chapters/02_grundlagen.tex
 %
-% Überarbeitete Fassung vom 16.10.2026 (Betreuerkritik B1–B15 und
-% Quellenprüfung umgesetzt). Alle Labels der Vorfassung sind erhalten.
-% Abbildungsdateien unverändert; Korrekturhinweise siehe Änderungsprotokoll.
+% Grundlagenkapitel.
 % Benötigt in der Präambel: amsmath, graphicx, booktabs.
 
 \chapter{Grundlagen}
@@ -127,7 +125,8 @@ und B kennzeichnet das erste Token eines Chunks nur dann, wenn
 unmittelbar davor ein anderer Chunk endet.
 \textcite{tjong1999representing} vergleichen mehrere Varianten dieser
 Kodierung und prägen die Bezeichnungen IOB1 für das ursprüngliche Schema
-und IOB2 für die Variante, bei der jeder Chunk mit einem B-Tag beginnt.
+und IOB2 für die Variante, bei der jeder Chunk mit einem B-Tag beginnt;
+letztere wird häufig kurz als BIO-Schema bezeichnet.
 Für NER wird der Typ an das Tag angehängt, etwa \texttt{B-PER} und
 \texttt{I-PER}.
 Die Kodierung setzt voraus, dass sich Entitäten weder überlappen noch
@@ -343,7 +342,7 @@ Rohtext einschließlich der Leerzeichen arbeitet~\cite{kudo2018sentencepiece};
 es unterstützt neben der Byte-Paar-Kodierung das Unigram-Modell, das jedem
 Teilstück eine Wahrscheinlichkeit zuweist und die wahrscheinlichste
 Zerlegung eines Wortes wählt~\cite{kudo2018subword}.
-DeBERTaV3 verwendet ein SentencePiece-Vokabular mit
+DeBERTa-v3 verwendet ein SentencePiece-Vokabular mit
 128\,000 Einheiten~\cite{he2021debertav3}.
 Für NER hat die Zerlegung eine praktische Folge: Die Labels liegen je
 Wort vor, die Modelleingabe besteht aber aus Subwörtern.
@@ -399,7 +398,7 @@ Zweitens bezieht der \emph{Enhanced Mask Decoder} die absoluten
 Positionen erst nach den Transformer-Schichten und unmittelbar vor der
 Vorhersage der maskierten Tokens ein, da etwa die syntaktische Rolle eines
 Wortes von seiner absoluten Position im Satz abhängt.
-DeBERTaV3 behält diese Architektur bei und ersetzt das
+DeBERTa-v3 behält diese Architektur bei und ersetzt das
 Vortrainingsziel~\cite{he2021debertav3}.
 Statt MLM verwendet es \emph{Replaced Token Detection} nach ELECTRA: Ein
 kleines Generatormodell ersetzt einige Tokens durch plausible
@@ -414,7 +413,7 @@ nennen dies \emph{Tug-of-war} und lösen es durch
 \emph{Gradient-Disentangled Embedding Sharing}: Der Diskriminator nutzt
 die Generator-Embeddings, aber seine Gradienten fließen nicht in sie
 zurück.
-DeBERTaV3 wurde mit denselben Einstellungen und Daten wie DeBERTa
+DeBERTa-v3 wurde mit denselben Einstellungen und Daten wie DeBERTa
 vortrainiert; die Base-Variante hat zwölf Schichten mit 86~Mio.
 Parametern im Backbone, die Large-Variante 24 Schichten mit 304~Mio.,
 jeweils zuzüglich der Embedding-Parameter des großen
@@ -914,12 +913,12 @@ Für den Vergleich generativer Modelle, deren Ausgaben erst in Tagfolgen
 eindeutigere Wahl.
 
 Bei mehreren Entitätstypen werden die Kennzahlen aggregiert.
-Der Micro-F$_1$-Score summiert $TP$, $FP$ und $FN$ über alle Typen und
+Der Mikro-F$_1$-Score summiert $TP$, $FP$ und $FN$ über alle Typen und
 berechnet daraus eine Kennzahl, sodass häufige Typen das Ergebnis
 dominieren; der Makro-F$_1$-Score mittelt die je Typ berechneten
 F$_1$-Scores und gewichtet alle Typen gleich~\cite{manning2008introduction}.
 Bei stark unausgewogenen Typverteilungen wie in MultiNERD, wo drei Typen
-den größten Teil der Entitäten stellen, spiegelt der Micro-F$_1$-Score
+den größten Teil der Entitäten stellen, spiegelt der Mikro-F$_1$-Score
 vor allem die Leistung auf diesen Typen wider; typbezogene Werte
 ergänzen ihn (Abschnitt~\ref{sec:performanzmetriken}).
 Für seltene Typen mit wenigen Referenzentitäten, dem sogenannten
