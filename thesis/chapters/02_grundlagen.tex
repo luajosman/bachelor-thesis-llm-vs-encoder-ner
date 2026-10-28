@@ -99,7 +99,7 @@ ausschließenden Endindex.
   \centering
   \includegraphics[width=0.85\linewidth]{figures/ner_grundprinzip.pdf}
   \vspace{0.5em}
-  \caption{Grundprinzip der Named Entity Recognition: Aus einer
+  \caption[Grundprinzip der Named Entity Recognition]{Grundprinzip der Named Entity Recognition: Aus einer
   Tokenfolge werden Erwähnungen als Tripel aus Startindex, Endindex und
   Typ extrahiert.
   Eigene Darstellung in Anlehnung an die Formalisierung bei
@@ -147,7 +147,7 @@ für die Auswertung vorausgesetzt wird.
   \centering
   \small
   \renewcommand{\arraystretch}{1.3}
-  \caption{IOB2- und IOB1-Kodierung desselben Satzes.
+  \caption[IOB2- und IOB1-Kodierung desselben Satzes]{IOB2- und IOB1-Kodierung desselben Satzes.
   In IOB2 beginnt jede Entität mit \texttt{B-}; in IOB1 erhält nur eine
   Entität ein \texttt{B-}-Tag, die unmittelbar auf eine Entität
   desselben Typs folgt, was in diesem Satz nicht vorkommt.}
@@ -262,7 +262,7 @@ Abbildung~\ref{fig:transformer-architektur} zeigt den Aufbau.
   \centering
   \includegraphics[width=0.85\linewidth]{figures/vaswani_transformer.pdf}
   \vspace{0.5em}
-  \caption{Transformer-Architektur mit Encoder (links) und Decoder
+  \caption[Transformer-Architektur mit Encoder und Decoder]{Transformer-Architektur mit Encoder (links) und Decoder
   (rechts).
   Jede Encoder-Schicht enthält Multi-Head-Self-Attention und ein
   Feed-Forward-Netz, jeweils mit Residualverbindung und
@@ -611,7 +611,7 @@ gleichwertige oder bessere Qualität als vollständiges Fine-Tuning.
   \centering
   \includegraphics[width=0.6\linewidth]{figures/lora_adapter.pdf}
   \vspace{0.5em}
-  \caption{Aufbau eines LoRA-Adapters.
+  \caption[Aufbau eines LoRA-Adapters]{Aufbau eines LoRA-Adapters.
   Die eingefrorene Gewichtsmatrix $W_0$ wird um den trainierbaren
   Low-Rank-Pfad $\Delta W = BA$ mit Rang $r$ ergänzt; beide Pfade
   verarbeiten dieselbe Eingabe $x$, und ihre Ausgaben werden addiert
@@ -701,7 +701,7 @@ abzubrechen~\cite{kaplan2020scaling}.
     keepaspectratio
   ]{figures/kaplan_scaling.pdf}
   \vspace{0.2em}
-  \caption{Test-Loss in Abhängigkeit von Rechenaufwand, Datensatzumfang
+  \caption[Skalierungsgesetze: Test-Loss in Abhängigkeit von Rechenaufwand, Datensatzumfang und Parameteranzahl]{Test-Loss in Abhängigkeit von Rechenaufwand, Datensatzumfang
   und Parameteranzahl (ohne Embeddings) in doppelt logarithmischer
   Darstellung; Kurvenverläufe schematisch.
   Die eingetragenen Potenzgesetze und Konstanten entsprechen Abbildung~1
@@ -813,7 +813,7 @@ und wertet nur die gemeinsamen Grobtypen aus
   \centering
   \small
   \renewcommand{\arraystretch}{1.25}
-  \caption{Vergleich der verwendeten NER-Datensätze.
+  \caption[Vergleich der verwendeten NER-Datensätze]{Vergleich der verwendeten NER-Datensätze.
   Eigene Zusammenstellung nach \textcite{sang2003conll},
   \textcite{weischedel2013ontonotes}, \textcite{tedeschi2022multinerd}
   und \textcite{liu2021crossner}.}

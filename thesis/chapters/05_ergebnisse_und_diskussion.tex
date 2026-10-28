@@ -89,7 +89,7 @@ Die beiden Encoder stehen in den ersten beiden Zeilen.
 \begin{table}[htbp]
   \centering
   \small
-  \caption{Erkennungsleistung aller Konfigurationen auf dem englischen
+  \caption[Erkennungsleistung aller Konfigurationen auf dem MultiNERD-Testsplit]{Erkennungsleistung aller Konfigurationen auf dem englischen
   MultiNERD-Testsplit (strikte Entity-Level-Werte, IOB2, in Punkten).
   Trainierte Konfigurationen: Mittelwert~$\pm$~Stichprobenstandardabweichung
   über drei Seeds; Zero-Shot: Einzellauf mit Sampling.
@@ -187,7 +187,7 @@ Antworten entfällt.
 \begin{table}[htbp]
   \centering
   \footnotesize
-  \caption{Typbezogene F$_1$-Werte (strikt, in Punkten) ausgewählter
+  \caption[Typbezogene F$_1$-Werte ausgewählter Konfigurationen]{Typbezogene F$_1$-Werte (strikt, in Punkten) ausgewählter
   Konfigurationen auf dem Testsplit; trainierte Konfigurationen als
   Mittelwert über drei Seeds, Zero-Shot als Einzellauf.
   Support: Zahl der Referenzentitäten im Testsplit
@@ -273,7 +273,7 @@ fehlende Fähigkeit.
       \addlegendentry{Qwen3.5-27B (Zero-Shot)}
     \end{axis}
   \end{tikzpicture}
-  \caption{Typbezogene F$_1$-Werte der drei Kernkonfigurationen auf dem
+  \caption[Typbezogene F$_1$-Werte der drei Kernkonfigurationen]{Typbezogene F$_1$-Werte der drei Kernkonfigurationen auf dem
   Testsplit (Werte aus Tabelle~\ref{tab:typen}; Typen in der Reihenfolge
   der Tabelle, trainierte Konfigurationen als Mittel über drei Seeds).}
   \label{fig:typen}
@@ -288,7 +288,7 @@ aus Tabelle~\ref{tab:formtreue} für die sechs LLM-Konfigurationen.
 \begin{table}[htbp]
   \centering
   \footnotesize
-  \caption{Formtreue der LLM-Ausgaben auf dem Testsplit (16\,454
+  \caption[Formtreue der LLM-Ausgaben auf dem Testsplit]{Formtreue der LLM-Ausgaben auf dem Testsplit (16\,454
   Antworten).
   Parse-Fehlerrate in Prozent der Antworten; übrige Werte absolute
   Häufigkeiten (QLoRA: Mittel über drei Seeds, gerundet).
@@ -361,7 +361,7 @@ Abschnitt~\ref{sec:groessenklassen} getrennt nach Familie und Regime dar.
 \begin{table}[htbp]
   \centering
   \small
-  \caption{Mikro-F$_1$ (in Punkten) nach Größenklasse und Regime.
+  \caption[Mikro-F$_1$ nach Größenklasse und Regime]{Mikro-F$_1$ (in Punkten) nach Größenklasse und Regime.
   S/M/L bezeichnen die relative Größe innerhalb der Familie
   (Tabelle~\ref{tab:experiment-matrix}); $\Delta$ ist die Differenz zur
   nächstkleineren Klasse.
@@ -416,7 +416,7 @@ Abschnitt~\ref{sec:groessenklassen} getrennt nach Familie und Regime dar.
         table[x=params, y=f1, y error=sd] {generated/fig-groesse.dat};
     \end{axis}
   \end{tikzpicture}
-  \caption{Erkennungsleistung in Abhängigkeit von der Parameterzahl,
+  \caption[Erkennungsleistung in Abhängigkeit von der Parameterzahl]{Erkennungsleistung in Abhängigkeit von der Parameterzahl,
   getrennt nach Modellfamilie und Regime.
   Links alle Konfigurationen, rechts nur die trainierten mit
   Fehlerbalken (Standardabweichung über drei Seeds, meist kleiner als
@@ -466,8 +466,8 @@ gezogen.
 
 \begin{table}[htbp]
   \centering
-  \footnotesize
-  \caption{Ressourcenbedarf der Konfigurationen.
+  \scriptsize
+  \caption[Ressourcenbedarf der Konfigurationen]{Ressourcenbedarf der Konfigurationen.
   Training: Wall-Clock-Dauer des Trainingsaufrufs in Stunden, Mittel über
   drei Seeds; Latenz: Dauer des Modellaufrufs je Testsatz bei
   Batchgröße~1 in Millisekunden (Mittelwert, Median, 95.~Perzentil);
@@ -613,7 +613,7 @@ was auch auf den GPU-Typ zurückgehen kann.
         table[x=vram_gb, y=f1] {generated/fig-tradeoff.dat};
     \end{axis}
   \end{tikzpicture}
-  \caption{Erkennungsleistung gegenüber Inferenzlatenz (links) und
+  \caption[Erkennungsleistung gegenüber Inferenzlatenz und GPU-Spitzenspeicher]{Erkennungsleistung gegenüber Inferenzlatenz (links) und
   GPU-Spitzenspeicher (rechts), beide Achsen logarithmisch.
   Symbolform nach Regime, Farbe nach Familie, Symbolgröße nach
   Größenklasse; Werte nach Tabelle~\ref{tab:effizienz}.
@@ -635,7 +635,7 @@ Tabelle~\ref{tab:fehlertypen} zeigt die Verteilung.
 \begin{table}[htbp]
   \centering
   \footnotesize
-  \caption{Fehlerprofile auf dem Testsplit: Verteilung der 25\,645
+  \caption[Fehlerprofile auf dem Testsplit]{Fehlerprofile auf dem Testsplit: Verteilung der 25\,645
   Referenzentitäten auf Fehlerklassen (in Prozent) sowie Zahl der
   Zusätze (vorhergesagte Spans ohne Überlappung mit einer Referenz).
   Trainierte Konfigurationen als Mittel über drei Seeds.}
@@ -705,7 +705,7 @@ Beide Modelle liefen auf derselben H100 mit 80\,GB.
 \begin{table}[htbp]
   \centering
   \footnotesize
-  \caption{CrossNER-Transfertest (nur PER, ORG, LOC; strikte Werte in
+  \caption[CrossNER-Transfertest (PER, ORG, LOC)]{CrossNER-Transfertest (nur PER, ORG, LOC; strikte Werte in
   Punkten; Precision und Recall als Mittel, F$_1$ als
   Mittelwert~$\pm$~Standardabweichung über die drei
   MultiNERD-Checkpoints je Modell).
@@ -763,7 +763,7 @@ Mechanismus, nicht die Größe des Effekts auf dem gesamten Testsplit.
 \begin{table}[htbp]
   \centering
   \small
-  \caption{Sensitivitätsanalyse zum Ausgabelimit: Qwen3.5-27B (QLoRA,
+  \caption[Sensitivitätsanalyse zum Ausgabelimit auf CrossNER (Vorstudie)]{Sensitivitätsanalyse zum Ausgabelimit: Qwen3.5-27B (QLoRA,
   Seed~42) auf je 25 CrossNER-Sätzen mit 256 und 1\,024 Ausgabetokens
   (nur PER, ORG, LOC; strikte Werte in Punkten; Latenz als Mittel je
   Satz).}

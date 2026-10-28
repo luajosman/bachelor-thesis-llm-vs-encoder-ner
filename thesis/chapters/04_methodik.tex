@@ -75,25 +75,31 @@ von rund 184~Mio. bis 27~Mrd. Parametern.
 
 Der Hauptstudie gingen explorative Vorläufe der fünf trainierten
 Konfigurationen mit Seed~42 voraus, die unter anderem der Stabilisierung
-der Pipeline dienten.
+der Pipeline dienten; so wurde ein erster Lauf des 4B-Modells mit
+aktiviertem Thinking-Modus abgebrochen, nachdem die generative
+Validierung Parse-Fehlerraten von 71 bis 83\,\% ergeben hatte, und der
+Thinking-Modus daraufhin für alle Läufe deaktiviert
+(Abschnitt~\ref{sec:llm-pipeline}).
 Da für mehrere Vorläufe der exakte Quellcodestand nicht rekonstruierbar
 ist, wurden alle trainierten Konfigurationen für die Hauptstudie aus
 versionierten Codeständen ohne lokale Änderungen neu trainiert; die
 Vorläufe gehen nicht in die Auswertung ein.
 Die Zero-Shot-Läufe stammen aus einem eindeutig identifizierbaren Commit
-ohne lokale Änderungen und sind Teil der Hauptauswertung.
+ohne lokale Änderungen, der im Repository als Tag
+\texttt{zeroshot-runs-137bffd} erreichbar ist
+(Anhang~\ref{app:reproduzierbarkeit}), und sind Teil der Hauptauswertung.
 
 \begin{table}[ht]
     \centering
     \small
-    \caption{Untersuchte Konfigurationen.
+    \caption[Untersuchte Konfigurationen]{Untersuchte Konfigurationen.
     Größe: relative Größenklasse innerhalb der Modellfamilie
     (Abschnitt~\ref{sec:groessenklassen}).
     Parameter: Textmodell ohne Adapter, bei Qwen3.5 ohne den nicht
     geladenen Vision-Encoder (Abschnitt~\ref{sec:llm-auswahl}).
     Trainierbar: bei LoRA die Adapterparameter.
-    NF4: 4-Bit-quantisiertes Basismodell; die Adapter werden in BF16
-    trainiert.}
+    NF4: 4-Bit-quantisiertes Basismodell; die Adapter werden mit
+    BF16-Mixed-Precision trainiert (Abschnitt~\ref{sec:lora-konfiguration}).}
     \label{tab:experiment-matrix}
     \label{tab:groessenklassen}
     \setlength{\tabcolsep}{4pt}
@@ -195,8 +201,9 @@ und bieten mehrere Größenstufen innerhalb einer Familie.
 Verwendet werden die veröffentlichten Checkpoints, die laut
 Modellbeschreibung vor- und nachtrainiert sind (Pre- und Post-Training)
 und damit keine reinen Pre-Training-Checkpoints
-darstellen.\footnote{Siehe etwa
-\texttt{https://huggingface.co/Qwen/Qwen3.5-0.8B}.}
+darstellen.\footnote{Modellkarten unter
+\url{https://huggingface.co/Qwen/Qwen3.5-0.8B}, \texttt{…/Qwen3.5-4B}
+und \texttt{…/Qwen3.5-27B}.}
 Der Begriff \emph{Basismodell} bezeichnet im Folgenden lediglich die
 eingefrorenen Ausgangsgewichte, auf die beim LoRA-Training Adapter
 aufgesetzt werden.
@@ -228,7 +235,7 @@ verwendeten Sequenzlängen nicht limitierend.
 \begin{table}[ht]
     \centering
     \small
-    \caption{Architekturkennzahlen der Qwen3.5-Modelle laut
+    \caption[Architekturkennzahlen der Qwen3.5-Modelle]{Architekturkennzahlen der Qwen3.5-Modelle laut
     Modellkonfiguration der verwendeten Revisionen.
     Parameterzahlen aus den Tensorformen der Checkpoints; das Textmodell
     schließt die Ausgabeschicht ein.}
@@ -311,8 +318,9 @@ Textbereinigung oder Normalisierung auf Datensatzebene findet nicht
 statt.
 Der Datensatz wird über die \emph{Datasets}-Bibliothek aus dem
 Hugging-Face-Repository \texttt{Babelscape/\allowbreak multinerd} geladen,
-über das Sprachfeld auf \texttt{en} gefiltert und auf vorhandene Splits und Spalten sowie exakte Splitgrößen
-geprüft.
+in einer festen Revision (Anhang~\ref{app:reproduzierbarkeit}) geladen,
+über das Sprachfeld auf \texttt{en} gefiltert und auf vorhandene Splits
+und Spalten sowie exakte Splitgrößen geprüft.
 Eine zeilenweise Prüfung von Sequenzlängen und Label-IDs findet dabei
 nicht statt; eine nachträgliche Prüfung der Rohdaten ergab jedoch weder
 leere Sätze noch Längeninkonsistenzen oder Label-IDs außerhalb des
@@ -376,7 +384,7 @@ während der von PER von 31,2\,\% auf 20,5\,\% sinkt.
 \begin{table}[ht]
     \centering
     \small
-    \caption{Umfang und Typverteilung der englischen MultiNERD-Splits.
+    \caption[Umfang und Typverteilung der englischen MultiNERD-Splits]{Umfang und Typverteilung der englischen MultiNERD-Splits.
     Tokens bezeichnen Wort-Tokens vor der Subwort-Tokenisierung;
     Entitäten wurden als Anzahl der \texttt{B}-Tags gezählt.}
     \label{tab:datensplits}
@@ -424,7 +432,9 @@ unverändert.
 Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
 (Abschnitt~\ref{sec:llm-pipeline}), und die Inferenzpräzision wurde
-anhand von Durchsatzmessungen auf einer Teilmenge des Testsplits gewählt.
+anhand von Durchsatzmessungen auf einer Teilmenge des Testsplits gewählt
+(standardmäßig 96 gleichmäßig verteilte Sätze; der tatsächliche Umfang
+wurde nicht protokolliert).
 Die Zero-Shot-Ergebnisse sind daher nicht unabhängig von
 Testbeobachtungen und tendenziell optimistisch.
 
@@ -461,7 +471,7 @@ Standardwerte dieser Versionen.
 \begin{table}[ht]
     \centering
     \small
-    \caption{Eingesetzte GPU-Typen laut Laufmetadaten.
+    \caption[Eingesetzte GPU-Typen]{Eingesetzte GPU-Typen laut Laufmetadaten.
     Training und Inferenz einer MultiNERD-Konfiguration liefen jeweils
     auf demselben GPU-Typ.}
     \label{tab:hardware}
@@ -544,7 +554,7 @@ per argmax bestimmt.
 \begin{table}[ht]
   \centering
   \small
-  \caption{Hyperparameter der Encoder-Pipeline.
+  \caption[Hyperparameter der Encoder-Pipeline]{Hyperparameter der Encoder-Pipeline.
   Weitere Einstellungen (Adam-Parameter, Gradient Clipping,
   Checkpoint-Intervalle) enthält Anhang~\ref{app:reproduzierbarkeit}.}
   \label{tab:encoder-hyperparams}
@@ -755,8 +765,11 @@ Die Basismodelle werden mit \texttt{bitsandbytes}
 gerechnet wird in BF16, trainiert mit BF16-Mixed-Precision und Gradient
 Checkpointing.
 Nicht quantisierte Komponenten wie Embeddings und
-Normalisierungsschichten bleiben in höherer Präzision, die
-Adapterparameter werden in BF16 geführt.
+Normalisierungsschichten bleiben in höherer Präzision.
+Die Adapter werden mit BF16-Mixed-Precision trainiert; die gespeicherten
+Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor (12,8 bzw. 42,5~MB),
+die der 27B-Läufe nach der Wiederaufnahme aus Checkpoints
+(Abschnitt~\ref{sec:effizienzmetriken}) in FP32 (637,6~MB).
 In zwei Punkten weicht die Umsetzung vom QLoRA-Standardrezept
 \cite{dettmers2023qlora} ab: Double Quantization war vorgesehen, wurde
 aber wegen eines fehlerhaft benannten Konfigurationsparameters nicht
@@ -779,7 +792,7 @@ Ein systematischer Hyperparameter-Suchlauf fand nicht statt.
 \begin{table}[ht]
   \centering
   \small
-  \caption{LoRA-/QLoRA-Hyperparameter.
+  \caption[LoRA-/QLoRA-Hyperparameter]{LoRA-/QLoRA-Hyperparameter.
   Der Anteil trainierbarer Parameter bezieht sich auf die Gesamtzahl aus
   Basismodell und Adaptern (0,759, 4,227 bzw. 27,055~Mrd.).
   Weitere Einstellungen enthält Anhang~\ref{app:reproduzierbarkeit}.}
@@ -902,6 +915,19 @@ Ein Unterschied zwischen zwei trainierten Konfigurationen wird nur dann
 als Unterschied bezeichnet, wenn er die Summe der beiden
 Standardabweichungen übersteigt; dieses Kriterium ersetzt keinen
 statistischen Test, macht die Lesart der Ergebnisse aber einheitlich.
+Ergänzend wird die Unsicherheit durch die Auswahl der Testsätze mit einem
+gepaarten Satz-Bootstrap beziffert: Aus den 16\,454 Testsätzen werden
+2\,000 Stichproben mit Zurücklegen gezogen, und für jede Stichprobe werden
+Mikro- und Makro-F$_1$ aller Läufe sowie die Differenzen zwischen
+Konfigurationen neu berechnet, wobei dieselbe Stichprobe für alle Läufe
+gilt und Läufe mit gleichem Seed gepaart werden; berichtet werden
+95-\%-Perzentilintervalle.
+Das Bootstrap erfasst die Streuung durch die Testsätze, die
+Standardabweichung über die Seeds die Streuung durch das Training; beide
+ergänzen sich.
+Für die Zero-Shot-Konfigurationen liegt nur ein Lauf vor, sodass die Summe
+der Standardabweichungen bei Vergleichen mit ihnen allein die Streuung
+der trainierten Seite enthält.
 Für die Fehleranalyse werden Precision, Recall, F$_1$ und Support zusätzlich
 je Entitätstyp berechnet; für die Trainingsläufe der Hauptstudie sind
 diese Werte gespeichert, für alle Konfigurationen lassen sie sich aus den
@@ -937,15 +963,22 @@ Gemessen wird die Wall-Clock-Zeit des Trainingsaufrufs einschließlich der
 Validierung nach jeder Epoche (bei den LLMs inklusive generativer
 Validierung) und des Speicherns von Checkpoints, jedoch ohne Laden von
 Modell und Daten, Vorverarbeitung und Export.
-Die drei 27B-Läufe wurden nach einer vom Scheduler ausgelösten
-Unterbrechung aus einem gespeicherten Checkpoint fortgesetzt; der
-gespeicherte Wert erfasst dort nur den letzten Abschnitt.
-Eine mit den übrigen Läufen vergleichbare Gesamtdauer lässt sich aus den
-vorhandenen Metadaten nicht rekonstruieren, da Endzeitpunkte früherer
-Abschnitte fehlen und die Phasenhistorie ein breiteres Intervall als den
-Trainingsaufruf erfasst.
-Für diese Läufe wird die Trainingsdauer daher nur als Untergrenze
-angegeben.
+Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
+Tagen und wurden vom Scheduler dreimal neu eingereiht; jeder Lauf
+bestand damit aus vier Zuteilungen (Start am 7., 12., 15. und
+18.~August 2026, Abschluss am 20.~August), und der vom Trainer
+gespeicherte Wert erfasst nur die letzte Zuteilung ab Schritt 20\,000
+bzw. 19\,500 von 24\,615.
+Für diese Läufe wird die Trainingsdauer daher als Summe der vier
+Zuteilungen aus der Slurm-Abrechnung (\texttt{sacct}) angegeben; sie
+schließt das erneute Laden von Modell und Daten je Zuteilung ein und ist
+mit den übrigen Läufen nur näherungsweise vergleichbar.
+Als Plausibilitätsprüfung dient die Hochrechnung der Schrittrate des
+letzten Abschnitts auf alle Schritte.
+Die Trainingsdauer hängt zudem von der Auslastung des Knotens ab: Die
+drei 27B-Läufe liefen gleichzeitig auf demselben Knoten und benötigten
+rund 38~s je Optimierungsschritt, der explorative Vorlauf mit zwei
+Epochen allein auf dem Knoten 15{,}5~s.
 
 \paragraph{Inferenzlatenz und Durchsatz.}
 Gemessen wird je Testsatz bei Batchgröße~1 die Dauer des Modellaufrufs
@@ -960,6 +993,10 @@ Generierungszeit.
 Die Werte beschreiben die Latenz einzelner Anfragen, nicht den mit
 Batching erreichbaren Durchsatz; bei den LLMs hängen sie zudem von der
 Länge der erzeugten Antwort ab.
+Ergänzend wird die Gesamtdauer der Testinferenz über alle 16\,454 Sätze
+aus der Phasenhistorie der Laufverwaltung berichtet; für die
+Zero-Shot-Läufe, die keine Phasenhistorie besitzen, wird sie aus der
+mittleren Latenz hochgerechnet.
 
 \paragraph{GPU-Speicher.}
 Erfasst wird der maximal von PyTorch allokierte GPU-Speicher während der
@@ -1001,13 +1038,15 @@ Inventar liefern, können LLMs syntaktisch oder inhaltlich unzulässige
 Ausgaben erzeugen.
 Diese werden über die Kennzahlen in Tabelle~\ref{tab:formtreue} erfasst,
 die direkt aus der Validierungskette (Abschnitt~\ref{sec:postprocessing})
-hervorgehen und drei Fehlerklassen zugeordnet sind:
+hervorgehen und vier Fehlerklassen zugeordnet sind:
 \emph{JSON-Validität} -- lässt sich überhaupt ein Array gewinnen
 \cite{dagdelen2024structuredIE} --, \emph{Span-Alignment} -- passen
-Indizes und Text zur Tokenliste \cite{semin2026spanLabeling} -- und
+Indizes und Text zur Tokenliste \cite{semin2026spanLabeling} --,
 \emph{Schema-Treue} -- werden Struktur und Typinventar eingehalten, wobei
 Typen außerhalb des Inventars als halluzinierte Kategorien gelten
-\cite{tedeschi2022multinerd,tam2024speakfreely}.
+\cite{tedeschi2022multinerd,tam2024speakfreely} -- und \emph{Konsistenz}
+-- überlappen gültige Spans einander, sodass nur der zuerst übernommene
+bleibt.
 Für Encoder entfallen diese Kennzahlen; gerade dieser strukturelle
 Unterschied ist Teil des Vergleichs, da LLMs Ausgabeformat und
 Typinventar erst über Prompt und Fine-Tuning erlernen müssen
@@ -1016,7 +1055,7 @@ Typinventar erst über Prompt und Fine-Tuning erlernen müssen
 \begin{table}[ht]
   \centering
   \small
-  \caption{Kennzahlen zur Formtreue der LLM-Ausgaben in der Reihenfolge
+  \caption[Kennzahlen zur Formtreue der LLM-Ausgaben]{Kennzahlen zur Formtreue der LLM-Ausgaben in der Reihenfolge
   der Prüfung.
   Die Parse-Fehlerrate bezieht sich auf die Zahl der Testantworten, alle
   übrigen Werte sind absolute Häufigkeiten über den Testsplit.}
@@ -1111,7 +1150,7 @@ abgebildeten Typ wie \texttt{misc} angehören, zählen als falsch positiv.
 \begin{table}[ht]
   \centering
   \small
-  \caption{Abbildung der CrossNER-Typen auf die gemeinsamen Grobtypen;
+  \caption[Abbildung der CrossNER-Typen auf die gemeinsamen Grobtypen]{Abbildung der CrossNER-Typen auf die gemeinsamen Grobtypen;
   alle übrigen CrossNER-Typen (z.\,B. \texttt{misc}, \texttt{event},
   \texttt{product}, \texttt{song}) werden als \texttt{O} behandelt.}
   \label{tab:crossner-mapping}
@@ -1174,10 +1213,12 @@ nicht parsebar und zählt als leere Vorhersage.
 Die Analyse der nicht parsebaren Antworten deutet darauf hin, dass diese
 ausnahmslos auf dieses Limit zurückgehen; Recall und F$_1$ des LLM
 sind dadurch tendenziell unterschätzt.
-Als Sensitivitätsanalyse wurde die Inferenz des 27B-Modells (Seed~42)
-mit einem Limit von 1\,024 Ausgabetokens auf einer Stichprobe von je 25
-Sätzen der Domänen Musik und Politik wiederholt und auf denselben Sätzen
-mit dem Hauptlauf verglichen (Abschnitt~\ref{sec:erg-crossner}).
+In einer Vorstudie wurde die Inferenz des 27B-Modells (Seed~42) mit
+einem Limit von 1\,024 Ausgabetokens auf den jeweils ersten 25 Sätzen der
+Testsplits von Musik und Politik wiederholt und auf denselben Sätzen mit
+dem Hauptlauf verglichen; die beiden Domänen wurden gewählt, weil dort bei
+256 Tokens besonders viele Antworten nicht parsebar waren, die Stichprobe
+ist also weder zufällig noch repräsentativ (Abschnitt~\ref{sec:erg-crossner}).
 
 \section{Validität und bekannte Abweichungen}
 \label{sec:validitaet}
@@ -1190,7 +1231,7 @@ Limitationsdiskussion im Fazit berücksichtigt.
 \begin{table}[ht]
   \centering
   \small
-  \caption{Bekannte Abweichungen vom idealisierten Versuchsdesign.}
+  \caption[Bekannte Abweichungen vom idealisierten Versuchsdesign]{Bekannte Abweichungen vom idealisierten Versuchsdesign.}
   \label{tab:abweichungen}
   \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.3cm}%
       >{\raggedright\arraybackslash}X%
@@ -1217,12 +1258,15 @@ Limitationsdiskussion im Fazit berücksichtigt.
       \ref{sec:lora-konfiguration} \\
     SFT-Verlust & Verlust über die gesamte Sequenz einschließlich Prompt
       & \ref{sec:llm-pipeline} \\
-    Hyperparameter & Größenabhängig gewählt, kein Suchlauf &
-      \ref{sec:lora-konfiguration} \\
+    Adapter-Präzision & Gespeicherte 27B-Adapter nach der Wiederaufnahme in
+      FP32 statt BF16 & \ref{sec:lora-konfiguration} \\
+    Hyperparameter & Größenabhängig gewählt, kein Suchlauf (Encoder und
+      LLM) & \ref{sec:encoder-pipeline}, \ref{sec:lora-konfiguration} \\
     Längengrenzen & 256 Subwort-Tokens (Encoder), 1\,024 Tokens (SFT),
       256 Ausgabetokens (LLM-Inferenz) & \ref{sec:datenvorverarbeitung},
-      \ref{sec:crossner} \\
-    Effizienzmessung & Trainingsdauer der 27B-Läufe nur als Untergrenze;
+      \ref{sec:llm-pipeline}, \ref{sec:crossner} \\
+    Effizienzmessung & 27B-Training in vier Slurm-Zuteilungen, Dauer aus
+      der Slurm-Abrechnung; drei 27B-Seeds gleichzeitig auf einem Knoten;
       kein Trainingsspeicher protokolliert &
       \ref{sec:effizienzmetriken} \\
     \bottomrule
