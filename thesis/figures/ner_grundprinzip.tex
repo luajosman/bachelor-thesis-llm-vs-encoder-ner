@@ -1,0 +1,30 @@
+% figures/ner_grundprinzip.tex -- Grundprinzip der NER (eigene Darstellung,
+% TikZ). Beispiel wie in Tabelle 2.1; Endindizes einschliessend.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  tok/.style={draw=gray!60, fill=gray!8, rounded corners=2pt,
+    minimum width=1.75cm, minimum height=0.8cm, inner sep=3pt},
+  per/.style={tok, fill=orange!22}, loc/.style={tok, fill=blue!14},
+  box/.style={draw=gray!60, fill=green!12, rounded corners=3pt,
+    minimum width=5.2cm, minimum height=1.25cm, align=center,
+    font=\sffamily\normalsize},
+  outbox/.style={draw=gray!60, fill=white, rounded corners=3pt, inner sep=7pt},
+  arr/.style={-{Latex[length=2.5mm]}, thick, gray!60!black},
+  lbl/.style={font=\sffamily\footnotesize, text=gray!70!black},
+]
+  \node[lbl, anchor=west] at (-4.95, 1.25) {Eingabe: Tokenfolge $t_1, \dots, t_5$};
+  \foreach \i/\w/\s in {1/Barack/per, 2/Obama/per, 3/visited/tok, 4/Berlin/loc, 5/./tok} {
+    \node[\s] (t\i) at ({(\i-3)*2.05}, 0) {\w};
+    \node[lbl] at ({(\i-3)*2.05}, 0.68) {$t_\i$};
+  }
+  \node[box] (ner) at (0, -2.05) {Named Entity Recognition\\(NER)};
+  \draw[arr] (0, -0.42) -- (ner.north);
+  \node[outbox, anchor=north] (res) at (0, -3.35) {%
+    \begin{tabular}{@{}l@{\hspace{1.4em}}l@{}}
+      $(t_1,\; t_2,\; \mathrm{PER})$ & \colorbox{orange!22}{\strut Barack Obama}\\[2pt]
+      $(t_4,\; t_4,\; \mathrm{LOC})$ & \colorbox{blue!14}{\strut Berlin}
+    \end{tabular}};
+  \draw[arr] (ner.south) -- (res.north);
+  \node[lbl, anchor=north] at ($(res.south)+(0,-0.12)$)
+    {Ausgabe: Tripel (Startindex, Endindex, Typ), Endindex einschließend};
+\end{tikzpicture}
