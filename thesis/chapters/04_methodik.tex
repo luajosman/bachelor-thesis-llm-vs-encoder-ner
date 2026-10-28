@@ -473,8 +473,12 @@ Standardwerte dieser Versionen.
     \small
     \caption[Eingesetzte GPU-Typen]{Eingesetzte GPU-Typen laut Laufmetadaten.
     Training und Inferenz einer MultiNERD-Konfiguration liefen jeweils
-    auf demselben GPU-Typ.}
+    auf demselben GPU-Typ; die Sensitivitätsanalysen mit 1\,024 Tokens
+    (Abschnitte~\ref{sec:nachinferenz} und~\ref{sec:crossner}) liefen
+    auf der H100, für das 27B-Modell also auf einem anderen GPU-Typ als
+    seine Hauptläufe.}
     \label{tab:hardware}
+    \setlength{\tabcolsep}{4pt}
     \begin{tabular}{lll}
         \toprule
         \textbf{Modell} & \textbf{Regime} & \textbf{GPU} \\
@@ -487,6 +491,8 @@ Standardwerte dieser Versionen.
         Qwen3.5-27B             & Zero-Shot   & NVIDIA H100 NVL (94\,GB) \\
         \midrule
         DeBERTa-v3-large, Qwen3.5-27B & CrossNER-Inferenz & NVIDIA H100 (80\,GB HBM3) \\
+        Qwen3.5-27B             & CrossNER (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
+        Qwen3.5, alle Größen    & Nachinferenz (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
         \bottomrule
     \end{tabular}
 \end{table}

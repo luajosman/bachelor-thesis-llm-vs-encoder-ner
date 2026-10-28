@@ -77,6 +77,8 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
     Qwen3.5-27B Zero-Shot & \texttt{qwen35\_27b\_zeroshot}$^{b}$ & \texttt{qwen35-27b-zeroshot}     & \texttt{137bffd} \\
     CrossNER           & wie Hauptstudie                    & \texttt{results/crossner/}\dots      & \texttt{b620041} \\
     CrossNER, 1\,024 Tokens (Vorstudie) & wie Hauptstudie & \texttt{results/\allowbreak crossner\_output\_limit\_1024/\allowbreak smoke/}\dots & \texttt{ec49279} \\
+    CrossNER, 1\,024 Tokens (alle Sätze, drei Seeds) & wie Hauptstudie & \texttt{results/\allowbreak crossner\_output\_limit\_1024/}\dots & \texttt{ff91342} \\
+    Nachinferenz MultiNERD, 1\,024 Tokens (neun QLoRA-Läufe) & wie Hauptstudie & \texttt{results/\allowbreak multinerd\_output\_limit\_1024/}\dots & \texttt{ff91342} \\
     Greedy-Kontrolle Qwen3.5-0.8B & \texttt{qwen35\_08b\_zeroshot} & \texttt{qwen35-08b-zeroshot-greedy-v1} & \texttt{4679bf1}$^{c}$ \\
     Vorlauf DeBERTa-v3-base (Latenz auf A100) & \texttt{deberta\_base} & \texttt{deberta-v3-base} & \texttt{cdf10db}$^{c}$ \\
     \bottomrule
@@ -97,8 +99,9 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
   \footnotesize
   \caption[Vollständige Commits und Revisionen]{Vollständige Commits und Revisionen.
   Die Modell- und Datensatzrevisionen gelten für die Trainingsläufe der
-  Hauptstudie und den CrossNER-Versuch; die Zero-Shot-Läufe luden Modelle
-  und Datensatz ohne explizite Revisionsangabe.}
+  Hauptstudie, den CrossNER-Versuch und die Sensitivitätsanalysen; die
+  Zero-Shot-Läufe luden Modelle und Datensatz ohne explizite
+  Revisionsangabe.}
   \label{tab:app-revisionen}
   \begin{tabular}{ll}
     \toprule
@@ -109,6 +112,7 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
     Code: Zero-Shot-Läufe                    & \texttt{137bffdd9b4351b35a31e4550bde0c15b3c53a19} \\
     Code: CrossNER-Evaluationen              & \texttt{b620041ce75878603b37763831204f26fac7ab91} \\
     Code: CrossNER mit 1\,024 Tokens (Vorstudie) & \texttt{ec492799551cbfc9c47550e25006f11386f99ceb} \\
+    Code: Sensitivitätsanalysen mit 1\,024 Tokens & \texttt{ff91342f1f206572c5e930e0be7d1929362ccb9c} \\
     Datensatz \texttt{Babelscape/multinerd}  & \texttt{2814b78e7af4b5a1f1886fe7ad49632de4d9dd25} \\
     CrossNER-Daten (Commit in \texttt{zliucr/CrossNER}) & \texttt{2e7ba2a7798c961e3f29fbc51252c5a8d40224bf} \\
     \texttt{Qwen/Qwen3.5-0.8B}               & \texttt{2fc06364715b967f1860aea9cf38778875588b17} \\

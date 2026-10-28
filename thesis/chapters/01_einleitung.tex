@@ -174,7 +174,11 @@ Die Arbeit leistet damit folgende Beiträge:
   \item einen ergänzenden Transfertest auf CrossNER, der prüft, wie sich
   die jeweils größten auf MultiNERD angepassten Modelle beider Familien
   auf Wikipedia-Texte aus fünf anderen Domänen übertragen
-  lassen~\cite{liu2021crossner}.
+  lassen~\cite{liu2021crossner};
+  \item eine Absicherung der Befunde durch gepaarte
+  Bootstrap-Konfidenzintervalle über die Testsätze und durch zwei
+  Sensitivitätsanalysen zum Ausgabelimit der LLM-Inferenz, die den
+  wichtigsten Störfaktor des Vergleichs messen statt schätzen.
 \end{itemize}
 Der Transfertest verwendet ausschließlich die Testsplits von CrossNER,
 ohne weiteres Training, und wertet nur die gemeinsamen Grobtypen Person,
