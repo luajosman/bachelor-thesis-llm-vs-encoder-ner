@@ -32,19 +32,20 @@ Seeds; der Encoder ist damit unterscheidbar besser, und auch
 DeBERTa-v3-base liegt mit 95,5 Punkten vor allen LLM-Konfigurationen,
 deren kleinere Vertreter 94,0 (4B) und 93,1 Punkte (0.8B) erreichen.
 Ohne Training fallen die LLMs auf 6,2 bis 69,4 Punkte zurück; die
-Anpassung mit QLoRA ist damit der mit Abstand wirksamste Faktor im
-Vergleich, nicht die Modellklasse und nicht die Modellgröße.
-Der Vorsprung des Encoders stammt vollständig aus dem Recall; etwa die
-Hälfte des Recall-Rückstands des LLM geht auf Antworten zurück, die am
-Limit von 256 Ausgabetokens abgeschnitten wurden, sodass der gemessene
+Anpassung mit QLoRA ist damit neben der Modellgröße im Zero-Shot-Regime
+der wirksamste Faktor im Vergleich, während Modellgröße und Modellklasse
+nach der Anpassung nur noch ein bis zweieinhalb Punkte ausmachen.
+Der Vorsprung des Encoders stammt nahezu vollständig aus dem Recall; der
+größte Teil des Recall-Rückstands des LLM geht auf Antworten zurück, die
+am Limit von 256 Ausgabetokens abgeschnitten wurden, sodass der gemessene
 Abstand eine Obergrenze des Klassenunterschieds darstellt.
 Bei den drei häufigen Typen PER, ORG und LOC unterscheiden sich die
 trainierten Konfigurationen um höchstens 1,8 Punkte; der Encoder liegt
-bei ANIM, FOOD, PLANT und DIS vorn, das LLM bei seltenen Typen wie INST,
-MYTH, CEL und TIME, sodass beide im Makro-F$_1$ gleichauf liegen.
+bei ANIM, FOOD, PLANT, DIS und EVE vorn, das LLM bei den seltenen Typen
+INST, MYTH und TIME, sodass beide im Makro-F$_1$ gleichauf liegen.
 Die Formtreue ist nach dem Fine-Tuning hoch: 0,4\,\% der Antworten sind
 nicht parsebar, alle wegen des Ausgabelimits; unbekannte Typen und
-unzulässige Indizes treten nicht mehr auf.
+unzulässige Indizes treten nur noch in Einzelfällen auf.
 Im Zero-Shot-Regime ist die Formtreue der begrenzende Faktor des
 0.8B-Modells, während 4B und 27B gültiges JSON erzeugen, aber Wortindizes
 falsch zählen.
@@ -57,11 +58,14 @@ Parameter 0,3 Punkte, innerhalb der LLM-Familie im QLoRA-Regime der
 Schritt von 0{,}75 auf 4{,}21~Mrd. 0,8 Punkte und der von 4{,}21 auf
 26{,}90~Mrd. weitere 0,5 Punkte; die Zugewinne sind unterscheidbar,
 nehmen aber mit der Größe ab.
-Dem stehen Ressourcen gegenüber, die mit der Größe steil wachsen: Die
-Inferenzlatenz je Satz steigt von 8,9~ms (DeBERTa-v3-base) über 16,5~ms
-(DeBERTa-v3-large) und 1\,876~ms (Qwen3.5-0.8B) auf 5\,505~ms
-(Qwen3.5-27B), der GPU-Spitzenspeicher der Inferenz von 0,7 auf
-18,7~GB, die Trainingsdauer von 0,4 auf mindestens 50 Stunden.
+Dem stehen Ressourcen gegenüber, die innerhalb der Encoder-Familie
+moderat wachsen (Latenz 8,9 auf 16,5~ms, Speicher 0,7 auf 1,7~GB,
+Training 0,4 auf 1,1~h) und innerhalb der LLM-Familie unterschiedlich
+steil: Die Latenz je Satz steigt von 1\,876 auf 5\,505~ms, also auf das
+Dreifache bei 36-facher Parameterzahl, der GPU-Spitzenspeicher der
+Inferenz von 0,9 auf 18,7~GB und die Trainingsdauer von 12 auf rund 266
+Stunden, wobei der Vergleich der Trainingsdauern durch unterschiedliche
+GPU-Typen und Clusterlast überlagert ist.
 Im Zero-Shot-Regime ist der Größeneffekt mit rund 30 Punkten je Schritt
 um Größenordnungen größer, weil erst das 27B-Modell Format und
 Typinventar weitgehend einhält.
@@ -75,12 +79,12 @@ die bessere und zugleich effizientere Wahl, unabhängig von Latenz- oder
 Speicherbeschränkungen: Die beiden Encoder bilden allein die
 Pareto-Front aus Erkennungsleistung, Latenz und Speicher.
 Ein LLM rechtfertigt den Mehraufwand von rund 5,5 Sekunden je Satz,
-24~GB GPU-Speicher und mindestens 50 Stunden Training nur, wenn seine
+24~GB GPU-Speicher und rund 266 Stunden Training nur, wenn seine
 spezifischen Vorteile zählen: die gleichwertige Makro-Leistung mit
 Vorsprüngen bei seltenen Typen oder die hier nicht gemessene
 Möglichkeit, das Typinventar per Prompt zu ändern; dann ist Qwen3.5-27B
-mit QLoRA und einem Ausgabelimit oberhalb von 256 Tokens die beste
-Konfiguration, während das 4B-Modell von beiden Encodern dominiert wird.
+mit QLoRA und einem Ausgabelimit, das lange Antworten nicht abschneidet,
+die beste Konfiguration, während das 4B-Modell von beiden Encodern dominiert wird.
 Das Zero-Shot-Regime ist bei 15 Typen nicht konkurrenzfähig und nur
 ohne annotierte Daten sinnvoll, dann allein mit dem 27B-Modell.
 Beim Transfer auf die CrossNER-Domänen ohne Nachtraining verliert der
@@ -132,7 +136,9 @@ Schicht ab, und die QLoRA-Umsetzung weicht in zwei Punkten vom
 Standardrezept ab (Abschnitt~\ref{sec:lora-konfiguration}).
 Hyperparameter wurden je Modellgröße nach üblichen Werten gesetzt und
 nicht gesucht; für keine Konfiguration liegt daher ein Nachweis vor,
-dass sie ihr Optimum erreicht hat.
+dass sie ihr Optimum erreicht hat, und in vier der sechs Encoder- sowie
+acht der neun LLM-Läufe fiel die Checkpoint-Auswahl auf die letzte
+Epoche, sodass längeres Training weitere Zugewinne hätte bringen können.
 Die Checkpoint-Auswahl ist asymmetrisch: Die Encoder wurden auf dem
 vollständigen Validierungssplit ausgewählt, die LLM-Adapter anhand von
 200 Validierungssätzen.
@@ -141,8 +147,8 @@ Teil des Lernsignals auf dessen Reproduktion entfällt.
 Das Limit von 256 Ausgabetokens schließlich benachteiligt die LLMs
 messbar: Auf MultiNERD liegen 2,6\,\% der Referenzentitäten in
 abgeschnittenen Antworten, auf CrossNER sind 10\,\% der Antworten
-betroffen, und die Sensitivitätsanalyse auf 50 Sätzen zeigt, dass ein
-höheres Limit den Recall dort auf das Niveau der Precision hebt.
+betroffen, und die Vorstudie auf 50 Sätzen zeigt, dass ein höheres Limit
+den Recall dort auf rund 90 Punkte hebt.
 Der gemessene Abstand zwischen den Modellklassen ist deshalb eine
 Obergrenze.
 
@@ -167,9 +173,9 @@ beim Encoder (17{,}6 gegenüber 8{,}9~ms) erreichen können.
 Gemessen wurde die Latenz bei Batchgröße~1 und einem Satz je Anfrage;
 der mit Batching erreichbare Durchsatz, der Speicherbedarf während des
 Trainings sowie Energieverbrauch und Kosten wurden nicht erfasst.
-Die Trainingsdauer des 27B-Modells ist nur als Untergrenze bekannt, weil
-alle drei Läufe nach einem Neustart aus einem Checkpoint wieder
-aufgenommen wurden.
+Die Trainingsdauer des 27B-Modells stammt aus der Slurm-Abrechnung von
+vier Zuteilungen je Lauf und enthält den Neustart-Overhead sowie die
+gegenseitige Auslastung der drei gleichzeitig laufenden Seeds.
 
 \paragraph{Statistische Absicherung.}
 Jede trainierte Konfiguration wurde mit drei Seeds trainiert; auf
