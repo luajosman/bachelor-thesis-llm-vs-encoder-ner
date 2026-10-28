@@ -7,23 +7,23 @@
     & & & \textbf{[h]} & \textbf{gesamt [h]} & \textbf{Mittel} & \textbf{Median} & \textbf{P95} &
     \textbf{[S\"atze/s]} & \textbf{[GB]} \\
     \midrule
-    DeBERTa-v3-base & Fine-Tuning & H100 & 0,4 & 0,05 & 8,9 & 8,9 & 9,3 & -- & 0,7 \\
-    DeBERTa-v3-large & Fine-Tuning & H100 & 1,2 & 0,09 & 16,5 & 16,4 & 17,0 & -- & 1,7 \\
+    DeBERTa-v3-base & Fine-Tuning & H100 & 0,4 & 0,05 & 8,9 & 8,9 & 9,3 & --$^{d}$ & 0,7 \\
+    DeBERTa-v3-large & Fine-Tuning & H100 & 1,2 & 0,09 & 16,5 & 16,4 & 17,0 & --$^{d}$ & 1,7 \\
     \midrule
-    Qwen3.5-0.8B & Zero-Shot & A100 & -- & 14,7$^{c}$ & 3211 & --$^{b}$ & 9186 & 0,31 & 1,5 \\
-    Qwen3.5-4B & Zero-Shot & A100 & -- & 9,2$^{c}$ & 2015 & --$^{b}$ & 6942 & 0,50 & 8,2 \\
-    Qwen3.5-27B & Zero-Shot & NVL & -- & 17,3$^{c}$ & 3783 & --$^{b}$ & 8597 & 0,26 & 50,7 \\
+    Qwen3.5-0.8B & Zero-Shot & A100 & -- & 14,7$^{c}$ & 3\,211 & --$^{b}$ & 9\,186 & 0,31 & 1,5 \\
+    Qwen3.5-4B & Zero-Shot & A100 & -- & 9,2$^{c}$ & 2\,015 & --$^{b}$ & 6\,942 & 0,50 & 8,2 \\
+    Qwen3.5-27B & Zero-Shot & NVL & -- & 17,3$^{c}$ & 3\,783 & --$^{b}$ & 8\,597 & 0,26 & 50,7 \\
     \midrule
-    Qwen3.5-0.8B & QLoRA & H100 & 12,1 & 8,6 & 1876 & 1292 & 4413 & 0,53 & 0,9 \\
-    Qwen3.5-4B & QLoRA & A100 & 62,9 & 21,4 & 4685 & 3245 & 10939 & 0,21 & 3,5 \\
-    Qwen3.5-27B & QLoRA & NVL & 266,2$^{a}$ & 25,2 & 5505 & 3792 & 12950 & 0,18 & 18,7 \\
+    Qwen3.5-0.8B & QLoRA & H100 & 12,1 & 8,6 & 1\,876 & 1\,292 & 4\,413 & 0,53 & 0,9 \\
+    Qwen3.5-4B & QLoRA & A100 & 62,9 & 21,4 & 4\,685 & 3\,245 & 10\,939 & 0,21 & 3,5 \\
+    Qwen3.5-27B & QLoRA & NVL & 266,2$^{a}$ & 25,2 & 5\,505 & 3\,792 & 12\,950 & 0,18 & 18,7 \\
     \bottomrule
     \multicolumn{10}{@{}l}{\scriptsize $^{a}$ Vier Slurm-Zuteilungen (Start 7., 12., 15. und 18.~August 2026, Abschluss 20.~August) wegen} \\
-    \multicolumn{10}{@{}l}{\scriptsize des 3-Tage-Limits; Summe der Zuteilungen laut Slurm-Abrechnung. Der Trainer protokollierte nur den} \\
-    \multicolumn{10}{@{}l}{\scriptsize letzten Abschnitt ab Schritt 20\,000 bzw. 19\,500 (Mittel 50,5~h); Hochrechnung mit dessen} \\
-    \multicolumn{10}{@{}l}{\scriptsize Schrittrate (38,0~s je Schritt) auf 24\,615 Schritte ergibt 260~h} \\
-    \multicolumn{10}{@{}l}{\scriptsize (Abschnitt~\ref{sec:effizienzmetriken}). Die drei Seeds liefen gleichzeitig auf einem Knoten.} \\
+    \multicolumn{10}{@{}l}{\scriptsize des 3-Tage-Limits, Summe laut Slurm-Abrechnung; Hochrechnung \"uber die Schrittrate des letzten} \\
+    \multicolumn{10}{@{}l}{\scriptsize Abschnitts: 260~h (Abschnitt~\ref{sec:effizienzmetriken}). Die drei Seeds liefen gleichzeitig auf} \\
+    \multicolumn{10}{@{}l}{\scriptsize einem Knoten.} \\
     \multicolumn{10}{@{}l}{\scriptsize $^{b}$ F\"ur die Zero-Shot-L\"aufe wurde kein Median protokolliert.} \\
     \multicolumn{10}{@{}l}{\scriptsize $^{c}$ Zero-Shot-L\"aufe ohne Phasenprotokoll: mittlere Latenz $\times$ 16\,454 S\"atze} \\
     \multicolumn{10}{@{}l}{\scriptsize (Sch\"atzung).} \\
+    \multicolumn{10}{@{}l}{\scriptsize $^{d}$ Durchsatz nur f\"ur die generative Inferenz protokolliert.} \\
 \end{tabular}

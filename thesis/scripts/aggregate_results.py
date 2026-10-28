@@ -245,6 +245,11 @@ def de(x, nd=1):
     return f"{x:.{nd}f}".replace(".", ",")
 
 
+def de_sep(x, nd=1):
+    """Deutsche Dezimalschreibweise mit schmalem Tausendertrenner."""
+    return f"{x:,.{nd}f}".replace(",", "\\,").replace(".", ",")
+
+
 def pm(mean, std, nd=2):
     if std is None:
         return de(mean, nd)
@@ -1038,10 +1043,9 @@ def training_footnote(a, sacct_ok):
     seeds_word = NUMBER_WORDS.get(len(profs), str(len(profs))).lower()
     same_node = f" Die {seeds_word} Seeds liefen gleichzeitig auf einem Knoten." if len(nodes) == 1 and len(profs) > 1 else ""
     if sacct_ok:
-        return (f"{n_word} Slurm-Zuteilungen {dates} wegen des 3-Tage-Limits; Summe der Zuteilungen laut "
-                f"Slurm-Abrechnung. Der Trainer protokollierte nur den letzten Abschnitt ab Schritt {resume} "
-                f"(Mittel {last_h}~h); Hochrechnung mit dessen Schrittrate ({rate}~s je Schritt) auf {total} Schritte "
-                f"ergibt {est_h}~h (Abschnitt~\\ref{{sec:effizienzmetriken}}).{same_node}")
+        return (f"{n_word} Slurm-Zuteilungen {dates} wegen des 3-Tage-Limits, Summe laut Slurm-Abrechnung; "
+                f"Hochrechnung \\\"uber die Schrittrate des letzten Abschnitts: {est_h}~h "
+                f"(Abschnitt~\\ref{{sec:effizienzmetriken}}).{same_node}")
     return (f"Hochrechnung: {n_word} Slurm-Zuteilungen {dates} wegen des 3-Tage-Limits; der Trainer "
             f"protokollierte nur den letzten Abschnitt ab Schritt {resume} (Mittel {last_h}~h). Dessen Schrittrate "
             f"({rate}~s je Schritt) auf {total} Schritte hochgerechnet (Abschnitt~\\ref{{sec:effizienzmetriken}}).")
@@ -1088,6 +1092,7 @@ def tab_effizienz(G):
     lines += note_rows("$^{b}$ F\\\"ur die Zero-Shot-L\\\"aufe wurde kein Median protokolliert.", 10)
     lines += note_rows("$^{c}$ Zero-Shot-L\\\"aufe ohne Phasenprotokoll: mittlere Latenz $\\times$ "
                        f"{n_sent} S\\\"atze (Sch\\\"atzung).", 10)
+    lines += note_rows("$^{d}$ Durchsatz nur f\\\"ur die generative Inferenz protokolliert.", 10)
     lines += ["\\end{tabular}", ""]
     return "\n".join(lines)
 

@@ -1,4 +1,4 @@
-\begin{tabular}{>{\raggedright\arraybackslash}p{4.4cm}rrrrrr}
+\begin{tabular}{>{\raggedright\arraybackslash}p{5.8cm}rrrrrr}
     \toprule
     & \multicolumn{3}{c}{\textbf{Zero-Shot}} &
       \multicolumn{3}{c}{\textbf{QLoRA}} \\
@@ -6,7 +6,8 @@
     \textbf{Kennzahl} & \textbf{0.8B} & \textbf{4B} & \textbf{27B} &
       \textbf{0.8B} & \textbf{4B} & \textbf{27B} \\
     \midrule
-    Parse-Fehlerrate [\%] & 14,29 & 1,75 & 1,06 & 0,41 & 0,42 & 0,40 \\
+    Nicht parsebare Antworten & 2\,352 & 288 & 175 & 68 & 69 & 65 \\
+    \quad Anteil an allen Antworten [\%] & 14,29 & 1,75 & 1,06 & 0,41 & 0,42 & 0,40 \\
     \quad davon ohne schlie\ss{}ende Klammer & 2\,304 & 256 & 139 & 68 & 69 & 65 \\
     Referenzentit\"aten in nicht parsebaren Antworten [\%] & 16,15 & 5,08 & 3,83 & 2,59 & 2,61 & 2,56 \\
     Parse direkt & 4\,430 & 14\,675 & 16\,261 & 16\,386 & 16\,385 & 16\,389 \\
