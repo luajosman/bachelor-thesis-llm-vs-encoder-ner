@@ -8,6 +8,7 @@
     \midrule
     Parse-Fehlerrate [\%] & 14,29 & 1,75 & 1,06 & 0,41 & 0,42 & 0,40 \\
     \quad davon ohne schlie\ss{}ende Klammer & 2\,304 & 256 & 139 & 68 & 69 & 65 \\
+    Referenzentit\"aten in nicht parsebaren Antworten [\%] & 16,15 & 5,08 & 3,83 & 2,59 & 2,61 & 2,56 \\
     Parse direkt & 4\,430 & 14\,675 & 16\,261 & 16\,386 & 16\,385 & 16\,389 \\
     \quad nach Entfernen eines Codeblocks & 9\,477 & 1\,453 & 12 & 0 & 0 & 0 \\
     \quad durch Extraktion aus Text & 195 & 38 & 6 & 0 & 0 & 0 \\
@@ -18,7 +19,11 @@
     Unbekannte Typen & 1\,882 & 77 & 22 & 0 & 0 & 0 \\
     Text-Abweichungen & 9\,895 & 3\,930 & 3\,397 & 45 & 12 & 4 \\
     \"Uberlappungen & 21 & 19 & 109 & 0 & 0 & 0 \\
+    Begonnene Elemente (Rohausgabe) & 43\,482 & 17\,453 & 33\,621 & 25\,958 & 25\,955 & 25\,859 \\
+    \"Ubernommene Spans & 5\,820 & 11\,375 & 28\,823 & 25\,305 & 25\,326 & 25\,271 \\
     \midrule
     Leere Vorhersagen & 12\,632 & 10\,021 & 1\,887 & 83 & 76 & 70 \\
+    \quad davon nicht parsebar & 2\,352 & 288 & 175 & 68 & 69 & 65 \\
+    \quad davon ohne Referenzentit\"at & 5 & 4 & 2 & 0 & 0 & 3 \\
     \bottomrule
 \end{tabular}

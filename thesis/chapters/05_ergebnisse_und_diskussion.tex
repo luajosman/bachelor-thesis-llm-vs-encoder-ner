@@ -303,8 +303,15 @@ aus Tabelle~\ref{tab:formtreue} für die sechs LLM-Konfigurationen.
   Häufigkeiten (QLoRA: Mittel über drei Seeds, gerundet).
   Jedes verworfene Element zählt nur bei der ersten verletzten Regel
   (Abschnitt~\ref{sec:robustheit-ausgaben}).
-  Leere Vorhersagen: Sätze ohne übernommenen Span; acht Testsätze
-  enthalten keine Referenzentität.}
+  Referenzentitäten in nicht parsebaren Antworten: Anteil der
+  Referenzentitäten in Sätzen mit nicht parsebarer Antwort.
+  Begonnene Elemente: in der Rohausgabe begonnene JSON-Objekte (Näherung
+  über öffnende geschweifte Klammern, einschließlich abgeschnittener
+  Objekte); übernommene Spans: Elemente, die alle Prüfungen bestanden
+  haben.
+  Leere Vorhersagen: Sätze ohne übernommenen Span, unabhängig von der
+  Ursache; davon nicht parsebar bzw. ohne Referenzentität (acht Testsätze
+  enthalten keine Referenzentität).}
   \label{tab:formtreue-erg}
   \setlength{\tabcolsep}{4pt}
   \input{generated/tab-formtreue}
@@ -485,9 +492,12 @@ gezogen.
   \centering
   \scriptsize
   \caption[Ressourcenbedarf der Konfigurationen]{Ressourcenbedarf der Konfigurationen.
-  Training: Wall-Clock-Dauer des Trainingsaufrufs in Stunden, Mittel über
-  drei Seeds; Latenz: Dauer des Modellaufrufs je Testsatz bei
-  Batchgröße~1 in Millisekunden (Mittelwert, Median, 95.~Perzentil);
+  Training: Wall-Clock-Dauer der Trainingsjobs laut Slurm-Abrechnung in
+  Stunden (einschließlich Laden von Modell und Daten; beim 27B-Modell
+  Summe der vier Zuteilungen), Mittel über drei Seeds; Testinferenz:
+  Gesamtdauer der Testinferenz über 16\,454 Sätze in Stunden; Latenz:
+  Dauer des Modellaufrufs je Testsatz bei Batchgröße~1 in Millisekunden
+  (Mittelwert, Median, 95.~Perzentil);
   Durchsatz: Testsätze je Sekunde reiner Generierungszeit; Speicher:
   maximal allokierter GPU-Speicher während der Testinferenz in GB.
   GPU: H100 = H100 80\,GB HBM3, A100 = A100-SXM4 80\,GB, NVL = H100 NVL
@@ -499,13 +509,13 @@ gezogen.
 
 \paragraph{Trainingsdauer.}
 Das vollständige Fine-Tuning der Encoder dauerte 0,4~h (base, fünf
-Epochen) bzw. 1,1~h (large, vier Epochen) auf einer H100.
+Epochen) bzw. 1,2~h (large, vier Epochen) auf einer H100.
 Das QLoRA-Training über drei Epochen benötigte 12,1~h für das
 0.8B-Modell auf derselben H100 und 62,9~h für das 4B-Modell auf einer
 A100.
 Die drei 27B-Läufe wurden am Drei-Tage-Limit der Partition dreimal neu
 eingereiht; die Summe ihrer vier Zuteilungen laut Slurm-Abrechnung
-beträgt 265,0, 264,1 bzw. 269,5~h (Mittel 266~h), wovon der Trainer nur
+beträgt 265,0, 264,2 bzw. 269,5~h (Mittel 266~h), wovon der Trainer nur
 die letzte Zuteilung von im Mittel 50,5~h protokolliert hat; eine
 Hochrechnung der dort gemessenen Schrittrate auf alle 24\,615 Schritte
 ergibt 260~h und bestätigt die Größenordnung
@@ -766,7 +776,8 @@ abgebildeten Fachtypen als Zusätze zählen, und Politik (86,9) die
 leichteste; für das LLM ist Musik mit 63,0 und einem Recall von 48,4 die
 schwerste und Literatur (77,6) die leichteste.
 Der Ausschluss der 21 mit MultiNERD-Trainingssätzen übereinstimmenden
-Sätze verändert die gepoolten Werte um 0,2 bzw. 0,4 Punkte.
+Sätze verändert die gepoolten Werte um 0,2 bzw. 0,4 Punkte; die Werte der
+einzelnen Seeds und je Grobtyp stehen in Anhang~\ref{app:ergebnistabellen}.
 
 Der Recall-Verlust des LLM hängt mit dem Ausgabelimit zusammen.
 CrossNER-Sätze sind mit im Mittel 38 Tokens und 3,2 Referenzentitäten
@@ -1028,7 +1039,7 @@ Drittens passen die QLoRA-Läufe mit 6,4 bis 159~Mio. trainierbaren
 Parametern und NF4-Basismodell auf eine einzelne GPU, kosten aber Zeit:
 Das 27B-Modell benötigt 18,7~GB während der Inferenz und rund 266 Stunden
 Training über vier Zuteilungen (Abschnitt~\ref{sec:erg-effizienz})
-gegenüber 1,1 Stunden für DeBERTa-v3-large; der Trainingsspeicher wurde
+gegenüber 1,2 Stunden für DeBERTa-v3-large; der Trainingsspeicher wurde
 nicht gemessen.
 
 Daraus ergeben sich Empfehlungen, die in
@@ -1079,6 +1090,41 @@ und 0,3), ebenso einzelne typbezogene Werte der seltenen Typen.
 Die explorativen Vorläufe mit Seed~42, die nicht in die Auswertung
 eingehen, weichen von den kanonischen Läufen desselben Seeds um höchstens
 0,12 Punkte Mikro-F$_1$ ab, was die Streuung über die Seeds bestätigt.
+
+Tabelle~\ref{tab:ci} ergänzt die Seed-Streuung um die Unsicherheit durch
+die Auswahl der Testsätze (gepaartes Satz-Bootstrap,
+Abschnitt~\ref{sec:performanzmetriken}).
+Die 95-\%-Intervalle der Mikro-F$_1$-Differenzen schließen bei allen
+sieben Paaren die Null aus; für den zentralen Vergleich liegt die
+Differenz zwischen DeBERTa-v3-large und Qwen3.5-27B bei 1,34 Punkten mit
+einem Intervall von 0,99 bis 1,68.
+Beim Makro-F$_1$ schließen vier der sieben Intervalle die Null ein,
+darunter beide Vergleiche der Encoder mit dem 27B-Modell und der
+Vergleich der beiden Encoder; nur die Größenschritte innerhalb der
+LLM-Familie und der Vergleich von DeBERTa-v3-base mit dem 0.8B-Modell
+sind auch im Makro-F$_1$ belastbar.
+Die Intervalle der einzelnen Konfigurationen sind beim Makro-F$_1$ mit
+fünf bis sechs Punkten Breite rund zehnmal so breit wie beim
+Mikro-F$_1$, weil die seltenen Typen auf wenigen Sätzen beruhen.
+Beide Streuungsquellen führen damit zur gleichen Lesart: Der
+Mikro-Vorsprung der Encoder ist belastbar, der Makro-Gleichstand
+ebenfalls.
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption[Bootstrap-Konfidenzintervalle für Mikro- und Makro-F$_1$]{Gepaartes
+  Satz-Bootstrap über die 16\,454 Testsätze ($B = 2\,000$,
+  Perzentilintervalle 2,5 und 97,5\,\%): Differenzen zwischen
+  Konfigurationen (A $-$ B, seedgleiche Paare, über die drei Seeds
+  gemittelt; Zero-Shot-Läufe gegen jeden Seed) und Intervalle der
+  einzelnen Konfigurationen (Seed-Mittel).
+  Werte in Punkten; Dolch: Intervall schließt null ein.}
+  \label{tab:ci}
+  \scriptsize
+  \setlength{\tabcolsep}{3pt}
+  \input{generated/tab-ci}
+\end{table}
 Belastbar sind der Abstand zwischen Zero-Shot- und QLoRA-Regime, der
 Abstand zwischen den Encodern und allen LLM-Konfigurationen, die
 Richtung der Größeneffekte und die Effizienzfaktoren, die um ein

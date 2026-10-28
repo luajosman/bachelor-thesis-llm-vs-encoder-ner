@@ -4,9 +4,10 @@ Abbildungsdaten und Kennzahlen fuer Kapitel 5 der Bachelorarbeit.
 
 Aufruf aus dem Repo-Stamm:
     python3 thesis/scripts/aggregate_results.py
-Benoetigt PyYAML (pip3 install --user pyyaml).
+Benoetigt PyYAML und numpy (pip3 install --user pyyaml numpy).
 
-Eingaben:  ba-ner/results/{multinerd,crossner,crossner_output_limit_1024}
+Eingaben:  ba-ner/results/{multinerd,crossner,crossner_output_limit_1024,multinerd_output_limit_1024}
+           ba-ner/results/slurm_accounting_2026-08.csv  (sacct-Export; fehlt er, Hochrechnung)
            ba-ner/configs/crossner_overlap_exclusions.yaml
 Ausgaben:  thesis/generated/summary.json  (alle Kennzahlen)
            thesis/generated/tab-*.tex     (tabular-Fragmente fuer \\input)
@@ -16,16 +17,22 @@ Alle F1-, Precision- und Recall-Werte werden strikt auf Entitaetsebene nach
 dem IOB2-Schema berechnet (wie seqeval im strikten Modus) und gegen die
 gespeicherten Werte der Laeufe geprueft. Mittelwerte und
 Stichprobenstandardabweichungen (ddof=1) ueber die Seeds 42, 123, 456.
+Konfidenzintervalle: gepaartes Satz-Bootstrap (gleiche Stichprobe fuer alle
+Laeufe, feste Zufallssaat, daher byteidentisch reproduzierbar).
 """
 from __future__ import annotations
 
+import csv
+import hashlib
 import json
 import re
 import statistics
 import sys
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -83,6 +90,18 @@ CROSS_AGG_NAMES = {"deberta-large": "deberta-v3-large", "qwen27-qlora": "qwen35-
 DOMAINS = [("ai", "K\\\"unstliche Intelligenz"), ("literature", "Literatur"), ("music", "Musik"),
            ("politics", "Politik"), ("science", "Naturwissenschaften")]
 COARSE = ["PER", "ORG", "LOC"]
+TOTAL_STEPS_QLORA = 24615                       # Optimierungsschritte je QLoRA-Lauf (3 Epochen)
+BOOT_B, BOOT_SEED, BOOT_CHUNK = 2000, 42, 500   # Satz-Bootstrap: Replikate, Zufallssaat, Blockgroesse
+LIMIT_ROOT = RES / "multinerd_output_limit_1024"
+LIMIT_GROUPS = {"qwen08-qlora-1024": "qwen08-qlora", "qwen4-qlora-1024": "qwen4-qlora",
+                "qwen27-qlora-1024": "qwen27-qlora"}    # Schluessel -> Basisgruppe (Laufnamen identisch)
+SACCT = RES / "slurm_accounting_2026-08.csv"
+SACCT_MODEL = {"deberta-base": "deb-base", "deberta-large": "deb-large", "qwen08-qlora": "qwen08b",
+               "qwen4-qlora": "qwen4b", "qwen27-qlora": "qwen27b-3ep"}   # Gruppe -> Modell-Token im Slurm-Jobnamen
+SACCT_JOB = re.compile(r"^ner-(?P<model>.+)-s(?P<seed>\d+)-(?P<phase>train|infer|eval)$")
+MONTHS = ["Januar", "Februar", "M\\\"arz", "April", "Mai", "Juni", "Juli", "August", "September",
+          "Oktober", "November", "Dezember"]
+NUMBER_WORDS = {1: "Eine", 2: "Zwei", 3: "Drei", 4: "Vier", 5: "F\\\"unf", 6: "Sechs"}
 
 
 # --------------------------------------------------------------------------- Hilfsfunktionen
@@ -144,6 +163,23 @@ def score(records, gold_key, pred_key, types=None):
     per_type = {t: dict(zip(("precision", "recall", "f1"), prf(tp[t], fp[t], fn[t])), support=support[t])
                 for t in (types or TYPES)}
     return overall, per_type
+
+
+def sentence_counts(records, gold_key, pred_key):
+    """Je Satz (tp, fp, fn) gesamt und je Typ (strikt, wie score()) fuer das gepaarte Satz-Bootstrap.
+    Rueckgabe: micro int32[n, 3], types int32[n, len(TYPES), 3]."""
+    idx = {t: i for i, t in enumerate(TYPES)}
+    micro = np.zeros((len(records), 3), dtype=np.int32)
+    types = np.zeros((len(records), len(TYPES), 3), dtype=np.int32)
+    for i, rec in enumerate(records):
+        gold = set(entities(rec[gold_key]))
+        pred = set(entities(rec[pred_key]))
+        for j, group in enumerate((gold & pred, pred - gold, gold - pred)):
+            micro[i, j] = len(group)
+            for e in group:
+                if e[2] in idx:
+                    types[i, idx[e[2]], j] += 1
+    return micro, types
 
 
 def error_profile(records, gold_key, pred_key):
@@ -225,14 +261,76 @@ def write(path: Path, text: str):
     print(f"  geschrieben: {path.relative_to(ROOT)}")
 
 
+def fmt_int(x):
+    """Gerundete Ganzzahl mit \\, als Tausendertrenner."""
+    return f"{round(x):,}".replace(",", "\\,")
+
+
+def iso(ts):
+    return datetime.fromisoformat(ts)
+
+
+def parse_phase_history(meta):
+    """Trainingsstarts, Trainingsabschluss und Inferenzphase aus run_metadata.yaml:phase_history.
+    Jede Wiederaufnahme nach einem Slurm-Requeue schreibt einen weiteren training/RUNNING-Eintrag;
+    elapsed_seconds des *_COMPLETED-Eintrags ist die Wall-Clock der letzten Zuteilung."""
+    hist = (meta or {}).get("phase_history") or []
+    starts = [iso(e["timestamp"]) for e in hist if e["phase"] == "training" and e["status"] == "RUNNING"]
+    done = [e for e in hist if e["phase"] == "training" and e["status"] == "TRAINING_COMPLETED"]
+    inf_start = [iso(e["timestamp"]) for e in hist if e["phase"] == "inference" and e["status"] == "RUNNING"]
+    inf_done = [e for e in hist if e["phase"] == "inference" and e["status"] == "INFERENCE_COMPLETED"]
+    return dict(
+        training_starts=starts,
+        training_completed=(iso(done[-1]["timestamp"]), done[-1]["elapsed_seconds"]) if done else None,
+        inference=(inf_start[-1] if inf_start else None,
+                   iso(inf_done[-1]["timestamp"]) if inf_done else None,
+                   inf_done[-1]["elapsed_seconds"] if inf_done else None))
+
+
+def load_sacct(path: Path = SACCT):
+    """Slurm-Abrechnung (sacct -D -X -P, pipe-getrennt): Zuteilungen je (Modell-Token, Seed, Phase).
+    Requeue-Zuteilungen desselben Jobs erscheinen als mehrere Zeilen; Zeilen unter 60 s sind die
+    sofort gescheiterten automatischen Neustarts und werden ignoriert. None, wenn die Datei fehlt."""
+    if not path.exists():
+        return None
+    rows = {}
+    with open(path, encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle, delimiter="|"):
+            m = SACCT_JOB.match(row["JobName"])
+            if not m:
+                continue
+            elapsed = int(row["ElapsedRaw"] or 0)
+            if elapsed < 60:
+                continue
+            rows.setdefault((m["model"], int(m["seed"]), m["phase"]), []).append(dict(
+                job_id=row["JobID"], state=row["State"], start=row["Start"], end=row["End"],
+                elapsed_seconds=elapsed, partition=row["Partition"], node=row["NodeList"]))
+    for lst in rows.values():
+        lst.sort(key=lambda r: r["start"])
+    return rows
+
+
+def sacct_for(sacct, key, seed):
+    """Trainings- und Inferenzzuteilungen eines Laufs (Gruppe, Seed) aus der Slurm-Abrechnung."""
+    if sacct is None or key not in SACCT_MODEL:
+        return None
+    tok = SACCT_MODEL[key]
+    return dict(train=sacct.get((tok, seed, "train"), []), infer=sacct.get((tok, seed, "infer"), []))
+
+
 # --------------------------------------------------------------------------- MultiNERD-Laeufe
-def analyse_multinerd_run(run_dir: Path, is_llm: bool):
+def analyse_multinerd_run(run_dir: Path, is_llm: bool, seed=None, sacct=None):
     preds = load_json(run_dir / "test_predictions.json")
     gold_key, pred_key = ("gold_bio", "pred_bio") if is_llm else ("gold", "pred")
     overall, per_type = score(preds, gold_key, pred_key)
-    im = load_yaml(run_dir / "inference_metrics.yaml")
+    im_path = run_dir / "inference_metrics.yaml"
+    im = load_yaml(im_path) if im_path.exists() else {}
+    if seed is not None and im.get("seed") is not None and int(im["seed"]) != seed:
+        sys.exit(f"ABBRUCH: Seed {run_dir.name}: erwartet {seed}, gespeichert {im['seed']}")
     stored_f1 = im.get("test_f1", im.get("f1"))
-    if abs(stored_f1 - overall[2]) > 1e-9:
+    if stored_f1 is None:
+        print(f"  Hinweis: {run_dir.name} ohne gespeicherten F1; Selbstpruefung uebersprungen")
+    elif abs(stored_f1 - overall[2]) > 1e-9:
         sys.exit(f"ABBRUCH: F1-Abweichung in {run_dir.name}: eigen {overall[2]:.8f}, gespeichert {stored_f1:.8f}")
     ev_path = run_dir / "evaluation_metrics.yaml"
     if ev_path.exists():
@@ -241,6 +339,13 @@ def analyse_multinerd_run(run_dir: Path, is_llm: bool):
             if abs(ev["per_entity"][t]["f1"] - per_type[t]["f1"]) > 1e-9:
                 sys.exit(f"ABBRUCH: Typ-F1-Abweichung {run_dir.name}/{t}")
     macro = statistics.fmean(per_type[t]["f1"] for t in TYPES)
+    # Satzzaehler fuer das Bootstrap; ihre Summen muessen die strikten Gesamt- und Typwerte reproduzieren
+    sent_micro, sent_types = sentence_counts(preds, gold_key, pred_key)
+    if abs(prf(*map(int, sent_micro.sum(0)))[2] - overall[2]) > 1e-12:
+        sys.exit(f"ABBRUCH: Satzzaehler {run_dir.name}: Mikro-F1 weicht ab")
+    for j, t in enumerate(TYPES):
+        if abs(prf(*map(int, sent_types[:, j].sum(0)))[2] - per_type[t]["f1"]) > 1e-12:
+            sys.exit(f"ABBRUCH: Satzzaehler {run_dir.name}/{t}: Typ-F1 weicht ab")
     out = dict(name=run_dir.name, precision=overall[0], recall=overall[1], f1=overall[2], macro_f1=macro,
                per_type=per_type, n_sentences=len(preds),
                n_gold=sum(per_type[t]["support"] for t in TYPES),
@@ -249,7 +354,23 @@ def analyse_multinerd_run(run_dir: Path, is_llm: bool):
                throughput=im.get("generation_samples_per_second"), total_params=im.get("total_params"),
                gpu=(im.get("run_metadata", {}).get("cuda", {}).get("devices") or [None])[0],
                commit=im.get("run_metadata", {}).get("git", {}).get("commit"))
+    # numpy-Felder und Signaturen bleiben auf dem Laufobjekt (nicht in agg, nicht in summary.json)
+    out["sent_micro"], out["sent_types"] = sent_micro, sent_types
+    out["sentence_signature"] = hashlib.sha1(json.dumps([r["tokens"] for r in preds]).encode()).hexdigest()
+    out["gold_signature"] = hashlib.sha1(json.dumps([r[gold_key] for r in preds]).encode()).hexdigest()
     out["errors"] = error_profile(preds, gold_key, pred_key)
+    # Wall-Clock der Testinferenz: Phasenprotokoll (exakt) oder mittlere Latenz x Satzzahl (Schaetzung)
+    meta_path = run_dir / "run_metadata.yaml"
+    meta = load_yaml(meta_path) if meta_path.exists() else None
+    lat = im.get("latency_ms_mean")
+    out["inference_seconds_latency_estimate"] = lat * len(preds) / 1000 if lat is not None else None
+    phases = parse_phase_history(meta) if meta else None
+    if phases and phases["inference"][2] is not None:
+        out["inference_seconds"] = phases["inference"][2]
+        out["inference_seconds_source"] = "phase_history"
+    else:
+        out["inference_seconds"] = out["inference_seconds_latency_estimate"]
+        out["inference_seconds_source"] = "latency_estimate" if lat is not None else None
     res_path = run_dir / "results.yaml"
     if res_path.exists():
         res = load_yaml(res_path)
@@ -257,14 +378,30 @@ def analyse_multinerd_run(run_dir: Path, is_llm: bool):
         out["best_epoch"] = res.get("best_epoch")
         out["val_f1"] = res.get("best_validation_f1", res.get("best_dev_f1"))
         out["epoch_results"] = res.get("epoch_results")
-        recov = list(run_dir.glob("recovery-*.yaml"))
-        out["train_lower_bound"] = bool(recov)
-        out["resume_checkpoint"] = load_yaml(recov[0]).get("validated_checkpoint") if recov else None
+        recov = sorted(run_dir.glob("recovery-*.yaml"))
+        # validated_checkpoint der manuellen Wiederherstellung = Wiederaufnahmepunkt der 2. Zuteilung (nur Doku);
+        # der protokollierte Trainingsabschnitt beginnt bei results.yaml:resume_checkpoint.
+        out["recovery_checkpoint"] = load_yaml(recov[0]).get("validated_checkpoint") if recov else None
+        out["resumed"] = bool(res.get("resumed"))
+        out["train_lower_bound"] = out["resumed"]
+        out["resume_checkpoint"] = Path(res["resume_checkpoint"]).name if res.get("resume_checkpoint") else None
+        out["training_profile"] = training_time_profile(run_dir, res, meta, sacct, is_llm)
     if is_llm:
         status = Counter(r["parse_status"] for r in preds)
         failed_no_close = sum(1 for r in preds if r["parse_status"] == "failed"
                               and not r.get("raw_output", "").rstrip().endswith("]"))
-        empty = sum(1 for r in preds if not r.get("pred_entities"))
+        empty = sum(1 for r in preds if not r.get("pred_entities"))   # Saetze ohne uebernommenen Span, egal warum
+        # Uebernommene Spans (= B-Tags = Eintraege in pred_entities) und begonnene JSON-Objekte der Rohausgabe
+        accepted = sum(len(r.get("pred_entities") or []) for r in preds)
+        b_tags = sum(t.startswith("B-") for r in preds for t in r["pred_bio"])
+        if accepted != b_tags:
+            sys.exit(f"ABBRUCH: Spanzahl {run_dir.name}: pred_entities {accepted} != B-Tags {b_tags}")
+        generated = sum(r.get("raw_output", "").count("{") for r in preds)   # inkl. abgeschnittener Objekte (Naeherung)
+        gold_empty_ids = {i for i, r in enumerate(preds) if not entities(r["gold_bio"])}
+        empty_failed = sum(1 for r in preds if not r.get("pred_entities") and r["parse_status"] == "failed")
+        empty_correct = sum(1 for i, r in enumerate(preds) if not r.get("pred_entities")
+                            and r["parse_status"] != "failed" and i in gold_empty_ids)
+        empty_array = sum(1 for r in preds if r.get("raw_output", "").strip() == "[]")
         unknown = Counter()
         for r in preds:
             if r["parse_diagnostics"].get("unknown_types", 0):
@@ -279,19 +416,115 @@ def analyse_multinerd_run(run_dir: Path, is_llm: bool):
                                  lost_share=lost / n_gold_total,
                                  mean_tokens_failed=(sum(len(r["tokens"]) for r in failed_recs) / len(failed_recs)) if failed_recs else None,
                                  recall_without_failed=tp / (n_gold_total - lost) if n_gold_total > lost else None)
+        # Parse-Zaehler aus den Datensaetzen; gespeicherte Werte (kanonische Laeufe) muessen uebereinstimmen
+        diag = Counter()
+        for r in preds:
+            diag.update(r["parse_diagnostics"])
+        computed = dict(parse_ok=status["ok"], markdown=status["markdown_stripped"], regex=status["regex_fallback"],
+                        failed=status["failed"], failure_rate=status["failed"] / len(preds),
+                        wrong_schema=diag["wrong_schema"], invalid_items=diag["invalid_items"],
+                        missing_fields=diag["missing_fields"], invalid_offsets=diag["invalid_offsets"],
+                        unknown_types=diag["unknown_types"], text_mismatches=diag["text_mismatches"],
+                        overlaps=diag["overlaps"])
+        im_keys = dict(parse_ok="parse_ok", markdown="parse_markdown_stripped", regex="parse_regex_fallback",
+                       failed="parse_failed", failure_rate="parse_failure_rate", wrong_schema="parse_wrong_schema",
+                       invalid_items="parse_invalid_items", missing_fields="parse_missing_fields",
+                       invalid_offsets="parse_invalid_offsets", unknown_types="parse_unknown_types",
+                       text_mismatches="parse_text_mismatches", overlaps="parse_overlaps")
+        form = {}
+        for k, imk in im_keys.items():
+            if imk in im:
+                if abs(im[imk] - computed[k]) > (1e-12 if k == "failure_rate" else 0):
+                    sys.exit(f"ABBRUCH: Parse-Zaehler {run_dir.name}/{imk}: eigen {computed[k]}, gespeichert {im[imk]}")
+                form[k] = im[imk]
+            else:
+                form[k] = computed[k]
         out["form"] = dict(
-            n=len(preds), parse_ok=im["parse_ok"], markdown=im["parse_markdown_stripped"],
-            regex=im["parse_regex_fallback"], failed=im["parse_failed"], failure_rate=im["parse_failure_rate"],
-            wrong_schema=im["parse_wrong_schema"], invalid_items=im["parse_invalid_items"],
-            missing_fields=im["parse_missing_fields"], invalid_offsets=im["parse_invalid_offsets"],
-            unknown_types=im["parse_unknown_types"], text_mismatches=im["parse_text_mismatches"],
-            overlaps=im["parse_overlaps"], failed_no_close=failed_no_close, empty=empty,
+            n=len(preds), **form, failed_no_close=failed_no_close, empty=empty,
+            accepted_spans=accepted, generated_items=generated, empty_failed=empty_failed,
+            empty_correct=empty_correct, empty_other=empty - empty_failed - empty_correct, empty_array=empty_array,
+            gold_empty=len(gold_empty_ids),
             status=dict(status), unknown_examples=unknown.most_common(10))
         out["generation_settings"] = im.get("generation_settings")
         out["max_new_tokens"] = im.get("max_new_tokens")
+        out["pred_hashes"] = [hashlib.sha1(json.dumps(r["pred_bio"]).encode()).hexdigest() for r in preds]
+        if any("regenerated" in r for r in preds):      # Nachinferenz mit hoeherem Ausgabelimit (Step 5)
+            idx = [i for i, r in enumerate(preds) if r.get("regenerated")]
+            regen = [preds[i] for i in idx]
+            sub256 = [dict(gold_bio=r["gold_bio"], pred_bio=r["baseline_256"]["pred_bio"]) for r in regen]
+            out["regen"] = dict(
+                n_regenerated=len(idx), indices=idx,
+                n_limit_reached=sum(1 for r in regen if r.get("token_limit_reached")),
+                stop_reasons=dict(Counter(r.get("stop_reason") for r in regen)),
+                generated_tokens_mean=statistics.fmean(r["generated_token_count"] for r in regen) if regen else None,
+                latency_ms_mean_regenerated=statistics.fmean(r["latency_ms"] for r in regen) if regen else None,
+                n_failed_after=status["failed"],
+                n_failed_regenerated=sum(1 for r in regen if r["parse_status"] == "failed"),
+                n_failed_before_regenerated=sum(1 for r in regen if r["baseline_256"]["parse_status"] == "failed"),
+                stored_prefix_match_count=sum(1 for r in regen if r.get("stored_prefix_match")),
+                json_complete_count=sum(1 for r in regen if r.get("json_complete")),
+                subset_metrics=dict(
+                    baseline_256=dict(zip(("precision", "recall", "f1"), score(sub256, "gold_bio", "pred_bio")[0])),
+                    output_limit=dict(zip(("precision", "recall", "f1"), score(regen, "gold_bio", "pred_bio")[0]))),
+                baseline_pred_hashes={i: hashlib.sha1(json.dumps(preds[i]["baseline_256"]["pred_bio"]).encode()).hexdigest()
+                                      for i in idx})
     # Beispiele fuer die Fehlertabelle (kurze Saetze)
     out["examples"] = collect_examples(preds, gold_key, pred_key, is_llm)
     return out
+
+
+def training_time_profile(run_dir: Path, res, meta, sacct, is_llm: bool):
+    """Trainingsdauer eines Laufs aus drei Quellen.
+    exakt:     logged_seconds (HF train() des protokollierten, bei Wiederaufnahme nur des letzten Abschnitts),
+               last_allocation_seconds und wallclock_span_seconds (Phasenprotokoll),
+               sacct_train_seconds (Summe aller Slurm-Zuteilungen des Trainingsjobs; primaere Quelle).
+    geschaetzt: seconds_per_step des letzten Abschnitts x Gesamtschritte (estimated_total_seconds)."""
+    logged = res.get("train_runtime_seconds")
+    resumed = bool(res.get("resumed"))
+    resume_step = int(re.search(r"checkpoint-(\d+)", res["resume_checkpoint"]).group(1)) if resumed else 0
+    hist = load_json(run_dir / "training_history.json")
+    total_steps = max(e["step"] for e in hist if "step" in e)
+    if is_llm and total_steps != TOTAL_STEPS_QLORA:
+        sys.exit(f"ABBRUCH: Schrittzahl {run_dir.name}: {total_steps} != {TOTAL_STEPS_QLORA}")
+    steps_logged = total_steps - resume_step
+    sec_per_step = logged / steps_logged
+    estimate = sec_per_step * total_steps
+    phases = parse_phase_history(meta)
+    starts = phases["training_starts"]
+    done_ts, last_alloc = phases["training_completed"] or (None, None)
+    marks = starts + ([done_ts] if done_ts else [])
+    prof = dict(
+        resumed=resumed, resume_step=resume_step, total_steps=total_steps, steps_logged=steps_logged,
+        logged_seconds=logged, seconds_per_step=sec_per_step, estimated_total_seconds=estimate,
+        n_allocations=max(len(starts), 1), allocation_starts=[s.isoformat() for s in starts],
+        completed_at=done_ts.isoformat() if done_ts else None,
+        allocation_spans_seconds=[(b - a).total_seconds() for a, b in zip(marks, marks[1:])],  # Startabstaende inkl. Wartezeit
+        last_allocation_seconds=last_alloc,
+        wallclock_span_seconds=(done_ts - starts[0]).total_seconds() if starts and done_ts else None,
+        sacct_train_seconds=None, sacct_train_allocations=None, sacct_train_detail=None, sacct_infer_seconds=None,
+        exact=["logged_seconds", "last_allocation_seconds", "n_allocations", "wallclock_span_seconds",
+               "sacct_train_seconds"],
+        estimated=["seconds_per_step", "estimated_total_seconds"])
+    if sacct is not None:
+        train_rows, infer_rows = sacct.get("train", []), sacct.get("infer", [])
+        if train_rows:
+            prof["sacct_train_seconds"] = sum(r["elapsed_seconds"] for r in train_rows)
+            prof["sacct_train_allocations"] = len(train_rows)
+            prof["sacct_train_detail"] = train_rows
+            # Selbstpruefung: Slurm-Summe gegen Protokoll (nicht wiederaufgenommen) bzw. Hochrechnung (wiederaufgenommen)
+            rel = (abs(prof["sacct_train_seconds"] - estimate) / prof["sacct_train_seconds"] if resumed
+                   else abs(prof["sacct_train_seconds"] - logged) / logged)
+            if rel >= 0.05:
+                print(f"  Hinweis: Slurm-Trainingszeit {run_dir.name} weicht {rel * 100:.1f} % von "
+                      f"{'Hochrechnung' if resumed else 'Protokoll'} ab")
+            if len(train_rows) != prof["n_allocations"]:
+                print(f"  Hinweis: {run_dir.name}: {len(train_rows)} Slurm-Zuteilungen, "
+                      f"{prof['n_allocations']} Trainingsstarts im Phasenprotokoll")
+        else:
+            print(f"  Hinweis: keine Slurm-Zeilen fuer das Training von {run_dir.name}")
+        if infer_rows:
+            prof["sacct_infer_seconds"] = sum(r["elapsed_seconds"] for r in infer_rows)
+    return prof
 
 
 def collect_examples(preds, gold_key, pred_key, is_llm, max_tokens=22, per_class=4):
@@ -339,12 +572,30 @@ def collect_examples(preds, gold_key, pred_key, is_llm, max_tokens=22, per_class
 
 def aggregate_group(runs):
     keys = ["precision", "recall", "f1", "macro_f1", "latency_mean", "latency_p50", "latency_p95", "vram_mb",
-            "throughput", "train_seconds"]
+            "throughput", "train_seconds", "inference_seconds", "inference_seconds_latency_estimate"]
     agg = {}
     for k in keys:
         vals = [r.get(k) for r in runs]
         m, s = mean_std(vals)
         agg[k] = dict(mean=m, std=s, values=vals)
+    agg["inference_latency_estimate"] = agg.pop("inference_seconds_latency_estimate")
+    sources = [r.get("inference_seconds_source") for r in runs]
+    agg["inference_seconds_source"] = sources[0] if len(set(sources)) == 1 else sources
+    # Trainingszeitprofil (Step 1): Slurm-Summe fuer alle, Hochrechnung nur fuer wiederaufgenommene Laeufe
+    profiles = [r.get("training_profile") for r in runs]
+    agg["training_profile"] = profiles
+    vals = [p["sacct_train_seconds"] if p else None for p in profiles]
+    m, s = mean_std(vals)
+    agg["training_sacct_seconds"] = dict(mean=m, std=s, values=vals)
+    agg["recovery_checkpoints"] = [r.get("recovery_checkpoint") for r in runs]
+    if any(p and p["resumed"] for p in profiles):
+        for name, field in (("training_estimate_seconds", "estimated_total_seconds"),
+                            ("training_last_segment_seconds", "logged_seconds"),
+                            ("training_wallclock_span_seconds", "wallclock_span_seconds")):
+            vals = [p[field] for p in profiles]
+            m, s = mean_std(vals)
+            agg[name] = dict(mean=m, std=s, values=vals)
+        agg["training_n_allocations"] = [p["n_allocations"] for p in profiles]
     agg["per_type"] = {}
     for t in TYPES:
         agg["per_type"][t] = {}
@@ -391,14 +642,64 @@ def aggregate_group(runs):
     agg["gpus"] = sorted({r["gpu"] for r in runs if r["gpu"]})
     agg["commits"] = sorted({r["commit"] for r in runs if r["commit"]})
     agg["total_params_reported"] = [r.get("total_params") for r in runs]
+    if "regen" in runs[0]:
+        agg["regen"] = {}
+        for k in ("n_regenerated", "n_limit_reached", "generated_tokens_mean", "latency_ms_mean_regenerated",
+                  "n_failed_after", "n_failed_regenerated", "n_failed_before_regenerated",
+                  "stored_prefix_match_count", "json_complete_count"):
+            vals = [r["regen"][k] for r in runs]
+            m, s = mean_std(vals)
+            agg["regen"][k] = dict(mean=m, std=s, values=vals)
+        agg["regen"]["stop_reasons"] = [r["regen"]["stop_reasons"] for r in runs]
+        agg["regen"]["subset_metrics"] = {
+            ev: {m: mean_std([r["regen"]["subset_metrics"][ev][m] for r in runs]) for m in ("precision", "recall", "f1")}
+            for ev in ("baseline_256", "output_limit")}
     return agg
+
+
+def paired_limit_stats(base_runs, runs):
+    """Seedweise Paarung Basis (Limit 256) gegen Nachinferenz (Limit 1024): identische Saetze und Referenz,
+    nicht regenerierte Saetze mit unveraenderter Vorhersage, gespeicherte 256er-Vorhersage der regenerierten
+    Saetze gleich der Basis; sonst ABBRUCH. Rueckgabe: Kennzahlen je Seed und mean/std darueber."""
+    per_seed = []
+    for b, r in zip(base_runs, runs):
+        if (b["sentence_signature"], b["gold_signature"]) != (r["sentence_signature"], r["gold_signature"]):
+            sys.exit(f"ABBRUCH: 1024-Lauf {r['name']}: Saetze oder Referenz weichen von {b['name']} ab")
+        rg = r.get("regen")
+        if rg is None:
+            sys.exit(f"ABBRUCH: 1024-Lauf {r['name']} ohne regenerated-Markierungen")
+        regen = set(rg["indices"])
+        changed = sum(1 for i, (hb, hr) in enumerate(zip(b["pred_hashes"], r["pred_hashes"]))
+                      if i not in regen and hb != hr)
+        if changed:
+            sys.exit(f"ABBRUCH: 1024-Lauf {r['name']}: {changed} nicht regenerierte Saetze mit veraenderter Vorhersage")
+        mism = sum(1 for i, h in rg["baseline_pred_hashes"].items() if h != b["pred_hashes"][i])
+        if mism:
+            sys.exit(f"ABBRUCH: 1024-Lauf {r['name']}: gespeicherte 256er-Vorhersage weicht in {mism} Saetzen ab")
+        per_seed.append(dict(
+            run=r["name"], f1_256=b["f1"], f1_1024=r["f1"], delta_f1=r["f1"] - b["f1"],
+            delta_precision=r["precision"] - b["precision"], delta_recall=r["recall"] - b["recall"],
+            delta_macro_f1=r["macro_f1"] - b["macro_f1"],
+            omission_256=b["errors"]["counts"].get("auslassung", 0) / b["errors"]["n_gold"],
+            omission_1024=r["errors"]["counts"].get("auslassung", 0) / r["errors"]["n_gold"],
+            failed_256=b["form"]["failed"], failed_1024=r["form"]["failed"],
+            n_regenerated=rg["n_regenerated"], n_limit_reached=rg["n_limit_reached"],
+            subset_f1_256=rg["subset_metrics"]["baseline_256"]["f1"],
+            subset_f1_1024=rg["subset_metrics"]["output_limit"]["f1"]))
+    stats = {k: dict(zip(("mean", "std"), mean_std([p[k] for p in per_seed]))) for k in per_seed[0] if k != "run"}
+    return dict(per_seed=per_seed, **stats)
 
 
 # --------------------------------------------------------------------------- CrossNER
 def analyse_crossner():
     agg_file = load_yaml(RES / "crossner" / "aggregate" / "summary.yaml")
     excluded = set(load_yaml(CFG / "crossner_overlap_exclusions.yaml")["excluded_sample_ids"])
-    out = dict(aggregate={}, sensitivity={}, parse={}, latency={}, gpus={}, sentence_stats={}, per_seed={})
+    with open(RES / "crossner" / "aggregate" / "seed_metrics.csv", encoding="utf-8", newline="") as handle:
+        seed_rows = list(csv.DictReader(handle))
+    with open(RES / "crossner" / "aggregate" / "per_entity_metrics.csv", encoding="utf-8", newline="") as handle:
+        entity_rows = list(csv.DictReader(handle))
+    out = dict(aggregate={}, sensitivity={}, parse={}, latency={}, gpus={}, sentence_stats={}, per_seed={},
+               seed_table={}, per_type_domain={}, samples={}, vram={})
     for key, name in CROSS_AGG_NAMES.items():
         out["aggregate"][key] = {row["domain"]: row for row in agg_file["summary"] if row["model"] == name}
     for key, runs in CROSS_RUNS.items():
@@ -406,19 +707,24 @@ def analyse_crossner():
         pooled_full, pooled_excl, fails, no_close, lat_mean, lat_median, n_total = [], [], [], [], [], [], []
         gpus = set()
         tokens_per_sentence, ents_per_sentence = [], []
-        per_domain_seed = {}
+        per_domain_seed, per_domain_seed_types, resources = {}, {}, {}
         for run in runs:
             records = []
             for dom, _ in DOMAINS:
                 dom_dir = RES / "crossner" / run / dom
                 recs = load_json(dom_dir / "test_predictions.json")
                 records.extend(recs)
+                if out["samples"].setdefault(dom, len(recs)) != len(recs):
+                    sys.exit(f"ABBRUCH: CrossNER {run}/{dom}: Satzzahl weicht von anderen Laeufen ab")
                 im = load_yaml(dom_dir / "inference_metrics.yaml")
                 dev = (im.get("run_metadata", {}).get("cuda", {}).get("devices") or [None])[0]
                 if dev:
                     gpus.add(dev)
-                ov, _ = score(recs, "gold_bio", "pred_bio", COARSE)
+                resources[(run, dom)] = dict(vram_peak_mb=im.get("vram_peak_mb"), latency_ms_mean=im.get("latency_ms_mean"),
+                                             latency_ms_p50=im.get("latency_ms_p50"), latency_ms_p95=im.get("latency_ms_p95"))
+                ov, pt = score(recs, "gold_bio", "pred_bio", COARSE)
                 per_domain_seed[(run, dom)] = ov
+                per_domain_seed_types[(run, dom)] = pt
             ov_full, _ = score(records, "gold_bio", "pred_bio", COARSE)
             ov_excl, _ = score([r for r in records if r["sample_id"] not in excluded], "gold_bio", "pred_bio", COARSE)
             pooled_full.append(ov_full)
@@ -451,6 +757,46 @@ def analyse_crossner():
                                           entities_mean=statistics.fmean(ents_per_sentence),
                                           tokens_max=max(tokens_per_sentence))
         out["per_seed"][key] = {f"{run}/{dom}": ov for (run, dom), ov in per_domain_seed.items()}
+        vram_vals = [v["vram_peak_mb"] for v in resources.values() if v["vram_peak_mb"] is not None]
+        out["vram"][key] = dict(max_mb=max(vram_vals) if vram_vals else None,
+                                mean_mb=statistics.fmean(vram_vals) if vram_vals else None,
+                                per_run_domain={f"{run}/{dom}": v for (run, dom), v in resources.items()})
+        # Seed-Einzelwerte und Typwerte aus den Aggregat-CSVs, jede Zeile gegen die eigene strikte Rechnung geprueft
+        name = CROSS_AGG_NAMES[key]
+        seed_to_run = dict(zip(SEEDS, runs))
+        table = {}
+        for row in seed_rows:
+            if row["model"] != name:
+                continue
+            seed, dom = int(row["seed"]), row["domain"]
+            vals = {k: float(row[k]) for k in ("precision", "recall", "f1")}
+            own = (per_domain_seed.get((seed_to_run[seed], dom)) if dom in out["samples"]
+                   else pooled_full[SEEDS.index(seed)] if dom == "pooled_micro" else None)
+            if own is not None:
+                if any(abs(vals[k] - own[i]) > 1e-9 for i, k in enumerate(("precision", "recall", "f1"))):
+                    sys.exit(f"ABBRUCH: seed_metrics.csv {name}/{seed}/{dom}: F1 {vals['f1']:.8f} != eigen {own[2]:.8f}")
+                if dom in out["samples"] and int(row["samples"]) != out["samples"][dom]:
+                    sys.exit(f"ABBRUCH: seed_metrics.csv {name}/{seed}/{dom}: Satzzahl {row['samples']}")
+            table.setdefault(dom, {})[seed] = vals
+        if any(len(table.get(dom, {})) != len(SEEDS) for dom in list(out["samples"]) + ["pooled_micro", "domain_mean"]):
+            sys.exit(f"ABBRUCH: seed_metrics.csv {name}: Zeilen fehlen")
+        out["seed_table"][key] = table
+        types = {}
+        for row in entity_rows:
+            if row["model"] != name:
+                continue
+            seed, dom, t = int(row["seed"]), row["domain"], row["entity_type"]
+            pt = per_domain_seed_types[(seed_to_run[seed], dom)][t]
+            if abs(float(row["f1"]) - pt["f1"]) > 1e-9 or int(float(row["support"])) != pt["support"]:
+                sys.exit(f"ABBRUCH: per_entity_metrics.csv {name}/{seed}/{dom}/{t} weicht ab")
+            types.setdefault(dom, {}).setdefault(t, []).append(
+                dict(seed=seed, precision=float(row["precision"]), recall=float(row["recall"]), f1=float(row["f1"]),
+                     support=int(float(row["support"]))))
+        out["per_type_domain"][key] = {
+            dom: {t: dict(f1=mean_std([v["f1"] for v in vals]), precision=mean_std([v["precision"] for v in vals]),
+                          recall=mean_std([v["recall"] for v in vals]), support=vals[0]["support"], n_seeds=len(vals))
+                  for t, vals in per_dom.items()}
+            for dom, per_dom in types.items()}
     # Sensitivitaet des Ausgabelimits: 1024-Rauchtest gegen Hauptlauf auf denselben Saetzen
     limit = {}
     for dom in ("music", "politics"):
@@ -471,7 +817,118 @@ def analyse_crossner():
                            latency_mean=statistics.fmean(r["latency_ms"] for r in smoke)),
             tokens_mean=statistics.fmean(len(r["tokens"]) for r in smoke))
     out["output_limit"] = limit
+    out["output_limit_full"] = analyse_crossner_limit(out)
     return out
+
+
+def analyse_crossner_limit(C):
+    """Vollstaendige CrossNER-Auswertung mit Ausgabelimit 1024 (aggregate/comparison.yaml des Moduls
+    src/evaluate/crossner_output_limit.py). Fehlt die Datei oder ist sie unvollstaendig, nur Hinweis."""
+    path = RES / "crossner_output_limit_1024" / "aggregate" / "comparison.yaml"
+    if not path.exists():
+        print(f"  Hinweis: {path.relative_to(RES)} fehlt; tab-limit.tex wird nicht erzeugt")
+        return dict(available=False, complete=False)
+    rep = load_yaml(path)
+    status = dict(available=True, complete=bool(rep.get("complete")), max_new_tokens=rep.get("max_new_tokens"),
+                  successful_evaluations=rep.get("successful_evaluations"),
+                  expected_evaluations=rep.get("expected_evaluations"))
+    if not status["complete"]:
+        print(f"  Hinweis: 1024-Auswertung unvollstaendig ({status['successful_evaluations']}/"
+              f"{status['expected_evaluations']}); tab-limit.tex wird nicht erzeugt")
+        return status
+    limit_eval = rep.get("evaluation") or f"output_limit_{rep.get('max_new_tokens', 1024)}"
+    rows = {(r["evaluation"], r["population"], r["domain"]): r for r in rep["summary"]}
+    doms = [d for d, _ in DOMAINS] + ["pooled_micro", "domain_mean"]
+    # Selbstpruefung: Referenzzeilen (256 bzw. Encoder) muessen den Hauptlauf reproduzieren (gleiche Saetze, gleicher Scorer)
+    for dom in doms:
+        for ev, key in (("baseline_256", "qwen27-qlora"), ("encoder_baseline", "deberta-large")):
+            r = rows.get((ev, "full", dom))
+            if r is None or rows.get((limit_eval, "full", dom)) is None:
+                sys.exit(f"ABBRUCH: comparison.yaml ohne Zeile {ev}/full/{dom}")
+            if abs(r["f1_mean"] - C["aggregate"][key][dom]["f1_mean"]) > 1e-6:
+                sys.exit(f"ABBRUCH: comparison.yaml {ev}/{dom}: F1 {r['f1_mean']:.6f} != Hauptlauf "
+                         f"{C['aggregate'][key][dom]['f1_mean']:.6f}")
+    for ev, key in (("baseline_256", "qwen27-qlora"), ("encoder_baseline", "deberta-large")):
+        r = rows.get((ev, "deduplicated", "pooled_micro"))
+        if r is not None and abs(r["f1_mean"] - C["sensitivity"][key]["excluded"]["f1"][0]) > 1e-6:
+            sys.exit(f"ABBRUCH: comparison.yaml {ev}/deduplicated/pooled_micro weicht von der Sensitivitaet ab")
+
+    def pick(r):
+        return {k: v for k, v in r.items() if k.endswith("_mean") or k.endswith("_std")
+                or k in ("sample_count", "successful_seeds", "complete")}
+
+    sizes = {"256": "baseline_256", str(status["max_new_tokens"]): limit_eval, "encoder": "encoder_baseline"}
+    for pop in ("full", "deduplicated"):
+        status[pop] = {dom: {size: pick(rows[(ev, pop, dom)]) for size, ev in sizes.items() if (ev, pop, dom) in rows}
+                       for dom in doms}
+    status["evaluation"] = limit_eval
+    return status
+
+
+# --------------------------------------------------------------------------- Satz-Bootstrap
+def f1_of(S):
+    """F1 aus (tp, fp, fn) in der letzten Achse; Nullfaelle wie prf()."""
+    tp, fp, fn = S[..., 0], S[..., 1], S[..., 2]
+    p = np.divide(tp, tp + fp, out=np.zeros_like(tp), where=(tp + fp) > 0)
+    r = np.divide(tp, tp + fn, out=np.zeros_like(tp), where=(tp + fn) > 0)
+    return np.divide(2 * p * r, p + r, out=np.zeros_like(tp), where=(p + r) > 0)
+
+
+def bootstrap_intervals(G, pair_keys, B=BOOT_B, seed=BOOT_SEED, chunk=BOOT_CHUNK):
+    """Gepaartes Satz-Bootstrap: dieselben B Stichproben (Ziehen mit Zuruecklegen ueber die n Testsaetze)
+    fuer alle Laeufe und Konfigurationen. Je Replikat werden die Satzzaehler gewichtet aufsummiert
+    (Ganzzahlen in float64, daher exakt und plattformunabhaengig reproduzierbar) und daraus Mikro-F1
+    und Makro-F1 berechnet. Intervalle: Perzentile 2,5/97,5 des Seed-Mittels je Replikat; Differenzen
+    seedgleich gepaart (42/123/456), bei einem Einzellauf (Zero-Shot) dieser gegen jeden Seed."""
+    rng = np.random.default_rng(seed)
+    n = next(iter(G.values()))["runs"][0]["n_sentences"]
+    nt = len(TYPES)
+    width = 3 + 3 * nt
+    M, R = {}, {}
+    for key, g in G.items():
+        M[key] = np.concatenate([np.concatenate([r["sent_micro"], r["sent_types"].reshape(n, 3 * nt)], axis=1)
+                                 for r in g["runs"]], axis=1).astype(np.float64)
+        R[key] = len(g["runs"])
+        point = f1_of(M[key].sum(0).reshape(R[key], width)[:, :3])     # ungewichtet = Laufwerte
+        if any(abs(point[j] - r["f1"]) > 1e-12 for j, r in enumerate(g["runs"])):
+            sys.exit(f"ABBRUCH: Bootstrap-Punktschaetzung {key} weicht von den Laufwerten ab")
+    F1 = {k: np.empty((B, R[k])) for k in G}
+    MF1 = {k: np.empty((B, R[k])) for k in G}
+    for lo in range(0, B, chunk):
+        b = min(chunk, B - lo)
+        W = np.stack([np.bincount(rng.integers(0, n, n), minlength=n) for _ in range(b)]).astype(np.float64)
+        for key in G:
+            S = (W @ M[key]).reshape(b, R[key], width)
+            F1[key][lo:lo + b] = f1_of(S[:, :, :3])
+            MF1[key][lo:lo + b] = f1_of(S[:, :, 3:].reshape(b, R[key], nt, 3)).mean(axis=2)
+
+    def ci(x):
+        lo_, hi_ = np.percentile(x, [2.5, 97.5])
+        return [float(lo_) * 100, float(hi_) * 100]
+
+    configs = {}
+    for key, g in G.items():
+        a = g["agg"]
+        configs[key] = dict(
+            micro=dict(point=a["f1"]["mean"] * 100, ci_seed_mean=ci(F1[key].mean(1)),
+                       ci_per_seed=[ci(F1[key][:, j]) for j in range(R[key])]),
+            macro=dict(point=a["macro_f1"]["mean"] * 100, ci_seed_mean=ci(MF1[key].mean(1)),
+                       ci_per_seed=[ci(MF1[key][:, j]) for j in range(R[key])]))
+    pairs = {}
+    for pk in pair_keys:
+        k1, k2 = pk.split("->")
+        single = R[k1] == 1 or R[k2] == 1
+        lo_, hi_ = ci((F1[k2] - F1[k1]).mean(1))        # Broadcasting, wenn eine Seite ein Einzellauf ist
+        mlo, mhi = ci((MF1[k2] - MF1[k1]).mean(1))
+        pairs[pk] = dict(diff=(G[k2]["agg"]["f1"]["mean"] - G[k1]["agg"]["f1"]["mean"]) * 100, ci=[lo_, hi_],
+                         excludes_zero=bool(lo_ > 0 or hi_ < 0),
+                         macro_diff=(G[k2]["agg"]["macro_f1"]["mean"] - G[k1]["agg"]["macro_f1"]["mean"]) * 100,
+                         macro_ci=[mlo, mhi], macro_excludes_zero=bool(mlo > 0 or mhi < 0),
+                         pairing="single-run vs each seed" if single else "seed-matched")
+    settings = dict(B=B, seed=seed, chunk=chunk, n_sentences=n, interval="Perzentil 2,5/97,5",
+                    note="Satz-Bootstrap mit identischer Stichprobe fuer alle Laeufe; erfasst Testsplit-Unsicherheit, "
+                         "nicht Seed-Streuung")
+    return dict(settings=settings, configs=configs, pairs=pairs)
 
 
 # --------------------------------------------------------------------------- Tabellen
@@ -486,7 +943,7 @@ def tab_haupt(G):
         rows.append(f"    {g['label']} & {g['regime']} & " + " & ".join(cells) + " \\\\")
     body = "\n".join(rows[:2]) + "\n    \\midrule\n" + "\n".join(rows[2:5]) + "\n    \\midrule\n" + "\n".join(rows[5:])
     return ("\\begin{tabular}{llcccc}\n    \\toprule\n    \\textbf{Modell} & \\textbf{Regime} & \\textbf{Precision} &\n"
-            "    \\textbf{Recall} & \\textbf{Micro-F$_1$} & \\textbf{Makro-F$_1$} \\\\\n    \\midrule\n"
+            "    \\textbf{Recall} & \\textbf{Mikro-F$_1$} & \\textbf{Makro-F$_1$} \\\\\n    \\midrule\n"
             + body + "\n    \\bottomrule\n\\end{tabular}\n")
 
 
@@ -510,7 +967,7 @@ def tab_typen(G):
             lines.append(f"    {t:5s} & {int(sup):,}".replace(",", "\\,") + " & " + " & ".join(vals) + " \\\\")
     lines.append("    \\midrule")
     n_gold = G["deberta-base"]["agg"]["errors"]["n_gold"]
-    lines.append(f"    Micro-F$_1$ (alle) & {n_gold:,}".replace(",", "\\,") + " & "
+    lines.append(f"    Mikro-F$_1$ (alle) & {n_gold:,}".replace(",", "\\,") + " & "
                  + " & ".join(de(G[c]["agg"]["f1"]["mean"] * 100, 1) for c in cols) + " \\\\")
     lines.append("    Makro-F$_1$ & -- & " + " & ".join(de(G[c]["agg"]["macro_f1"]["mean"] * 100, 1) for c in cols) + " \\\\")
     lines += ["    \\bottomrule", "\\end{tabular}", ""]
@@ -538,12 +995,65 @@ def tab_groesse(G):
     return "\n".join(lines)
 
 
+def note_rows(text, ncols, width=100):
+    """Tabellenfussnote als eine oder mehrere \\multicolumn-Zeilen (Umbruch an Wortgrenzen, damit
+    keine Zeile breiter als die Tabelle wird; die Zeichenzahl zaehlt TeX-Makros mit, ist also konservativ)."""
+    rows, cur = [], ""
+    for word in text.split(" "):
+        if cur and len(cur) + 1 + len(word) > width:
+            rows.append(cur)
+            cur = word
+        else:
+            cur = f"{cur} {word}" if cur else word
+    rows.append(cur)
+    return [f"    \\multicolumn{{{ncols}}}{{@{{}}l}}{{\\scriptsize {r}}} \\\\" for r in rows]
+
+
+def day_list(dates, with_year=True):
+    """'7., 12., 15. und 18.~August 2026' (ein Monat) bzw. '31.~Juli, 2.~August 2026' (Monatswechsel)."""
+    days = sorted({(d.year, d.month, d.day) for d in dates})
+    if len({(y, m) for y, m, _ in days}) == 1:
+        y, m, _ = days[0]
+        items = [f"{d}." for _, _, d in days]
+        joined = items[0] if len(items) == 1 else ", ".join(items[:-1]) + " und " + items[-1]
+        return f"{joined}~{MONTHS[m - 1]}" + (f" {y}" if with_year else "")
+    items = [f"{d}.~{MONTHS[m - 1]}" + (f" {y}" if with_year else "") for y, m, d in days]
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " und " + items[-1]
+
+
+def training_footnote(a, sacct_ok):
+    """Fussnote a der Effizienztabelle, aus den Trainingsprofilen der wiederaufgenommenen Gruppe erzeugt."""
+    profs = a["training_profile"]
+    starts = [iso(s) for p in profs for s in p["allocation_starts"]]
+    done = [iso(p["completed_at"]) for p in profs if p["completed_at"]]
+    n_alloc = sorted({p["n_allocations"] for p in profs})
+    n_word = NUMBER_WORDS.get(n_alloc[0], str(n_alloc[0])) if len(n_alloc) == 1 else f"{n_alloc[0]}--{n_alloc[-1]}"
+    resume = " bzw. ".join(fmt_int(s) for s in dict.fromkeys(p["resume_step"] for p in profs))
+    last_h = de(a["training_last_segment_seconds"]["mean"] / 3600, 1)
+    rate = de(statistics.fmean(p["seconds_per_step"] for p in profs), 1)
+    total = fmt_int(profs[0]["total_steps"])
+    est_h = de(a["training_estimate_seconds"]["mean"] / 3600, 0)
+    dates = f"(Start {day_list(starts)}, Abschluss {day_list(done, with_year=False)})"
+    nodes = {r["node"] for p in profs for r in (p["sacct_train_detail"] or [])}
+    seeds_word = NUMBER_WORDS.get(len(profs), str(len(profs))).lower()
+    same_node = f" Die {seeds_word} Seeds liefen gleichzeitig auf einem Knoten." if len(nodes) == 1 and len(profs) > 1 else ""
+    if sacct_ok:
+        return (f"{n_word} Slurm-Zuteilungen {dates} wegen des 3-Tage-Limits; Summe der Zuteilungen laut "
+                f"Slurm-Abrechnung. Der Trainer protokollierte nur den letzten Abschnitt ab Schritt {resume} "
+                f"(Mittel {last_h}~h); Hochrechnung mit dessen Schrittrate ({rate}~s je Schritt) auf {total} Schritte "
+                f"ergibt {est_h}~h (Abschnitt~\\ref{{sec:effizienzmetriken}}).{same_node}")
+    return (f"Hochrechnung: {n_word} Slurm-Zuteilungen {dates} wegen des 3-Tage-Limits; der Trainer "
+            f"protokollierte nur den letzten Abschnitt ab Schritt {resume} (Mittel {last_h}~h). Dessen Schrittrate "
+            f"({rate}~s je Schritt) auf {total} Schritte hochgerechnet (Abschnitt~\\ref{{sec:effizienzmetriken}}).")
+
+
 def tab_effizienz(G):
-    lines = ["\\begin{tabular}{llrrrrrrr}", "    \\toprule",
+    sacct_ok = all(G[k]["agg"]["training_sacct_seconds"]["mean"] is not None for k in TRAINED)
+    lines = ["\\begin{tabular}{llrrrrrrrr}", "    \\toprule",
              "    \\textbf{Modell} & \\textbf{Regime} & \\textbf{GPU} &",
-             "    \\textbf{Training} & \\multicolumn{3}{c}{\\textbf{Latenz [ms]}} &",
-             "    \\textbf{Durchsatz} & \\textbf{Speicher} \\\\", "    \\cmidrule(lr){5-7}",
-             "    & & & \\textbf{[h]} & \\textbf{Mittel} & \\textbf{Median} & \\textbf{P95} &",
+             "    \\textbf{Training} & \\textbf{Testinferenz} & \\multicolumn{3}{c}{\\textbf{Latenz [ms]}} &",
+             "    \\textbf{Durchsatz} & \\textbf{Speicher} \\\\", "    \\cmidrule(lr){6-8}",
+             "    & & & \\textbf{[h]} & \\textbf{gesamt [h]} & \\textbf{Mittel} & \\textbf{Median} & \\textbf{P95} &",
              "    \\textbf{[S\\\"atze/s]} & \\textbf{[GB]} \\\\", "    \\midrule"]
     for i, key in enumerate(TABLE_ORDER):
         g = G[key]
@@ -553,24 +1063,32 @@ def tab_effizienz(G):
         enc = key.startswith("deberta")
         if a["train_seconds"]["mean"] is None:
             train = "--"
+        elif sacct_ok:                       # primaere Quelle: Summe der Slurm-Zuteilungen
+            train = de(a["training_sacct_seconds"]["mean"] / 3600, 1)
+            if a.get("train_lower_bound"):
+                train += "$^{a}$"
+        elif a.get("train_lower_bound"):     # Rueckfall ohne Abrechnung: Hochrechnung ueber die Schrittrate
+            train = de(a["training_estimate_seconds"]["mean"] / 3600, 1) + "$^{a}$"
         else:
             train = de(a["train_seconds"]["mean"] / 3600, 1)
-            if a.get("train_lower_bound"):
-                train = "$\\geq$\\," + train + "$^{a}$"
+        inf = de(a["inference_seconds"]["mean"] / 3600, 2 if enc else 1)
+        if a["inference_seconds_source"] != "phase_history":
+            inf += "$^{c}$"
         nd = 1 if enc else 0
         lat = de(a["latency_mean"]["mean"], nd)
         med = de(a["latency_p50"]["mean"], nd) if a["latency_p50"]["mean"] is not None else "--$^{b}$"
         p95 = de(a["latency_p95"]["mean"], nd)
         thr = "--" if enc else de(a["throughput"]["mean"], 2)
         mem = de(a["vram_mb"]["mean"] / 1024, 1)
-        lines.append(f"    {g['label']} & {g['regime']} & {g['gpu']} & {train} & {lat} & {med} & {p95} & {thr} & {mem} \\\\")
-    lines += ["    \\bottomrule",
-              "    \\multicolumn{9}{@{}l}{\\scriptsize $^{a}$ Nur der Abschnitt nach der",
-              "      Wiederaufnahme protokolliert; Untergrenze",
-              "      (Abschnitt~\\ref{sec:effizienzmetriken}).} \\\\",
-              "    \\multicolumn{9}{@{}l}{\\scriptsize $^{b}$ F\\\"ur die Zero-Shot-L\\\"aufe wurde kein",
-              "      Median protokolliert.} \\\\",
-              "\\end{tabular}", ""]
+        lines.append(f"    {g['label']} & {g['regime']} & {g['gpu']} & {train} & {inf} & {lat} & {med} & {p95} & "
+                     f"{thr} & {mem} \\\\")
+    n_sent = fmt_int(G["qwen27-zs"]["runs"][0]["n_sentences"])
+    lines.append("    \\bottomrule")
+    lines += note_rows("$^{a}$ " + training_footnote(G["qwen27-qlora"]["agg"], sacct_ok), 10)
+    lines += note_rows("$^{b}$ F\\\"ur die Zero-Shot-L\\\"aufe wurde kein Median protokolliert.", 10)
+    lines += note_rows("$^{c}$ Zero-Shot-L\\\"aufe ohne Phasenprotokoll: mittlere Latenz $\\times$ "
+                       f"{n_sent} S\\\"atze (Sch\\\"atzung).", 10)
+    lines += ["\\end{tabular}", ""]
     return "\n".join(lines)
 
 
@@ -590,6 +1108,8 @@ def tab_formtreue(G):
              "      \\textbf{0.8B} & \\textbf{4B} & \\textbf{27B} \\\\", "    \\midrule"]
     rows = [("Parse-Fehlerrate [\\%]", lambda k: val(k, "failure_rate", pct=True)),
             ("\\quad davon ohne schlie\\ss{}ende Klammer", lambda k: val(k, "failed_no_close")),
+            ("Referenzentit\\\"aten in nicht parsebaren Antworten [\\%]",
+             lambda k: de(G[k]["agg"]["truncation"]["lost_share"][0] * 100, 2)),
             ("Parse direkt", lambda k: val(k, "parse_ok")),
             ("\\quad nach Entfernen eines Codeblocks", lambda k: val(k, "markdown")),
             ("\\quad durch Extraktion aus Text", lambda k: val(k, "regex")),
@@ -599,11 +1119,15 @@ def tab_formtreue(G):
             ("Unzul\\\"assige Indizes", lambda k: val(k, "invalid_offsets")),
             ("Unbekannte Typen", lambda k: val(k, "unknown_types")),
             ("Text-Abweichungen", lambda k: val(k, "text_mismatches")),
-            ("\\\"Uberlappungen", lambda k: val(k, "overlaps"))]
+            ("\\\"Uberlappungen", lambda k: val(k, "overlaps")),
+            ("Begonnene Elemente (Rohausgabe)", lambda k: val(k, "generated_items")),
+            ("\\\"Ubernommene Spans", lambda k: val(k, "accepted_spans"))]
     for label, fn in rows:
         lines.append(f"    {label} & " + " & ".join(fn(k) for k in cols) + " \\\\")
     lines.append("    \\midrule")
     lines.append("    Leere Vorhersagen & " + " & ".join(val(k, "empty") for k in cols) + " \\\\")
+    lines.append("    \\quad davon nicht parsebar & " + " & ".join(val(k, "empty_failed") for k in cols) + " \\\\")
+    lines.append("    \\quad davon ohne Referenzentit\\\"at & " + " & ".join(val(k, "empty_correct") for k in cols) + " \\\\")
     lines += ["    \\bottomrule", "\\end{tabular}", ""]
     return "\n".join(lines)
 
@@ -634,7 +1158,7 @@ def tab_crossner(C):
              "    \\cmidrule(lr){3-5}\\cmidrule(lr){6-8}",
              "    \\textbf{Dom\\\"ane} & \\textbf{S\\\"atze} & \\textbf{P} & \\textbf{R} & \\textbf{F$_1$} &",
              "      \\textbf{P} & \\textbf{R} & \\textbf{F$_1$} \\\\", "    \\midrule"]
-    counts = {"ai": 431, "literature": 416, "music": 465, "politics": 651, "science": 543}
+    counts = C["samples"]
 
     def trio(key, dom):
         r = agg[key][dom]
@@ -644,7 +1168,8 @@ def tab_crossner(C):
     for dom, label in DOMAINS:
         lines.append(f"    {label} & {counts[dom]} & {trio('deberta-large', dom)} & {trio('qwen27-qlora', dom)} \\\\")
     lines.append("    \\midrule")
-    lines.append(f"    Gepoolt & 2\\,506 & {trio('deberta-large', 'pooled_micro')} & {trio('qwen27-qlora', 'pooled_micro')} \\\\")
+    lines.append(f"    Gepoolt & {fmt_int(sum(counts.values()))} & {trio('deberta-large', 'pooled_micro')} & "
+                 f"{trio('qwen27-qlora', 'pooled_micro')} \\\\")
     dm_d = agg["deberta-large"]["domain_mean"]
     dm_q = agg["qwen27-qlora"]["domain_mean"]
     lines.append(f"    Dom\\\"anenmittel & -- & -- & -- & {pm(dm_d['f1_mean'] * 100, dm_d['f1_std'] * 100, 1)} & -- & -- & "
@@ -700,6 +1225,152 @@ def tab_app_typen_prf(G):
     return "\n".join(lines)
 
 
+def tab_app_crossner_seeds(C):
+    st = C["seed_table"]
+    seeds = " & ".join(f"\\textbf{{{s}}}" for s in SEEDS)
+    lines = ["\\begin{tabular}{lrrrrrrr}", "    \\toprule",
+             "    & & \\multicolumn{3}{c}{\\textbf{DeBERTa-v3-large}} &",
+             "      \\multicolumn{3}{c}{\\textbf{Qwen3.5-27B (QLoRA)}} \\\\",
+             "    \\cmidrule(lr){3-5}\\cmidrule(lr){6-8}",
+             f"    \\textbf{{Dom\\\"ane}} & \\textbf{{S\\\"atze}} & {seeds} & {seeds} \\\\", "    \\midrule"]
+
+    def cells(dom):
+        return " & ".join(de(st[key][dom][s]["f1"] * 100, 2) for key in ("deberta-large", "qwen27-qlora") for s in SEEDS)
+
+    for dom, label in DOMAINS:
+        lines.append(f"    {label} & {C['samples'][dom]} & {cells(dom)} \\\\")
+    lines.append("    \\midrule")
+    lines.append(f"    Gepoolt & {fmt_int(sum(C['samples'].values()))} & {cells('pooled_micro')} \\\\")
+    lines.append(f"    Dom\\\"anenmittel & -- & {cells('domain_mean')} \\\\")
+    lines += ["    \\bottomrule", "\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
+def tab_app_crossner_typen(C):
+    pt = C["per_type_domain"]
+    types = " & ".join(COARSE)
+    lines = ["\\begin{tabular}{lrrrrrrrrr}", "    \\toprule",
+             "    & \\multicolumn{3}{c}{\\textbf{Support}} & \\multicolumn{3}{c}{\\textbf{DeBERTa-v3-large}} &",
+             "      \\multicolumn{3}{c}{\\textbf{Qwen3.5-27B (QLoRA)}} \\\\",
+             "    \\cmidrule(lr){2-4}\\cmidrule(lr){5-7}\\cmidrule(lr){8-10}",
+             f"    \\textbf{{Dom\\\"ane}} & {types} & {types} & {types} \\\\", "    \\midrule"]
+    for dom, label in DOMAINS:
+        sup = " & ".join(fmt_int(pt["deberta-large"][dom][t]["support"]) for t in COARSE)
+        if any(pt["qwen27-qlora"][dom][t]["support"] != pt["deberta-large"][dom][t]["support"] for t in COARSE):
+            sys.exit(f"ABBRUCH: CrossNER-Support {dom} unterscheidet sich zwischen den Modellen")
+        vals = " & ".join(de(pt[key][dom][t]["f1"][0] * 100, 1) for key in ("deberta-large", "qwen27-qlora") for t in COARSE)
+        lines.append(f"    {label} & {sup} & {vals} \\\\")
+    lines += ["    \\bottomrule", "\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
+def tab_limit(C):
+    """CrossNER mit Ausgabelimit 1024 gegen die Hauptlaeufe (256) auf denselben Saetzen; nur bei complete."""
+    L = C["output_limit_full"]
+    big = str(L["max_new_tokens"])
+    lines = ["\\begin{tabular}{llrrrrrrr}", "    \\toprule",
+             "    \\textbf{Dom\\\"ane} & \\textbf{Limit} & \\textbf{P} & \\textbf{R} & \\textbf{F$_1$} & $\\Delta$\\textbf{F$_1$} &",
+             "      \\textbf{\\shortstack[c]{nicht pars-\\\\bar [\\%]}} & \\textbf{\\shortstack[c]{Limit er-\\\\reicht [\\%]}} &",
+             "      \\textbf{Latenz [s]} \\\\", "    \\midrule"]
+
+    def pct(r, field, nd=1):
+        m, s = r.get(field + "_mean"), r.get(field + "_std")
+        return "--" if m is None else pm(m * 100, None if s is None else s * 100, nd)
+
+    def row(label, dom, size):
+        r = L["full"][dom][size]
+        if size == "256":
+            delta, hit = "--", "--$^{a}$"
+        else:
+            m, s = r.get("delta_f1_vs_256_mean"), r.get("delta_f1_vs_256_std")
+            delta = "--" if m is None else signed(m * 100, 1) + ("" if s is None else f"\\,$\\pm$\\,{de(s * 100, 1)}")
+            hit = pct(r, "output_limit_rate")
+        lat = "--" if r.get("latency_ms_mean") is None else de(r["latency_ms_mean"] / 1000, 1)
+        return (f"    {label} & {fmt_int(int(size))} & {de(r['precision_mean'] * 100, 1)} & {de(r['recall_mean'] * 100, 1)} & "
+                f"{pct(r, 'f1')} & {delta} & {pct(r, 'parse_failure_rate')} & {hit} & {lat} \\\\")
+
+    for dom, label in DOMAINS:
+        lines.append(row(label, dom, "256"))
+        lines.append(row("", dom, big))
+    lines.append("    \\midrule")
+    lines.append(row("Gepoolt", "pooled_micro", "256"))
+    lines.append(row("", "pooled_micro", big))
+    lines.append("    \\bottomrule")
+    lines += note_rows("$^{a}$ F\\\"ur die Hauptl\\\"aufe (Limit 256) wurden Ausgabel\\\"ange und Stoppgrund nicht "
+                       "protokolliert; Limit-Treffer daher unbekannt.", 9)
+    lines += ["\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
+def tab_limit_multinerd(G, L):
+    """MultiNERD: Basislaeufe (Limit 256) gegen Nachinferenz der abgeschnittenen Saetze mit Limit 1024."""
+    lines = ["\\begin{tabular}{llrrrrrrr}", "    \\toprule",
+             "    \\textbf{Modell} & \\textbf{Limit} & \\textbf{P} & \\textbf{R} & \\textbf{Mikro-F$_1$} &",
+             "      $\\Delta$\\textbf{F$_1$} & \\textbf{\\shortstack[c]{neu\\\\erzeugt}} &",
+             "      \\textbf{\\shortstack[c]{weiterhin\\\\abgeschnitten}} & \\textbf{\\shortstack[c]{Auslas-\\\\sungen [\\%]}} \\\\",
+             "    \\midrule"]
+    for key, base in LIMIT_GROUPS.items():
+        if key not in L:
+            continue
+        st = L[key]
+        big = fmt_int(G[key]["runs"][0].get("max_new_tokens") or 1024)
+        for label, g, size in ((G[base]["label"], G[base], "256"), ("", G[key], big)):
+            a = g["agg"]
+            cells = [de(a["precision"]["mean"] * 100, 1), de(a["recall"]["mean"] * 100, 1),
+                     pm(a["f1"]["mean"] * 100, None if a["f1"]["std"] is None else a["f1"]["std"] * 100, 2)]
+            if size == "256":
+                cells += ["--", "--", "--"]
+            else:
+                d = signed(st["delta_f1"]["mean"] * 100, 2)
+                if st["delta_f1"]["std"] is not None:
+                    d += f"\\,$\\pm$\\,{de(st['delta_f1']['std'] * 100, 2)}"
+                cells += [d, fmt_int(st["n_regenerated"]["mean"]), fmt_int(st["n_limit_reached"]["mean"])]
+            cells.append(de(a["errors"]["auslassung"]["mean"] * 100, 2))
+            lines.append(f"    {label} & {size} & " + " & ".join(cells) + " \\\\")
+    lines += ["    \\bottomrule", "\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
+CI_PAIRS = ["qwen27-qlora->deberta-large", "deberta-base->qwen27-qlora", "deberta-base->deberta-large",
+            "qwen4-qlora->qwen27-qlora", "qwen08-qlora->qwen4-qlora", "qwen08-qlora->deberta-base",
+            "deberta-base->qwen4-qlora"]
+CI_PAIRS_1024 = ["qwen27-qlora-1024->deberta-large", "deberta-base->qwen27-qlora-1024",
+                 "qwen08-qlora-1024->deberta-base"]
+
+
+def tab_ci(G, boot):
+    def name(key, with_regime=False):
+        g = G[key]
+        return g["label"] + (f" ({g['regime']})" if with_regime or not key.startswith("deberta") else "")
+
+    def interval(lo, hi, nd=2):
+        return f"[{signed(lo, nd)}; {signed(hi, nd)}]" + ("$^{\\dagger}$" if lo <= 0 <= hi else "")
+
+    lines = ["\\begin{tabular}{lrlrl}", "    \\toprule",
+             "    \\textbf{Vergleich (A $-$ B)} & $\\Delta$\\,\\textbf{Mikro-F$_1$} & \\textbf{95\\,\\%-KI} &",
+             "      $\\Delta$\\,\\textbf{Makro-F$_1$} & \\textbf{95\\,\\%-KI} \\\\", "    \\midrule"]
+    for pk in [p for p in CI_PAIRS + CI_PAIRS_1024 if p in boot["pairs"]]:
+        k1, k2 = pk.split("->")
+        p = boot["pairs"][pk]
+        lines.append(f"    {name(k2)} $-$ {name(k1)} & {signed(p['diff'], 2)} & {interval(*p['ci'])} & "
+                     f"{signed(p['macro_diff'], 2)} & {interval(*p['macro_ci'])} \\\\")
+    lines += ["    \\midrule",
+              "    \\textbf{Konfiguration} & \\textbf{Mikro-F$_1$} & \\textbf{95\\,\\%-KI} &",
+              "      \\textbf{Makro-F$_1$} & \\textbf{95\\,\\%-KI} \\\\", "    \\midrule"]
+    for key in TABLE_ORDER + [k for k in LIMIT_GROUPS if k in G]:
+        c = boot["configs"][key]
+        mi, ma = c["micro"]["ci_seed_mean"], c["macro"]["ci_seed_mean"]
+        lines.append(f"    {name(key, True)} & {de(c['micro']['point'], 2)} & [{de(mi[0], 2)}; {de(mi[1], 2)}] & "
+                     f"{de(c['macro']['point'], 2)} & [{de(ma[0], 2)}; {de(ma[1], 2)}] \\\\")
+    lines.append("    \\bottomrule")
+    s = boot["settings"]
+    lines += note_rows(f"$^{{\\dagger}}$ Intervall schlie\\ss{{}}t 0 ein. Satz-Bootstrap, $B = {fmt_int(s['B'])}$, "
+                       "gleiche Stichprobe f\\\"ur alle L\\\"aufe, seedgleiche Paare; Konfigurationen: Intervall des "
+                       "Seed-Mittels.", 5)
+    lines += ["\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
 # --------------------------------------------------------------------------- Abbildungsdaten
 def fig_data(G):
     typen = ["type support f1_large f1_q27 f1_zs27"]
@@ -728,15 +1399,35 @@ def fig_data(G):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     print("MultiNERD-Laeufe auswerten ...")
+    sacct = load_sacct(SACCT)
+    if sacct is None:
+        print(f"  Hinweis: Slurm-Abrechnung {SACCT.name} fehlt; Trainingszeiten aus Protokoll bzw. Hochrechnung")
     G = {}
     for key, meta in TRAINED.items():
-        runs = [analyse_multinerd_run(RES / "multinerd" / r, not key.startswith("deberta")) for r in meta["runs"]]
+        runs = [analyse_multinerd_run(RES / "multinerd" / r, not key.startswith("deberta"), seed, sacct_for(sacct, key, seed))
+                for r, seed in zip(meta["runs"], SEEDS)]
         G[key] = dict(meta, agg=aggregate_group(runs), runs=runs)
         print(f"  {key}: F1 {G[key]['agg']['f1']['mean'] * 100:.2f} +- {G[key]['agg']['f1']['std'] * 100:.2f}")
     for key, meta in ZEROSHOT.items():
         run = analyse_multinerd_run(RES / "multinerd" / meta["run"], True)
         G[key] = dict(meta, agg=aggregate_group([run]), runs=[run])
         print(f"  {key}: F1 {G[key]['agg']['f1']['mean'] * 100:.2f}")
+    # Nachinferenz mit Ausgabelimit 1024 (Step 5): nur vollstaendige Dreiergruppen, seedweise an die Basis gepaart
+    L = {}
+    if not LIMIT_ROOT.exists():
+        print(f"  Hinweis: {LIMIT_ROOT.name} fehlt; 1024-Gruppen uebersprungen")
+    else:
+        for key, base in LIMIT_GROUPS.items():
+            dirs = [LIMIT_ROOT / r for r in TRAINED[base]["runs"]]
+            present = sum((d / "test_predictions.json").exists() for d in dirs)
+            if present != len(dirs):
+                print(f"  Hinweis: {key} unvollstaendig ({present}/{len(dirs)} Laeufe); uebersprungen")
+                continue
+            runs = [analyse_multinerd_run(d, True, seed) for d, seed in zip(dirs, SEEDS)]
+            G[key] = dict(TRAINED[base], regime="QLoRA, Limit 1\\,024", agg=aggregate_group(runs), runs=runs)
+            L[key] = paired_limit_stats(G[base]["runs"], runs)
+            print(f"  {key}: F1 {G[key]['agg']['f1']['mean'] * 100:.2f} +- {G[key]['agg']['f1']['std'] * 100:.2f} "
+                  f"(Delta zu 256: {L[key]['delta_f1']['mean'] * 100:+.2f})")
     print("CrossNER auswerten ...")
     C = analyse_crossner()
 
@@ -764,7 +1455,28 @@ def main():
         ("deberta-base", "deberta-large"), ("qwen08-qlora", "qwen4-qlora"), ("qwen4-qlora", "qwen27-qlora"),
         ("qwen27-qlora", "deberta-large"), ("deberta-base", "qwen4-qlora"), ("qwen08-qlora", "deberta-base"),
         ("qwen27-zs", "qwen27-qlora"), ("qwen4-zs", "qwen4-qlora"), ("qwen08-zs", "qwen08-qlora"),
-        ("qwen08-qlora", "deberta-large"), ("deberta-base", "qwen27-qlora")]}
+        ("qwen08-qlora", "deberta-large"), ("deberta-base", "qwen27-qlora"),
+        ("qwen27-qlora-1024", "deberta-large"), ("deberta-base", "qwen27-qlora-1024"),
+        ("deberta-base", "qwen4-qlora-1024"), ("qwen08-qlora-1024", "deberta-base"),
+        ("qwen27-qlora", "qwen27-qlora-1024"), ("qwen4-qlora", "qwen4-qlora-1024"),
+        ("qwen08-qlora", "qwen08-qlora-1024")] if k1 in G and k2 in G}
+
+    # Gepaartes Satz-Bootstrap: setzt identische Satzfolge und Referenz in allen Laeufen voraus
+    sigs = {(r["sentence_signature"], r["gold_signature"]) for g in G.values() for r in g["runs"]}
+    if len(sigs) != 1:
+        sys.exit("ABBRUCH: Testsaetze oder Referenz nicht in allen Laeufen identisch; Paarung unmoeglich")
+    print(f"Satz-Bootstrap (B = {BOOT_B}, Saat {BOOT_SEED}) ...")
+    boot = bootstrap_intervals(G, list(comparisons))
+    for key, comp in comparisons.items():
+        k1, k2 = key.split("->")
+        comp["single_run"] = len(G[k1]["runs"]) == 1 or len(G[k2]["runs"]) == 1
+        if comp["single_run"]:
+            comp["sd_note"] = ("Zero-Shot: Einzellauf, SD-Summe enthaelt nur die SD der QLoRA-Seite; "
+                               "Belastbarkeit ueber das gepaarte Bootstrap-Intervall")
+        comp["bootstrap"] = boot["pairs"][key]
+    p = boot["pairs"]["qwen27-qlora->deberta-large"]
+    print(f"  DeBERTa-large - Qwen27B (QLoRA): {p['diff']:+.2f} [{p['ci'][0]:+.2f}; {p['ci'][1]:+.2f}], "
+          f"Makro {p['macro_diff']:+.2f} [{p['macro_ci'][0]:+.2f}; {p['macro_ci'][1]:+.2f}]")
 
     print("Tabellen und Abbildungsdaten schreiben ...")
     write(OUT / "tab-haupt.tex", tab_haupt(G))
@@ -776,10 +1488,53 @@ def main():
     write(OUT / "tab-crossner.tex", tab_crossner(C))
     write(OUT / "tab-app-seeds.tex", tab_app_seeds(G))
     write(OUT / "tab-app-typen-prf.tex", tab_app_typen_prf(G))
+    write(OUT / "tab-ci.tex", tab_ci(G, boot))
+    write(OUT / "tab-app-crossner-seeds.tex", tab_app_crossner_seeds(C))
+    write(OUT / "tab-app-crossner-typen.tex", tab_app_crossner_typen(C))
+    if C["output_limit_full"].get("complete"):
+        write(OUT / "tab-limit.tex", tab_limit(C))
+    if L:
+        write(OUT / "tab-limit-multinerd.tex", tab_limit_multinerd(G, L))
     d_typen, d_groesse, d_tradeoff = fig_data(G)
     write(OUT / "fig-typen.dat", d_typen)
     write(OUT / "fig-groesse.dat", d_groesse)
     write(OUT / "fig-tradeoff.dat", d_tradeoff)
+
+    # Trainingszeit 27B (Step 1): drei Quellen nebeneinander; die fruehere Hochrechnung der Arbeit benutzte
+    # faelschlich den Recovery-Checkpoint (Wiederaufnahmepunkt der 2. Zuteilung) als Beginn des Protokollabschnitts.
+    profs = G["qwen27-qlora"]["agg"]["training_profile"]
+    recovery_steps = [int(re.search(r"checkpoint-(\d+)", rc).group(1)) if rc else None
+                      for rc in G["qwen27-qlora"]["agg"]["recovery_checkpoints"]]
+    training_time_27b = dict(
+        total_steps=[p["total_steps"] for p in profs], resume_steps=[p["resume_step"] for p in profs],
+        steps_logged=[p["steps_logged"] for p in profs],
+        last_segment_h=[p["logged_seconds"] / 3600 for p in profs],
+        last_allocation_h=[p["last_allocation_seconds"] / 3600 for p in profs],
+        seconds_per_step=[p["seconds_per_step"] for p in profs],
+        estimate_h=[p["estimated_total_seconds"] / 3600 for p in profs],
+        sacct_h=[p["sacct_train_seconds"] / 3600 if p["sacct_train_seconds"] else None for p in profs],
+        sacct_allocations=[p["sacct_train_allocations"] for p in profs],
+        sacct_infer_h=[p["sacct_infer_seconds"] / 3600 if p["sacct_infer_seconds"] else None for p in profs],
+        wallclock_span_h=[p["wallclock_span_seconds"] / 3600 for p in profs],
+        n_allocations=[p["n_allocations"] for p in profs],
+        allocation_starts=[p["allocation_starts"] for p in profs],
+        completed_at=[p["completed_at"] for p in profs],
+        recovery_checkpoints=G["qwen27-qlora"]["agg"]["recovery_checkpoints"],
+        previous_thesis_estimate_h=[p["logged_seconds"] / (p["total_steps"] - rs) * p["total_steps"] / 3600
+                                    if rs is not None else None for p, rs in zip(profs, recovery_steps)],
+        previous_thesis_estimate_note="Hochrechnung mit dem Recovery-Checkpoint als Beginn des Protokollabschnitts "
+                                      "(fehlerhaft; Beginn ist results.yaml:resume_checkpoint)",
+        exact=profs[0]["exact"], estimated=profs[0]["estimated"],
+        primary_source="sacct" if sacct is not None else "estimate")
+    inference_wallclock_check = {}
+    for g in G.values():
+        for r in g["runs"]:
+            p = r.get("training_profile")
+            wall, est = r.get("inference_seconds"), r.get("inference_seconds_latency_estimate")
+            inference_wallclock_check[r["name"]] = dict(
+                wall_h=wall / 3600 if wall else None, latency_estimate_h=est / 3600 if est else None,
+                diff_h=(wall - est) / 3600 if wall and est else None, source=r.get("inference_seconds_source"),
+                sacct_h=p["sacct_infer_seconds"] / 3600 if p and p.get("sacct_infer_seconds") else None)
 
     summary = dict(
         groups={k: dict(label=v["label"], regime=v["regime"], gpu=v["gpu"], params=v["params"], agg=v["agg"],
@@ -791,6 +1546,10 @@ def main():
         multinerd_sentence_stats=dict(tokens_mean=mn_tokens, entities_mean=mn_ents, coarse_entities_mean=mn_coarse,
                                       n_sentences=len(preds), gold_empty_sentences=mn_gold_empty),
         greedy_control_08b=greedy,
+        training_time_27b=training_time_27b,
+        inference_wallclock_check=inference_wallclock_check,
+        bootstrap=boot,
+        output_limit_multinerd=dict(available=list(L), missing=[k for k in LIMIT_GROUPS if k not in L], per_size=L),
     )
 
     def default(o):
@@ -798,6 +1557,14 @@ def main():
             return {f"{k[0]}->{k[1]}" if isinstance(k, tuple) else k: v for k, v in o.items()}
         if isinstance(o, tuple):
             return list(o)
+        if isinstance(o, np.integer):
+            return int(o)
+        if isinstance(o, np.floating):
+            return float(o)
+        if isinstance(o, np.bool_):
+            return bool(o)
+        if isinstance(o, np.ndarray):
+            return o.tolist()
         raise TypeError(str(type(o)))
 
     (OUT / "summary.json").write_text(json.dumps(summary, indent=1, ensure_ascii=False, default=default), encoding="utf-8")
