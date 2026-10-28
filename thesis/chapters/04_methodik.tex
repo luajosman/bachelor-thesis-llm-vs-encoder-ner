@@ -610,8 +610,15 @@ den Beginn der Assistentenantwort ergänzt.
 Der Thinking-Modus von Qwen3.5 ist in allen generativen Schritten
 deaktiviert; das Template setzt dazu einen leeren Denkblock vor die
 Antwort, sodass das Modell unmittelbar mit der JSON-Ausgabe beginnt.
-Die Antwort ist auf 256 neue Tokens begrenzt, die Eingabe wird nicht
-gekürzt, und jeder Testsatz wird einzeln verarbeitet.
+Die Antwort ist auf 256 neue Tokens begrenzt.
+Dieser Wert wurde vor den Läufen ohne vorherige Längenanalyse
+festgelegt; nachträglich zeigt sich, dass er die Referenzantworten des
+Testsplits nahezu vollständig abdeckt: Unter dem Qwen3.5-Tokenizer sind
+sie im Median 32 Tokens lang (99.~Perzentil 186, Maximum 553); 55 der
+16\,454 Referenzantworten überschreiten 256 Tokens, eine überschreitet
+512 und keine 1\,024 (Skript \texttt{scripts/answer\_lengths.py}).
+Die Eingabe wird nicht gekürzt, und jeder Testsatz wird einzeln
+verarbeitet.
 
 \paragraph{Zero-Shot-Regime.}
 Die Checkpoints werden unverändert in BF16 verwendet; alle drei Größen
@@ -1336,8 +1343,8 @@ Limitationsdiskussion im Fazit berücksichtigt.
       Validierungssätzen, Encoder nach dem vollständigen Split &
       \ref{sec:llm-pipeline}, \ref{sec:encoder-pipeline} \\
     Längengrenzen & 256 Subwort-Tokens (Encoder), 1\,024 Tokens (SFT),
-      256 Ausgabetokens (LLM-Inferenz; Sensitivitätsanalysen mit 1\,024
-      Tokens) & \ref{sec:datenvorverarbeitung},
+      256 Ausgabetokens (LLM-Inferenz, a priori ohne Längenanalyse
+      gesetzt; Sensitivitätsanalysen mit 1\,024 Tokens) & \ref{sec:datenvorverarbeitung},
       \ref{sec:llm-pipeline}, \ref{sec:crossner} \\
     Effizienzmessung & 27B-Training in vier Slurm-Zuteilungen, Dauer aus
       der Slurm-Abrechnung; drei 27B-Seeds gleichzeitig auf einem Knoten;
