@@ -1123,6 +1123,34 @@ angemessenen Verhältnis zum zusätzlichen Ressourcenbedarf stehen und
 wann kompakte Encoder eine attraktive Alternative sind
 \cite{keraghel2024recent,obeidat2025llm}.
 
+\subsection{Nachinferenz am Ausgabelimit}
+\label{sec:nachinferenz}
+
+Das Limit von 256 Ausgabetokens ist eine Einstellung der Pipeline, die bei
+langen Sätzen mit vielen Entitäten greift
+(Abschnitt~\ref{sec:robustheit-ausgaben}).
+Um seinen Einfluss auf MultiNERD zu messen statt hochzurechnen, wurden für
+alle neun QLoRA-Läufe genau die Testsätze, deren gespeicherte Antwort nicht
+parsebar war, mit demselben Adapter, demselben Prompt und Greedy-Decoding,
+aber einem Limit von 1\,024 Tokens erneut generiert; alle übrigen
+Antworten wurden unverändert übernommen.
+Bei Greedy-Decoding hängt eine Antwort, die vor dem Limit mit dem
+Ende-Token abschließt, nicht vom Limit ab; die Nachinferenz der
+abgeschnittenen Sätze ist damit einem vollständigen Neulauf äquivalent,
+sofern die Logits reproduziert werden.
+Da die Nachinferenz teilweise auf anderen GPU-Knoten lief als die
+ursprüngliche Testinferenz, wird diese Annahme geprüft: Für jeden
+nachgenerierten Satz wird festgehalten, ob die ersten 256 erzeugten Tokens
+mit der gespeicherten Antwort übereinstimmen, und in einem Vorlauf wurden
+zusätzlich fünf nicht abgeschnittene Sätze neu generiert und mit den
+gespeicherten Antworten verglichen.
+Die zusammengeführten Vorhersagen werden mit derselben strikten Metrik über
+alle 16\,454 Sätze ausgewertet und je Seed den Werten bei 256 Tokens
+gegenübergestellt.
+Die Hauptauswertung beruht weiterhin auf dem Limit von 256 Tokens; die
+Nachinferenz wird als Sensitivitätsanalyse berichtet
+(Abschnitt~\ref{sec:erg-formtreue}).
+
 \section{CrossNER-Ergänzungsversuch}
 \label{sec:crossner}
 
@@ -1218,7 +1246,16 @@ einem Limit von 1\,024 Ausgabetokens auf den jeweils ersten 25 Sätzen der
 Testsplits von Musik und Politik wiederholt und auf denselben Sätzen mit
 dem Hauptlauf verglichen; die beiden Domänen wurden gewählt, weil dort bei
 256 Tokens besonders viele Antworten nicht parsebar waren, die Stichprobe
-ist also weder zufällig noch repräsentativ (Abschnitt~\ref{sec:erg-crossner}).
+ist also weder zufällig noch repräsentativ.
+Anschließend wurde die Inferenz des 27B-Modells mit 1\,024 Ausgabetokens
+für alle drei Seeds auf allen 2\,506 Sätzen der fünf Domänen wiederholt;
+Prompt, Parser, Typabbildung und Greedy-Decoding blieben unverändert, nur
+das Limit wurde angehoben.
+Die Auswertung stellt den Werten bei 256 Tokens die Werte bei 1\,024
+Tokens auf denselben Sätzen gegenüber (gepaart je Seed), berichtet den
+Anteil der Antworten, die auch das höhere Limit erreichen, und wiederholt
+die Sensitivitätsanalyse ohne die 21 überschneidenden Sätze
+(Abschnitt~\ref{sec:erg-crossner}).
 
 \section{Validität und bekannte Abweichungen}
 \label{sec:validitaet}
@@ -1263,7 +1300,8 @@ Limitationsdiskussion im Fazit berücksichtigt.
     Hyperparameter & Größenabhängig gewählt, kein Suchlauf (Encoder und
       LLM) & \ref{sec:encoder-pipeline}, \ref{sec:lora-konfiguration} \\
     Längengrenzen & 256 Subwort-Tokens (Encoder), 1\,024 Tokens (SFT),
-      256 Ausgabetokens (LLM-Inferenz) & \ref{sec:datenvorverarbeitung},
+      256 Ausgabetokens (LLM-Inferenz; Sensitivitätsanalysen mit 1\,024
+      Tokens) & \ref{sec:datenvorverarbeitung},
       \ref{sec:llm-pipeline}, \ref{sec:crossner} \\
     Effizienzmessung & 27B-Training in vier Slurm-Zuteilungen, Dauer aus
       der Slurm-Abrechnung; drei 27B-Seeds gleichzeitig auf einem Knoten;
