@@ -28,13 +28,17 @@ Auf dem englischen MultiNERD-Testsplit erreicht der beste Encoder,
 DeBERTa-v3-large, einen Mikro-F$_1$ von 95,8 Punkten, das beste LLM,
 Qwen3.5-27B im QLoRA-Regime, einen von 94,5.
 Der Abstand von 1,3 Punkten ist ein Vielfaches der Streuung über die
-Seeds; der Encoder ist damit unterscheidbar besser, und auch
+Seeds, und das gepaarte Bootstrap-Intervall über die Testsätze schließt
+die Null klar aus (1,34 Punkte, 95-\%-Intervall 0,99 bis 1,68); der
+Encoder ist damit unterscheidbar besser, und auch
 DeBERTa-v3-base liegt mit 95,5 Punkten vor allen LLM-Konfigurationen,
 deren kleinere Vertreter 94,0 (4B) und 93,1 Punkte (0.8B) erreichen.
-Ohne Training fallen die LLMs auf 6,2 bis 69,4 Punkte zurück; die
-Anpassung mit QLoRA ist damit neben der Modellgröße im Zero-Shot-Regime
-der wirksamste Faktor im Vergleich, während Modellgröße und Modellklasse
-nach der Anpassung nur noch ein bis zweieinhalb Punkte ausmachen.
+Ohne Training fallen die LLMs auf 6,2 bis 69,4 Punkte zurück.
+Die Anpassung mit QLoRA hebt den Mikro-F$_1$ um 25 bis 87 Punkte;
+Modellgröße innerhalb einer Familie (0,3 Punkte bei den Encodern, 1,3
+Punkte bei den LLMs) und Modellklasse (1,0 bis 2,7 Punkte zwischen den
+trainierten Konfigurationen) wirken nach der Anpassung um eine
+Größenordnung schwächer.
 Der Vorsprung des Encoders stammt nahezu vollständig aus dem Recall; der
 größte Teil des Recall-Rückstands des LLM geht auf Antworten zurück, die
 am Limit von 256 Ausgabetokens abgeschnitten wurden, sodass der gemessene
@@ -42,7 +46,8 @@ Abstand eine Obergrenze des Klassenunterschieds darstellt.
 Bei den drei häufigen Typen PER, ORG und LOC unterscheiden sich die
 trainierten Konfigurationen um höchstens 1,8 Punkte; der Encoder liegt
 bei ANIM, FOOD, PLANT, DIS und EVE vorn, das LLM bei den seltenen Typen
-INST, MYTH und TIME, sodass beide im Makro-F$_1$ gleichauf liegen.
+INST, MYTH und TIME, sodass beide im Makro-F$_1$ gleichauf liegen; das
+Bootstrap-Intervall der Makro-Differenz schließt die Null ein.
 Die Formtreue ist nach dem Fine-Tuning hoch: 0,4\,\% der Antworten sind
 nicht parsebar, alle wegen des Ausgabelimits; unbekannte Typen und
 unzulässige Indizes treten nur noch in Einzelfällen auf.
@@ -64,11 +69,13 @@ Training 0,4 auf 1,2~h) und innerhalb der LLM-Familie unterschiedlich
 steil: Die Latenz je Satz steigt von 1\,876 auf 5\,505~ms, also auf das
 Dreifache bei 36-facher Parameterzahl, der GPU-Spitzenspeicher der
 Inferenz von 0,9 auf 18,7~GB und die Trainingsdauer von 12 auf rund 266
-Stunden, wobei der Vergleich der Trainingsdauern durch unterschiedliche
-GPU-Typen und Clusterlast überlagert ist.
+Stunden, wobei Latenz und Trainingsdauer der drei Größen auf
+verschiedenen GPU-Typen gemessen wurden (Tabelle~\ref{tab:effizienz}) und
+die Trainingsdauern zusätzlich durch Clusterlast überlagert sind.
 Im Zero-Shot-Regime ist der Größeneffekt mit rund 30 Punkten je Schritt
-um Größenordnungen größer, weil erst das 27B-Modell Format und
-Typinventar weitgehend einhält.
+um Größenordnungen größer, weil das 0.8B-Modell am Format scheitert, das
+4B-Modell überwiegend leere Arrays und falsche Indizes liefert und erst
+das 27B-Modell Format, Typinventar und Abdeckung weitgehend einhält.
 Über die Familien hinweg erklärt die Parameterzahl die Leistung nicht:
 DeBERTa-v3-base erreicht mit 184~Mio. Parametern mehr als jedes
 Qwen3.5-Modell mit dem Vier- bis 146-Fachen.
@@ -79,7 +86,8 @@ die bessere und zugleich effizientere Wahl, unabhängig von Latenz- oder
 Speicherbeschränkungen: Die beiden Encoder bilden allein die
 Pareto-Front aus Erkennungsleistung, Latenz und Speicher.
 Ein LLM rechtfertigt den Mehraufwand von rund 5,5 Sekunden je Satz,
-24~GB GPU-Speicher und rund 266 Stunden Training nur, wenn seine
+einer GPU mit mindestens 24~GB (gemessen 18,7~GB) und rund 266 Stunden
+Training nur, wenn seine
 spezifischen Vorteile zählen: die gleichwertige Makro-Leistung mit
 Vorsprüngen bei seltenen Typen oder die hier nicht gemessene
 Möglichkeit, das Typinventar per Prompt zu ändern; dann ist Qwen3.5-27B
@@ -178,12 +186,18 @@ vier Zuteilungen je Lauf und enthält den Neustart-Overhead sowie die
 gegenseitige Auslastung der drei gleichzeitig laufenden Seeds.
 
 \paragraph{Statistische Absicherung.}
-Jede trainierte Konfiguration wurde mit drei Seeds trainiert; auf
-inferenzstatistische Tests wurde verzichtet.
-Die Unterschiede im Mikro-F$_1$ übersteigen die Summe der
-Standardabweichungen durchweg deutlich, der Makro-F$_1$ der beiden
-besten Modelle und die Werte seltener Typen sind mit diesem Umfang
-dagegen nicht zu trennen.
+Jede trainierte Konfiguration wurde mit drei Seeds trainiert; die
+Unterschiede im Mikro-F$_1$ übersteigen die Summe der
+Standardabweichungen durchweg deutlich.
+Die Unsicherheit durch die Auswahl der Testsätze wurde zusätzlich mit
+einem gepaarten Satz-Bootstrap quantifiziert (Tabelle~\ref{tab:ci}):
+Alle sieben Mikro-Intervalle schließen die Null aus, vier der sieben
+Makro-Intervalle schließen sie ein, darunter beide Vergleiche der Encoder
+mit dem 27B-Modell.
+Der Makro-F$_1$ der beiden besten Modelle und die Werte seltener Typen
+sind mit diesem Umfang daher nicht zu trennen; Hypothesentests wurden
+nicht durchgeführt, und die Zero-Shot-Werte beruhen auf je einem Lauf
+mit Sampling, dessen Streuung nicht gemessen wurde.
 Der Testsplit wurde außerdem bereits in den explorativen Vorläufen
 ausgewertet; für die trainierten Konfigurationen blieben die
 Hyperparameter danach bis auf die Epochenzahl des 27B-Modells
@@ -245,9 +259,10 @@ Eine Messung auf einheitlicher Hardware, mit Batching und mit
 Energieverbrauch würde die Empfehlungen aus FF3 auf
 Offline-Verarbeitung ausweiten.
 Für die Inferenz der LLMs bieten sich zudem spezialisierte
-Inferenzsysteme und das Zusammenführen der Adapter mit dem Basismodell
-an, die hier nicht verwendet wurden und die den Dequantisierungsaufwand
-der NF4-Gewichte vermeiden würden.
+Inferenzsysteme und das Zusammenführen der Adapter mit einem Basismodell
+in BF16 an; Letzteres vermeidet die Dequantisierung der NF4-Gewichte in
+jedem Vorwärtsdurchlauf, gibt aber den Speichervorteil der Quantisierung
+auf. Beides wurde hier nicht verwendet.
 
 \paragraph{Übertragbarkeit.}
 MultiNERD umfasst zehn Sprachen mit demselben Typinventar.
@@ -257,5 +272,5 @@ gemessene Abstand zwischen Encodern und LLMs in Sprachen mit weniger
 Vortrainingsdaten anders ausfällt.
 Der CrossNER-Versuch legt nahe, den Domänenwechsel mit dem vollständigen
 Typinventar und mit wenigen Zieldomänenbeispielen zu untersuchen, wie es
-\textcite{ashok2023promptner} und \textcite{sainz2024gollie} für
-LLM-Ansätze tun.
+\textcite{ashok2023promptner} mit wenigen Beispielen und
+\textcite{sainz2024gollie} ohne Beispiele für LLM-Ansätze tun.

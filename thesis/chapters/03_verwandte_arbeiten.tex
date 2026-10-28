@@ -469,11 +469,13 @@ Die Decoder werden hier also nicht generativ, sondern wie Encoder
 eingesetzt, was die Formatfrage umgeht, aber eine Suche über
 Maskierungskonfigurationen erfordert.
 
-Die vier Arbeiten konvergieren in einem Punkt: Mit Adaptern feinjustierte
-LLMs erreichen auf etablierten Benchmarks das Niveau feinjustierter
-Encoder oder übertreffen es leicht, und der Gewinn ist klein im
-Verhältnis zum Mehraufwand bei der
-Inferenz~\cite{zhan2026generativeNER,obeidat2025llm}.
+Drei der vier Arbeiten konvergieren in einem Punkt: Mit Adaptern
+feinjustierte LLMs erreichen auf etablierten Benchmarks das Niveau
+feinjustierter Encoder oder übertreffen es leicht, und der Gewinn ist
+klein im Verhältnis zum Mehraufwand bei der
+Inferenz~\cite{zhan2026generativeNER,obeidat2025llm,dukic2024lookingright};
+\textcite{lu2024llmstruggle} finden im klinischen Setting mit LoRA
+dagegen einen bleibenden Rückstand.
 Zugleich markieren sie die Grenzen des bisherigen Wissens.
 Die Datensätze sind entweder allgemein, aber grob typisiert, oder
 domänenspezifisch; ein allgemeiner feingranularer Datensatz fehlt.
@@ -484,7 +486,7 @@ Die Ressourcenerfassung ist unvollständig: \textcite{obeidat2025llm}
 messen Inferenzzeiten, aber keinen Speicher, \textcite{zhan2026generativeNER}
 berichten nur Trainingskosten, und \textcite{lu2024llmstruggle} sowie
 \textcite{dukic2024lookingright} messen keine Ressourcen.
-Die untersuchten LLMs liegen durchweg in einer einzigen Größenklasse,
+Die untersuchten LLMs liegen durchweg zwischen 3 und 9~Mrd. Parametern,
 sodass weder deutlich kleinere noch deutlich größere Decoder im Vergleich
 stehen.
 Und die Encoder-Referenzwerte stammen teilweise aus anderen Publikationen

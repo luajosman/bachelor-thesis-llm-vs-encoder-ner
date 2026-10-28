@@ -59,9 +59,11 @@ Evaluationsprotokoll über alle Konfigurationen konstant bleiben
     Folgenden nach seiner Umsetzung als QLoRA-Regime bezeichnet wird.
 \end{enumerate}
 
-Encoder werden ausschließlich feinjustiert, da sie ohne trainierten
-Klassifikationskopf keine NER-Vorhersagen erzeugen und somit kein
-Zero-Shot-Pendant besitzen.
+Encoder werden ausschließlich feinjustiert, da Token-Klassifikatoren mit
+neu initialisiertem Kopf ohne Training keine NER-Vorhersagen erzeugen und
+somit kein Zero-Shot-Pendant besitzen; Generalisten wie GLiNER
+(Abschnitt~\ref{sec:encoder_ner_related}) bleiben als eigene Modellklasse außerhalb des
+Vergleichs.
 
 \subsection*{Experimentmatrix}
 
@@ -285,8 +287,10 @@ bei seltenen oder semantisch komplexen Typen sichtbar werden können.
 Zweitens kombiniert der Datensatz mit Wikipedia- und Wikinews-Artikeln
 zwei Textgenres \cite{tedeschi2022multinerd}.
 Drittens stehen offizielle \texttt{train}-, \texttt{validation}- und
-\texttt{test}-Splits zur Verfügung, die Anschlussfähigkeit an die
-Literatur bieten \cite{tedeschi2022multinerd}.
+\texttt{test}-Splits zur Verfügung \cite{tedeschi2022multinerd}, die
+künftigen Arbeiten einen festen Bezugspunkt bieten, auch wenn bislang
+keine Vergleichswerte auf diesen Splits publiziert sind
+(Abschnitt~\ref{sec:encoder_ner_related}).
 Viertens ist der englische Teil mit rund 164\,000 Sätzen groß genug für
 vollständiges Fine-Tuning der Encoder ebenso wie für LoRA-Training der
 LLMs.
@@ -316,9 +320,9 @@ erzeugten Referenz.
 Vorverarbeitet wird nur, was die technische Integration erfordert; eine
 Textbereinigung oder Normalisierung auf Datensatzebene findet nicht
 statt.
-Der Datensatz wird über die \emph{Datasets}-Bibliothek aus dem
+Der Datensatz wird über die \emph{Datasets}-Bibliothek in einer festen
+Revision (Anhang~\ref{app:reproduzierbarkeit}) aus dem
 Hugging-Face-Repository \texttt{Babelscape/\allowbreak multinerd} geladen,
-in einer festen Revision (Anhang~\ref{app:reproduzierbarkeit}) geladen,
 über das Sprachfeld auf \texttt{en} gefiltert und auf vorhandene Splits
 und Spalten sowie exakte Splitgrößen geprüft.
 Eine zeilenweise Prüfung von Sequenzlängen und Label-IDs findet dabei
@@ -666,8 +670,8 @@ Eine Entität, die nur das Token mit Index~4 umfasst, wird also durch
 Die Adressierung über Indizes bleibt auch bei mehrfach vorkommenden
 Oberflächenformen eindeutig; das redundante Feld \texttt{text} ermöglicht
 eine Konsistenzprüfung (Abschnitt~\ref{sec:postprocessing}).
-Das Format entspricht der \emph{Indexing}-Familie der von Semin et al.
-beschriebenen Span-Labeling-Strategien \cite{semin2026spanLabeling} und
+Das Format entspricht der \emph{Indexing}-Familie der von
+\textcite{semin2026spanLabeling} beschriebenen Span-Labeling-Strategien und
 nutzt JSON als verbreitetes Austauschformat strukturierter
 Informationsextraktion \cite{dagdelen2024structuredIE}.
 
@@ -1140,12 +1144,18 @@ alle neun QLoRA-Läufe genau die Testsätze, deren gespeicherte Antwort nicht
 parsebar war, mit demselben Adapter, demselben Prompt und Greedy-Decoding,
 aber einem Limit von 1\,024 Tokens erneut generiert; alle übrigen
 Antworten wurden unverändert übernommen.
+Die Auswahlregel \enquote{nicht parsebar} ist ein Stellvertreter für
+\enquote{abgeschnitten}: Jede nicht parsebare Antwort der QLoRA-Läufe
+endet ohne schließende Klammer, und eine vollständige, aber aus anderem
+Grund nicht parsebare Antwort würde unter Greedy-Decoding identisch
+reproduziert; abgeschnittene, aber zufällig parsebare Antworten lassen
+sich in den gespeicherten Daten dagegen nicht erkennen.
 Bei Greedy-Decoding hängt eine Antwort, die vor dem Limit mit dem
 Ende-Token abschließt, nicht vom Limit ab; die Nachinferenz der
 abgeschnittenen Sätze ist damit einem vollständigen Neulauf äquivalent,
 sofern die Logits reproduziert werden.
-Da die Nachinferenz teilweise auf anderen GPU-Knoten lief als die
-ursprüngliche Testinferenz, wird diese Annahme geprüft: Für jeden
+Da die Nachinferenz auf einem anderen GPU-Typ lief als die
+ursprüngliche Testinferenz (Tabelle~\ref{tab:hardware}), wird diese Annahme geprüft: Für jeden
 nachgenerierten Satz wird festgehalten, ob die ersten 256 erzeugten Tokens
 mit der gespeicherten Antwort übereinstimmen, und in einem Vorlauf wurden
 zusätzlich fünf nicht abgeschnittene Sätze neu generiert und mit den

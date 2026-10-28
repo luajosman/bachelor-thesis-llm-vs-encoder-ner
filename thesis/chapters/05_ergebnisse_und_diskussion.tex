@@ -180,8 +180,9 @@ In der Precision sind beste Encoder und bestes LLM damit praktisch
 gleichauf (95,3 gegenüber 95,2); der Vorsprung des Encoders stammt
 nahezu vollständig aus dem Recall (96,4 gegenüber 93,8).
 Abschnitt~\ref{sec:erg-fehlertypen} führt diesen Recall-Unterschied auf
-Auslassungen zurück, von denen etwa die Hälfte auf abgeschnittene
-Antworten entfällt.
+Auslassungen zurück; etwa die Hälfte der Auslassungen des LLM und damit
+nahezu der gesamte Recall-Rückstand gegenüber dem Encoder entfallen auf
+abgeschnittene Antworten.
 
 \subsection{Ergebnisse nach Entitätstyp}
 \label{sec:erg-typen}
@@ -224,10 +225,11 @@ gegenüber 70,1), PLANT (72,6 gegenüber 70,1), DIS (81,9 gegenüber 80,0),
 EVE (97,2 gegenüber 96,6) sowie bei PER und LOC (je 99,7 gegenüber 98,7
 und 98,2); das LLM liegt vorn bei INST (97,2 gegenüber 82,7), MYTH (88,6
 gegenüber 82,2) und TIME (87,4 gegenüber 84,9).
-Bei ORG und MEDIA sind beide gleichauf, und bei CEL (84,7 gegenüber 80,2)
-und VEHI (92,8 gegenüber 91,3) bleiben die Differenzen unter der Summe
-der Standardabweichungen, die bei diesen seltenen Typen 5,8 bzw. 4,5
-Punkte beträgt.
+Bei MEDIA sind beide gleichauf; bei ORG (98,8 gegenüber 98,9) sowie bei
+BIO (79,0 gegenüber 67,5), CEL (84,7 gegenüber 80,2) und VEHI (92,8
+gegenüber 91,3) bleiben die Differenzen unter der Summe der
+Standardabweichungen, die bei ORG 0,1 und bei den drei seltenen Typen
+12,5, 5,8 bzw. 4,5 Punkte beträgt.
 Diese Verteilung erklärt, warum Mikro- und Makro-F$_1$ die Klassen
 unterschiedlich ordnen: Der Mikro-Wert wird von LOC, PER und ANIM
 getragen, bei denen der Encoder vorn liegt; der Makro-Wert gewichtet die
@@ -336,8 +338,12 @@ Die verbleibende Fehlerklasse sind Text-Abweichungen, bei denen das Feld
 \texttt{text} nicht zu den indizierten Tokens passt; sie betreffen 45
 (0.8B), 12 (4B) und 4 (27B) von rund 25\,000 übernommenen Spans je Lauf.
 Als leer gelten Sätze ohne übernommenen Span; ihre Zahl liegt mit 70 bis
-83 nur wenig über der Zahl abgeschnittener Antworten, der Rest entfällt
-überwiegend auf die acht Testsätze ohne Referenzentität.
+83 je Lauf nur wenig über der Zahl abgeschnittener Antworten.
+Die übrigen leeren Sätze, im Mittel 15 (0.8B), 7 (4B) und 2 (27B),
+enthalten Referenzentitäten, zu denen kein Span übernommen wurde; die
+acht Testsätze ohne Referenzentität lässt nur das 27B-Modell leer (drei
+bis vier je Lauf), die beiden kleineren Modelle geben dort stets
+mindestens einen Span aus.
 
 Im Zero-Shot-Regime zeigt sich ein anderes Bild, das stark von der Größe
 abhängt.
@@ -866,11 +872,11 @@ entfällt auf die 65 Antworten, die am Limit von 256 Ausgabetokens
 abgeschnitten wurden und 2,6\,\% der Referenzentitäten enthalten
 (Abschnitt~\ref{sec:erg-fehlertypen}).
 Auf den übrigen Sätzen liegt der Recall des 27B-Modells bei 96,3 und
-damit nur 0,1 bis 0,3 Punkte unter dem des Encoders auf denselben Sätzen;
-rechnet man die abgeschnittenen Sätze mit diesem Recall hoch, ergäbe sich
-ein F$_1$ von etwa 95,7 gegenüber 95,8, also ein Abstand von wenigen
-Zehntelpunkten, der nach dem Kriterium aus
-Abschnitt~\ref{sec:performanzmetriken} noch unterscheidbar wäre.
+damit höchstens 0,3 Punkte unter dem des Encoders auf denselben Sätzen
+(96,2 bis 96,5 je Seed); rechnet man die abgeschnittenen Sätze mit diesem
+Recall hoch, ergäbe sich ein F$_1$ von 95,7 gegenüber 95,8, also ein
+Abstand von rund einem Zehntelpunkt, der genau an der Grenze des
+Kriteriums aus Abschnitt~\ref{sec:performanzmetriken} läge.
 Diese Hochrechnung ist eine Schätzung, kein Messwert; sie wird von der
 Vorstudie auf CrossNER gestützt, in der ein höheres Limit den Recall auf
 denselben Sätzen von 26 bzw. 65 auf rund 90 Punkte hob
@@ -945,8 +951,10 @@ berichtete Befund, dass feinjustierte Modelle JSON fast immer parsebar
 ausgeben, auch ohne erzwungene Formatierung.
 Die verbleibenden Parse-Fehler gehen ausschließlich auf das
 Ausgabelimit zurück, nicht auf das Format; sie sind eine Eigenschaft der
-Pipeline-Einstellung und würden mit einem höheren Limit entfallen, wie
-die Sensitivitätsanalyse zeigt.
+Pipeline-Einstellung und würden mit einem höheren Limit weitgehend
+entfallen, wie die Vorstudie auf CrossNER nahelegt
+(Abschnitt~\ref{sec:erg-crossner}); die Nachinferenz mit 1\,024 Tokens
+(Abschnitt~\ref{sec:nachinferenz}) prüft dies auf dem Testsplit.
 
 Im Zero-Shot-Regime ist die Formtreue deutlich schwächer, und der
 Flaschenhals liegt nicht in der JSON-Syntax, sondern in den Konventionen
@@ -1024,17 +1032,17 @@ Ressourcenbedarf unter Speicher- und Latenzbeschränkungen.
 Die Effizienzwerte lassen sich zu drei Aussagen verdichten.
 Erstens liegen die Encoder bei der Latenz um zwei bis drei
 Größenordnungen unter den LLMs (8,9 bis 16,5~ms gegenüber 1\,876 bis
-5\,505~ms je Satz); beim Speicher reicht die Spanne von einem
-Gleichstand des 0.8B-Modells mit DeBERTa-v3-large (0,9 gegenüber 1,7~GB)
-bis zum 25-Fachen beim 27B-Modell (18,7~GB).
-Zweitens kostet der Wechsel zum LLM hier keinen Leistungsgewinn, sondern
+5\,505~ms je Satz); beim Speicher reicht die Spanne vom halben
+Bedarf von DeBERTa-v3-large (0.8B: 0,9 gegenüber 1,7~GB) bis zum
+25-Fachen von DeBERTa-v3-base (27B: 18,7 gegenüber 0,7~GB).
+Zweitens bringt der Wechsel zum LLM hier keinen Leistungsgewinn, sondern
 einen Verlust von 1,0 bis 2,4 Punkten gegenüber DeBERTa-v3-base, bei
 einem Latenzfaktor von 210 bis 617; die Pareto-Front besteht allein aus
 den beiden Encodern.
 Das geht über die Schlussfolgerung von \textcite{obeidat2025llm} hinaus,
 dass Encoder bei kleinen Leistungsunterschieden oder Latenzanforderungen
 die geeignetere Wahl bleiben: Unter den hier gewählten Bedingungen sind
-sie es in jeder Hinsicht.
+sie es in Mikro-F$_1$, Latenz und Speicher zugleich.
 Drittens passen die QLoRA-Läufe mit 6,4 bis 159~Mio. trainierbaren
 Parametern und NF4-Basismodell auf eine einzelne GPU, kosten aber Zeit:
 Das 27B-Modell benötigt 18,7~GB während der Inferenz und rund 266 Stunden
@@ -1104,7 +1112,7 @@ Vergleich der beiden Encoder; nur die Größenschritte innerhalb der
 LLM-Familie und der Vergleich von DeBERTa-v3-base mit dem 0.8B-Modell
 sind auch im Makro-F$_1$ belastbar.
 Die Intervalle der einzelnen Konfigurationen sind beim Makro-F$_1$ mit
-fünf bis sechs Punkten Breite rund zehnmal so breit wie beim
+vier bis fünf Punkten Breite fünf- bis zehnmal so breit wie beim
 Mikro-F$_1$, weil die seltenen Typen auf wenigen Sätzen beruhen.
 Beide Streuungsquellen führen damit zur gleichen Lesart: Der
 Mikro-Vorsprung der Encoder ist belastbar, der Makro-Gleichstand

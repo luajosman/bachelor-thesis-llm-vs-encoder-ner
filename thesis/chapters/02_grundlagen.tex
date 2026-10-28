@@ -134,7 +134,7 @@ ineinander verschachtelt sind; CoNLL-2003 trifft genau diese
 Annahme~\cite{sang2003conll}, und auch die in dieser Arbeit verwendeten
 Datensätze enthalten nur flache Annotationen.
 Erweiterungen wie BIOES oder BILOU markieren zusätzlich das letzte Token
-eines Spans (E) und Spans aus einem einzigen Token (S).
+eines Spans (E bzw. L) und Spans aus einem einzigen Token (S bzw. U).
 Tabelle~\ref{tab:bio-beispiel} stellt IOB2 und IOB1 an einem Satz
 gegenüber.
 Die Daten des CoNLL-2003-Benchmarks liegen im IOB1-Schema vor
@@ -369,9 +369,10 @@ gewählt.
 Trainiert wird mit der Kreuzentropie zwischen dieser Verteilung und dem
 Referenzlabel, gemittelt über alle Tokens mit Label.
 Da die Positionskodierung von BERT auf 512 Positionen festgelegt ist,
-müssen längere Eingaben gekürzt oder geteilt werden; eine
-Längenbegrenzung gilt daher auch für die Encoder-Pipeline dieser Arbeit
-(Abschnitt~\ref{sec:datenvorverarbeitung}).
+müssen längere Eingaben gekürzt oder geteilt werden; auch DeBERTa-v3 ist
+auf Sequenzen von höchstens 512 Positionen vortrainiert~\cite{he2021debertav3},
+sodass eine Längenbegrenzung ebenso für die Encoder-Pipeline dieser Arbeit
+gilt (Abschnitt~\ref{sec:datenvorverarbeitung}).
 Auf CoNLL-2003 erreichte BERT-Large damit das Niveau der besten damaligen
 Systeme: einen F$_1$ von 92{,}8 gegenüber 93{,}1 für ein Verfahren mit
 kontextuellen Zeichenketten-Embeddings und 92{,}2 für
@@ -390,8 +391,9 @@ Encoders~\cite{he2020deberta}.
 Erstens trennt die \emph{disentangled Attention} Inhalt und Position:
 Jedes Token wird durch einen Inhaltsvektor und einen Vektor für seine
 relative Position zu den anderen Tokens repräsentiert, und der
-Relevanzwert zweier Tokens setzt sich aus einem Inhalt-zu-Inhalt-Term und
-zwei Inhalt-zu-Position-Termen zusammen.
+Relevanzwert zweier Tokens setzt sich aus einem Inhalt-zu-Inhalt-Term,
+einem Inhalt-zu-Position-Term und einem Position-zu-Inhalt-Term
+zusammen; ein Position-zu-Position-Term entfällt.
 Die Attention kann so getrennt lernen, welche Inhalte und welche
 Abstände zusammengehören.
 Zweitens bezieht der \emph{Enhanced Mask Decoder} die absoluten
@@ -680,7 +682,7 @@ Trägt man beide Achsen logarithmisch auf, ergibt sich eine Gerade mit
 der Steigung $-\alpha_N$.
 \textcite{kaplan2020scaling} zeigen für Transformer-Sprachmodelle, dass
 der Test-Loss einem solchen Gesetz folgt, wenn jeweils nur einer von drei
-Faktoren begrenzt: die Zahl der Parameter ohne Embeddings $N$ mit
+Faktoren begrenzend wirkt: die Zahl der Parameter ohne Embeddings $N$ mit
 $\alpha_N \approx 0{,}076$, der Datensatzumfang $D$ in Tokens mit
 $\alpha_D \approx 0{,}095$ und der optimal eingesetzte Rechenaufwand
 $C_{\min}$ mit $\alpha_C \approx 0{,}050$.
@@ -725,9 +727,9 @@ Als Beleg trainieren sie Chinchilla mit 70~Mrd. Parametern auf
 1{,}4~Billionen Tokens, das mit demselben Rechenbudget das viermal
 größere Gopher übertrifft~\cite{hoffmann2022training}.
 \textcite{bahri2024explaining} liefern eine theoretische Erklärung
-solcher Gesetze und unterscheiden Regime, in denen die Varianz der
-Schätzung begrenzt, von solchen, in denen die Auflösung der
-Datenmannigfaltigkeit durch das Modell begrenzt.
+solcher Gesetze und unterscheiden Regime, in denen der Verlust durch die
+Varianz der Schätzung begrenzt ist, von solchen, in denen ihn die
+Auflösung der Datenmannigfaltigkeit durch das Modell begrenzt.
 
 Für die vorliegende Arbeit sind zwei Grenzen dieser Befunde wesentlich.
 Erstens beschreiben die Gesetze den Verlust des Vortrainings von

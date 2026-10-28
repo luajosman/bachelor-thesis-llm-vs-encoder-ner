@@ -117,8 +117,8 @@ Drittens werden Erkennungsleistung und Ressourcenbedarf nur teilweise
 gemeinsam erfasst: \textcite{obeidat2025llm} messen Inferenzzeiten, aber
 keinen Speicherbedarf, \textcite{zhan2026generativeNER} berichten nur
 Trainingskosten.
-Viertens stammen die untersuchten LLMs aus einer einzigen Größenklasse
-zwischen 3 und 9~Mrd. Parametern, sodass offen bleibt, wie deutlich
+Viertens stammen die adaptierten LLMs der direkten Vergleiche aus einer
+einzigen Größenklasse zwischen 3 und 9~Mrd. Parametern, sodass offen bleibt, wie deutlich
 kleinere oder größere Modelle im Vergleich zu Encodern abschneiden.
 
 Die vorliegende Arbeit setzt an diesen Punkten an.
@@ -168,9 +168,10 @@ Die Arbeit leistet damit folgende Beiträge:
   \item eine Größenstaffelung über zwei Modellfamilien von rund 184~Mio.
   bis 27~Mrd. Parametern mit gemeinsamer Erfassung von
   Erkennungsleistung und Ressourcenbedarf;
-  \item ein JSON-Ausgabeformat, das Entitäten über Wortindizes adressiert
-  und ohne Constrained Decoding erzeugt wird, sodass die Formtreue der
-  LLM-Ausgaben eigens gemessen werden kann~\cite{semin2026spanLabeling};
+  \item die Übernahme eines indexbasierten JSON-Ausgabeformats nach
+  \textcite{semin2026spanLabeling} in eine trainierte Pipeline ohne
+  Constrained Decoding, sodass die Formtreue der LLM-Ausgaben eigens
+  gemessen werden kann;
   \item einen ergänzenden Transfertest auf CrossNER, der prüft, wie sich
   die jeweils größten auf MultiNERD angepassten Modelle beider Familien
   auf Wikipedia-Texte aus fünf anderen Domänen übertragen
@@ -178,7 +179,7 @@ Die Arbeit leistet damit folgende Beiträge:
   \item eine Absicherung der Befunde durch gepaarte
   Bootstrap-Konfidenzintervalle über die Testsätze und durch zwei
   Sensitivitätsanalysen zum Ausgabelimit der LLM-Inferenz, die den
-  wichtigsten Störfaktor des Vergleichs messen statt schätzen.
+  wichtigsten Störfaktor des Vergleichs quantifizieren.
 \end{itemize}
 Der Transfertest verwendet ausschließlich die Testsplits von CrossNER,
 ohne weiteres Training, und wertet nur die gemeinsamen Grobtypen Person,
@@ -284,9 +285,10 @@ Auswahl von Modellen und Daten sowie die Encoder- und die LLM-Pipeline
 einschließlich Prompt-Design, QLoRA-Konfiguration und Nachverarbeitung der
 generierten Ausgaben.
 Darauf folgen das Evaluationskonzept für Erkennungsleistung,
-Ressourcenbedarf und Formtreue, das Versuchsdesign des CrossNER-Transfertests
-und eine Zusammenfassung der bekannten Abweichungen vom idealisierten
-Versuchsdesign.
+Ressourcenbedarf und Formtreue einschließlich der Nachinferenz am
+Ausgabelimit, das Versuchsdesign des CrossNER-Transfertests mit seiner
+Sensitivitätsanalyse zum Ausgabelimit und eine Zusammenfassung der
+bekannten Abweichungen vom idealisierten Versuchsdesign.
 
 Kapitel~\ref{chap:ergebnisse} präsentiert die Erkennungsleistung aller
 Konfigurationen insgesamt und je Entitätstyp sowie die Formtreue der
@@ -299,4 +301,5 @@ Kapitel~\ref{chap:fazit} beantwortet die Forschungsfragen, erläutert die
 Grenzen der Untersuchung und skizziert weiterführende Arbeiten.
 Der Anhang dokumentiert die Reproduzierbarkeit der Läufe mit
 Konfigurationen, Codeständen, Modellrevisionen und nachrangigen
-Einstellungen sowie den vollständigen Zero-Shot-Prompt.
+Einstellungen sowie den vollständigen Zero-Shot-Prompt und ergänzt
+Ergebnistabellen je Seed, Entitätstyp und CrossNER-Domäne.
