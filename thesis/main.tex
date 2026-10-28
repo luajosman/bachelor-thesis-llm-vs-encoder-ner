@@ -133,7 +133,7 @@
 % =========================
 % Vorderteil
 % =========================
-\pagenumbering{arabic}
+\pagenumbering{roman}
 \pagestyle{empty}
 
 % Deckblatt
@@ -148,10 +148,7 @@
 
 % Abstract
 \input{frontmatter/abstract}
-\clearpage
-
-% Abkürzungsverzeichnis
-\input{frontmatter/abkuerzungsverzeichnis}
+\addcontentsline{toc}{chapter}{Abstract}
 \clearpage
 
 % Inhaltsverzeichnis
@@ -162,14 +159,22 @@
 \tableofcontents
 \clearpage
 \listoffigures
+\addcontentsline{toc}{chapter}{Abbildungsverzeichnis}
 \clearpage
 \listoftables
+\addcontentsline{toc}{chapter}{Tabellenverzeichnis}
 \clearpage
 \endgroup
+
+% Abkürzungsverzeichnis
+\input{frontmatter/abkuerzungsverzeichnis}
+\addcontentsline{toc}{chapter}{Abkürzungsverzeichnis}
+\clearpage
 
 % =========================
 % Hauptteil
 % =========================
+\pagenumbering{arabic}
 \pagestyle{plain}
 
 \input{chapters/01_einleitung}

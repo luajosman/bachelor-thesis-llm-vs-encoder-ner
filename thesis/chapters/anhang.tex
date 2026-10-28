@@ -173,7 +173,7 @@ Listing~\ref{lst:prompt-task}.
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true,
   breakatwhitespace=true, columns=fullflexible, keepspaces=true,
-  frame=single, captionpos=b,
+  frame=single, captionpos=b, float=htbp,
   postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
   caption={Systemnachricht des im Zero-Shot-Regime verwendeten
   Glossar-Profils.},
@@ -189,7 +189,7 @@ Token indices must refer exactly to the numbered token list shown by the user. C
 \label{app:ergebnistabellen}
 
 % Tabellenkörper werden von thesis/scripts/aggregate_results.py erzeugt
-% (thesis/generated/); die Beispiele in Tabelle A.6 stammen aus den
+% (thesis/generated/); die Beispiele in Tabelle A.8 (tab:app-beispiele) stammen aus den
 % Testvorhersagen der genannten Läufe (Seed 42).
 
 Tabelle~\ref{tab:app-seeds} nennt die Testwerte der einzelnen Seeds, aus
@@ -254,8 +254,9 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
   \centering
   \footnotesize
   \caption[Beispiele typischer Fehler je Fehlerklasse]{Beispiele typischer Fehler je Fehlerklasse
-  (Abschnitt~\ref{sec:erg-fehlertypen}) aus den Testvorhersagen mit
-  Seed~42. Referenz und Vorhersage als Span mit Typ; ein Strich bedeutet,
+  (Abschnitt~\ref{sec:erg-fehlertypen}) sowie der Formtreue-Kategorie
+  \enquote{Unbekannter Typ} (Abschnitt~\ref{sec:erg-formtreue}) aus den
+  Testvorhersagen mit Seed~42. Referenz und Vorhersage als Span mit Typ; ein Strich bedeutet,
   dass die Referenz bzw. die Vorhersage keinen Span an dieser Stelle
   enthält.}
   \label{tab:app-beispiele}

@@ -237,7 +237,8 @@ Positionsvektoren aus Sinus- und Kosinusfunktionen unterschiedlicher
 Frequenz.
 Spätere Modelle kodieren Positionen relativ, etwa als Abstand zweier
 Tokens in der Attention (Abschnitt~\ref{sec:encoder_ner}) oder durch
-Rotation der Query- und Key-Vektoren~\cite{qwen2026card27b}.
+Rotation der Query- und Key-Vektoren~\cite{su2024roformer}, wie sie auch
+Qwen3.5 verwendet~\cite{qwen2026card27b}.
 
 Eine Transformer-Schicht des Encoders besteht aus zwei Teilschichten: der
 Multi-Head-Self-Attention und einem positionsweisen Feed-Forward-Netz,
@@ -764,7 +765,8 @@ Die Daten sind manuell annotiert und im IOB-Schema nach Ramshaw und
 Marcus kodiert, also IOB1 (Abschnitt~\ref{sec:ner}); die Auswertung
 zählt eine Entität nur bei exakter Übereinstimmung als korrekt
 (Abschnitt~\ref{sec:evaluation}).
-CoNLL-2003 ist bis heute der am häufigsten verwendete NER-Benchmark.
+CoNLL-2003 ist bis heute der am häufigsten verwendete
+NER-Benchmark~\cite{li2018survey}.
 
 OntoNotes 5.0 ist ein manuell annotiertes Korpus mit Texten aus
 Nachrichten, Rundfunk, Gesprächen, Weblogs und Foren in Englisch,
@@ -781,11 +783,12 @@ die Wissensbasis BabelNet einem Typ zugeordnet, auf weitere Vorkommen
 verwirft, bei denen ein auf den Daten trainiertes Modell der Annotation
 widerspricht.
 Die offiziellen Trainings-, Validierungs- und Testsplits sind damit ein
-\emph{Silver Standard}: Ihre Labels stammen nicht von Menschen, und auch
+\emph{Silver Standard} (im Folgenden Silberreferenz): Ihre Labels stammen nicht von Menschen, und auch
 die Testreferenz kann Fehler enthalten.
 Zusätzlich stellen die Autoren eine kleine, manuell geprüfte englische
 Teststichprobe bereit, auf der sie die Annotationsqualität je Typ
-messen; PER, ORG, LOC, CEL, DIS, EVE und MEDIA gelten danach als
+messen; PER, ORG, LOC, CEL, DIS, EVE und MEDIA (Kürzel nach
+Tabelle~\ref{tab:datensplits}) gelten danach als
 zuverlässig annotiert, während ANIM, BIO, FOOD und PLANT häufig
 verwechselt oder nicht erkannt werden~\cite{tedeschi2022multinerd}.
 Der englische Teil mit rund 164\,000 Sätzen bildet die Hauptdatenbasis
@@ -932,7 +935,7 @@ nicht definiert und wird in der Praxis als null gewertet.
 Vergleich zweier Annotationen der positiven spezifischen Übereinstimmung
 entspricht.
 Ein F$_1$-Score misst damit die Übereinstimmung mit der Referenz, nicht
-die Richtigkeit an sich; bei einem Silver Standard wie MultiNERD ist
+die Richtigkeit an sich; bei einer Silberreferenz wie MultiNERD ist
 diese Lesart zu berücksichtigen.
 
 Neben der Erkennungsleistung erfasst diese Arbeit den Ressourcenbedarf.

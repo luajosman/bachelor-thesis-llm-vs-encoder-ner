@@ -200,6 +200,13 @@ Qwen3.5 baut auf der Architektur- und Trainingstradition von Qwen2.5 und
 Qwen3 auf \cite{qwen2024qwen25,qwen2025qwen3,qwen2026qwen35blog}; die
 Modelle sind als offene Gewichte unter der Apache-2.0-Lizenz verfügbar
 und bieten mehrere Größenstufen innerhalb einer Familie.
+Für die Familie sprachen neben der Lizenz die dichte Größenleiter mit
+gemeinsamem Tokenizer und Chat-Template, sodass Größeneffekte nicht mit
+Architekturwechseln vermischt werden; die drei Stufen wurden so gewählt,
+dass sie den in der Literatur untersuchten Bereich von 3 bis 9~Mrd.
+Parametern (Abschnitt~\ref{sec:research_gap}) nach unten und oben
+verlassen und das Training mit einer einzelnen GPU je Lauf möglich
+bleibt.
 Verwendet werden die veröffentlichten Checkpoints, die laut
 Modellbeschreibung vor- und nachtrainiert sind (Pre- und Post-Training)
 und damit keine reinen Pre-Training-Checkpoints
@@ -305,7 +312,7 @@ Die Autoren stellen zwar zusätzlich einen kleinen, manuell annotierten
 Testdatensatz vor; die hier verwendeten offiziellen Splits umfassen
 zusammen jedoch 164\,144 Sätze und damit den automatisch erzeugten
 englischen Datensatz.
-Auch die Referenz des Testsplits ist somit ein Silver Standard.
+Auch die Referenz des Testsplits ist somit eine Silberreferenz.
 Laut den Autoren gelten PER, ORG, LOC, CEL, DIS, EVE und MEDIA als
 besonders zuverlässig annotiert, während andere Klassen teils stark
 verrauscht sind \cite{tedeschi2022multinerd}.
@@ -619,6 +626,10 @@ Antworten waren leere Arrays).
 Zugleich wurde der Prompt um ausgeschriebene Typbezeichnungen und eine
 Definition benannter Entitäten erweitert, da die Abkürzungen des
 Inventars ohne Training nicht selbsterklärend sind.
+Decoding-Einstellung und Prompt-Änderung wurden damit gleichzeitig
+eingeführt; ihre Einzelbeiträge sind nicht trennbar, und die Übertragung
+der Sampling-Einstellung auf das 4B- und das 27B-Modell wurde nicht
+eigens geprüft (Abschnitt~\ref{sec:limitationen}).
 Die Ergebnisse beruhen auf jeweils einer Stichprobe aus der
 Ausgabeverteilung und zeigen, wie weit die allgemeinen Fähigkeiten der
 nachtrainierten Checkpoints ohne NER-spezifische Anpassung tragen
@@ -650,6 +661,12 @@ Verlust dient nur der Überwachung.
 Verwendet wird der Adapter der Epoche mit dem höchsten Wert, bei
 Gleichstand der frühere; in acht der neun Läufe war dies die dritte, in
 einem Lauf (4B, Seed~42) die zweite Epoche.
+Die Beschränkung auf 200 Sätze hält die generative Validierung je Epoche bei
+Batchgröße~1 im Bereich von Minuten (beim 27B-Modell rund 18 Minuten
+gegenüber rund 25 Stunden für den vollständigen Split); sie macht die
+Auswahl aber von einem kleinen, nicht zufällig gezogenen Ausschnitt
+abhängig, was in acht der neun Läufe folgenlos blieb, weil ohnehin die
+letzte Epoche gewählt wurde (Abschnitt~\ref{sec:limitationen}).
 Für die Testinferenz wird der Adapter ohne Merge auf das
 4-Bit-quantisierte Basismodell aufgesetzt und greedy decodiert.
 
@@ -1254,9 +1271,9 @@ wiederholt die Aggregation ohne die 21 Sätze.
 Bei längeren Sätzen mit vielen Entitäten kann die JSON-Antwort das Limit
 von 256 Ausgabetokens überschreiten; sie wird dann abgeschnitten, ist
 nicht parsebar und zählt als leere Vorhersage.
-Die Analyse der nicht parsebaren Antworten deutet darauf hin, dass diese
-ausnahmslos auf dieses Limit zurückgehen; Recall und F$_1$ des LLM
-sind dadurch tendenziell unterschätzt.
+Ob die nicht parsebaren Antworten ausnahmslos auf dieses Limit
+zurückgehen und wie stark Recall und F$_1$ des LLM dadurch unterschätzt
+werden, prüft Abschnitt~\ref{sec:erg-crossner}.
 In einer Vorstudie wurde die Inferenz des 27B-Modells (Seed~42) mit
 einem Limit von 1\,024 Ausgabetokens auf den jeweils ersten 25 Sätzen der
 Testsplits von Musik und Politik wiederholt und auf denselben Sätzen mit
@@ -1292,8 +1309,8 @@ Limitationsdiskussion im Fazit berücksichtigt.
     \toprule
     \textbf{Aspekt} & \textbf{Abweichung} & \textbf{Abschnitt} \\
     \midrule
-    Referenz & Alle MultiNERD-Splits automatisch annotiert (Silver
-      Standard) & \ref{sec:datenauswahl} \\
+    Referenz & Alle MultiNERD-Splits automatisch annotiert
+      (Silberreferenz) & \ref{sec:datenauswahl} \\
     Hardware & Drei GPU-Typen; CrossNER-Inferenz von Qwen3.5-27B auf
       anderem GPU-Typ als MultiNERD & \ref{sec:rechenumgebung},
       \ref{sec:crossner} \\
@@ -1315,6 +1332,9 @@ Limitationsdiskussion im Fazit berücksichtigt.
       FP32 statt BF16 & \ref{sec:lora-konfiguration} \\
     Hyperparameter & Größenabhängig gewählt, kein Suchlauf (Encoder und
       LLM) & \ref{sec:encoder-pipeline}, \ref{sec:lora-konfiguration} \\
+    Checkpoint-Auswahl & LLM-Adapter nach den ersten 200
+      Validierungssätzen, Encoder nach dem vollständigen Split &
+      \ref{sec:llm-pipeline}, \ref{sec:encoder-pipeline} \\
     Längengrenzen & 256 Subwort-Tokens (Encoder), 1\,024 Tokens (SFT),
       256 Ausgabetokens (LLM-Inferenz; Sensitivitätsanalysen mit 1\,024
       Tokens) & \ref{sec:datenvorverarbeitung},
