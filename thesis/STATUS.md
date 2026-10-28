@@ -31,9 +31,22 @@ Der ausführliche Plan mit Bewertung je Kapitel, Audit-Listen und beiden Zeitpl�
 5. Frontmatter: Titelwortlaut, Überschrift „Abstract“ vs. „Zusammenfassung“, KI-Angabe bestätigen, Datum/Unterschrift bei Abgabe.
 6. Betreuer-Feedback (Entwurf bis 8.11. bzw. 11.11. versenden), externes Korrekturlesen, Umfang (106 Seiten) mit Fachgebiet klären.
 
-## Bewertung (28.10., 1–10, 10 = abgabefertig)
+## Bewertung (28.10. abends, nach vier Zweitgutachten in `thesis/review/`; 1–10, 10 = abgabefertig)
 
-Frontmatter 7 (war 3; Abstract/Erklärung Entwurf, Titel offen) · Kap. 1: 8 · Kap. 2: 9 · Kap. 3: 8 · Kap. 4: 8 (war 7; 1024-Methodik fehlt noch) · Kap. 5: 7 (war 6; Audit-Fehler behoben, 1024-Ergebnisse und eigene Sprache offen) · Kap. 6: 7 · Anhang 8 · Gesamt 7–8.
+| Teil | Note | Hauptgründe |
+|---|---|---|
+| Frontmatter | 7 | Abstract fertig bis auf den Satz zum Ausgabelimit; Deckblatt ohne Datum/Institut; Erklärung nicht 1:1 Fak.-IV-Vorlage; Vorspann arabisch paginiert |
+| 1 Einleitung | 8 | sauber; Doppelungen 1.2/1.3, DFKI-Absatz, „vier Fragen“ vs. zwei Lücken in 3.5 |
+| 2 Grundlagen | 8 | drei Sachfehler korrigiert (28.10.); offen: RoPE-Primärquelle, Typkürzel-Glosse, Abb. 2.3/2.4, 2.7 kürzen |
+| 3 Verwandte Arbeiten | 8 | zwei Überzeichnungen korrigiert; offen: Suchstrategie, InstructUIE/GNER, Redundanz zu Kap. 4, Unterabschnitte in 3.2 |
+| 4 Methodik | 8 | Widersprüche zu Kap. 3 korrigiert; offen: Begründung Ausgabelimit 256, Checkpoint-Wahl auf 200 Sätzen, Modellwahl, Zero-Shot-Konfundierung, Länge |
+| 5 Ergebnisse und Diskussion | 6 | sechs Tabellenwidersprüche korrigiert; offen: Messwerte statt Hochrechnung, Trennung Darstellung/Interpretation, FF2 in 5.7.3, Redundanz zu Kap. 6, Tabellen-/Abbildungsformalia, eigene Sprache |
+| 6 Fazit und Ausblick | 7 | Bootstrap und vier Präzisionsfehler korrigiert; offen: Messwerte, Redundanz zu 5.7, Limitationen nach Wirkung ordnen, Paragraph-Rahmen auflösen, eigene Sprache |
+| Anhang | 8 | offen: Repository-Fundort (URL/DOI), Listing A.1 ungebrochen, Labels aus dem Haupttext, Tab. A.8/A.3/A.5/A.7 |
+| Literatur | 8 | offen: ICLR-Fassungen für LoRA/DeBERTa, Preprint-Kennzeichnung, CoNLL-DOI, ungenutzte Einträge |
+| **Gesamt** | **7** | Zur 1,0: Messwerte einbauen, Struktur (Redundanz, Limitationen, Darstellung/Interpretation), Begründungslücken Kap. 3/4, Formalia, eigene Sprache in 5/6, Betreuer-Schleife |
+
+Detaillierte Mängellisten mit Zeilennummern (Stand 99d9a56) und Stilstellen für das Umschreiben: `thesis/review/01_…` bis `04_…`.
 
 ## Zeitplan (Kurzform; Details im Plan)
 
