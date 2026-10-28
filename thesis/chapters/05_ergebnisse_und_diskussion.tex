@@ -382,6 +382,49 @@ ergab 16\,052 leere Arrays bei 16\,454 Antworten und einen F$_1$ von
 0,5 Punkten; das Sampling hebt den Wert des kleinsten Modells also auf
 6,2, ändert an seiner Unbrauchbarkeit im Zero-Shot-Regime aber nichts.
 
+
+\paragraph{Nachinferenz mit 1\,024 Tokens.}
+Tabelle~\ref{tab:limit-multinerd} beziffert, was die abgeschnittenen
+Antworten kosten.
+Werden nur die 62 bis 72 nicht parsebaren Sätze je Lauf mit einem Limit
+von 1\,024 Tokens neu generiert (Abschnitt~\ref{sec:nachinferenz}), endet
+jede dieser Antworten mit dem Ende-Token nach im Mittel 337 Tokens, keine
+erreicht das neue Limit, und alle sind parsebar.
+Auf den neu generierten Sätzen erreichen die Modelle einen F$_1$ von 90,5
+(0.8B), 91,2 (4B) und 93,0 (27B) bei einem Recall von 97 bis 98 und einer
+Precision von 85 bis 88 Punkten.
+Über den gesamten Testsplit steigt der Mikro-F$_1$ dadurch um 1,12, 1,14
+und 1,16 Punkte und der Recall um 2,5 Punkte, während die Precision um 0,2
+bis 0,3 Punkte sinkt; der Makro-F$_1$ steigt um 0,5 bis 0,7 Punkte.
+Die Auslassungsrate des 27B-Modells fällt von 5,1 auf 2,5\,\% und liegt
+damit auf dem Niveau der Encoder (Abschnitt~\ref{sec:erg-fehlertypen}).
+Die Annahme, dass alle übrigen Antworten unverändert bleiben, hält der
+Prüfung stand: In 594 von 604 nachgenerierten Sätzen stimmen die ersten
+256 erzeugten Tokens mit der gespeicherten Antwort überein, und die fünf
+Kontrollsätze des Vorlaufs wurden byte-gleich reproduziert; die zehn
+Abweichungen (1,7\,\%) sind mutmaßlich numerische Effekte des anderen
+GPU-Typs bei Beinahe-Gleichständen einzelner Tokens.
+Die Nachinferenz der langen Sätze dauerte je Satz 11,5 (0.8B), 15,4 (4B)
+und 31,6~s (27B), das Drei- bis Sechsfache der mittleren Latenz, weil die
+Generierungsdauer mit der Antwortlänge wächst.
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption[Nachinferenz der abgeschnittenen Antworten mit 1\,024 Tokens]{Nachinferenz
+  der am Limit von 256 Tokens abgeschnittenen Antworten mit 1\,024 Tokens
+  (Abschnitt~\ref{sec:nachinferenz}): strikte Werte über alle 16\,454
+  Testsätze in Punkten, Mittel über drei Seeds (F$_1$ und $\Delta$F$_1$
+  mit Standardabweichung).
+  Neu erzeugt: je Lauf neu generierte Sätze (Mittel); weiterhin
+  abgeschnitten: davon am Limit von 1\,024 Tokens; Auslassungen:
+  übersehene Referenzentitäten in Prozent
+  (Abschnitt~\ref{sec:erg-fehlertypen}).}
+  \label{tab:limit-multinerd}
+  \setlength{\tabcolsep}{3pt}
+  \input{generated/tab-limit-multinerd}
+\end{table}
+
 \section{Einfluss der Modellgröße auf die NER-Leistung}
 \label{sec:erg-groesse}
 
@@ -703,6 +746,8 @@ Antwort am Ausgabelimit abgeschnitten wurde
 (Abschnitt~\ref{sec:erg-formtreue}); auf den übrigen Sätzen liegt der
 Recall des 27B-Modells bei 96,3 und der des Encoders auf denselben Sätzen
 je nach Seed bei 96,2 bis 96,5.
+Mit der Nachinferenz dieser Sätze (Tabelle~\ref{tab:limit-multinerd})
+sinkt die Auslassungsrate der QLoRA-Modelle auf 2,5 bis 3,1\,\%.
 Die Zahl der Zusätze ist bei bestem Encoder und bestem LLM nahezu gleich
 (921 gegenüber 931).
 Das von \textcite{zhan2026generativeNER} auf CoNLL-2003 beschriebene
@@ -873,20 +918,22 @@ Recall zurück, und der größte Teil des Recall-Rückstands von 2,6 Punkten
 entfällt auf die 65 Antworten, die am Limit von 256 Ausgabetokens
 abgeschnitten wurden und 2,6\,\% der Referenzentitäten enthalten
 (Abschnitt~\ref{sec:erg-fehlertypen}).
-Auf den übrigen Sätzen liegt der Recall des 27B-Modells bei 96,3 und
-damit höchstens 0,3 Punkte unter dem des Encoders auf denselben Sätzen
-(96,2 bis 96,5 je Seed); rechnet man die abgeschnittenen Sätze mit diesem
-Recall hoch, ergäbe sich ein F$_1$ von 95,7 gegenüber 95,8, also ein
-Abstand von rund einem Zehntelpunkt, der genau an der Grenze des
-Kriteriums aus Abschnitt~\ref{sec:performanzmetriken} läge.
-Diese Hochrechnung ist eine Schätzung, kein Messwert; sie wird von der
-Vorstudie auf CrossNER gestützt, in der ein höheres Limit den Recall auf
-denselben Sätzen von 26 bzw. 65 auf rund 90 Punkte hob
-(Tabelle~\ref{tab:limit}).
+Die Nachinferenz dieser Sätze mit 1\,024 Tokens
+(Tabelle~\ref{tab:limit-multinerd}) macht daraus einen Messwert: Mit
+vollständigen Antworten erreicht das 27B-Modell 95,6 Punkte und liegt
+damit 0,2 Punkte hinter DeBERTa-v3-large und 0,1 Punkte vor
+DeBERTa-v3-base.
+Der Abstand zum großen Encoder bleibt nach dem Kriterium aus
+Abschnitt~\ref{sec:performanzmetriken} und im Bootstrap-Intervall (0,02
+bis 0,33) unterscheidbar, der zum kleinen Encoder ist es im Bootstrap
+nicht mehr (Tabelle~\ref{tab:ci}); im Makro-F$_1$ liegt das 27B-Modell
+mit 1\,024 Tokens unterscheidbar vor DeBERTa-v3-base (Intervall 0,61 bis
+4,18) und gleichauf mit DeBERTa-v3-large.
+Das 4B- und das 0.8B-Modell bleiben auch mit 1\,024 Tokens 0,4 bzw. 1,2
+Punkte hinter DeBERTa-v3-base.
 Das Ausgabelimit ist eine Einstellung der Pipeline, keine Eigenschaft
-der Modellklasse; der gemessene Abstand von 1,3 Punkten ist deshalb als
-Obergrenze des Klassenunterschieds unter den hier gewählten Bedingungen
-zu lesen.
+der Modellklasse: Von den 1,3 Punkten Abstand unter dem registrierten
+Protokoll entfallen 1,2 auf das Limit und 0,2 auf die Modellklasse.
 
 Unabhängig von der Richtung ist der Abstand zwischen den trainierten
 Klassen klein im Verhältnis zum Abstand zwischen den Regimen: Die
@@ -953,10 +1000,9 @@ berichtete Befund, dass feinjustierte Modelle JSON fast immer parsebar
 ausgeben, auch ohne erzwungene Formatierung.
 Die verbleibenden Parse-Fehler gehen ausschließlich auf das
 Ausgabelimit zurück, nicht auf das Format; sie sind eine Eigenschaft der
-Pipeline-Einstellung und würden mit einem höheren Limit weitgehend
-entfallen, wie die Vorstudie auf CrossNER nahelegt
-(Abschnitt~\ref{sec:erg-crossner}); die Nachinferenz mit 1\,024 Tokens
-(Abschnitt~\ref{sec:nachinferenz}) prüft dies auf dem Testsplit.
+Pipeline-Einstellung und entfallen mit einem Limit von 1\,024 Tokens
+vollständig: Keine der nachgenerierten Antworten erreicht das höhere
+Limit, alle sind parsebar (Tabelle~\ref{tab:limit-multinerd}).
 
 Im Zero-Shot-Regime ist die Formtreue deutlich schwächer, und der
 Flaschenhals liegt nicht in der JSON-Syntax, sondern in den Konventionen
@@ -1117,12 +1163,17 @@ darunter beide Vergleiche der Encoder mit dem 27B-Modell und der
 Vergleich der beiden Encoder; nur die Größenschritte innerhalb der
 LLM-Familie und der Vergleich von DeBERTa-v3-base mit dem 0.8B-Modell
 sind auch im Makro-F$_1$ belastbar.
+Für die Nachinferenz mit 1\,024 Tokens bestätigen die Intervalle die
+Lesart aus Abschnitt~\ref{sec:disk-leistung}: Der Abstand zwischen
+DeBERTa-v3-large und dem 27B-Modell schrumpft auf 0,18 Punkte (Intervall
+0,02 bis 0,33), der Abstand zu DeBERTa-v3-base kehrt sich um und ist mit
+0,14 Punkten (Intervall $-$0,02 bis 0,30) nicht mehr unterscheidbar.
 Die Intervalle der einzelnen Konfigurationen sind beim Makro-F$_1$ mit
 vier bis fünf Punkten Breite fünf- bis zehnmal so breit wie beim
 Mikro-F$_1$, weil die seltenen Typen auf wenigen Sätzen beruhen.
-Beide Streuungsquellen führen damit zur gleichen Lesart: Der
-Mikro-Vorsprung der Encoder ist belastbar, der Makro-Gleichstand
-ebenfalls.
+Beide Streuungsquellen führen damit zur gleichen Lesart: Unter dem
+registrierten Limit von 256 Tokens ist der Mikro-Vorsprung der Encoder
+belastbar, der Makro-Gleichstand ebenfalls.
 
 \begin{table}[htbp]
   \centering
@@ -1135,7 +1186,7 @@ ebenfalls.
   Werte in Punkten.}
   \label{tab:ci}
   \scriptsize
-  \setlength{\tabcolsep}{3pt}
+  \setlength{\tabcolsep}{2pt}
   \input{generated/tab-ci}
 \end{table}
 Belastbar sind der Abstand zwischen Zero-Shot- und QLoRA-Regime, der

@@ -22,7 +22,9 @@ Transfertest auf CrossNER ergänzt den Vergleich.
 Der beste Encoder erreicht einen Mikro-F$_1$ von 95,8 Punkten, das beste
 LLM 94,5; der Abstand liegt weit über der Streuung der Seeds und stammt fast
 ausschließlich aus dem Recall, dessen Rückstand überwiegend auf Antworten
-entfällt, die am Ausgabelimit von 256 Tokens abgeschnitten wurden.
+entfällt, die am Ausgabelimit von 256 Tokens abgeschnitten wurden;
+werden diese Antworten mit 1\,024 Tokens nachgeneriert, schrumpft der
+Abstand auf 0,2 Punkte.
 Im Makro-F$_1$ sind beide Klassen gleichauf.
 Ohne Anpassung erreichen die LLMs nur 6,2 bis 69,4 Punkte; die Anpassung
 wirkt damit stärker als Modellklasse und Modellgröße.

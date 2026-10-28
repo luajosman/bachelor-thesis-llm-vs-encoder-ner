@@ -39,10 +39,14 @@ Modellgröße innerhalb einer Familie (0,3 Punkte bei den Encodern, 1,3
 Punkte bei den LLMs) und Modellklasse (1,0 bis 2,7 Punkte zwischen den
 trainierten Konfigurationen) wirken nach der Anpassung um eine
 Größenordnung schwächer.
-Der Vorsprung des Encoders stammt nahezu vollständig aus dem Recall; der
-größte Teil des Recall-Rückstands des LLM geht auf Antworten zurück, die
-am Limit von 256 Ausgabetokens abgeschnitten wurden, sodass der gemessene
-Abstand eine Obergrenze des Klassenunterschieds darstellt.
+Der Vorsprung des Encoders stammt nahezu vollständig aus dem Recall und
+dort aus den Antworten, die am Limit von 256 Ausgabetokens abgeschnitten
+wurden: Mit nachgenerierten Antworten (1\,024 Tokens) erreicht das
+27B-Modell 95,6 Punkte, 0,2 hinter DeBERTa-v3-large und 0,1 vor
+DeBERTa-v3-base; nur der Abstand zum großen Encoder bleibt
+unterscheidbar.
+Von den 1,3 Punkten unter dem registrierten Protokoll gehen 1,2 auf das
+Limit und 0,2 auf die Modellklasse zurück.
 Bei den drei häufigen Typen PER, ORG und LOC unterscheiden sich die
 trainierten Konfigurationen um höchstens 1,8 Punkte; der Encoder liegt
 bei ANIM, FOOD, PLANT, DIS und EVE vorn, das LLM bei den seltenen Typen
@@ -154,11 +158,13 @@ Der Trainingsverlust der LLMs umfasst den konstanten Prompt, sodass ein
 Teil des Lernsignals auf dessen Reproduktion entfällt.
 Das Limit von 256 Ausgabetokens schließlich benachteiligt die LLMs
 messbar: Auf MultiNERD liegen 2,6\,\% der Referenzentitäten in
-abgeschnittenen Antworten, auf CrossNER sind 10\,\% der Antworten
-betroffen, und die Vorstudie auf 50 Sätzen zeigt, dass ein höheres Limit
-den Recall dort auf rund 90 Punkte hebt.
-Der gemessene Abstand zwischen den Modellklassen ist deshalb eine
-Obergrenze.
+abgeschnittenen Antworten, und die Nachinferenz mit 1\,024 Tokens hebt
+den Mikro-F$_1$ aller drei Größen um 1,1 bis 1,2 Punkte
+(Abschnitt~\ref{sec:erg-formtreue}); auf CrossNER sind 10\,\% der
+Antworten betroffen (Abschnitt~\ref{sec:erg-crossner}).
+Die Hauptwerte bei 256 Tokens sind deshalb als Werte des registrierten
+Protokolls zu lesen; die Werte mit 1\,024 Tokens beziffern den
+Klassenunterschied ohne diesen Störfaktor.
 
 \paragraph{Zero-Shot-Regime.}
 Die Zero-Shot-Ergebnisse beruhen auf je einem Lauf mit Sampling bei
@@ -211,14 +217,14 @@ Aus den Ergebnissen und ihren Grenzen ergeben sich mehrere
 Anschlussfragen.
 
 \paragraph{Ausgabelimit.}
-Die naheliegendste Ergänzung ist eine Wiederholung der LLM-Inferenz mit
-einem Ausgabelimit von 1\,024 Tokens auf dem vollständigen Testsplit und
-allen Seeds.
-Die Hochrechnung in Abschnitt~\ref{sec:disk-leistung} und die
-Sensitivitätsanalyse auf CrossNER lassen erwarten, dass der Abstand zum
-Encoder damit auf wenige Zehntelpunkte schrumpft; ob er verschwindet,
-ist eine offene empirische Frage, deren Beantwortung nur Rechenzeit
-kostet.
+Die Nachinferenz zeigt, dass ein Limit von 1\,024 Tokens für MultiNERD
+ausreicht; ob längere Dokumente oder Datensätze mit mehr Entitäten je
+Satz andere Abbruchmechanismen auslösen, etwa Wiederholungsschleifen,
+bleibt offen.
+Für die Zero-Shot-Läufe wurde das Limit nicht variiert; dort liegen 4
+bis 16\,\% der Referenzentitäten in nicht parsebaren Antworten
+(Abschnitt~\ref{sec:erg-formtreue}), sodass ein höheres Limit auch diese
+Werte anheben dürfte.
 
 \paragraph{Gold-Referenz.}
 Eine manuell geprüfte Teststichprobe, etwa im Umfang der 1\,000 Sätze,

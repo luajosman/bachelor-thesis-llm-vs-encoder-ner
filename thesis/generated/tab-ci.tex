@@ -10,6 +10,9 @@
     Qwen3.5-4B (QLoRA) $-$ Qwen3.5-0.8B (QLoRA) & $+$0,82 & [$+$0,66; $+$0,98] & $+$1,98 & [$+$0,50; $+$3,67] \\
     DeBERTa-v3-base $-$ Qwen3.5-0.8B (QLoRA) & $+$2,36 & [$+$1,99; $+$2,72] & $+$2,81 & [$+$0,80; $+$4,82] \\
     Qwen3.5-4B (QLoRA) $-$ DeBERTa-v3-base & $-$1,54 & [$-$1,89; $-$1,18] & $-$0,83 & [$-$2,32; $+$0,80]$^{\dagger}$ \\
+    DeBERTa-v3-large $-$ Qwen3.5-27B (QLoRA, Limit 1\,024) & $+$0,18 & [$+$0,02; $+$0,33] & $-$0,81 & [$-$2,77; $+$0,65]$^{\dagger}$ \\
+    Qwen3.5-27B (QLoRA, Limit 1\,024) $-$ DeBERTa-v3-base & $+$0,14 & [$-$0,02; $+$0,30]$^{\dagger}$ & $+$2,12 & [$+$0,61; $+$4,18] \\
+    DeBERTa-v3-base $-$ Qwen3.5-0.8B (QLoRA, Limit 1\,024) & $+$1,24 & [$+$1,05; $+$1,43] & $+$2,17 & [$+$0,20; $+$4,22] \\
     \midrule
     \textbf{Konfiguration} & \textbf{Mikro-F$_1$} & \textbf{95\,\%-KI} &
       \textbf{Makro-F$_1$} & \textbf{95\,\%-KI} \\
@@ -22,6 +25,9 @@
     Qwen3.5-0.8B (QLoRA) & 93,14 & [92,73; 93,57] & 82,58 & [79,49; 84,63] \\
     Qwen3.5-4B (QLoRA) & 93,97 & [93,57; 94,36] & 84,56 & [81,55; 86,54] \\
     Qwen3.5-27B (QLoRA) & 94,48 & [94,10; 94,88] & 86,85 & [84,67; 88,57] \\
+    Qwen3.5-0.8B (QLoRA, Limit 1\,024) & 94,27 & [93,95; 94,57] & 83,21 & [80,14; 85,26] \\
+    Qwen3.5-4B (QLoRA, Limit 1\,024) & 95,11 & [94,83; 95,39] & 85,06 & [81,99; 87,05] \\
+    Qwen3.5-27B (QLoRA, Limit 1\,024) & 95,64 & [95,38; 95,90] & 87,50 & [85,38; 89,17] \\
     \bottomrule
     \multicolumn{5}{@{}l}{\scriptsize $^{\dagger}$ Intervall schlie\ss{}t 0 ein. Satz-Bootstrap, $B = 2\,000$, gleiche Stichprobe f\"ur} \\
     \multicolumn{5}{@{}l}{\scriptsize alle L\"aufe, seedgleiche Paare; Konfigurationen: Intervall des Seed-Mittels.} \\
