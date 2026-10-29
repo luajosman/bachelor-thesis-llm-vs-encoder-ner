@@ -41,8 +41,9 @@ Abschnitt~\ref{sec:erg-diskussion} ordnet die Befunde in die verwandten
 Arbeiten ein, leitet daraus die Empfehlungen zu FF3 ab und benennt,
 welche Unterschiede angesichts der Streuung belastbar sind.
 Die Abschnitte~\ref{sec:erg-leistung} bis~\ref{sec:erg-crossner}
-beschränken sich auf die Darstellung der Messwerte; Interpretationen
-folgen in Abschnitt~\ref{sec:erg-diskussion}.
+beschränken sich weitgehend auf die Darstellung der Messwerte;
+Einordnungen stehen dort nur, wo sie zum Lesen einer Tabelle nötig sind,
+die Interpretation folgt in Abschnitt~\ref{sec:erg-diskussion}.
 
 Für alle Kennzahlen gelten die Festlegungen aus
 Abschnitt~\ref{sec:evaluationskonzept}.
@@ -618,10 +619,6 @@ Im Zero-Shot-Regime mit BF16-Gewichten liegt der Bedarf bei 1,5, 8,2 und
 allem auf die 4-Bit-Quantisierung des Basismodells zurück, deren
 Einsparung wegen nicht quantisierter Komponenten, Aktivierungen und
 KV-Cache unter dem Faktor vier bleibt.
-Für die praktische Modellwahl folgt daraus: Beide Encoder, die beiden
-kleineren QLoRA-Modelle und das 4B-Modell im Zero-Shot-Regime passen auf
-eine GPU mit 16~GB, das 27B-Modell im QLoRA-Regime benötigt eine GPU mit
-mindestens 24~GB, das 27B-Modell in BF16 eine mit mindestens 64~GB.
 
 \paragraph{Trade-off.}
 Abbildung~\ref{fig:tradeoff} stellt den Mikro-F$_1$ der Latenz und dem
@@ -750,10 +747,6 @@ Mit der Nachinferenz dieser Sätze (Tabelle~\ref{tab:limit-multinerd})
 sinkt die Auslassungsrate der QLoRA-Modelle auf 2,5 bis 3,1\,\%.
 Die Zahl der Zusätze ist bei bestem Encoder und bestem LLM nahezu gleich
 (921 gegenüber 931).
-Das von \textcite{zhan2026generativeNER} auf CoNLL-2003 beschriebene
-Muster, nach dem der Encoder vor allem übersieht und das LLM vor allem
-falsche Typen vergibt, zeigt sich hier also nicht: Das LLM übersieht
-mehr, vergibt aber nicht häufiger falsche Typen.
 
 Die Typfehler konzentrieren sich bei allen trainierten Modellen auf
 dieselben Paare.
@@ -963,6 +956,11 @@ der 93{,}73 (UniNER-7B) und 91{,}25 (BERT-base), die
 \textcite{zhou2024universalner} auf einer MultiNERD-Variante mit
 eigener Datenaufbereitung berichten; auch dort ist der Abstand zwischen
 LLM und Encoder klein, allerdings mit umgekehrter Richtung.
+Das von \textcite{zhan2026generativeNER} auf CoNLL-2003 beschriebene
+Fehlermuster, nach dem der Encoder vor allem übersieht und das LLM vor
+allem falsche Typen vergibt, zeigt sich hier nicht: Das LLM übersieht
+mehr, vergibt aber nicht häufiger falsche Typen
+(Abschnitt~\ref{sec:erg-fehlertypen}).
 Da alle Werte dieser Arbeit die Übereinstimmung mit einer
 Silberreferenz messen (Abschnitt~\ref{sec:datenauswahl}), bleibt offen,
 ob die Unterschiede bei den verrauschten Typen ANIM, BIO, FOOD und PLANT
@@ -1055,6 +1053,15 @@ Bei den LLMs im QLoRA-Regime bringt der Schritt von 0.8B auf 4B 0,8
 Punkte und der von 4B auf 27B 0,5 Punkte; die Zugewinne nehmen mit der
 Größe ab, obwohl die Parameterzahl je Schritt um das Fünf- bis
 Sechsfache wächst.
+Den Zugewinnen stehen Ressourcen gegenüber, die innerhalb der
+Encoder-Familie moderat wachsen (Latenz 8,9 auf 16,5~ms, Speicher 0,7 auf
+1,7~GB, Training 0,4 auf 1,2~h) und innerhalb der LLM-Familie
+unterschiedlich steil: Die Latenz je Satz steigt von 1\,876 auf
+5\,505~ms, also auf das Dreifache bei 36-facher Parameterzahl, der
+Inferenzspeicher von 0,9 auf 18,7~GB und die Trainingsdauer von 12 auf
+266 Stunden; das 4B-Modell fällt mit 62,9 Stunden auf der A100 aus der
+Reihe, und Latenz wie Trainingsdauer sind durch GPU-Typ und Clusterlast
+überlagert (Tabelle~\ref{tab:effizienz}).
 Das Muster entspricht den Beobachtungen bei GoLLIE und UniversalNER,
 wo größere Backbones nur wenig hinzugewinnen und der Gewinn durch die
 Anpassung den Gewinn durch die Größe übersteigt
@@ -1120,9 +1127,12 @@ erneutes Training per Prompt zu ändern, oder ein Umfeld, in dem das
 LLM ohnehin für andere Aufgaben bereitsteht.
 Dann ist Qwen3.5-27B mit QLoRA die beste Konfiguration, sofern 24~GB
 GPU-Speicher, Latenzen von rund 5,5 Sekunden je Satz und ein
-Ausgabelimit vorgesehen sind, das lange Antworten nicht abschneidet; das 4B-Modell wird von
-beiden Encodern dominiert und bietet gegenüber dem 27B-Modell nur den
-Speichervorteil.
+Ausgabelimit vorgesehen sind, das lange Antworten nicht abschneidet; das
+4B-Modell wird von beiden Encodern dominiert und bietet gegenüber dem
+27B-Modell nur den Speichervorteil.
+In Speicherklassen ausgedrückt passen beide Encoder, die beiden kleineren
+QLoRA-Modelle und das 4B-Modell im Zero-Shot-Regime auf eine GPU mit
+16~GB, das 27B-Modell im QLoRA-Regime braucht 24~GB, in BF16 64~GB.
 (3) Das Zero-Shot-Regime ist bei 15 Typen nicht konkurrenzfähig und nur
 dann sinnvoll, wenn keine annotierten Daten vorliegen; dann ist
 allein das 27B-Modell mit 69,4 Punkten und 50,7~GB brauchbar, und der
