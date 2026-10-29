@@ -844,36 +844,43 @@ für Qwen3.5-27B (Median 13\,763~ms; das 2,7-Fache, wobei dessen
 MultiNERD-Wert von der H100~NVL stammt); der GPU-Spitzenspeicher lag bei
 1,7 bzw. 19,0~GB.
 
-Die in Abschnitt~\ref{sec:crossner} beschriebene Vorstudie zum
-Ausgabelimit stützt diese Deutung auf einer kleinen, bewusst gewählten
-Stichprobe (Tabelle~\ref{tab:limit}).
-Mit 1\,024 statt 256 Ausgabetokens bleibt keine Antwort abgeschnitten,
-der Recall steigt auf je 25 Sätzen der Domänen Musik und Politik von
-26,0 auf 89,3 bzw. von 64,7 auf 91,7 Punkte, und der F$_1$ erreicht in
-beiden Domänen rund 92 Punkte; die Precision bleibt nahezu unverändert.
-Die Stichprobe ist klein, nicht zufällig gezogen (jeweils die ersten 25
-Sätze; im Mittel 46 bzw. 37 Tokens) und beruht auf einem Seed; sie belegt
-den Mechanismus, nicht die Größe des Effekts auf dem gesamten Testsplit.
+Die Sensitivitätsanalyse mit 1\,024 Ausgabetokens
+(Abschnitt~\ref{sec:crossner}, Tabelle~\ref{tab:limit}) bestätigt diese
+Deutung auf dem gesamten Testsplit: Keine der 2\,506 Antworten erreicht
+das höhere Limit, alle sind parsebar, und der gepoolte Recall des
+27B-Modells steigt von 60,4 auf 85,5 Punkte bei unveränderter Precision
+(88,3 gegenüber 88,8).
+Der gepoolte F$_1$ steigt um 15,4 Punkte auf 87,1 und liegt damit 2,1
+Punkte über dem Wert von DeBERTa-v3-large (85,0; Summe der
+Standardabweichungen 0,8).
+Je Domäne beträgt der Zugewinn zwischen 7,3 (Literatur) und 25,1 Punkten
+(Musik); mit 1\,024 Tokens liegt das LLM in allen fünf Domänen vor dem
+Encoder, nach dem Kriterium aus Abschnitt~\ref{sec:performanzmetriken}
+unterscheidbar in vier Domänen, am deutlichsten in Naturwissenschaften
+(86,3 gegenüber 82,0) und Musik (88,0 gegenüber 85,1), und nur in
+Literatur innerhalb der Streuung.
+Gemessen an der jeweiligen MultiNERD-Referenz auf den drei Grobtypen
+verliert das LLM beim Transfer dann 12,4 Punkte, der Encoder
+14,5; der Recall-Verlust des LLM bei 256 Tokens war damit
+überwiegend ein Artefakt des Ausgabelimits, nicht des Domänenwechsels.
+Die Latenz je Satz lag mit im Mittel 12,9~s auf dem Niveau der Hauptläufe
+(14,7~s); der Ausschluss der 21 überschneidenden Sätze ändert den
+gepoolten Wert um 0,1 Punkte (87,0).
 
 \begin{table}[htbp]
   \centering
-  \small
-  \caption[Sensitivitätsanalyse zum Ausgabelimit auf CrossNER (Vorstudie)]{Sensitivitätsanalyse zum Ausgabelimit: Qwen3.5-27B (QLoRA,
-  Seed~42) auf je 25 CrossNER-Sätzen mit 256 und 1\,024 Ausgabetokens
-  (nur PER, ORG, LOC; strikte Werte in Punkten; Latenz als Mittel je
-  Satz).}
+  \footnotesize
+  \caption[Sensitivitätsanalyse zum Ausgabelimit auf CrossNER]{Sensitivitätsanalyse
+  zum Ausgabelimit auf CrossNER: Qwen3.5-27B (QLoRA, drei Seeds) auf
+  allen 2\,506 Sätzen mit 256 und 1\,024 Ausgabetokens (nur PER, ORG,
+  LOC; strikte Werte in Punkten; F$_1$ als Mittel $\pm$
+  Standardabweichung über die Seeds, $\Delta$F$_1$ je Seed gepaart;
+  nicht parsebar und Limit erreicht in Prozent der Antworten; Latenz als
+  Mittel je Satz).
+  Gepoolt: Mikrowert über alle Sätze.}
   \label{tab:limit}
-  \begin{tabular}{llrrrrr}
-    \toprule
-    \textbf{Domäne} & \textbf{Limit} & \textbf{P} & \textbf{R} & \textbf{F$_1$} &
-    \textbf{nicht parsebar} & \textbf{Latenz [s]} \\
-    \midrule
-    Musik   & 256     & 94,4 & 26,0 & 40,7 & 9 & 18,1 \\
-            & 1\,024  & 95,1 & 89,3 & 92,1 & 0 & 21,6 \\
-    Politik & 256     & 93,5 & 64,7 & 76,4 & 4 & 16,0 \\
-            & 1\,024  & 93,1 & 91,7 & 92,4 & 0 & 16,0 \\
-    \bottomrule
-  \end{tabular}
+  \setlength{\tabcolsep}{3pt}
+  \input{generated/tab-limit}
 \end{table}
 
 \section{Diskussion der Ergebnisse}
@@ -1120,10 +1127,11 @@ Speichervorteil.
 dann sinnvoll, wenn keine annotierten Daten vorliegen; dann ist
 allein das 27B-Modell mit 69,4 Punkten und 50,7~GB brauchbar, und der
 Typ TIME muss im Prompt an die Datensatzkonvention angepasst werden.
-(4) Für den Transfer auf andere Domänen ohne Nachtraining ist der
-Encoder ebenfalls die robustere Wahl (85,0 gegenüber 71,7 auf
-CrossNER), wobei ein Teil des LLM-Rückstands auf das Ausgabelimit
-zurückgeht.
+(4) Für den Transfer auf andere Domänen ohne Nachtraining hängt die
+Wahl vom Ausgabelimit ab: Unter dem registrierten Limit liegt der Encoder
+vorn (85,0 gegenüber 71,7 auf CrossNER), mit 1\,024 Tokens das LLM
+(87,1), das dort vor allem bei der Precision stärker ist
+(Abschnitt~\ref{sec:erg-crossner}).
 Diese Empfehlungen gelten für die hier gemessenen Bedingungen:
 Batchgröße~1, ein Satz je Anfrage, die genannten GPU-Typen.
 Mit Batching steigt der Durchsatz der LLMs stärker als der der Encoder,

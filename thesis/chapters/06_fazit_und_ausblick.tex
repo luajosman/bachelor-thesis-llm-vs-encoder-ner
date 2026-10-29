@@ -100,8 +100,10 @@ die beste Konfiguration, während das 4B-Modell von beiden Encodern dominiert wi
 Das Zero-Shot-Regime ist bei 15 Typen nicht konkurrenzfähig und nur
 ohne annotierte Daten sinnvoll, dann allein mit dem 27B-Modell.
 Beim Transfer auf die CrossNER-Domänen ohne Nachtraining verliert der
-Encoder 14,5 Punkte, das LLM 26,8, wobei ein Teil des LLM-Rückstands
-wiederum auf das Ausgabelimit zurückgeht.
+Encoder 14,5 Punkte, das LLM unter dem registrierten Limit 26,8; mit
+1\,024 Ausgabetokens dreht sich das Bild, das LLM erreicht gepoolt 87,1
+gegenüber 85,0 Punkten des Encoders und liegt in allen fünf Domänen
+vorn.
 Diese Empfehlungen gelten für die Verarbeitung einzelner Sätze auf den
 verwendeten GPU-Typen; für Offline-Verarbeitung mit Batching verschieben
 sich die Faktoren zugunsten der LLMs, ohne dass dies hier gemessen wurde.
@@ -161,7 +163,9 @@ messbar: Auf MultiNERD liegen 2,6\,\% der Referenzentitäten in
 abgeschnittenen Antworten, und die Nachinferenz mit 1\,024 Tokens hebt
 den Mikro-F$_1$ aller drei Größen um 1,1 bis 1,2 Punkte
 (Abschnitt~\ref{sec:erg-formtreue}); auf CrossNER sind 10\,\% der
-Antworten betroffen (Abschnitt~\ref{sec:erg-crossner}).
+Antworten betroffen, und mit 1\,024 Tokens steigt der gepoolte F$_1$ des
+LLM um 15,4 Punkte und übertrifft den des Encoders
+(Abschnitt~\ref{sec:erg-crossner}).
 Die Hauptwerte bei 256 Tokens sind deshalb als Werte des registrierten
 Protokolls zu lesen; die Werte mit 1\,024 Tokens beziffern den
 Klassenunterschied ohne diesen Störfaktor.

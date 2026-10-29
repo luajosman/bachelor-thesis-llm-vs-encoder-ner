@@ -31,7 +31,8 @@ wirkt damit stärker als Modellklasse und Modellgröße.
 Die Encoder benötigen je Satz 9 bis 17~ms und unter 2~GB GPU-Speicher, die
 angepassten LLMs 1,9 bis 5,5~s und bis zu 19~GB; beim Training steht
 rund eine Stunde gegen einen halben Tag bis elf Tage.
-Beim Transfer auf CrossNER verliert der Encoder 14,5, das LLM 26,8 Punkte.
+Beim Transfer auf CrossNER verliert der Encoder 14,5, das LLM 26,8 Punkte;
+ohne das Ausgabelimit liegt das LLM dort vorn (87,1 gegenüber 85,0).
 Für NER mit ausreichend annotierten Daten ist DeBERTa-v3 damit die bessere
 und zugleich effizientere Wahl; ein LLM lohnt sich nur, wenn seine Stärken
 bei seltenen Typen oder die Änderbarkeit des Typinventars per Prompt den
