@@ -686,8 +686,10 @@ results/multinerd_output_limit_1024/aggregate/
   comparison.{yaml,csv,md}  # verified seed means and sample standard deviations
 ```
 
-The codebase uses config-validated runs, fixed seeds where supported, and
-greedy decoding for LLM inference. Result metadata records the experiment name,
+The codebase uses config-validated runs and fixed seeds where supported.
+The trained LLM study uses greedy decoding; the historical zero-shot runs
+evaluated in the thesis use sampling and the glossary prompt from commit
+`137bffd`, as described above. Result metadata records the experiment name,
 model ID, dataset, language, regime, seed, metrics, git state, Python/platform
 details, package versions, CUDA visibility, and GPU names.
 

@@ -46,8 +46,8 @@ Evaluationsprotokoll über alle Konfigurationen konstant bleiben
     nachtrainierte Decoder-LLMs werden ohne aufgabenspezifisches Training
     und ohne Demonstrationsbeispiele im Prompt eingesetzt und geben die
     Entitäten als JSON aus.
-    Das Regime zeigt, wie weit die allgemeinen Fähigkeiten dieser
-    Checkpoints ohne Anpassung an die Aufgabe tragen
+    Das Regime beschreibt die Leistung dieser Checkpoints unter den
+    gewählten Prompt- und Decoding-Bedingungen ohne NER-spezifisches Training
     \cite{brown2020language,zhao2023survey}.
 
     \item \textbf{LLM Fine-Tuning mit LoRA (QLoRA-Regime):} Dieselben LLMs werden über
@@ -125,9 +125,10 @@ ohne lokale Änderungen, der im Repository als Tag
 
 \subsection*{Variablen, Konstanten und Störgrößen}
 
-Unabhängige Variablen sind die \emph{Modellarchitektur} (Encoder-only
-gegenüber Decoder-only), die \emph{Parameteranzahl} und das
-\emph{Anpassungsregime}; der Seed dient bei den trainierten
+Die Konfigurationen unterscheiden sich in \emph{Modellfamilie und
+Architektur} (Encoder-only gegenüber Decoder-only), \emph{Parameteranzahl}
+und \emph{Anpassungsregime}; diese Merkmale werden nicht unabhängig
+voneinander variiert. Der Seed dient bei den trainierten
 Konfigurationen als Replikationsfaktor.
 Abhängige Variablen sind
 (1)~strikte Entity-Level-Precision, -Recall und -F$_1$,
@@ -163,6 +164,9 @@ Nachverarbeitung in eine IOB2-Sequenz überführt
 \cite{dagdelen2024structuredIE,semin2026spanLabeling}.
 Erst diese Rückkonvertierung erlaubt die Evaluation beider Pipelines auf
 derselben Repräsentation.
+Die Erkennungsmetriken bewerten damit die vollständige Vorhersagepipeline
+einschließlich Ausgabeformat und Validierung. Semantische Erkennung und
+korrekte Serialisierung werden im Gesamt-F$_1$ gemeinsam erfasst.
 Da die Ausgabestruktur nicht durch \emph{constrained decoding} erzwungen
 wird, bleibt ihre Formtreue selbst messbar
 (Abschnitt~\ref{sec:robustheit-ausgaben}).
@@ -439,15 +443,25 @@ Einschränkend wurde der Testsplit bereits in den explorativen Vorläufen
 ausgewertet.
 Für die trainierten Konfigurationen blieben die Hyperparameter zwischen
 Vorlauf und Hauptstudie bis auf die Epochenzahl des 27B-Modells
-unverändert.
+unverändert; diese wurde von zwei auf drei erhöht und entspricht damit
+dem Umfang der übrigen QLoRA-Konfigurationen. Die kanonischen Läufe
+wurden anschließend mit drei Seeds neu trainiert. Diese Wiederholungen
+erfassen Trainingsvariabilität, stellen aber die Unabhängigkeit eines
+bereits ausgewerteten Testsplits nicht wieder her.
 Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
 (Abschnitt~\ref{sec:llm-pipeline}), und die Inferenzpräzision wurde
 anhand von Durchsatzmessungen auf einer Teilmenge des Testsplits gewählt
 (standardmäßig 96 gleichmäßig verteilte Sätze; der tatsächliche Umfang
 wurde nicht protokolliert).
-Die Zero-Shot-Ergebnisse sind daher nicht unabhängig von
-Testbeobachtungen und tendenziell optimistisch.
+Die Zero-Shot-Ergebnisse werden deshalb als explorative Ergebnisse der
+nach Testbeobachtungen gewählten Konfigurationen berichtet. Solche
+Auswahlentscheidungen können zu einer optimistischen Verzerrung führen
+\cite{cawley2010selectionbias}; deren Umfang lässt sich mit den vorhandenen Daten
+nicht beziffern. Die Durchsatzmessung zur Präzisionswahl ist dabei von der
+an beobachteter Erkennungsleistung orientierten Prompt- und Decoding-Wahl
+zu unterscheiden. Auch die späteren Analysen des Ausgabelimits sind
+nachträgliche Sensitivitätsanalysen auf den bekannten Testsplits.
 
 \section{Versuchsaufbau}
 \label{sec:versuchsaufbau}
@@ -638,9 +652,11 @@ eingeführt; ihre Einzelbeiträge sind nicht trennbar, und die Übertragung
 der Sampling-Einstellung auf das 4B- und das 27B-Modell wurde nicht
 eigens geprüft (Abschnitt~\ref{sec:limitationen}).
 Die Ergebnisse beruhen auf jeweils einer Stichprobe aus der
-Ausgabeverteilung und zeigen, wie weit die allgemeinen Fähigkeiten der
-nachtrainierten Checkpoints ohne NER-spezifische Anpassung tragen
-\cite{zhao2023survey,minaee2024large}.
+Ausgabeverteilung und beschreiben die veröffentlichten Checkpoints ohne
+NER-spezifische Anpassung unter genau diesen Prompt- und
+Decoding-Bedingungen. Ein isolierter Effekt der Anpassung lässt sich aus
+dem Vergleich mit dem QLoRA-Regime wegen der weiteren Änderungen nicht
+bestimmen.
 
 \paragraph{QLoRA-Regime.}
 Die Anpassung erfolgt mit \texttt{peft} \cite{mangrulkar2022peft} und dem
@@ -672,8 +688,10 @@ Die Beschränkung auf 200 Sätze hält die generative Validierung je Epoche bei
 Batchgröße~1 im Bereich von Minuten (beim 27B-Modell rund 18 Minuten
 gegenüber rund 25 Stunden für den vollständigen Split); sie macht die
 Auswahl aber von einem kleinen, nicht zufällig gezogenen Ausschnitt
-abhängig, was in acht der neun Läufe folgenlos blieb, weil ohnehin die
-letzte Epoche gewählt wurde (Abschnitt~\ref{sec:limitationen}).
+abhängig. Ob eine größere oder zufällig gezogene Validierungsstichprobe
+dieselben Checkpoints ausgewählt hätte, wurde nicht geprüft; aus der
+häufigen Auswahl der letzten Epoche folgt keine nachgewiesene
+Folgenlosigkeit dieser Beschränkung (Abschnitt~\ref{sec:limitationen}).
 Für die Testinferenz wird der Adapter ohne Merge auf das
 4-Bit-quantisierte Basismodell aufgesetzt und greedy decodiert.
 
@@ -811,6 +829,9 @@ eines Paged Optimizers der Standardoptimierer des Trainers verwendet
 (AdamW, fusionierte PyTorch-Implementierung).
 Die Konfiguration ist für alle drei Größen identisch, sodass sich
 Größeneffekte nicht mit Unterschieden im Präzisionsregime vermischen.
+Die Ergebnisse beziehen sich auf diese tatsächlich ausgeführte Variante.
+Der Einfluss von Double Quantization, anderer Adapterplatzierung oder
+eines auf die Antwort beschränkten Verlusts wurde nicht isoliert gemessen.
 
 Die übrigen Hyperparameter fasst Tabelle~\ref{tab:lora-hyperparams}
 zusammen.
@@ -942,25 +963,31 @@ Wortebene gegen identische Referenzsequenzen ausgewertet
 
 Für trainierte Konfigurationen werden Mittelwert und
 Stichprobenstandardabweichung über die drei Seeds berichtet, für die
-Zero-Shot-Konfigurationen der jeweilige Einzellauf; auf
-inferenzstatistische Tests wird bei drei Seeds verzichtet.
-Ein Unterschied zwischen zwei trainierten Konfigurationen wird nur dann
-als Unterschied bezeichnet, wenn er die Summe der beiden
-Standardabweichungen übersteigt; dieses Kriterium ersetzt keinen
-statistischen Test, macht die Lesart der Ergebnisse aber einheitlich.
-Ergänzend wird die Unsicherheit durch die Auswahl der Testsätze mit einem
+Zero-Shot-Konfigurationen der jeweilige Einzellauf. Die
+Standardabweichung beschreibt die beobachtete Streuung der Trainingsläufe
+und dient nicht als Schwelle für die Bewertung von Unterschieden.
+Die Unsicherheit durch die Auswahl der Testsätze wird mit einem
 gepaarten Satz-Bootstrap beziffert: Aus den 16\,454 Testsätzen werden
 2\,000 Stichproben mit Zurücklegen gezogen, und für jede Stichprobe werden
 Mikro- und Makro-F$_1$ aller Läufe sowie die Differenzen zwischen
 Konfigurationen neu berechnet, wobei dieselbe Stichprobe für alle Läufe
-gilt und Läufe mit gleichem Seed gepaart werden; berichtet werden
-95-\%-Perzentilintervalle.
-Das Bootstrap erfasst die Streuung durch die Testsätze, die
-Standardabweichung über die Seeds die Streuung durch das Training; beide
-ergänzen sich.
-Für die Zero-Shot-Konfigurationen liegt nur ein Lauf vor, sodass die Summe
-der Standardabweichungen bei Vergleichen mit ihnen allein die Streuung
-der trainierten Seite enthält.
+gilt. Pro Stichprobe werden die Laufwerte über die drei festen Seeds
+gemittelt; berichtet werden 95-\%-Perzentilintervalle dieser Mittelwerte
+und ihrer Differenzen. Bei Zero-Shot geht der jeweilige Einzellauf ein.
+Ein Differenzintervall, das null ausschließt, spricht unter diesen
+Annahmen für eine gerichtete Differenz. Enthält es null, wird kein
+eindeutiger Unterschied festgestellt; Gleichwertigkeit ist damit nicht
+nachgewiesen \cite{lakens2017equivalence}. Typbezogene Vergleiche ohne eigene Intervalle werden
+deskriptiv behandelt.
+
+Das Bootstrap ist auf die vorhandenen trainierten Modelle und
+gespeicherten Vorhersagen bedingt. Es erfasst weder die Unsicherheit
+durch neue Trainingsläufe noch die Sampling-Streuung einer erneuten
+Zero-Shot-Inferenz. Die Sätze werden als unabhängige Einheiten behandelt;
+Abhängigkeiten innerhalb von Quelldokumenten werden nicht modelliert.
+Die Intervalle sind nicht für Mehrfachvergleiche korrigiert und werden
+als explorative Unsicherheitsangaben interpretiert. Sie beseitigen auch
+keine mögliche Verzerrung durch die frühere Testnutzung.
 Für die Fehleranalyse werden Precision, Recall, F$_1$ und Support zusätzlich
 je Entitätstyp berechnet; für die Trainingsläufe der Hauptstudie sind
 diese Werte gespeichert, für alle Konfigurationen lassen sie sich aus den
@@ -1014,6 +1041,9 @@ Die Trainingsdauer hängt zudem von der Auslastung des Knotens ab: Die
 drei 27B-Läufe liefen gleichzeitig auf demselben Knoten und benötigten
 rund 38~s je Optimierungsschritt, der explorative Vorlauf mit zwei
 Epochen allein auf dem Knoten 15{,}5~s.
+Sie beschreibt daher den tatsächlich angefallenen Aufwand dieser Jobs;
+ein von Auslastung und Neustarts unabhängiger Trainingsbedarf der
+Modellkonfiguration wird daraus nicht abgeleitet.
 
 \paragraph{Inferenzlatenz und Durchsatz.}
 Gemessen wird je Testsatz bei Batchgröße~1 die Dauer des Modellaufrufs
@@ -1035,7 +1065,8 @@ mittleren Latenz hochgerechnet.
 
 \paragraph{GPU-Speicher.}
 Erfasst wird der maximal von PyTorch allokierte GPU-Speicher während der
-Testinferenz in MiB.
+Testinferenz in MiB; die Ergebnistabellen rechnen durch Division durch
+1\,024 in GiB um.
 Der Zähler wird nach dem Laden des Modells zurückgesetzt, sodass der Wert
 die Modellgewichte und den zusätzlichen Inferenzbedarf umfasst;
 reservierter Speicher und der über \texttt{nvidia-smi} sichtbare
@@ -1175,10 +1206,10 @@ endet ohne schließende Klammer, und eine vollständige, aber aus anderem
 Grund nicht parsebare Antwort würde unter Greedy-Decoding identisch
 reproduziert; abgeschnittene, aber zufällig parsebare Antworten lassen
 sich in den gespeicherten Daten dagegen nicht erkennen.
-Bei Greedy-Decoding hängt eine Antwort, die vor dem Limit mit dem
-Ende-Token abschließt, nicht vom Limit ab; die Nachinferenz der
-abgeschnittenen Sätze ist damit einem vollständigen Neulauf äquivalent,
-sofern die Logits reproduziert werden.
+Bei identischen Logits und Greedy-Decoding bliebe eine Antwort, die vor
+dem Limit mit dem Ende-Token abschließt, unverändert. Da die ursprünglichen
+Läufe den Stoppgrund nicht protokollierten, lässt sich diese Bedingung
+für die übernommenen Antworten nicht vollständig prüfen.
 Da die Nachinferenz auf einem anderen GPU-Typ lief als die
 ursprüngliche Testinferenz (Tabelle~\ref{tab:hardware}), wird diese Annahme geprüft: Für jeden
 nachgenerierten Satz wird festgehalten, ob die ersten 256 erzeugten Tokens
@@ -1189,7 +1220,9 @@ Die zusammengeführten Vorhersagen werden mit derselben strikten Metrik über
 alle 16\,454 Sätze ausgewertet und je Seed den Werten bei 256 Tokens
 gegenübergestellt.
 Die Hauptauswertung beruht weiterhin auf dem Limit von 256 Tokens; die
-Nachinferenz wird als Sensitivitätsanalyse berichtet
+zusammengeführte Nachinferenz wird als Sensitivitätsanalyse und nicht als
+vollständiger Neulauf aller Testsätze berichtet. Beide Auswertungen gehen
+in die Schlussfolgerungen ein
 (Abschnitt~\ref{sec:erg-formtreue}).
 
 \section{CrossNER-Ergänzungsversuch}
@@ -1256,6 +1289,18 @@ Je Domäne werden strikte Precision, Recall und F$_1$ berechnet und je Seed
 zu einem gepoolten Mikrowert über alle Domänen sowie zu einem gleich
 gewichteten Domänenmittel aggregiert; berichtet werden Mittelwert und
 Stichprobenstandardabweichung über die Seeds.
+Für die Differenz zwischen Qwen3.5-27B und DeBERTa-v3-large wird zusätzlich
+ein gepaartes Satz-Bootstrap mit 2\,000 Replikaten berechnet. Innerhalb
+jeder Domäne werden mit Zurücklegen genauso viele Sätze wie im
+jeweiligen Testsplit gezogen; dieselbe Auswahl gilt für alle Modelle,
+Seeds und beide Ausgabelimits. Für den gepoolten Mikro-F$_1$ werden je
+Replikat die Entitätszähler über die Domänen addiert, bevor die F$_1$-Werte
+berechnet und über die Seeds gemittelt werden. Damit bleibt die
+Domänenzusammensetzung fest. Die 95-\%-Perzentilintervalle unterliegen
+denselben Einschränkungen wie das MultiNERD-Bootstrap
+(Abschnitt~\ref{sec:performanzmetriken}); insbesondere sind die
+domänenweisen Vergleiche explorativ und nicht für Mehrfachvergleiche
+korrigiert.
 Bezugsgröße ist der F$_1$-Wert derselben Modelle auf dem MultiNERD-Testsplit,
 ebenfalls auf PER, ORG und LOC beschränkt.
 Die Differenz $\Delta$F$_1$ beschreibt den beobachteten Unterschied zwischen
@@ -1325,8 +1370,9 @@ Limitationsdiskussion im Fazit berücksichtigt.
     Zero-Shot-Setup & Glossar-Prompt, Sampling und BF16 statt
       Standardprofil, Greedy-Decoding und NF4; ein nicht
       deterministischer Lauf je Größe & \ref{sec:llm-pipeline} \\
-    Testnutzung & Decoding, Prompt und Präzision der Zero-Shot-Läufe
-      nach Testbeobachtungen gewählt & \ref{sec:datenaufteilung} \\
+    Testnutzung & Testsplit bereits in Vorläufen ausgewertet;
+      Zero-Shot-Prompt und Decoding nach Testbeobachtungen gewählt;
+      Präzision anhand von Durchsatzmessungen & \ref{sec:datenaufteilung} \\
     Provenienz & Zero-Shot-Läufe ohne Revisions-Pins und mit reduzierten
       Metadaten; keine bitgenaue Reproduzierbarkeit &
       \ref{sec:rechenumgebung} \\

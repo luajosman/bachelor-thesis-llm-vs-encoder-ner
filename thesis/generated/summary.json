@@ -13169,8 +13169,6 @@
  "comparisons": {
   "deberta-base->deberta-large": {
    "diff": 0.315445485917909,
-   "sd_sum": 0.0698004426090703,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 0.315445485917909,
@@ -13190,8 +13188,6 @@
   },
   "qwen08-qlora->qwen4-qlora": {
    "diff": 0.8248734273491487,
-   "sd_sum": 0.14505868912336348,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 0.8248734273491487,
@@ -13211,8 +13207,6 @@
   },
   "qwen4-qlora->qwen27-qlora": {
    "diff": 0.5139152949145687,
-   "sd_sum": 0.12454258056155626,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 0.5139152949145687,
@@ -13232,8 +13226,6 @@
   },
   "qwen27-qlora->deberta-large": {
    "diff": 1.3369571567167227,
-   "sd_sum": 0.10963970090004996,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 1.3369571567167227,
@@ -13253,8 +13245,6 @@
   },
   "deberta-base->qwen4-qlora": {
    "diff": -1.5354269657133823,
-   "sd_sum": 0.08470332227057663,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": -1.5354269657133823,
@@ -13274,8 +13264,6 @@
   },
   "qwen08-qlora->deberta-base": {
    "diff": 2.360300393062531,
-   "sd_sum": 0.13923999902770706,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 2.360300393062531,
@@ -13295,10 +13283,8 @@
   },
   "qwen27-zs->qwen27-qlora": {
    "diff": 25.0722352086039,
-   "sd_sum": 0.07928157437843976,
-   "distinguishable": true,
    "single_run": true,
-   "sd_note": "Zero-Shot: Einzellauf, SD-Summe enthaelt nur die SD der QLoRA-Seite; Belastbarkeit ueber das gepaarte Bootstrap-Intervall",
+   "uncertainty_note": "Zero-Shot: Einzellauf; Bootstrap bedingt auf die gespeicherten Ausgaben, keine Messung der Sampling-Streuung",
    "bootstrap": {
     "diff": 25.0722352086039,
     "ci": [
@@ -13317,10 +13303,8 @@
   },
   "qwen4-zs->qwen4-qlora": {
    "diff": 59.04081504056203,
-   "sd_sum": 0.045261006183116514,
-   "distinguishable": true,
    "single_run": true,
-   "sd_note": "Zero-Shot: Einzellauf, SD-Summe enthaelt nur die SD der QLoRA-Seite; Belastbarkeit ueber das gepaarte Bootstrap-Intervall",
+   "uncertainty_note": "Zero-Shot: Einzellauf; Bootstrap bedingt auf die gespeicherten Ausgaben, keine Messung der Sampling-Streuung",
    "bootstrap": {
     "diff": 59.04081504056203,
     "ci": [
@@ -13339,10 +13323,8 @@
   },
   "qwen08-zs->qwen08-qlora": {
    "diff": 86.97107099084195,
-   "sd_sum": 0.09979768294024695,
-   "distinguishable": true,
    "single_run": true,
-   "sd_note": "Zero-Shot: Einzellauf, SD-Summe enthaelt nur die SD der QLoRA-Seite; Belastbarkeit ueber das gepaarte Bootstrap-Intervall",
+   "uncertainty_note": "Zero-Shot: Einzellauf; Bootstrap bedingt auf die gespeicherten Ausgaben, keine Messung der Sampling-Streuung",
    "bootstrap": {
     "diff": 86.97107099084195,
     "ci": [
@@ -13361,8 +13343,6 @@
   },
   "qwen08-qlora->deberta-large": {
    "diff": 2.67574587898044,
-   "sd_sum": 0.13015580946185715,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 2.67574587898044,
@@ -13382,8 +13362,6 @@
   },
   "deberta-base->qwen27-qlora": {
    "diff": -1.0215116707988137,
-   "sd_sum": 0.11872389046589985,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": -1.0215116707988137,
@@ -13403,8 +13381,6 @@
   },
   "qwen27-qlora-1024->deberta-large": {
    "diff": 0.17806740059288506,
-   "sd_sum": 0.08846336810449458,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 0.17806740059288506,
@@ -13424,8 +13400,6 @@
   },
   "deberta-base->qwen27-qlora-1024": {
    "diff": 0.13737808532502394,
-   "sd_sum": 0.0975475576703445,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 0.13737808532502394,
@@ -13445,8 +13419,6 @@
   },
   "deberta-base->qwen4-qlora-1024": {
    "diff": -0.3954398104956458,
-   "sd_sum": 0.08435626151729872,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": -0.3954398104956458,
@@ -13466,8 +13438,6 @@
   },
   "qwen08-qlora-1024->deberta-base": {
    "diff": 1.236631620988371,
-   "sd_sum": 0.13716761931334026,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 1.236631620988371,
@@ -13487,8 +13457,6 @@
   },
   "qwen27-qlora->qwen27-qlora-1024": {
    "diff": 1.1588897561238376,
-   "sd_sum": 0.13738681596132413,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 1.1588897561238376,
@@ -13508,8 +13476,6 @@
   },
   "qwen4-qlora->qwen4-qlora-1024": {
    "diff": 1.1399871552177365,
-   "sd_sum": 0.09017495161295513,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 1.1399871552177365,
@@ -13529,8 +13495,6 @@
   },
   "qwen08-qlora->qwen08-qlora-1024": {
    "diff": 1.12366877207416,
-   "sd_sum": 0.19752298616612712,
-   "distinguishable": true,
    "single_run": false,
    "bootstrap": {
     "diff": 1.12366877207416,
@@ -16503,6 +16467,175 @@
     }
    },
    "evaluation": "output_limit_1024"
+  },
+  "bootstrap": {
+   "settings": {
+    "B": 2000,
+    "seed": 42,
+    "chunk": 500,
+    "n_by_domain": {
+     "ai": 431,
+     "literature": 416,
+     "music": 465,
+     "politics": 651,
+     "science": 543
+    },
+    "reference": "deberta-large",
+    "interval": "Perzentil 2,5/97,5",
+    "note": "Nach Domaene geschichtetes, gepaartes Satz-Bootstrap; feste Seeds; keine Dokumentcluster oder Korrektur fuer Mehrfachvergleiche"
+   },
+   "domains": {
+    "ai": {
+     "configs": {
+      "deberta-large": 81.98086991472714,
+      "qwen27-qlora": 74.80846430418174,
+      "qwen27-qlora-1024": 82.7054256069467
+     },
+     "pairs": {
+      "qwen27-qlora": {
+       "diff": -7.172405610545397,
+       "ci": [
+        -13.248412205591293,
+        -1.5318858872739345
+       ],
+       "excludes_zero": true
+      },
+      "qwen27-qlora-1024": {
+       "diff": 0.7245556922195675,
+       "ci": [
+        -1.2681732161607313,
+        2.7094679318319317
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "literature": {
+     "configs": {
+      "deberta-large": 84.00186555351893,
+      "qwen27-qlora": 77.61309063263022,
+      "qwen27-qlora-1024": 84.89952733996023
+     },
+     "pairs": {
+      "qwen27-qlora": {
+       "diff": -6.388774920888707,
+       "ci": [
+        -10.094736607043501,
+        -3.0581786767932306
+       ],
+       "excludes_zero": true
+      },
+      "qwen27-qlora-1024": {
+       "diff": 0.8976617864413043,
+       "ci": [
+        -0.36874335676088565,
+        2.2618571995108083
+       ],
+       "excludes_zero": false
+      }
+     }
+    },
+    "music": {
+     "configs": {
+      "deberta-large": 85.05404229841056,
+      "qwen27-qlora": 62.9728971933174,
+      "qwen27-qlora-1024": 88.04299525122993
+     },
+     "pairs": {
+      "qwen27-qlora": {
+       "diff": -22.081145105093164,
+       "ci": [
+        -27.26075164895264,
+        -16.723203365572267
+       ],
+       "excludes_zero": true
+      },
+      "qwen27-qlora-1024": {
+       "diff": 2.9889529528193606,
+       "ci": [
+        1.399841619942335,
+        4.624275069464882
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "politics": {
+     "configs": {
+      "deberta-large": 86.92780842635392,
+      "qwen27-qlora": 71.59081879679042,
+      "qwen27-qlora-1024": 88.3327880484221
+     },
+     "pairs": {
+      "qwen27-qlora": {
+       "diff": -15.336989629563504,
+       "ci": [
+        -18.619426380813078,
+        -11.980402941015942
+       ],
+       "excludes_zero": true
+      },
+      "qwen27-qlora-1024": {
+       "diff": 1.4049796220681827,
+       "ci": [
+        0.40828787828048263,
+        2.4247460963719374
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "science": {
+     "configs": {
+      "deberta-large": 82.02223115881469,
+      "qwen27-qlora": 76.14010357432025,
+      "qwen27-qlora-1024": 86.27915377553337
+     },
+     "pairs": {
+      "qwen27-qlora": {
+       "diff": -5.882127584494441,
+       "ci": [
+        -10.46402150072713,
+        -1.482969798137025
+       ],
+       "excludes_zero": true
+      },
+      "qwen27-qlora-1024": {
+       "diff": 4.256922616718683,
+       "ci": [
+        2.2831579254705385,
+        6.316144522106901
+       ],
+       "excludes_zero": true
+      }
+     }
+    },
+    "pooled_micro": {
+     "configs": {
+      "deberta-large": 84.9863470209955,
+      "qwen27-qlora": 71.69171611479057,
+      "qwen27-qlora-1024": 87.11962880360383
+     },
+     "pairs": {
+      "qwen27-qlora": {
+       "diff": -13.29463090620493,
+       "ci": [
+        -15.448117843871563,
+        -11.283286870624245
+       ],
+       "excludes_zero": true
+      },
+      "qwen27-qlora-1024": {
+       "diff": 2.1332817826083357,
+       "ci": [
+        1.4684337034041726,
+        2.8010202905334123
+       ],
+       "excludes_zero": true
+      }
+     }
+    }
+   }
   }
  },
  "multinerd_sentence_stats": {

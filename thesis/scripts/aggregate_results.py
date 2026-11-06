@@ -165,7 +165,7 @@ def score(records, gold_key, pred_key, types=None):
     return overall, per_type
 
 
-def sentence_counts(records, gold_key, pred_key):
+def sentence_counts(records, gold_key, pred_key, allowed_types=None):
     """Je Satz (tp, fp, fn) gesamt und je Typ (strikt, wie score()) fuer das gepaarte Satz-Bootstrap.
     Rueckgabe: micro int32[n, 3], types int32[n, len(TYPES), 3]."""
     idx = {t: i for i, t in enumerate(TYPES)}
@@ -174,6 +174,9 @@ def sentence_counts(records, gold_key, pred_key):
     for i, rec in enumerate(records):
         gold = set(entities(rec[gold_key]))
         pred = set(entities(rec[pred_key]))
+        if allowed_types is not None:
+            gold = {e for e in gold if e[2] in allowed_types}
+            pred = {e for e in pred if e[2] in allowed_types}
         for j, group in enumerate((gold & pred, pred - gold, gold - pred)):
             micro[i, j] = len(group)
             for e in group:
@@ -936,6 +939,105 @@ def bootstrap_intervals(G, pair_keys, B=BOOT_B, seed=BOOT_SEED, chunk=BOOT_CHUNK
     return dict(settings=settings, configs=configs, pairs=pairs)
 
 
+def crossner_bootstrap(C, B=BOOT_B, seed=BOOT_SEED, chunk=BOOT_CHUNK):
+    """Gepaartes, nach Domaene geschichtetes Satz-Bootstrap auf PER/ORG/LOC.
+
+    Pro Domaene bleiben Satzzahl und Paarung aller Modelle/Seeds erhalten.
+    Gepoolter Mikro-F1 wird aus summierten Entitaetszaehlern berechnet,
+    anschliessend ueber die drei festen Seeds gemittelt. Keine erneute
+    Seed-Ziehung, Dokumentcluster oder Korrektur fuer Mehrfachvergleiche.
+    """
+    configs = [("deberta-large", RES / "crossner", CROSS_RUNS["deberta-large"]),
+               ("qwen27-qlora", RES / "crossner", CROSS_RUNS["qwen27-qlora"])]
+    if C["output_limit_full"].get("complete"):
+        configs.append(("qwen27-qlora-1024", RES / "crossner_output_limit_1024",
+                        CROSS_RUNS["qwen27-qlora"]))
+    rng = np.random.default_rng(seed)
+    pooled = np.zeros((B, len(configs), len(SEEDS), 3), dtype=np.float64)
+    pooled_point = np.zeros(pooled.shape[1:], dtype=np.float64)
+    domains, sizes = {}, {}
+
+    def summarise(counts, point_counts):
+        values = f1_of(counts).mean(axis=2) * 100
+        point = f1_of(point_counts).mean(axis=1) * 100
+        pairs = {}
+        for j in range(1, len(configs)):
+            lo, hi = np.percentile(values[:, j] - values[:, 0], [2.5, 97.5])
+            pairs[configs[j][0]] = dict(diff=float(point[j] - point[0]),
+                                       ci=[float(lo), float(hi)],
+                                       excludes_zero=bool(lo > 0 or hi < 0))
+        return dict(configs={cfg[0]: float(point[j]) for j, cfg in enumerate(configs)},
+                    pairs=pairs)
+
+    for dom, _ in DOMAINS:
+        reference = None
+        matrices = []
+        for key, root, runs in configs:
+            per_seed = []
+            for run in runs:
+                records = load_json(root / run / dom / "test_predictions.json")
+                signature = [(r["sample_id"], r["tokens"], r["gold_bio"]) for r in records]
+                if not records or len({r["sample_id"] for r in records}) != len(records):
+                    raise ValueError(f"CrossNER {key}/{run}/{dom}: leere oder doppelte Satz-IDs")
+                if any(len(r["tokens"]) != len(r[k]) for r in records for k in ("gold_bio", "pred_bio")):
+                    raise ValueError(f"CrossNER {key}/{run}/{dom}: ungleiche Token-/Tag-Laengen")
+                if reference is None:
+                    reference = signature
+                elif signature != reference:
+                    raise ValueError(f"CrossNER {key}/{run}/{dom}: Satzfolge oder Referenz weicht ab")
+                counts, _ = sentence_counts(records, "gold_bio", "pred_bio", COARSE)
+                per_seed.append(counts)
+            matrices.append(np.stack(per_seed, axis=1))
+        matrix = np.stack(matrices, axis=1).astype(np.float64)
+        n = len(matrix)
+        sizes[dom] = n
+        point = matrix.sum(axis=0)
+        samples = np.empty_like(pooled)
+        for start in range(0, B, chunk):
+            b = min(chunk, B - start)
+            weights = np.stack([np.bincount(rng.integers(0, n, n), minlength=n)
+                                for _ in range(b)]).astype(np.float64)
+            samples[start:start + b] = (weights @ matrix.reshape(n, -1)).reshape(b, *point.shape)
+        domains[dom] = summarise(samples, point)
+        pooled += samples
+        pooled_point += point
+    domains["pooled_micro"] = summarise(pooled, pooled_point)
+    # Unabhaengiger Abgleich der Punktschaetzungen gegen die gespeicherten Aggregate.
+    for dom, result in domains.items():
+        for key, actual in result["configs"].items():
+            expected = (C["output_limit_full"]["full"][dom]["1024"]["f1_mean"]
+                        if key.endswith("1024") else C["aggregate"][key][dom]["f1_mean"])
+            if abs(actual - expected * 100) > 1e-4:
+                raise ValueError(f"CrossNER Bootstrap {key}/{dom}: Punktschaetzung weicht vom Aggregat ab")
+    return dict(settings=dict(B=B, seed=seed, chunk=chunk, n_by_domain=sizes,
+                              reference="deberta-large", interval="Perzentil 2,5/97,5",
+                              note="Nach Domaene geschichtetes, gepaartes Satz-Bootstrap; feste Seeds; "
+                                   "keine Dokumentcluster oder Korrektur fuer Mehrfachvergleiche"),
+                domains=domains)
+
+
+def tab_crossner_ci(C):
+    keys = ["qwen27-qlora"]
+    if C["output_limit_full"].get("complete"):
+        keys.append("qwen27-qlora-1024")
+    headers = ["\\textbf{Domäne}"]
+    for key in keys:
+        limit = "1\\,024" if key.endswith("1024") else "256"
+        headers.extend([f"$\\Delta$F$_1$ ({limit})", "95-\\%-Intervall"])
+    lines = ["\\begin{tabular}{l" + "rr" * len(keys) + "}", "    \\toprule",
+             "    " + " & ".join(headers) + r" \\", "    \\midrule"]
+    for dom, label in DOMAINS + [("pooled_micro", "Gepoolt")]:
+        if dom == "pooled_micro":
+            lines.append("    \\midrule")
+        cells = [label]
+        for key in keys:
+            p = C["bootstrap"]["domains"][dom]["pairs"][key]
+            cells.extend([signed(p["diff"]),
+                          f"[{signed(p['ci'][0])}; {signed(p['ci'][1])}]"])
+        lines.append("    " + " & ".join(cells) + r" \\")
+    return "\n".join(lines + ["    \\bottomrule", "\\end{tabular}", ""])
+
+
 # --------------------------------------------------------------------------- Tabellen
 def tab_haupt(G):
     rows = []
@@ -1058,7 +1160,7 @@ def tab_effizienz(G):
              "    \\textbf{Training} & \\textbf{Testinferenz} & \\multicolumn{3}{c}{\\textbf{Latenz [ms]}} &",
              "    \\textbf{Durchsatz} & \\textbf{Speicher} \\\\", "    \\cmidrule(lr){6-8}",
              "    & & & \\textbf{[h]} & \\textbf{gesamt [h]} & \\textbf{Mittel} & \\textbf{Median} & \\textbf{P95} &",
-             "    \\textbf{[S\\\"atze/s]} & \\textbf{[GB]} \\\\", "    \\midrule"]
+             "    \\textbf{[S\\\"atze/s]} & \\textbf{[GiB]} \\\\", "    \\midrule"]
     for i, key in enumerate(TABLE_ORDER):
         g = G[key]
         a = g["agg"]
@@ -1450,12 +1552,11 @@ def main():
                   empty_arrays=sum(1 for r in greedy_preds if r["raw_output"].strip() == "[]"),
                   n=len(greedy_preds), parse_failure_rate=greedy_im["parse_failure_rate"])
 
-    # Abgeleitete Vergleiche (Unterscheidbarkeit: Differenz > Summe der SDs)
+    # Deskriptive Differenzen; Unsicherheit ausschliesslich aus dem gepaarten Bootstrap.
     def compare(k1, k2):
         a1, a2 = G[k1]["agg"]["f1"], G[k2]["agg"]["f1"]
         diff = (a2["mean"] - a1["mean"]) * 100
-        sd_sum = ((a1["std"] or 0) + (a2["std"] or 0)) * 100
-        return dict(diff=diff, sd_sum=sd_sum, distinguishable=abs(diff) > sd_sum)
+        return dict(diff=diff)
 
     comparisons = {f"{k1}->{k2}": compare(k1, k2) for k1, k2 in [
         ("deberta-base", "deberta-large"), ("qwen08-qlora", "qwen4-qlora"), ("qwen4-qlora", "qwen27-qlora"),
@@ -1477,13 +1578,15 @@ def main():
         k1, k2 = key.split("->")
         comp["single_run"] = len(G[k1]["runs"]) == 1 or len(G[k2]["runs"]) == 1
         if comp["single_run"]:
-            comp["sd_note"] = ("Zero-Shot: Einzellauf, SD-Summe enthaelt nur die SD der QLoRA-Seite; "
-                               "Belastbarkeit ueber das gepaarte Bootstrap-Intervall")
+            comp["uncertainty_note"] = ("Zero-Shot: Einzellauf; Bootstrap bedingt auf die gespeicherten "
+                                        "Ausgaben, keine Messung der Sampling-Streuung")
         comp["bootstrap"] = boot["pairs"][key]
     p = boot["pairs"]["qwen27-qlora->deberta-large"]
     print(f"  DeBERTa-large - Qwen27B (QLoRA): {p['diff']:+.2f} [{p['ci'][0]:+.2f}; {p['ci'][1]:+.2f}], "
           f"Makro {p['macro_diff']:+.2f} [{p['macro_ci'][0]:+.2f}; {p['macro_ci'][1]:+.2f}]")
 
+    print(f"CrossNER-Satz-Bootstrap (B = {BOOT_B}, nach Domaene geschichtet) ...")
+    C["bootstrap"] = crossner_bootstrap(C)
     print("Tabellen und Abbildungsdaten schreiben ...")
     write(OUT / "tab-haupt.tex", tab_haupt(G))
     write(OUT / "tab-typen.tex", tab_typen(G))
@@ -1492,6 +1595,7 @@ def main():
     write(OUT / "tab-formtreue.tex", tab_formtreue(G))
     write(OUT / "tab-fehlertypen.tex", tab_fehlertypen(G))
     write(OUT / "tab-crossner.tex", tab_crossner(C))
+    write(OUT / "tab-crossner-ci.tex", tab_crossner_ci(C))
     write(OUT / "tab-app-seeds.tex", tab_app_seeds(G))
     write(OUT / "tab-app-typen-prf.tex", tab_app_typen_prf(G))
     write(OUT / "tab-ci.tex", tab_ci(G, boot))

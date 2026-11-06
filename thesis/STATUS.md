@@ -1,4 +1,21 @@
-# Stand der Bachelorarbeit (28.10.2026, nachmittags)
+# Stand der Bachelorarbeit (06.11.2026)
+
+## Methodische Überarbeitung am 06.11.
+
+- Alle geplanten Trainings-, Testinferenz- und 1.024-Token-Läufe sind abgeschlossen. Die unten dokumentierten laufenden Jobs vom 28.10. sind historische Zwischenstände.
+- Die Regel „Differenz größer als Summe der Standardabweichungen“ wurde aus Manuskript und Aggregationscode entfernt. Seed-SD bleibt deskriptiv; ausgewählte Differenzen werden mit gepaarten Satz-Bootstrap-Intervallen eingeordnet. Kein Gleichwertigkeitsnachweis durch ein Intervall mit null.
+- CrossNER erhält eine reproduzierbare, nach Domäne geschichtete Bootstrap-Auswertung aus den gespeicherten Vorhersagen für beide Ausgabelimits, mit geprüfter Satz-/Referenzpaarung und einer neuen Tabelle `generated/tab-crossner-ci.tex`.
+- CrossNER bei 1.024 Tokens: Qwen-27B minus DeBERTa-large gepoolt +2,13 Punkte, 95-%-Intervall [1,47; 2,80]. Domänenweise schließen drei Intervalle null aus (Musik, Politik, Naturwissenschaften); KI und Literatur nicht. Keine Korrektur für Mehrfachvergleiche.
+- Kapitel 1, 4–6 und Abstract grenzen Aussagen auf die ausgeführten Konfigurationen ein: kein isolierter Anpassungs-/Architektureffekt, keine behauptete Folgenlosigkeit der 200er-Validierung, keine unbekannte Sampling-Streuung als vernachlässigbar ausgegeben.
+- Ausgabelimit-Analysen in Schlussfolgerungen und Empfehlungen integriert; MultiNERD-Nachinferenz als selektive Sensitivitätsanalyse eingeordnet. Ressourcenwerte unterschiedlicher Limits werden nicht zu einer ungemessenen Konfiguration kombiniert.
+- Testgestützte Zero-Shot-Entwicklung bleibt ein historischer methodischer Vorbehalt. Epochenänderung 27B (2 → 3) wird genannt; eine damals nicht belegte Entscheidungsbegründung wird nicht nachträglich erfunden.
+- Speicherwerte der eigenen Auswertung korrekt als GiB bezeichnet; keine garantierten GPU-Mindestgrößen oder allgemeinen Trainingszeiten aus den Messungen abgeleitet. Tatsächliche Trainingskonfigurationen und Rohartefakte bleiben erhalten.
+- Methodische Quellen zu Selektionsverzerrung und Äquivalenzaussagen ergänzt. Neue Auswertungstests prüfen Paarung, grobe Typen, gepoolte Zähler, Seed-Mittel und Reproduzierbarkeit.
+- Prüfung abgeschlossen: vollständige Aggregation, fünf Tests, PDF-Build mit 110 Seiten; 0 Overfull-Boxen, 0 offene Verweise/Zitate, 0 LaTeX-Fehler. Details und verbleibende Grenzen in `review/06_methodische_korrekturen_2026-11-06.md`.
+
+Die folgenden Einträge dokumentieren den bisherigen Verlauf; ihre damaligen Bewertungen und offenen Experimentpunkte sind durch die Angaben oben und den aktuellen Überarbeitungsbericht zu ergänzen.
+
+## Historischer Stand vom 28.10. bis 30.10.
 
 Abgabe: 26.11.2026 (geplant 25.11.); mit zweiwöchigem Attest (Entscheidung bis 6.11.) verschiebt sich die Abgabe auf ca. 10.12.2026 (geplant 8.12.). Abstract nur deutsch (Entwurf steht). Angemeldeter Titel laut Anmeldung vermutlich „Fine-Tuning für NER: Ein Vergleich von BERT-basierten Modellen und LLMs mit LoRA“; das Deckblatt schreibt „Named Entity Recognition“ aus – **exakten Wortlaut prüfen**. Die Abweichung zu DeBERTa/QLoRA/Zero-Shot ist jetzt in 1.3 erklärt.
 

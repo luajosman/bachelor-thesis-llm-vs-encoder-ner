@@ -129,9 +129,10 @@ DeBERTa-v3-base und DeBERTa-v3-large mit vollständigem
 Fine-Tuning~\cite{he2021debertav3}, Qwen3.5-0.8B, Qwen3.5-4B und
 Qwen3.5-27B~\cite{qwen2026qwen35blog} im Zero-Shot-Einsatz sowie dieselben
 Qwen3.5-Modelle nach einer Anpassung mit QLoRA.
-Das Zero-Shot-Regime zeigt, was die veröffentlichten Modelle ohne
-Trainingsaufwand leisten, und dient als Bezugspunkt für den Nutzen der
-Anpassung.
+Das Zero-Shot-Regime beschreibt die veröffentlichten Modelle ohne
+NER-spezifisches Training unter den gewählten Prompt- und
+Decoding-Bedingungen. Wegen weiterer Unterschiede zwischen den Regimen
+misst der Vergleich keinen isolierten Anpassungseffekt.
 QLoRA trainiert Low-Rank-Adapter auf einem in 4~Bit quantisierten,
 eingefrorenen Basismodell~\cite{hu2021lora,dettmers2023qlora} und macht
 so auch die Anpassung des 27B-Modells auf einer einzelnen GPU möglich.

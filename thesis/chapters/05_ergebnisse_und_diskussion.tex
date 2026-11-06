@@ -59,14 +59,14 @@ in den Tabellen als Mittelwert~$\pm$~Standardabweichung.
 Die drei Zero-Shot-Konfigurationen beruhen auf je einem Lauf mit
 Sampling (Abschnitt~\ref{sec:llm-pipeline}); ihre Werte sind daher
 Einzelwerte ohne Streuungsangabe.
-Ein Unterschied zwischen zwei trainierten Konfigurationen wird im
-Folgenden nur dann als Unterschied bezeichnet, wenn er größer ist als
-die Summe der beiden Standardabweichungen; kleinere Differenzen werden
-als nicht unterscheidbar bezeichnet.
-Dieses Kriterium ist in Abschnitt~\ref{sec:performanzmetriken}
-festgelegt; es ersetzt keinen statistischen Test, macht die Lesart aber
-nachvollziehbar, und Abschnitt~\ref{sec:disk-validitaet} ergänzt es um
-Bootstrap-Konfidenzintervalle.
+Zur Einordnung ausgewählter Differenzen dienen die gepaarten
+Bootstrap-Konfidenzintervalle aus Abschnitt~\ref{sec:performanzmetriken}.
+Sie quantifizieren die Unsicherheit durch die Auswahl der Testsätze bei
+festen Modellen und Vorhersagen. Die Seed-Standardabweichungen ergänzen
+diese Angaben deskriptiv. Enthält ein Differenzintervall null, ist kein
+eindeutiger Unterschied nachgewiesen; daraus folgt keine Gleichwertigkeit.
+Typbezogene Unterschiede ohne eigene Intervalle werden ausschließlich
+als beobachtete Punktwertdifferenzen beschrieben.
 Alle Tabellenkörper dieses Kapitels und des Anhangs~\ref{app:ergebnistabellen}
 werden mit dem Skript \texttt{thesis/scripts/aggregate\_results.py} aus den
 Laufartefakten (Anhang~\ref{app:reproduzierbarkeit}) erzeugt; das Skript
@@ -105,9 +105,9 @@ Die beiden Encoder stehen in den ersten beiden Zeilen.
 
 DeBERTa-v3-base erreicht einen Mikro-F$_1$ von 95,5, DeBERTa-v3-large
 einen von 95,8.
-Die Differenz von 0,3 Punkten ist größer als die Summe der beiden
-Standardabweichungen (0,04 und 0,03); die größere Variante ist damit
-unterscheidbar besser.
+Für die Differenz von 0,32 Punkten ergibt sich ein gepaartes
+95-\%-Bootstrap-Intervall von 0,19 bis 0,43 Punkten zugunsten der
+größeren Variante (Tabelle~\ref{tab:ci}).
 Bei beiden Modellen liegt der Recall ein bis anderthalb Punkte über der
 Precision (base: 96,2 gegenüber 94,8; large: 96,4 gegenüber 95,3).
 Der Makro-F$_1$ liegt mit 85,4 bzw. 86,7 rund zehn bzw. neun Punkte unter
@@ -124,11 +124,12 @@ auf die dritte bzw. vierte Epoche (Abschnitt~\ref{sec:encoder-pipeline}).
 Die Validierungs-F$_1$-Werte der ausgewählten Checkpoints liegen bei
 92,6 bis 92,7 (base) bzw. 92,9 bis 93,1 (large) und damit rund drei
 Punkte unter den Testwerten.
-Diese Differenz geht auf die unterschiedliche Typverteilung der Splits
-zurück: Der Anteil von LOC, einem der am besten erkannten Typen, beträgt
+Eine mögliche Erklärung ist die unterschiedliche Typverteilung der Splits:
+Der Anteil von LOC, einem der am besten erkannten Typen, beträgt
 im Validierungssplit 30,1\,\%, im Testsplit 46,9\,\%
-(Tabelle~\ref{tab:datensplits}), und der mikro-gemittelte Wert folgt der
-Typverteilung.
+(Tabelle~\ref{tab:datensplits}). Der Mikro-Wert gewichtet häufige Typen
+stärker; der Beitrag der Typverteilung zu dieser Differenz wurde jedoch
+nicht isoliert bestimmt.
 
 Die Zeilen drei bis acht in Tabelle~\ref{tab:haupt} zeigen die
 LLM-Konfigurationen.
@@ -141,14 +142,18 @@ markiert aber viele Nicht-Entitäten (Precision 65,6, Recall 73,7).
 Die Werte sind Einzelwerte aus gesampelten Ausgaben und beruhen auf einem
 Prompt und Decoding-Einstellungen, die nach Beobachtungen auf dem
 Testsplit gewählt wurden (Abschnitt~\ref{sec:datenaufteilung}); sie sind
-daher als obere Abschätzung dessen zu lesen, was die unveränderten
-Checkpoints mit diesem Format leisten.
+daher explorative Messwerte dieser Konfigurationen. Sie bilden weder eine
+unabhängige Bestätigung noch eine Obergrenze der Leistung unveränderter
+Checkpoints mit diesem Format.
 
 Nach der Anpassung mit QLoRA steigt der Mikro-F$_1$ auf 93,1 (0.8B), 94,0
 (4B) und 94,5 (27B).
-Der Zugewinn gegenüber dem Zero-Shot-Regime beträgt damit 87,0, 59,0 bzw.
-25,1 Punkte und ist bei allen drei Größen um Größenordnungen größer als
-die Streuung über die Seeds, die bei 0,10, 0,05 und 0,08 Punkten liegt.
+Der Abstand zum Zero-Shot-Regime beträgt damit 87,0, 59,0 bzw.
+25,1 Punkte. Er beschreibt den Unterschied der vollständigen
+Konfigurationen, da zusätzlich zum Training Prompt, Decoding und
+Präzision variieren. Die Standardabweichungen der QLoRA-Läufe betragen
+0,10, 0,05 und 0,08 Punkte; die Zero-Shot-Sampling-Streuung wurde nicht
+gemessen.
 Der Makro-F$_1$ der QLoRA-Modelle beträgt 82,6, 84,6 und 86,9.
 Ausgewählt wurde in acht der neun Läufe der Adapter der dritten Epoche,
 beim 4B-Modell mit Seed~42 der Adapter der zweiten
@@ -162,8 +167,9 @@ Epoche mit 95,5 bereits über der dritten mit 95,3.
 
 Der beste Encoder, DeBERTa-v3-large, erreicht einen Mikro-F$_1$ von 95,8;
 das beste LLM, Qwen3.5-27B im QLoRA-Regime, einen von 94,5.
-Der Abstand beträgt 1,3 Punkte zugunsten des Encoders und ist mit dem
-Zwölffachen der Summe der Standardabweichungen (0,11) unterscheidbar.
+Der Abstand bei 256 Ausgabetokens beträgt 1,34 Punkte zugunsten des
+Encoders; sein gepaartes 95-\%-Bootstrap-Intervall reicht von 0,99 bis
+1,68 Punkten (Tabelle~\ref{tab:ci}).
 Auch die kleinere Encoder-Variante liegt vor allen LLM-Konfigurationen:
 DeBERTa-v3-base übertrifft Qwen3.5-4B um 1,5 und Qwen3.5-27B um 1,0
 Punkte.
@@ -177,8 +183,8 @@ Recall.
 Bei den Encodern liegt der Recall über der Precision (large: 96,4
 gegenüber 95,3), bei den QLoRA-Modellen ist es umgekehrt (27B: 93,8
 gegenüber 95,2).
-In der Precision sind beste Encoder und bestes LLM damit praktisch
-gleichauf (95,3 gegenüber 95,2); der Vorsprung des Encoders stammt
+Die Precision-Punktwerte von bestem Encoder und bestem LLM liegen damit
+nahe beieinander (95,3 gegenüber 95,2); der Vorsprung des Encoders stammt
 nahezu vollständig aus dem Recall (96,4 gegenüber 93,8).
 Abschnitt~\ref{sec:erg-fehlertypen} führt diesen Recall-Unterschied auf
 Auslassungen zurück; etwa die Hälfte der Auslassungen des LLM und damit
@@ -220,22 +226,25 @@ DeBERTa-v3-large); im Zero-Shot-Regime liegen sie zwischen 3,2 und 45,0.
 
 Die Modellklassen liegen nicht bei allen Typen in derselben Richtung
 auseinander.
-Nach dem Kriterium aus Abschnitt~\ref{sec:performanzmetriken} liegt der
-Encoder vorn bei ANIM (79,4 gegenüber 74,0 für Qwen3.5-27B), FOOD (72,9
+In den Punktwerten liegt der Encoder vorn bei ANIM (79,4 gegenüber 74,0
+für Qwen3.5-27B), FOOD (72,9
 gegenüber 70,1), PLANT (72,6 gegenüber 70,1), DIS (81,9 gegenüber 80,0),
 EVE (97,2 gegenüber 96,6) sowie bei PER und LOC (je 99,7 gegenüber 98,7
 und 98,2); das LLM liegt vorn bei INST (97,2 gegenüber 82,7), MYTH (88,6
 gegenüber 82,2) und TIME (87,4 gegenüber 84,9).
-Bei MEDIA sind beide gleichauf; bei ORG (98,8 gegenüber 98,9) sowie bei
-BIO (79,0 gegenüber 67,5), CEL (84,7 gegenüber 80,2) und VEHI (92,8
-gegenüber 91,3) bleiben die Differenzen unter der Summe der
-Standardabweichungen, die bei ORG 0,1 und bei den drei seltenen Typen
-12,5, 5,8 bzw. 4,5 Punkte beträgt.
+Bei MEDIA sind die gerundeten Werte gleich; bei ORG liegt das LLM knapp
+vorn (98,9 gegenüber 98,8). Bei BIO liegt der Encoder im Punktwert vorn
+(79,0 gegenüber 67,5), bei CEL und VEHI das LLM (84,7 gegenüber 80,2
+bzw. 92,8 gegenüber 91,3). Diese seltenen Typen weisen zugleich eine
+ausgeprägte Streuung zwischen den Seeds auf. Für typbezogene Vergleiche werden keine
+inferenzstatistischen Rangfolgen abgeleitet.
 Diese Verteilung erklärt, warum Mikro- und Makro-F$_1$ die Klassen
 unterschiedlich ordnen: Der Mikro-Wert wird von LOC, PER und ANIM
 getragen, bei denen der Encoder vorn liegt; der Makro-Wert gewichtet die
 seltenen Typen gleich, bei denen das LLM vorn liegt oder gleichzieht, und
-ergibt mit 86,9 gegenüber 86,7 praktisch Gleichstand.
+ergibt nahe beieinanderliegende Werte von 86,9 gegenüber 86,7. Das
+Bootstrap-Intervall der Makro-Differenz enthält null
+(Tabelle~\ref{tab:ci}); eine Äquivalenzprüfung wurde nicht durchgeführt.
 Für BIO (8 Referenzentitäten), INST (12), MYTH (32), VEHI (32) und CEL
 (41) sind die Werte mit erheblicher Unsicherheit behaftet, da wenige
 Fehler den F$_1$ um zweistellige Beträge verändern; die
@@ -399,12 +408,13 @@ und 1,16 Punkte und der Recall um 2,5 Punkte, während die Precision um 0,2
 bis 0,3 Punkte sinkt; der Makro-F$_1$ steigt um 0,5 bis 0,7 Punkte.
 Die Auslassungsrate des 27B-Modells fällt von 5,1 auf 2,5\,\% und liegt
 damit auf dem Niveau der Encoder (Abschnitt~\ref{sec:erg-fehlertypen}).
-Die Annahme, dass alle übrigen Antworten unverändert bleiben, hält der
-Prüfung stand: In 594 von 604 nachgenerierten Sätzen stimmen die ersten
+In 594 von 604 nachgenerierten Sätzen stimmen die ersten
 256 erzeugten Tokens mit der gespeicherten Antwort überein, und die fünf
 Kontrollsätze des Vorlaufs wurden byte-gleich reproduziert; die zehn
-Abweichungen (1,7\,\%) sind mutmaßlich numerische Effekte des anderen
-GPU-Typs bei Beinahe-Gleichständen einzelner Tokens.
+Abweichungen (1,7\,\%) könnten durch numerische Effekte des anderen
+GPU-Typs entstanden sein; ihre Ursache wurde nicht isoliert geprüft.
+Die Kontrollen stützen die überwiegende Reproduzierbarkeit der Präfixe,
+belegen aber keine vollständige Äquivalenz zu einem Neulauf aller Sätze.
 Die Nachinferenz der langen Sätze dauerte je Satz 11,5 (0.8B), 15,4 (4B)
 und 31,6~s (27B), das Drei- bis Sechsfache der mittleren Latenz, weil die
 Generierungsdauer mit der Antwortlänge wächst.
@@ -506,8 +516,9 @@ Parameter 0,3 Punkte.
 Innerhalb der LLM-Familie wächst der Mikro-F$_1$ im QLoRA-Regime von
 93,1 (0.8B) über 94,0 (4B) auf 94,5 (27B); der Zugewinn von 0.8B auf 4B
 beträgt 0,8 Punkte, der von 4B auf 27B 0,5 Punkte.
-Beide Schritte sind unterscheidbar (Summe der Standardabweichungen 0,15
-bzw. 0,12), die Zugewinne nehmen aber mit der Größe ab: Die
+Die gepaarten 95-\%-Bootstrap-Intervalle beider Differenzen schließen
+null aus (0,66 bis 0,98 bzw. 0,38 bis 0,64 Punkte;
+Tabelle~\ref{tab:ci}). Die Zugewinne nehmen mit der Größe ab: Die
 rund sechsfache Parameterzahl von 4B auf 27B bringt weniger als die rund
 fünfeinhalbfache von 0.8B auf 4B.
 Im Zero-Shot-Regime fällt der Größeneffekt ein bis zwei Größenordnungen
@@ -550,7 +561,7 @@ gezogen.
   Dauer des Modellaufrufs je Testsatz bei Batchgröße~1 in Millisekunden
   (Mittelwert, Median, 95.~Perzentil);
   Durchsatz: Testsätze je Sekunde reiner Generierungszeit; Speicher:
-  maximal allokierter GPU-Speicher während der Testinferenz in GB.
+  maximal allokierter GPU-Speicher während der Testinferenz in GiB.
   GPU: H100 = H100 80\,GB HBM3, A100 = A100-SXM4 80\,GB, NVL = H100 NVL
   94\,GB.}
   \label{tab:effizienz}
@@ -603,19 +614,20 @@ Die Zero-Shot-Läufe sind bei 4B und 27B schneller als die QLoRA-Läufe
 derselben Größe auf derselben GPU (2\,015 gegenüber 4\,685~ms auf der
 A100; 3\,783 gegenüber 5\,505~ms auf der H100~NVL).
 Zwei Faktoren wirken hier zusammen und lassen sich nicht trennen: Die
-Zero-Shot-Modelle erzeugen kürzere Ausgaben, beim 4B-Modell in 61\,\%
-der Fälle ein leeres Array, und die BF16-Gewichte ersparen die
+Zero-Shot-Modelle erzeugen kürzere Ausgaben, beim 4B-Modell in 51\,\%
+der Fälle unmittelbar ein leeres Array; nach der Validierung bleiben
+insgesamt 61\,\% der Sätze ohne vorhergesagte Entität. Die BF16-Gewichte ersparen die
 Dequantisierung der NF4-Gewichte bei jedem Vorwärtsdurchlauf.
 Beim 0.8B-Modell liefen beide Regime auf verschiedenen GPUs, sodass der
 Unterschied (3\,211 gegenüber 1\,876~ms) nicht einem Faktor zugeordnet
 werden kann.
 
 \paragraph{GPU-Speicher.}
-Der Spitzenspeicher der Inferenz beträgt 0,7~GB (DeBERTa-v3-base),
-1,7~GB (DeBERTa-v3-large), 0,9~GB (Qwen3.5-0.8B, QLoRA), 3,5~GB
-(Qwen3.5-4B, QLoRA) und 18,7~GB (Qwen3.5-27B, QLoRA).
+Der Spitzenspeicher der Inferenz beträgt 0,7~GiB (DeBERTa-v3-base),
+1,7~GiB (DeBERTa-v3-large), 0,9~GiB (Qwen3.5-0.8B, QLoRA), 3,5~GiB
+(Qwen3.5-4B, QLoRA) und 18,7~GiB (Qwen3.5-27B, QLoRA).
 Im Zero-Shot-Regime mit BF16-Gewichten liegt der Bedarf bei 1,5, 8,2 und
-50,7~GB; der Unterschied zum QLoRA-Regime (Faktor 1,7 bis 2,7) geht vor
+50,7~GiB; der Unterschied zum QLoRA-Regime (Faktor 1,7 bis 2,7) geht vor
 allem auf die 4-Bit-Quantisierung des Basismodells zurück, deren
 Einsparung wegen nicht quantisierter Komponenten, Aktivierungen und
 KV-Cache unter dem Faktor vier bleibt.
@@ -677,7 +689,7 @@ was auch auf den GPU-Typ zurückgehen kann.
       width=0.42\linewidth, height=6.2cm,
       xmode=log, xmin=0.4, xmax=100,
       ymin=0, ymax=100,
-      xlabel={GPU-Spitzenspeicher [GB]},
+      xlabel={GPU-Spitzenspeicher [GiB]},
       label style={font=\footnotesize}, tick label style={font=\footnotesize},
       ymajorgrids, grid style={gray!30},
     ]
@@ -699,10 +711,10 @@ was auch auf den GPU-Typ zurückgehen kann.
         table[x=vram_gb, y=f1] {generated/fig-tradeoff.dat};
     \end{axis}
   \end{tikzpicture}
-  \caption[Erkennungsleistung gegenüber Inferenzlatenz und GPU-Spitzenspeicher]{Erkennungsleistung gegenüber Inferenzlatenz (links) und
-  GPU-Spitzenspeicher (rechts), beide Achsen logarithmisch.
+  \caption[Erkennungsleistung gegenüber Inferenzlatenz und GPU-Spitzenspeicher]{Mikro-F$_1$ gegenüber Modelllatenz (links) und
+  maximal allokiertem GPU-Speicher (rechts); die x-Achse ist jeweils logarithmisch.
   Symbolform nach Regime, Farbe nach Familie, Symbolgröße nach
-  Größenklasse; Werte nach Tabelle~\ref{tab:effizienz}.
+  Größenklasse; LLM-Werte bei 256 Ausgabetokens nach Tabelle~\ref{tab:effizienz}.
   Werte verschiedener GPU-Typen sind nur eingeschränkt vergleichbar.}
   \label{fig:tradeoff}
 \end{figure}
@@ -809,9 +821,10 @@ Beide Modelle liefen auf derselben H100 mit 80\,GB.
 Gegenüber der MultiNERD-Referenz fällt der gepoolte F$_1$ auf CrossNER
 bei DeBERTa-v3-large um 14,5 Punkte auf 85,0 und bei Qwen3.5-27B um 26,8
 Punkte auf 71,7.
-Der Encoder verliert damit 12,2 Punkte weniger; der Abstand von 13,3
-Punkten zwischen den Modellen auf CrossNER ist das Dreizehnfache der
-Summe der Standardabweichungen.
+Der Encoder verliert damit 12,2 Punkte weniger; zwischen den Modellen
+liegen auf CrossNER bei 256 Ausgabetokens 13,3 Punkte. Das nach Domäne
+geschichtete Bootstrap-Intervall bestätigt die Richtung dieser Differenz
+(Tabelle~\ref{tab:crossner-ci}).
 Die Profile unterscheiden sich im Ursprung des Verlusts: Der Encoder
 verliert Precision und Recall gleichmäßig (84,5 und 85,5), das LLM
 behält eine hohe Precision (88,3), verliert aber vor allem Recall (60,4).
@@ -835,27 +848,31 @@ Die Latenz auf CrossNER betrug 25,7~ms je Satz für DeBERTa-v3-large (das
 1,6-Fache seiner MultiNERD-Latenz auf demselben GPU-Typ) und 14\,691~ms
 für Qwen3.5-27B (Median 13\,763~ms; das 2,7-Fache, wobei dessen
 MultiNERD-Wert von der H100~NVL stammt); der GPU-Spitzenspeicher lag bei
-1,7 bzw. 19,0~GB.
+1,7 bzw. 19,0~GiB.
 
 Die Sensitivitätsanalyse mit 1\,024 Ausgabetokens
 (Abschnitt~\ref{sec:crossner}, Tabelle~\ref{tab:limit}) bestätigt diese
 Deutung auf dem gesamten Testsplit: Keine der 2\,506 Antworten erreicht
 das höhere Limit, alle sind parsebar, und der gepoolte Recall des
-27B-Modells steigt von 60,4 auf 85,5 Punkte bei unveränderter Precision
+27B-Modells steigt von 60,4 auf 85,5 Punkte bei ähnlicher Precision
 (88,3 gegenüber 88,8).
 Der gepoolte F$_1$ steigt um 15,4 Punkte auf 87,1 und liegt damit 2,1
-Punkte über dem Wert von DeBERTa-v3-large (85,0; Summe der
-Standardabweichungen 0,8).
+Punkte über dem Wert von DeBERTa-v3-large (85,0). Das gepaarte,
+nach Domäne geschichtete 95-\%-Bootstrap-Intervall der Differenz
+LLM minus Encoder beträgt 1,47 bis 2,80 Punkte
+(Tabelle~\ref{tab:crossner-ci}).
 Je Domäne beträgt der Zugewinn zwischen 7,3 (Literatur) und 25,1 Punkten
 (Musik); mit 1\,024 Tokens liegt das LLM in allen fünf Domänen vor dem
-Encoder, nach dem Kriterium aus Abschnitt~\ref{sec:performanzmetriken}
-unterscheidbar in vier Domänen, am deutlichsten in Naturwissenschaften
-(86,3 gegenüber 82,0) und Musik (88,0 gegenüber 85,1), und nur in
-Literatur innerhalb der Streuung.
+Encoder. Die domänenweisen Intervalle schließen null in Musik, Politik
+und Naturwissenschaften aus; für Künstliche Intelligenz und Literatur
+bleibt die Richtung unsicher. Diese fünf Vergleiche sind explorativ und
+nicht für Mehrfachvergleiche korrigiert.
 Gemessen an der jeweiligen MultiNERD-Referenz auf den drei Grobtypen
 verliert das LLM beim Transfer dann 12,4 Punkte, der Encoder
-14,5; der Recall-Verlust des LLM bei 256 Tokens war damit
-überwiegend ein Artefakt des Ausgabelimits, nicht des Domänenwechsels.
+14,5. Der ursprüngliche Recall-Verlust des LLM wurde somit wesentlich
+durch das Ausgabelimit verursacht. Der verbleibende Unterschied zu
+MultiNERD umfasst außerdem Unterschiede in Texten und Annotation und
+isoliert keinen reinen Domäneneffekt.
 Die Latenz je Satz lag mit im Mittel 12,9~s auf dem Niveau der Hauptläufe
 (14,7~s); der Ausschluss der 21 überschneidenden Sätze ändert den
 gepoolten Wert um 0,1 Punkte (87,0).
@@ -876,6 +893,20 @@ gepoolten Wert um 0,1 Punkte (87,0).
   \input{generated/tab-limit}
 \end{table}
 
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption[Bootstrap-Intervalle des Modellvergleichs auf CrossNER]{Gepaarte
+  95-\%-Bootstrap-Intervalle auf CrossNER ($B = 2\,000$, nach Domäne
+  geschichtet). Differenz Qwen3.5-27B minus DeBERTa-v3-large in
+  Mikro-F$_1$-Punkten, gemittelt über drei feste Seeds, auf PER, ORG und
+  LOC. Die Domänenumfänge bleiben beim gepoolten Wert erhalten;
+  Intervalle ohne Korrektur für Mehrfachvergleiche.}
+  \label{tab:crossner-ci}
+  \setlength{\tabcolsep}{4pt}
+  \input{generated/tab-crossner-ci}
+\end{table}
+
 \section{Diskussion der Ergebnisse}
 \label{sec:erg-diskussion}
 
@@ -890,30 +921,31 @@ angesichts der Streuung und der bekannten Abweichungen
 \subsection{Erkennungsleistung im Vergleich zur Literatur}
 \label{sec:disk-leistung}
 
-Der zentrale Befund zu FF1 lautet: Das beste LLM, Qwen3.5-27B im
-QLoRA-Regime, liegt mit 94,5 Punkten 1,3 Punkte hinter DeBERTa-v3-large
-mit 95,8; der Abstand ist unterscheidbar, und unter dem registrierten
-Limit von 256 Ausgabetokens liegt auch der kleinere Encoder vor allen
-LLM-Konfigurationen.
+Der zentrale Befund zu FF1 hängt wesentlich vom Ausgabelimit ab: Bei
+256 Tokens liegt Qwen3.5-27B im QLoRA-Regime mit 94,5 Punkten 1,3 Punkte
+hinter DeBERTa-v3-large mit 95,8. Nach der selektiven Nachinferenz mit
+1\,024 Tokens beträgt der Abstand nur noch 0,18 Punkte. Die
+Bootstrap-Intervalle beider Differenzen schließen null aus; ihre
+praktische Größenordnung unterscheidet sich jedoch deutlich.
 
 Das Ergebnis weicht von \textcite{obeidat2025llm} ab, die auf vier von
 fünf biomedizinischen Datensätzen einen Vorsprung des LLM von 2 bis 8
 Punkten berichten, der dort vor allem aus der Precision stammt, während
-hier die Precision beider Klassen gleich ist.
+hier die Precision-Punktwerte nahe beieinanderliegen.
 Es liegt nahe am Befund von \textcite{zhan2026generativeNER}, dass
 LoRA-angepasste LLMs und spezialisierte Modelle auf flachen Datensätzen
 nur knapp auseinanderliegen (dort mit dem LLM vorn), und bei der
 Beobachtung von \textcite{lu2024llmstruggle}, dass ein LoRA-angepasstes
 7B-Modell hinter einem feinjustierten Encoder bleibt.
-Drei Eigenschaften des Setups sprechen dafür, dass die Encoder hier
-begünstigt sind.
+Drei Eigenschaften des Setups sind für die Einordnung relevant.
 Erstens wurden die Encoder vollständig feinjustiert, die LLMs nur über
 Adapter mit 0{,}5 bis 0{,}8\,\% trainierbarer Parameter
-(Tabelle~\ref{tab:lora-hyperparams}).
-Zweitens ist der Trainingssplit mit 131\,280 Sätzen groß genug, um den
-Vorteil des Vorwissens großer Modelle zu verkleinern, den
+(Tabelle~\ref{tab:lora-hyperparams}); ob vollständiges LLM-Fine-Tuning
+höhere Werte ergeben hätte, wurde nicht untersucht.
+Zweitens umfasst der Trainingssplit 131\,280 Sätze. Der Nutzen von
+Vorwissen bei deutlich weniger Trainingsdaten, den
 \textcite{bogdanov2024nuner} und \textcite{zaratiana2024gliner} vor allem
-bei wenigen Beispielen finden.
+für solche Bedingungen untersuchen, wird hier nicht geprüft.
 Drittens geht der Vorsprung des Encoders nahezu vollständig auf den
 Recall zurück, und der größte Teil des Recall-Rückstands von 2,6 Punkten
 entfällt auf die 65 Antworten, die am Limit von 256 Ausgabetokens
@@ -924,27 +956,30 @@ Die Nachinferenz dieser Sätze mit 1\,024 Tokens
 vollständigen Antworten erreicht das 27B-Modell 95,6 Punkte und liegt
 damit 0,2 Punkte hinter DeBERTa-v3-large und 0,1 Punkte vor
 DeBERTa-v3-base.
-Der Abstand zum großen Encoder bleibt nach dem Kriterium aus
-Abschnitt~\ref{sec:performanzmetriken} und im Bootstrap-Intervall (0,02
-bis 0,33) unterscheidbar, der zum kleinen Encoder ist es im Bootstrap
-nicht mehr (Tabelle~\ref{tab:ci}); im Makro-F$_1$ liegt das 27B-Modell
-mit 1\,024 Tokens unterscheidbar vor DeBERTa-v3-base (Intervall 0,61 bis
-4,18) und gleichauf mit DeBERTa-v3-large.
+Das Bootstrap-Intervall für den Vorsprung des großen Encoders reicht
+von 0,02 bis 0,33 Punkten. Für den Vorsprung des LLM gegenüber dem
+kleinen Encoder enthält es null ($-$0,02 bis 0,30;
+Tabelle~\ref{tab:ci}). Im Makro-F$_1$ liegt das 27B-Modell mit
+1\,024 Tokens vor DeBERTa-v3-base (Intervall 0,61 bis 4,18); gegenüber
+DeBERTa-v3-large wird kein eindeutiger Unterschied nachgewiesen.
 Das 4B- und das 0.8B-Modell bleiben auch mit 1\,024 Tokens 0,4 bzw. 1,2
 Punkte hinter DeBERTa-v3-base.
-Das Ausgabelimit ist eine Einstellung der Pipeline, keine Eigenschaft
-der Modellklasse: Von den 1,3 Punkten Abstand unter dem registrierten
-Protokoll entfallen 1,2 auf das Limit und 0,2 auf die Modellklasse.
+Die Nachinferenz verringert den beobachteten Abstand um 1,16 Punkte.
+Die verbleibenden 0,18 Punkte beschreiben einen Unterschied zwischen
+den untersuchten Konfigurationen. Da sich auch Vortraining,
+Anpassungsverfahren und Präzision unterscheiden, ist dieser Rest kein
+isolierter Effekt der Modellarchitektur.
 
 Unabhängig von der Richtung ist der Abstand zwischen den trainierten
-Klassen klein im Verhältnis zum Abstand zwischen den Regimen: Die
-Anpassung mit QLoRA hebt den F$_1$ um 25 bis 87 Punkte über das
-Zero-Shot-Regime.
-Das bestätigt für ein feingranulares Inventar mit 15 Typen, was
+Konfigurationen klein im Verhältnis zum Abstand zwischen den Regimen:
+Die QLoRA-Konfigurationen erreichen 25 bis 87 Punkte mehr als die
+Zero-Shot-Konfigurationen. Wegen der gleichzeitigen Unterschiede in
+Prompt, Decoding und Präzision ist dies kein isolierter Anpassungseffekt.
+Der beobachtete Abstand passt zu den Ergebnissen, die
 \textcite{keraghel2024recent} mit GPT-4o (65{,}17 gegenüber 90{,}98 auf
 CoNLL-2003) und \textcite{tan2023damo} mit ChatGPT auf MultiCoNER II
-(14{,}78 gegenüber 92{,}77) für geprompte Modelle berichten: Ohne
-aufgabenspezifische Anpassung bleiben LLMs weit hinter überwachten
+(14{,}78 gegenüber 92{,}77) für geprompte Modelle berichten. Unter den
+jeweils untersuchten Bedingungen liegen diese hinter den überwachten
 Systemen zurück.
 Der hier gemessene Zero-Shot-Wert von 69,4 Punkten für das 27B-Modell
 liegt unter dem Zero-Shot-Wert von 76,0, den \textcite{sainz2024gollie}
@@ -978,9 +1013,9 @@ offen gelassene Frage der Datenkontamination hinzu: Da Wikipedia- und
 Wikinews-Texte mit hoher Wahrscheinlichkeit Teil des Vortrainings sind,
 könnten die Modelle einzelne Artikel kennen.
 Die niedrigen Werte und die dominierenden Format- und
-Typdefinitionsfehler sprechen jedoch nicht für einen nennenswerten
-Vorteil aus solchem Vorwissen, und im QLoRA-Regime lernen alle Modelle
-das Typinventar aus den Trainingsdaten.
+Typdefinitionsfehler erlauben keinen Rückschluss auf das Ausmaß einer
+möglichen Kontamination. Diese Unsicherheit betrifft auch die
+vortrainierten Encoder und bleibt ohne unabhängige Prüfung offen.
 
 \subsection{Ausgabeformat und Formtreue}
 \label{sec:disk-format}
@@ -1044,8 +1079,8 @@ beide fallen bei jeder Entität an, gleich wie kompakt sie kodiert ist.
 \subsection{Modellgröße}
 \label{sec:disk-groesse}
 
-Zu FF2 zeigen die Ergebnisse kleine, aber unterscheidbare
-Größeneffekte innerhalb der trainierten Familien.
+Zu FF2 zeigen die Ergebnisse kleine Leistungszuwächse innerhalb der
+trainierten Familien, deren gepaarte Mikro-F$_1$-Intervalle null ausschließen.
 Bei den Encodern liegt die große Variante 0,3 Punkte vor der kleinen,
 bei allen drei Seeds in derselben Richtung; das ist stabiler als bei
 \textcite{keraghel2024recent}, wo DeBERTa-v3-base und -large je nach
@@ -1056,18 +1091,20 @@ Größe ab, obwohl die Parameterzahl je Schritt um das Fünf- bis
 Sechsfache wächst.
 Den Zugewinnen stehen Ressourcen gegenüber, die innerhalb der
 Encoder-Familie moderat wachsen (Latenz 8,9 auf 16,5~ms, Speicher 0,7 auf
-1,7~GB, Training 0,4 auf 1,2~h) und innerhalb der LLM-Familie
+1,7~GiB, Training 0,4 auf 1,2~h) und innerhalb der LLM-Familie
 unterschiedlich steil: Die Latenz je Satz steigt von 1\,876 auf
 5\,505~ms, also auf das Dreifache bei 36-facher Parameterzahl, der
-Inferenzspeicher von 0,9 auf 18,7~GB und die Trainingsdauer von 12 auf
+Inferenzspeicher von 0,9 auf 18,7~GiB und die Trainingsdauer von 12 auf
 266 Stunden; das 4B-Modell fällt mit 62,9 Stunden auf der A100 aus der
 Reihe, und Latenz wie Trainingsdauer sind durch GPU-Typ und Clusterlast
 überlagert (Tabelle~\ref{tab:effizienz}).
 Das Muster entspricht den Beobachtungen bei GoLLIE und UniversalNER,
 wo größere Backbones nur wenig hinzugewinnen und der Gewinn durch die
 Anpassung den Gewinn durch die Größe übersteigt
-\cite{sainz2024gollie,zhou2024universalner}: Hier bringt die Anpassung
-25 bis 87 Punkte, die Größe innerhalb des Regimes 1,3.
+\cite{sainz2024gollie,zhou2024universalner}. Hier beträgt der Abstand
+zwischen den Zero-Shot- und QLoRA-Konfigurationen 25 bis 87 Punkte,
+zwischen den kleinsten und größten QLoRA-Konfigurationen 1,3 Punkte;
+beide Vergleiche variieren mehrere Eigenschaften gleichzeitig.
 Im Zero-Shot-Regime ist der Größeneffekt mit 28,8 und 34,5 Punkten je
 Schritt um Größenordnungen größer, was zu der Beobachtung passt, dass
 Fähigkeiten wie das Befolgen komplexer Formatvorgaben erst ab einer
@@ -1090,139 +1127,128 @@ GPUs angepasst.
 \subsection{Effizienz und praktische Empfehlungen}
 \label{sec:disk-effizienz}
 
-FF3 fragt nach dem günstigsten Verhältnis von Erkennungsleistung und
-Ressourcenbedarf unter Speicher- und Latenzbeschränkungen.
-Die Effizienzwerte lassen sich zu drei Aussagen verdichten.
-Erstens liegen die Encoder bei der Latenz um zwei bis drei
-Größenordnungen unter den LLMs (8,9 bis 16,5~ms gegenüber 1\,876 bis
-5\,505~ms je Satz); beim Speicher reicht die Spanne vom halben
-Bedarf von DeBERTa-v3-large (0.8B: 0,9 gegenüber 1,7~GB) bis zum
-25-Fachen von DeBERTa-v3-base (27B: 18,7 gegenüber 0,7~GB).
-Zweitens bringt der Wechsel zum LLM hier keinen Leistungsgewinn, sondern
-einen Verlust von 1,0 bis 2,4 Punkten gegenüber DeBERTa-v3-base, bei
-einem Latenzfaktor von 210 bis 617; die Pareto-Front besteht allein aus
-den beiden Encodern.
-Das geht über die Schlussfolgerung von \textcite{obeidat2025llm} hinaus,
-dass Encoder bei kleinen Leistungsunterschieden oder Latenzanforderungen
-die geeignetere Wahl bleiben: Unter den hier gewählten Bedingungen sind
-sie es in Mikro-F$_1$, Latenz und Speicher zugleich.
-Drittens passen die QLoRA-Läufe mit 6,4 bis 159~Mio. trainierbaren
-Parametern und NF4-Basismodell auf eine einzelne GPU, kosten aber Zeit:
-Das 27B-Modell benötigt 18,7~GB während der Inferenz und rund 266 Stunden
-Training über vier Zuteilungen (Abschnitt~\ref{sec:erg-effizienz})
-gegenüber 1,2 Stunden für DeBERTa-v3-large; der Trainingsspeicher wurde
-nicht gemessen.
+FF3 fragt nach dem Verhältnis von Erkennungsleistung und Ressourcenbedarf
+unter Speicher- und Latenzbeschränkungen. Auf MultiNERD erreichen die
+Encoder 95,5 bzw. 95,8 Punkte bei 8,9 bzw. 16,5~ms Modelllatenz und
+0,7 bzw. 1,7~GiB maximal allokiertem Inferenzspeicher. Die QLoRA-Läufe
+benötigen unter dem ursprünglichen Limit von 256 Tokens 1\,876 bis
+5\,505~ms und 0,9 bis 18,7~GiB. Der Vergleich von DeBERTa-v3-base und
+Qwen3.5-0.8B auf demselben GPU-Typ bestätigt einen Latenzfaktor von etwa
+210. Faktoren zwischen anderen Größen enthalten zusätzlich
+Hardwareeffekte.
 
-Daraus ergeben sich Empfehlungen, die in
-Abschnitt~\ref{sec:fazit-zusammenfassung} zusammengefasst werden.
-(1) Bei annotierten Trainingsdaten in der Größenordnung von MultiNERD
-ist DeBERTa-v3 die erste Wahl, und zwar unabhängig von Latenz- oder
-Speicherbeschränkungen: DeBERTa-v3-large erreicht 95,8 Punkte bei
-16,5~ms je Satz und 1,7~GB, DeBERTa-v3-base 95,5 Punkte bei 8,9~ms und
-0,7~GB.
-(2) Ein LLM rechtfertigt den Mehraufwand nur, wenn seine spezifischen
-Vorteile für die Anwendung zählen: die gleichwertige Makro-Leistung
-mit Vorsprüngen bei seltenen Typen wie INST, MYTH, CEL und TIME, die in
-dieser Arbeit nicht gemessene Möglichkeit, das Typinventar ohne
-erneutes Training per Prompt zu ändern, oder ein Umfeld, in dem das
-LLM ohnehin für andere Aufgaben bereitsteht.
-Dann ist Qwen3.5-27B mit QLoRA die beste Konfiguration, sofern 24~GB
-GPU-Speicher, Latenzen von rund 5,5 Sekunden je Satz und ein
-Ausgabelimit vorgesehen sind, das lange Antworten nicht abschneidet; das
-4B-Modell wird von beiden Encodern dominiert und bietet gegenüber dem
-27B-Modell nur den Speichervorteil.
-In Speicherklassen ausgedrückt passen beide Encoder, die beiden kleineren
-QLoRA-Modelle und das 4B-Modell im Zero-Shot-Regime auf eine GPU mit
-16~GB, das 27B-Modell im QLoRA-Regime braucht 24~GB, in BF16 64~GB.
-(3) Das Zero-Shot-Regime ist bei 15 Typen nicht konkurrenzfähig und nur
-dann sinnvoll, wenn keine annotierten Daten vorliegen; dann ist
-allein das 27B-Modell mit 69,4 Punkten und 50,7~GB brauchbar, und der
-Typ TIME muss im Prompt an die Datensatzkonvention angepasst werden.
-(4) Für den Transfer auf andere Domänen ohne Nachtraining hängt die
-Wahl vom Ausgabelimit ab: Unter dem registrierten Limit liegt der Encoder
-vorn (85,0 gegenüber 71,7 auf CrossNER), mit 1\,024 Tokens das LLM
-(87,1), das dort vor allem bei der Precision stärker ist
-(Abschnitt~\ref{sec:erg-crossner}).
-Diese Empfehlungen gelten für die hier gemessenen Bedingungen:
-Batchgröße~1, ein Satz je Anfrage, die genannten GPU-Typen.
-Mit Batching steigt der Durchsatz der LLMs stärker als der der Encoder,
-sodass sich die Faktoren bei Offline-Verarbeitung verschieben; dieser
-Fall wurde nicht gemessen (Abschnitt~\ref{sec:abgrenzung}).
+Bei 256 Ausgabetokens bilden die beiden Encoder in den gemessenen
+Mikro-F$_1$-, Latenz- und Speicherwerten die Pareto-Front. Die
+Sensitivitätsanalyse verändert jedoch den Qualitätsvergleich: Mit den
+nachgenerierten Antworten erreicht das 27B-Modell 95,6 Punkte und liegt
+im Punktwert knapp vor DeBERTa-v3-base. Eine vollständige Messung von
+Qualität und Ressourcen für einen MultiNERD-Neulauf mit 1\,024 Tokens
+liegt nicht vor; die selektive Nachinferenz erfasst die Latenz nur für die
+regenerierten Sätze auf anderer Hardware. Deshalb werden ihre
+Qualitätswerte nicht mit den Ressourcenwerten des 256er-Laufs zu einer
+neuen Pareto-Aussage kombiniert. DeBERTa-v3-large bleibt auf MultiNERD
+im Mikro-F$_1$ knapp vorn. Dies stützt eine Empfehlung für Encoder bei
+vergleichbaren Daten und Anforderungen an geringe Latenz, wie sie auch
+\textcite{obeidat2025llm} für kleine Qualitätsunterschiede diskutieren.
+
+Die Trainingszeiten beschreiben den tatsächlich angefallenen Aufwand:
+0,4 bzw. 1,2 Stunden für die Encoder und 12,1, 62,9 bzw. 266 Stunden für
+die QLoRA-Konfigurationen. Beim 27B-Modell schließen sie vier
+Zuteilungen und die gemeinsame Knotennutzung dreier Läufe ein. Sie
+werden daher nicht als allgemeiner Mindestaufwand für ein Training
+dieser Modellgröße interpretiert. Der Trainingsspeicher wurde nicht
+gemessen. Auch der maximal von PyTorch allokierte Inferenzspeicher
+begründet allein keine garantierte Eignung bestimmter GPU-Speicherklassen:
+Reservierungen, weiterer Systembedarf und die Laufzeit auf anderer
+Hardware wurden nicht erfasst.
+
+Für Anwendungen mit einem festen Inventar von 15 Typen, einer Datenbasis
+wie MultiNERD und niedriger Latenztoleranz sind die untersuchten Encoder
+damit eine gut gestützte Wahl. Eine pauschale Qualitätsempfehlung über
+Datensätze hinweg ergibt sich dagegen nicht: Auf CrossNER erreicht
+Qwen3.5-27B mit 1\,024 Ausgabetokens 87,1 Punkte gegenüber 85,0 für
+DeBERTa-v3-large. Das gepaarte Intervall der Differenz schließt null aus;
+gleichzeitig beträgt die Modelllatenz dort 12,9~s gegenüber 25,7~ms auf
+demselben GPU-Typ. Ob dieser Qualitätsgewinn den Aufwand rechtfertigt,
+hängt von der Zielanwendung ab. Einzelne höhere Werte bei seltenen
+MultiNERD-Typen bleiben wegen ihres geringen Supports deskriptive
+Hinweise. Eine gleichwertige Makro-Leistung oder erfolgreiche Änderung
+des Typinventars per Prompt wurde nicht nachgewiesen.
+
+Die Zero-Shot-Konfigurationen erreichen in der gewählten Pipeline
+wesentlich niedrigere Werte. Unter ihnen erzielt das 27B-Modell den
+höchsten F$_1$, doch weder seine Eignung für eine konkrete Anwendung ohne
+Trainingsdaten noch die optimale Prompt- und Decoding-Wahl wurde geprüft.
+Alle Empfehlungen gelten für einzelne Sätze bei Batchgröße~1 und die
+genannten GPU-Typen. Der mit Batching oder anderen Inferenzsystemen
+erreichbare Durchsatz sowie vollständige Anwendungslatenzen bleiben offen.
 
 \subsection{Belastbarkeit der Befunde}
 \label{sec:disk-validitaet}
 
-Welche der berichteten Unterschiede tragen, bestimmt sich aus der
-Streuung und aus den Abweichungen in Tabelle~\ref{tab:abweichungen}.
-Die Standardabweichungen des Mikro-F$_1$ über die Seeds liegen bei 0,03
-bis 0,10 Punkten; alle Unterschiede zwischen trainierten
-Konfigurationen, der kleinste davon 0,3 Punkte zwischen den beiden
-Encodern, übersteigen die Summe der beteiligten Standardabweichungen um
-mindestens das Vierfache.
-Nicht unterscheidbar ist dagegen der Makro-F$_1$ von DeBERTa-v3-large
-und Qwen3.5-27B (86,7 gegenüber 86,9 bei Standardabweichungen von 0,4
-und 0,3), ebenso einzelne typbezogene Werte der seltenen Typen.
-Die explorativen Vorläufe mit Seed~42, die nicht in die Auswertung
-eingehen, weichen von den kanonischen Läufen desselben Seeds um höchstens
-0,12 Punkte Mikro-F$_1$ ab, was die Streuung über die Seeds bestätigt.
-Die Zero-Shot-Werte beruhen dagegen auf je einem Lauf mit Sampling,
-dessen Streuung nicht gemessen wurde; die Abstände zwischen den Größen
-(28,8 und 34,5 Punkte) und zum QLoRA-Regime liegen jedoch um
-Größenordnungen über jeder plausiblen Sampling-Streuung.
+Die Standardabweichungen des Mikro-F$_1$ über die drei Trainingsseeds
+liegen bei 0,03 bis 0,10 Punkten. Sie zeigen geringe Variabilität dieser
+Läufe unter den gewählten Konfigurationen. Drei Seeds erfassen jedoch
+nicht sämtliche Unsicherheit durch erneutes Training; insbesondere
+ersetzen kleine Standardabweichungen keine Untersuchung der
+Teststichprobe. Die ebenfalls geringen Abstände historischer Vorläufe
+werden wegen ihrer abweichenden Ausführungsbedingungen nicht als
+zusätzliche unabhängige Replikate gewertet.
 
-Tabelle~\ref{tab:ci} ergänzt die Seed-Streuung um die Unsicherheit durch
-die Auswahl der Testsätze (gepaartes Satz-Bootstrap,
-Abschnitt~\ref{sec:performanzmetriken}).
-Die 95-\%-Intervalle der Mikro-F$_1$-Differenzen schließen bei allen
-sieben Paaren die Null aus; für den zentralen Vergleich liegt die
-Differenz zwischen DeBERTa-v3-large und Qwen3.5-27B bei 1,34 Punkten mit
-einem Intervall von 0,99 bis 1,68.
-Beim Makro-F$_1$ schließen vier der sieben Intervalle die Null ein,
-darunter beide Vergleiche der Encoder mit dem 27B-Modell und der
-Vergleich der beiden Encoder; nur die Größenschritte innerhalb der
-LLM-Familie und der Vergleich von DeBERTa-v3-base mit dem 0.8B-Modell
-sind auch im Makro-F$_1$ belastbar.
-Für die Nachinferenz mit 1\,024 Tokens bestätigen die Intervalle die
-Lesart aus Abschnitt~\ref{sec:disk-leistung}: Der Abstand zwischen
-DeBERTa-v3-large und dem 27B-Modell schrumpft auf 0,18 Punkte (Intervall
-0,02 bis 0,33), der Abstand zu DeBERTa-v3-base kehrt sich um und ist mit
-0,14 Punkten (Intervall $-$0,02 bis 0,30) nicht mehr unterscheidbar.
-Die Intervalle der einzelnen Konfigurationen sind beim Makro-F$_1$ mit
-vier bis fünf Punkten Breite fünf- bis zehnmal so breit wie beim
-Mikro-F$_1$, weil die seltenen Typen auf wenigen Sätzen beruhen.
-Beide Streuungsquellen führen damit zur gleichen Lesart: Unter dem
-registrierten Limit von 256 Tokens ist der Mikro-Vorsprung der Encoder
-belastbar, der Makro-Gleichstand ebenfalls.
+Tabelle~\ref{tab:ci} quantifiziert die Unsicherheit durch die Auswahl der
+MultiNERD-Testsätze. Bei den sieben dort ausgewiesenen Vergleichen
+trainierter Konfigurationen mit 256 Ausgabetokens schließen die
+95-\%-Intervalle der Mikro-F$_1$-Differenzen null aus. Für DeBERTa-v3-large
+minus Qwen3.5-27B beträgt die Differenz 1,34 Punkte mit einem Intervall
+von 0,99 bis 1,68. Beim Makro-F$_1$ enthalten vier dieser sieben Intervalle
+null, darunter beide Vergleiche der Encoder mit dem 27B-Modell und der
+Vergleich der beiden Encoder. Für diese Paare ist kein eindeutiger
+Makro-Unterschied nachgewiesen; eine praktische Äquivalenz folgt daraus
+nicht.
+
+Mit den bei 1\,024 Tokens nachgenerierten Antworten schrumpft der
+Mikro-Abstand zwischen DeBERTa-v3-large und Qwen3.5-27B auf 0,18 Punkte
+(Intervall 0,02 bis 0,33). Gegenüber DeBERTa-v3-base liegt das LLM im
+Punktwert um 0,14 Punkte vorn, das Intervall enthält aber null
+($-$0,02 bis 0,30). Die Intervalle der einzelnen Konfigurationen sind
+beim Makro-F$_1$ mit etwa vier bis fünf Punkten Breite wesentlich breiter
+als beim Mikro-F$_1$, weil seltene Typen auf wenigen Sätzen beruhen.
+Die nach Domäne geschichteten CrossNER-Intervalle
+(Tabelle~\ref{tab:crossner-ci}) stützen bei 1\,024 Tokens den gepoolten
+Vorsprung des LLM. Domänenweise schließen die Intervalle in Musik,
+Politik und Naturwissenschaften null aus; in Künstlicher Intelligenz und
+Literatur bleibt die Richtung unsicher.
 
 \begin{table}[htbp]
   \centering
   \caption[Bootstrap-Konfidenzintervalle für Mikro- und Makro-F$_1$]{Gepaartes
   Satz-Bootstrap über die 16\,454 Testsätze ($B = 2\,000$,
   Perzentilintervalle 2,5 und 97,5\,\%): Differenzen zwischen
-  Konfigurationen (A $-$ B, seedgleiche Paare, über die drei Seeds
-  gemittelt) und Intervalle der einzelnen Konfigurationen (Seed-Mittel;
-  Zero-Shot-Läufe: Einzellauf).
-  Werte in Punkten.}
+  Konfigurationen (A $-$ B, über drei feste Seeds gemittelt) und
+  Intervalle einzelner Konfigurationen (Seed-Mittel; Zero-Shot:
+  Einzellauf). Werte in Punkten; keine Korrektur für Mehrfachvergleiche.}
   \label{tab:ci}
   \scriptsize
   \setlength{\tabcolsep}{2pt}
   \input{generated/tab-ci}
 \end{table}
-Belastbar sind der Abstand zwischen Zero-Shot- und QLoRA-Regime, der
-Abstand zwischen den Encodern und allen LLM-Konfigurationen, die
-Richtung der Größeneffekte und die Effizienzfaktoren, die um ein
-Vielfaches über der Streuung liegen.
-Für die Effizienzwerte gilt das nur innerhalb gleicher Hardware; der
-hardwaregleiche Vergleich beschränkt sich auf DeBERTa-v3 und
-Qwen3.5-0.8B (QLoRA) auf der H100, auf Zero-Shot- und QLoRA-Regime des
-4B-Modells auf der A100 und des 27B-Modells auf der H100~NVL sowie auf
-beide CrossNER-Modelle auf der H100.
-Die Einschränkungen des Versuchsdesigns, darunter die Silberreferenz,
-der einzelne Zero-Shot-Lauf je Größe, die drei GPU-Typen und die
-asymmetrische Checkpoint-Auswahl, sind in Tabelle~\ref{tab:abweichungen}
-zusammengefasst und werden in Abschnitt~\ref{sec:limitationen} diskutiert.
-Keine von ihnen kehrt die Richtung der belastbaren Befunde um; sie
-begrenzen aber, wie genau die kleinen Unterschiede zwischen den
-trainierten Konfigurationen zu beziffern sind, und das Ausgabelimit
-begrenzt, wie weit der gemessene Klassenunterschied auf die Modelle
-selbst zurückgeht.
+
+Alle Intervalle sind bedingt auf die vorhandenen Modelle und
+Vorhersagen. Dokumentabhängigkeiten, erneutes Training und die
+Sampling-Streuung der Zero-Shot-Inferenz werden nicht mitgeschätzt.
+Die Ergebnisse der einzelnen Vergleiche sind explorativ; eine gemeinsame
+Fehlerkontrolle für alle Vergleiche wurde nicht vorgenommen. Besonders
+knappe Intervalle sind deshalb vorsichtig zu interpretieren. Die
+beobachteten großen Abstände zwischen Zero-Shot- und QLoRA-Konfigurationen
+bleiben deskriptive Ergebnisse, deren Zerlegung in Training, Prompt,
+Decoding und Präzision das Design nicht erlaubt.
+
+Die frühere Testnutzung, die Silberreferenz, unterschiedliche Hardware
+und die asymmetrische Checkpoint-Auswahl begrenzen darüber hinaus die
+Aussagekraft (Tabelle~\ref{tab:abweichungen}). Ein Bootstrap kann diese
+Einflüsse nicht korrigieren. Ihre Auswirkungen auf die Rangfolge sind
+nicht generell bekannt; beim Ausgabelimit ist eine Änderung der Rangfolge
+auf CrossNER bereits nachgewiesen. Die Schlussfolgerungen beziehen sich
+daher auf die dokumentierten Konfigurationen, Ausgabelimits und
+Datensätze. Die konkreten Grenzen werden in
+Abschnitt~\ref{sec:limitationen} zusammengeführt.
