@@ -1010,12 +1010,13 @@ Das Muster ähnelt den Beobachtungen bei GoLLIE
 hinzugewinnen und der Gewinn durch die Anpassung den Gewinn durch die
 Größe übersteigt. Hier ist der Abstand
 zwischen den Zero-Shot- und QLoRA-Konfigurationen
-(Abschnitt~\ref{sec:disk-leistung}) um ein Vielfaches größer als der
+(Abschnitt~\ref{sec:erg-gesamt}) um ein Vielfaches größer als der
 zwischen den kleinsten und größten QLoRA-Konfigurationen (1,3 Punkte);
 beide Vergleiche variieren mehrere Eigenschaften gleichzeitig.
 Im Zero-Shot-Regime ist der Größeneffekt um Größenordnungen größer
-(Abschnitt~\ref{sec:erg-groesse}); die Formtreue-Kennzahlen zeigen, dass
-die Sprünge vor allem Sprünge der Formtreue sind.
+(Abschnitt~\ref{sec:erg-groesse}); die Formtreue-Kennzahlen legen nahe,
+dass ein großer Teil der Sprünge auf die Formtreue zurückgeht; getrennt
+bestimmt wurde dieser Anteil nicht.
 Eine mögliche Verbindung besteht zur Beobachtung, dass Fähigkeiten wie
 das Befolgen komplexer Formatvorgaben erst ab einer gewissen Größe
 zuverlässig auftreten \cite{wei2022emergent}; bei Einzelläufen ohne
@@ -1148,9 +1149,9 @@ Intelligenz und Literatur bleibt die Richtung unsicher.
 Alle Intervalle sind bedingt auf die vorhandenen Modelle und
 Vorhersagen. Dokumentabhängigkeiten, erneutes Training und die
 Sampling-Streuung der Zero-Shot-Inferenz werden nicht mitgeschätzt.
-Als Hauptvergleiche gelten die in der Experimentmatrix angelegten
-Vergleiche zu FF1 und FF2 (DeBERTa-v3-large gegen Qwen3.5-27B bei 256 Ausgabetokens; die
-Größenschritte innerhalb der Familien); die übrigen Vergleiche
+Als Hauptvergleiche gelten die aus FF1 und FF2 abgeleiteten Vergleiche
+bei 256 Ausgabetokens (DeBERTa-v3-large gegen Qwen3.5-27B; die
+Größenschritte innerhalb der Familien; Abschnitt~\ref{sec:performanzmetriken}); die übrigen Vergleiche
 (1\,024 Tokens, CrossNER) sind explorativ. Eine gemeinsame
 Fehlerkontrolle wurde nicht vorgenommen; knappe Intervalle sind deshalb
 vorsichtig zu interpretieren. Eine Schwelle praktischer Relevanz wurde

@@ -389,7 +389,7 @@ bereits ausgewerteten Testsplits nicht wieder her.
 Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
 (Abschnitt~\ref{sec:llm-pipeline}), die Inferenzpräzision auf
-Durchsatzmessungen an einer Teilmenge.
+Durchsatzmessungen an einer Teilmenge des Testsplits.
 Die Zero-Shot-Ergebnisse werden deshalb als explorative Ergebnisse der
 nach Testbeobachtungen gewählten Konfigurationen berichtet. Solche
 Auswahlentscheidungen können zu einer optimistischen Verzerrung führen
@@ -889,10 +889,11 @@ gespeicherten Vorhersagen bedingt. Es erfasst weder die Unsicherheit
 durch neue Trainingsläufe noch die Sampling-Streuung einer erneuten
 Zero-Shot-Inferenz. Die Sätze werden als unabhängige Einheiten behandelt;
 Abhängigkeiten innerhalb von Quelldokumenten werden nicht modelliert.
-Als Hauptvergleiche gelten die in der Experimentmatrix angelegten
-Gegenüberstellungen bei 256 Ausgabetokens (DeBERTa-v3-large gegen
-Qwen3.5-27B im QLoRA-Regime sowie die Größenschritte innerhalb der
-Familien); die Vergleiche der nachträglichen Sensitivitätsanalysen
+Als Hauptvergleiche gelten die aus FF1 und FF2 abgeleiteten
+Gegenüberstellungen der Konfigurationen in
+Tabelle~\ref{tab:experiment-matrix} bei 256 Ausgabetokens
+(DeBERTa-v3-large gegen Qwen3.5-27B im QLoRA-Regime sowie die
+Größenschritte innerhalb der Familien); die Vergleiche der nachträglichen Sensitivitätsanalysen
 (1\,024 Tokens, CrossNER-Domänen) sind explorativ.
 Die Intervalle sind nicht für Mehrfachvergleiche korrigiert. Sie beseitigen auch
 keine mögliche Verzerrung durch die frühere Testnutzung.

@@ -28,10 +28,10 @@ der Rückstand schrumpft auf 0,18 Punkte [0,02; 0,33].
 Zu DeBERTa-v3-base ergibt sich dann keine Rangfolge, weil das
 Differenzintervall [$-$0,02; 0,30] null enthält; auf CrossNER kehrt sich
 die Reihenfolge mit dem höheren Limit um (Tabelle~\ref{tab:synthese}).
-Erwartung E1 ist auf MultiNERD bei ausreichendem Ausgabelimit weitgehend
-bestätigt: Das mit QLoRA angepasste LLM liegt im Punktwert knapp vor
-DeBERTa-v3-base, ohne dass sich eine Rangfolge nachweisen lässt, und
-bleibt knapp hinter DeBERTa-v3-large.
+Erwartung E1 ist auf MultiNERD nur bei ausreichendem Ausgabelimit und
+nur teilweise bestätigt: Das mit QLoRA angepasste LLM liegt im Punktwert
+knapp vor DeBERTa-v3-base, ohne dass sich eine Rangfolge nachweisen
+lässt, bleibt aber knapp und nachweisbar hinter DeBERTa-v3-large.
 Der Rest ist kein isolierter Architektureffekt
 (Abschnitt~\ref{sec:disk-leistung}).
 
@@ -43,8 +43,8 @@ DeBERTa-v3-large enthalten bei beiden Limits null; Gleichwertigkeit folgt
 daraus nicht.
 
 Die Formtreue ist im QLoRA-Regime hoch: Rund 0,4\,\% der Antworten sind
-nicht parsebar, alle wegen des Limits von 256 Tokens, und mit 1\,024
-Tokens entfallen sie.
+nicht parsebar; sie enden ohne schließende Klammer, was auf das Limit von
+256 Tokens hinweist, und sind mit 1\,024 Tokens parsebar.
 Im Zero-Shot-Regime erreichen die drei Modelle nur 6,2 bis 69,4
 F$_1$-Punkte; das bestätigt Erwartung E3.
 Dort scheitert das 0.8B-Modell an Syntax und Typinventar, das 4B- und
@@ -61,7 +61,8 @@ ausschließen.
 Ein Skalierungsgesetz folgt daraus nicht, weil Hyperparameter und GPU-Typ
 mit der Größe variieren.
 Im Zero-Shot-Regime ist der Größeneffekt mit 28,8 und 34,5 Punkten je
-Schritt dagegen groß und vor allem ein Effekt der Formtreue.
+Schritt dagegen groß und geht mit großen Unterschieden in der Formtreue
+einher; ein isolierter Anteil wurde nicht bestimmt.
 Der Ressourcenbedarf wächst erheblich steiler als die Leistung.
 Innerhalb der Encoder-Familie steigt die Inferenzlatenz je Satz von 8,9
 auf 16,5~ms, der Speicher von 0,7 auf 1,7~GiB und die Trainingsdauer von
@@ -80,11 +81,14 @@ Für MultiNERD und vergleichbar annotierte Wikipedia-Texte mit festem
 Typinventar sowie engem Latenz- und Speicherbudget (gemessener
 allokierter Inferenzspeicher unter 2~GiB) sind die untersuchten
 DeBERTa-Konfigurationen eine gut gestützte Wahl.
+Bei 256 Ausgabetokens bilden sie allein die Pareto-Front: DeBERTa-v3-base
+genügt mit 8,9~ms und 0,7~GiB dem engsten Budget, DeBERTa-v3-large bringt
+0,3 Punkte mehr bei 16,5~ms und 1,7~GiB.
 Die Ressourcenwerte bei 256 Tokens gelten dabei nicht für eine Pipeline
 mit 1\,024 Tokens, für die kein vollständiger Neulauf vorliegt.
 Auf CrossNER liegt Qwen3.5-27B bei 1\,024 Tokens mit 87,1 Punkten vor
-DeBERTa-v3-large mit 85,0, bei 12,9~s gegenüber 25,7~ms Inferenzlatenz auf
-demselben GPU-Typ; unter ähnlichen Transferbedingungen und passender
+DeBERTa-v3-large mit 85,0, bei 12,9~s (mit 1\,024 Tokens) gegenüber
+25,7~ms Inferenzlatenz auf demselben GPU-Typ; unter ähnlichen Transferbedingungen und passender
 Latenztoleranz kann das LLM die bessere Wahl sein
 (Abschnitt~\ref{sec:disk-effizienz}).
 Eine allgemeine Überlegenheit einer Modellklasse folgt daraus nicht; eine
@@ -186,8 +190,8 @@ gepaarte Bootstrap ist auf die vorhandenen Vorhersagen bedingt, und die
 Sampling-Streuung der Zero-Shot-Einzelläufe ist unbekannt.
 Abhängigkeiten zwischen Sätzen desselben Dokuments bleiben
 unberücksichtigt.
-Als Hauptvergleiche gelten nur die in der Experimentmatrix angelegten
-Vergleiche zu FF1 und FF2; die übrigen sind explorativ, keines der Intervalle ist für
+Als Hauptvergleiche gelten nur die aus FF1 und FF2 abgeleiteten
+Vergleiche bei 256 Ausgabetokens (Abschnitt~\ref{sec:performanzmetriken}); die übrigen sind explorativ, keines der Intervalle ist für
 Mehrfachvergleiche korrigiert, und knappe Differenzen bei 1\,024 Tokens
 sowie Einzeldomänenvergleiche sind vorsichtig zu lesen
 (Abschnitt~\ref{sec:disk-validitaet}).
