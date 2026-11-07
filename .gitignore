@@ -252,3 +252,6 @@ thesis/*.synctex.gz
 *.fls
 thesis/literatur/
 thesis/main_betreuerentwurf_*.pdf
+
+# Lokale Claude-Code-Einstellungen
+.claude/settings.local.json
