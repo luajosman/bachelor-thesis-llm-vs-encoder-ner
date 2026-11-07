@@ -419,7 +419,7 @@ vortrainiert~\cite[Abschn.~4.1]{he2021debertav3}.
 Die Base-Variante hat zwölf Schichten mit 86~Mio.
 Parametern im Backbone, die Large-Variante 24 Schichten mit 304~Mio.,
 jeweils zuzüglich der Embedding-Parameter des großen
-Vokabulars~\cite{he2021debertav3}.
+Vokabulars~\cite{he2021debertav3,he2021debertav3cardlarge}.
 In der Vergleichsstudie von \textcite{keraghel2024recent} erweisen sich
 die DeBERTa-Varianten unter den Transformer-Modellen als am effektivsten
 für NER.
@@ -542,7 +542,8 @@ Ausgabeformat und Nachverarbeitung werden damit Teil des Systems, und
 die Ausgabe kann formal fehlerhaft sein, etwa durch ungültige Indizes
 oder Typen außerhalb des Inventars~\cite{semin2026spanLabeling}.
 Verfahren des \emph{Constrained Decoding} binden die Erzeugung an eine
-formale Grammatik. Syntax- und Schemafehler lassen sich dadurch nur
+formale Grammatik.
+Syntax- und Schemafehler lassen sich dadurch nur
 ausschließen, soweit die betreffenden Regeln in der Grammatik kodiert
 sind~\cite{geng2023grammar}; ob die Entitäten inhaltlich stimmen und im
 Eingabetext vorkommen, bleibt ungesichert.
@@ -659,9 +660,9 @@ durch das eingefrorene quantisierte Modell, aktualisiert werden nur die
 Adapter.
 Mit diesem Verfahren lässt sich ein Modell mit 65~Mrd. Parametern auf
 einer einzelnen GPU mit 48~GB feinjustieren; auf den von
-\textcite{dettmers2023qlora} geprüften Benchmarks GLUE,
-Super-NaturalInstructions und MMLU bleibt die Aufgabenleistung des
-16-Bit-Fine-Tunings erhalten.
+\textcite{dettmers2023qlora} geprüften Benchmarks erreicht QLoRA die
+Aufgabenleistung des 16-Bit-Fine-Tunings (volles Fine-Tuning bei GLUE
+und Super-NaturalInstructions, LoRA bei MMLU).
 Weitere Varianten verbinden LoRA mit quantisierungsbewusstem Training
 oder mit einer Zerlegung der Gewichte in einen quantisierten und einen
 Low-Rank-Anteil~\cite{xu2024qalora,guo2024lqlora}.

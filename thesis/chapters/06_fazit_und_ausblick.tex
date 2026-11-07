@@ -80,9 +80,9 @@ Neustarts und Clusterlast, keinen allgemeinen Bedarf.
 
 \paragraph{FF3: Empfehlungen.}
 Für MultiNERD und vergleichbar annotierte Wikipedia-Texte mit festem
-Typinventar sowie engem Latenz- und Speicherbudget (unter 2~GiB
-Inferenzspeicher) sind die untersuchten DeBERTa-Konfigurationen eine gut
-gestützte Wahl.
+Typinventar sowie engem Latenz- und Speicherbudget (gemessener
+allokierter Inferenzspeicher unter 2~GiB) sind die untersuchten
+DeBERTa-Konfigurationen eine gut gestützte Wahl.
 Die Ressourcenwerte bei 256 Tokens gelten dabei nicht für eine Pipeline
 mit 1\,024 Tokens, für die kein vollständiger Neulauf vorliegt.
 Auf CrossNER liegt Qwen3.5-27B bei 1\,024 Tokens mit 87,1 Punkten vor
@@ -108,8 +108,9 @@ Der MultiNERD-Testsplit war vor der Hauptstudie nicht unberührt
 Erstens blieben die Hyperparameter der trainierten Konfigurationen nach
 Vorläufen mit bekannten Testwerten unverändert; die 27B-Epochenzahl wurde
 an die übrigen QLoRA-Konfigurationen angeglichen.
-Ohne Auswahl unter Alternativen anhand von Testwerten ist die Verzerrung
-begrenzt, aber nicht ausgeschlossen.
+Da die Testwerte der Vorläufe bekannt waren, lässt sich ein Einfluss auf
+die Festlegung der Hauptstudie nicht ausschließen; sein Ausmaß ist mit
+den vorhandenen Daten nicht bestimmbar.
 Zweitens wurden Zero-Shot-Prompt und Decoding nach der Testleistung eines
 0.8B-Vorlaufs gewählt und für 4B und 27B ohne eigene Testauswahl
 übernommen; die Zero-Shot-Werte können daher optimistisch verzerrt sein

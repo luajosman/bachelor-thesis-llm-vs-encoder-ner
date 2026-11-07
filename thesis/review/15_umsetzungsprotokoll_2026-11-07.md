@@ -114,6 +114,32 @@ Neue reine Funktionen `coarse_reference`, `transfer_losses`, `encoder_recall_on_
 - **Datenlizenzen:** MultiNERD: `license: cc-by-nc-sa-4.0`; „restricted to only non-commercial research purposes under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License" (HF-Datensatzkarte README, Abruf 7.11.2026). CrossNER: MIT License, Copyright (c) 2020 Zihan Liu (GitHub-Repo LICENSE).
 
 
+### Codex-Neubewertung (Bericht 17, Sa 7.11. abends) – Übernahme R1–R8 und `references.bib`
+Codex' zweite Session hat parallel `references.bib` bereinigt (16:31, unbestätigt) und Bericht 17 abgelegt. Befund: HEAD b4eddcf zitiert `geng2023grammar` (02, 04) und `qwen2026card397b` (01, 02); beide Schlüssel stammen aus Codex' Arbeitsbaum-Fassung der bib, nicht aus der committeten. Der Schreib-Agent von Block 4a hat sie dort vorgefunden; ein sauberer Checkout von Tag `betreuerentwurf-2026-11-08` hätte daher zwei undefinierte Zitate. Entscheidung: Codex' bib-Fassung wird übernommen und committet (Abweichung von der Regel „nur Claude bearbeitet die bib", dem Nutzer in der Änderungsübersicht ausgewiesen).
+| Prüfung der bib-Änderung | Quelle (Abruf 7.11.2026) | Ergebnis |
+|---|---|---|
+| `geng2023grammar` (neu, @inproceedings) | ACL Anthology 2023.emnlp-main.674: Geng, Josifoski, Peyrard, West; EMNLP 2023, S. 10932–10952, DOI 10.18653/v1/2023.emnlp-main.674 | bestätigt |
+| `zhao2023survey` @misc → @article | Crossref 10.1007/s11704-026-60308-3: „A Survey of Large Language Models", Front. Comput. Sci. 20(12), online 9.5.2026 | bestätigt; `number = {12}` ergänzt (eid 2012627 nicht in Crossref, belassen) |
+| `wei2023chatie` v1 → v2 | arXiv 2302.10205: v2 vom 27.5.2024, Titel „ChatIE: …" | bestätigt |
+| `nakayama2018seqeval`, `mangrulkar2022peft` als @online mit Version | PyPI seqeval 1.2.2 (24.10.2020); PEFT 0.19.1 = Version in 04:546 | bestätigt |
+| `qwen2026card08b/4b/27b` URLs auf README der Revision aus Tab. A.2; `qwen2026card397b` neu | Revisions-Hashes identisch mit `tab:app-revisionen`-Zeilen (anhang.tex 163–165) | bestätigt |
+| 16 unbenutzte Einträge entfernt | keiner in Kapiteln/Frontmatter zitiert (comm cited/bibkeys: 0 fehlend; 97 Einträge) | übernommen |
+| `eprinttype` statt `archivePrefix` | biblatex-Feldname | übernommen |
+Befunde R1–R8 aus Bericht 17 (Codex-Bewertung ≈ 1,3 / 8,5):
+| ID | Befund | Umsetzung |
+|---|---|---|
+| R1 | 3.5 Lücke 2 „nicht gemeinsam erfasst" zu absolut | → Schreib-Agent Block 2b: „nur ausschnittsweise erfasst" |
+| R2 | 3.4 „Generativ arbeiten dabei nur Zhan und Obeidat" (Lu ebenfalls generativ) | → Schreib-Agent Block 2b: Zhan, Obeidat, Lu generativ; Dukić Klassifikationskopf; Obeidat-Ausgabe „je Eingabetoken ein Tag" am Quelltext prüfen |
+| R3 | 6.2 „Verzerrung begrenzt" unbelegt; „unter 2 GiB Inferenzspeicher" ohne Messbezug | 06: „Einfluss nicht auszuschließen, Ausmaß nicht bestimmbar"; „gemessener allokierter Inferenzspeicher unter 2 GiB" (selbst, 7.11.) |
+| R4 | „vorab festgelegt" (Hauptvergleiche) | Formulierung in 4.5.1 lautet bereits „in der Experimentmatrix angelegt" (Argumentationsgang-Commit); kein Protokolldatum behauptet → keine Änderung; Nutzerpunkt: bestätigen, dass die Matrix vor den Läufen stand |
+| R5 | Tab. A.8 Satz 59: unter strikter IOB2 (`metrics.py`: `mode="strict", scheme=IOB2`) sind I-LOC ohne B-LOC keine Spans; „Arboretum (LOC)" / „Campus Arboretum (LOC)" existieren als Vorhersage nicht | Zeile 59 (Seed 42): Vorhersage „University of Georgia Campus (ORG)", Klasse Grenzfehler; Seed-123-Zeile entfernt; neue Zeile 311 (Seed 42, large): Referenz „Robert Fulton Birthplace (LOC)", Vorhersage „Robert Fulton (PER)" (Tags B-PER I-PER I-LOC), Klasse Grenz- und Typfehler; geprüft an `test_predictions.json` beider Seeds (selbst, 7.11.) |
+| R6 | 5.7.2 „die Indizes aber nicht" legt Indexfeld fest; Dequantisierungsanteil nicht gemessen; Latenz nachgenerierter Sätze nicht isoliert | → Schreib-Agent Block 5b (R6a/R6b) |
+| R7 | Seitenziel ≈ 80 Haupttext (K2 14–15, K3 12–13, K4 21–22, K5 21–22) | Phase B unverändert (Ziel ≤ 76–80) |
+| R8 | Begleitnotiz: „Tabelle 4.x", 40 GPU-h unbelegt, „unabhängige Evaluation" zu stark | Bericht 16: Tabellenname statt Nummer; Frage 1 ohne GPU-Stunden, „zusätzliche Evidenz", Hinweis, dass der Testsplit derselbe bliebe (selbst, 7.11.) |
+
+### Prüfung Block 4a – Kapitel 2 (Prüf-Agent, abgeschlossen Sa 7.11. abends)
+Sieben Befunde; Umsetzung: (1/2) `qwen2026card397b` (02:517, 01:55) und `geng2023grammar` (02:547, 04:849) stammen aus Codex' Arbeitsbaum-bib → bib committet (siehe oben); 397B-Aussage („397 Mrd. Parameter, 17 Mrd. aktiv") entspricht dem Modellnamen Qwen3.5-397B-A17B der Modellkarte. (3) Quellentausch Willard → Geng in A3: arXiv-Abstract 2305.13971 (Abruf 7.11.) belegt „guaranteeing that the output follows a given structure" → Paraphrase gedeckt; beibehalten, `willard2023outlines` bleibt entfernt. (4) Dettmers-Vergleichsmaßstab präzisiert: „volles Fine-Tuning bei GLUE und Super-NaturalInstructions, LoRA bei MMLU" (dettmers2023qlora.txt, Abschn. 4/App. C.1). (5) „304 Mio." nicht im DeBERTaV3-Paper (Tab. 9 nur base/small/xsmall) → zusätzlich `he2021debertav3cardlarge` zitiert (Modellkarte: 304M Backbone). (6) Wortlaut A1 belassen. (7) Satz je Zeile wiederhergestellt (02:545). Zahlen 32/32 belegt; Overlap 0 gegen Quelltexte; Labels/Refs/Umgebungen unverändert; terms.sh 0.
+
 ---
 
 # Arbeitsliste (Stand 7.11., Zeilen gegen HEAD 3c49499; verbindlich sind die Anker)
