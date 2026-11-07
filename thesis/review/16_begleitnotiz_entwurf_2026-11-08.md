@@ -6,7 +6,7 @@ Vom Verfasser vor dem Versand anzupassen (Anrede, Tag/Commit des versandten Stan
 
 Sehr geehrter Herr Dr. Thomas,
 
-anbei sende ich Ihnen den vollständigen Entwurf meiner Bachelorarbeit „Fine-Tuning für Named Entity Recognition: Ein Vergleich von BERT-basierten Modellen und LLMs mit LoRA" (Stand vom 8. November 2026, 113 Seiten, davon 82 Seiten Haupttext). Abgabetermin ist der 26. November 2026.
+anbei sende ich Ihnen den vollständigen Entwurf meiner Bachelorarbeit „Fine-Tuning für Named Entity Recognition: Ein Vergleich von BERT-basierten Modellen und LLMs mit LoRA" (Stand vom 8. November 2026, 116 Seiten, davon 82 Seiten Haupttext). Abgabetermin ist der 26. November 2026.
 
 **Was der Entwurf enthält.** Der Vergleich von DeBERTa-v3-base/-large (vollständiges Fine-Tuning) mit Qwen3.5-0.8B/4B/27B (Zero-Shot und QLoRA) auf den offiziellen englischen MultiNERD-Splits ist vollständig ausgewertet (drei Seeds je trainierter Konfiguration, gepaartes Satz-Bootstrap, CrossNER-Transfertest). Die drei Kernbefunde: (1) Bei 256 Ausgabetokens liegt DeBERTa-v3-large 1,34 Punkte Mikro-F1 vor dem 27B-Modell im QLoRA-Regime; nach der Nachinferenz der am Limit abgeschnittenen Antworten mit 1 024 Tokens schrumpft der Abstand auf 0,18 Punkte (Intervall 0,02 bis 0,33). (2) Auf CrossNER kehrt sich die Rangfolge mit dem höheren Limit um (LLM 87,1 gegenüber 85,0). (3) Die Inferenz der LLMs ist hardwaregleich rund 210-mal langsamer; bei festem Typinventar und engem Latenz- und Speicherbudget bleiben die Encoder die gut gestützte Wahl.
 
