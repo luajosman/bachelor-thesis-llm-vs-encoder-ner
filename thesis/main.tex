@@ -95,6 +95,27 @@
 \usepackage{tabularx}
 \usepackage{booktabs}   % Tabellenlinien (alle Tabellen)
 \usepackage{listings}
+\usepackage{caption}
+
+% Einheitliche Beschriftungen; der Abstand liegt jeweils zum Objekt hin.
+\captionsetup{
+  font=small,
+  labelfont=bf,
+  justification=raggedright,
+  singlelinecheck=false
+}
+\captionsetup[table]{position=top,skip=10pt}
+\captionsetup[figure]{position=bottom,skip=10pt}
+\captionsetup[lstlisting]{position=bottom,skip=10pt}
+\lstset{
+  aboveskip=18pt plus 3pt minus 2pt,
+  belowskip=18pt plus 3pt minus 2pt,
+  abovecaptionskip=10pt,
+  belowcaptionskip=0pt
+}
+\AddToHook{env/table/begin}{\renewcommand{\arraystretch}{1.15}}
+\setlength{\belowbottomsep}{4pt}
+
 \onehalfspacing
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{3}
@@ -129,10 +150,19 @@
 \titlespacing*{\subsection}{0pt}{12pt}{8pt}
 
 % Gleitobjekte: weniger fast leere Seiten
+\setlength{\textfloatsep}{22pt plus 3pt minus 2pt}
+\setlength{\intextsep}{18pt plus 3pt minus 2pt}
+\setlength{\floatsep}{18pt plus 2pt minus 2pt}
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\bottomfraction}{0.5}
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\floatpagefraction}{0.75}
+% Auf reinen Gleitobjektseiten oben beginnen und Abstände nicht aufblähen.
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{24pt plus 2pt minus 2pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
 
 \begin{document}
 

@@ -1233,6 +1233,8 @@ Literatur bleibt die Richtung unsicher.
   \input{generated/tab-ci}
 \end{table}
 
+% Die Einordnung der Tabelle nicht durch einen Seitenumbruch zerreißen.
+\begin{samepage}
 Alle Intervalle sind bedingt auf die vorhandenen Modelle und
 Vorhersagen. Dokumentabhängigkeiten, erneutes Training und die
 Sampling-Streuung der Zero-Shot-Inferenz werden nicht mitgeschätzt.
@@ -1241,7 +1243,8 @@ Fehlerkontrolle für alle Vergleiche wurde nicht vorgenommen. Besonders
 knappe Intervalle sind deshalb vorsichtig zu interpretieren. Die
 beobachteten großen Abstände zwischen Zero-Shot- und QLoRA-Konfigurationen
 bleiben deskriptive Ergebnisse, deren Zerlegung in Training, Prompt,
-Decoding und Präzision das Design nicht erlaubt.
+Decoding und Präzision das Design nicht erlaubt.\par
+\end{samepage}
 
 Die frühere Testnutzung, die Silberreferenz, unterschiedliche Hardware
 und die asymmetrische Checkpoint-Auswahl begrenzen darüber hinaus die

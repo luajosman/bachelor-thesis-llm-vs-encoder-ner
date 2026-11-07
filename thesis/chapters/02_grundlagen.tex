@@ -94,11 +94,9 @@ zeigt, ist Konvention; die Abbildung verwendet einschließende Indizes,
 die LLM-Pipeline in Abschnitt~\ref{sec:prompt-design} einen
 ausschließenden Endindex.
 
-\medskip
 \begin{figure}[htbp]
   \centering
   \input{figures/ner_grundprinzip}
-  \vspace{0.5em}
   \caption[Grundprinzip der Named Entity Recognition]{Grundprinzip der Named Entity Recognition: Aus einer
   Tokenfolge werden Erwähnungen als Tripel aus Startindex, Endindex und
   Typ extrahiert.
@@ -106,7 +104,6 @@ ausschließenden Endindex.
   \textcite{li2018survey}; Endindizes einschließend.}
   \label{fig:ner-grundprinzip}
 \end{figure}
-\medskip
 
 Welche Kategorien unterschieden werden, legt der jeweilige Datensatz
 fest.
@@ -142,7 +139,6 @@ Die Daten des CoNLL-2003-Benchmarks liegen im IOB1-Schema vor
 Entitätsbeginn explizit markiert und in Abschnitt~\ref{sec:evaluation}
 für die Auswertung vorausgesetzt wird.
 
-\medskip
 \begin{table}[htbp]
   \centering
   \small
@@ -163,7 +159,6 @@ für die Auswertung vorausgesetzt wird.
     \bottomrule
   \end{tabular}
 \end{table}
-\medskip
 
 Lange Zeit bestimmten Conditional Random Fields (CRF) den Stand der
 Technik für diese Formulierung.
@@ -258,11 +253,9 @@ Technisch werden dazu die Relevanzwerte aller Positionen $j > i$ vor der
 Softmax-Funktion auf $-\infty$ gesetzt, sodass ihr Gewicht null wird.
 Abbildung~\ref{fig:transformer-architektur} zeigt den Aufbau.
 
-\medskip
 \begin{figure}[htbp]
   \centering
   \input{figures/vaswani_transformer}
-  \vspace{0.5em}
   \caption[Transformer-Architektur mit Encoder und Decoder]{Transformer-Architektur mit Encoder (links) und Decoder
   (rechts).
   Jede Encoder-Schicht enthält Multi-Head-Self-Attention und ein
@@ -272,7 +265,6 @@ Abbildung~\ref{fig:transformer-architektur} zeigt den Aufbau.
   Eigene Darstellung in Anlehnung an \textcite{vaswani2017attention}.}
   \label{fig:transformer-architektur}
 \end{figure}
-\medskip
 
 Aus diesem Bauplan sind drei Modellfamilien hervorgegangen.
 \emph{Encoder-only}-Modelle wie BERT verwenden nur den Encoder; jedes
@@ -609,11 +601,9 @@ um das Dreifache; der Adapter-Checkpoint schrumpft von 350~GB auf
 Auf RoBERTa, DeBERTa, GPT-2 und GPT-3 erreicht LoRA dabei eine
 gleichwertige oder bessere Qualität als vollständiges Fine-Tuning.
 
-\medskip
 \begin{figure}[htbp]
   \centering
   \input{figures/lora_adapter}
-  \vspace{0.5em}
   \caption[Aufbau eines LoRA-Adapters]{Aufbau eines LoRA-Adapters.
   Die eingefrorene Gewichtsmatrix $W_0$ wird um den trainierbaren
   Low-Rank-Pfad $\Delta W = BA$ mit Rang $r$ ergänzt; beide Pfade
@@ -622,7 +612,6 @@ gleichwertige oder bessere Qualität als vollständiges Fine-Tuning.
   Eigene Darstellung in Anlehnung an \textcite{hu2021lora}.}
   \label{fig:lora-adapter}
 \end{figure}
-\medskip
 
 LoRA senkt den Speicherbedarf für Gradienten und Optimiererzustände,
 nicht aber den für die eingefrorenen Gewichte selbst.
@@ -695,11 +684,9 @@ Bei festem Rechenbudget ist es daher am effizientesten, ein sehr großes
 Modell zu trainieren und deutlich vor der Konvergenz
 abzubrechen~\cite{kaplan2020scaling}.
 
-\medskip
 \begin{figure}[htbp]
   \centering
   \input{figures/kaplan_scaling}
-  \vspace{0.2em}
   \caption[Skalierungsgesetze: Test-Loss in Abhängigkeit von Rechenaufwand, Datensatzumfang und Parameteranzahl]{Test-Loss in Abhängigkeit von Rechenaufwand, Datensatzumfang
   und Parameteranzahl (ohne Embeddings) in doppelt logarithmischer
   Darstellung; Kurvenverläufe schematisch.
@@ -709,7 +696,6 @@ abzubrechen~\cite{kaplan2020scaling}.
   Eigene Darstellung in Anlehnung an \textcite{kaplan2020scaling}.}
   \label{fig:skalierungsgesetz}
 \end{figure}
-\medskip
 
 \textcite{hoffmann2022training} überprüfen diese Aufteilung mit über
 400 Modellen und kommen zu einem anderen Ergebnis.
@@ -809,7 +795,6 @@ Diese Arbeit verwendet ausschließlich die Testsplits als Transfertest
 und wertet nur die gemeinsamen Grobtypen aus
 (Abschnitt~\ref{sec:crossner}).
 
-\medskip
 \begin{table}[htbp]
   \centering
   \small
@@ -842,7 +827,6 @@ und wertet nur die gemeinsamen Grobtypen aus
     \bottomrule
   \end{tabular}
 \end{table}
-\medskip
 
 \section{Evaluationsmetriken}
 \label{sec:evaluation}

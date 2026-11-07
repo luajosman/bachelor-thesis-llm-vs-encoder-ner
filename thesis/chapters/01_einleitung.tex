@@ -85,7 +85,7 @@ zusätzliche Aufwand eines LLM durch eine bessere Erkennungsleistung
 gerechtfertigt ist und wann ein kompakter Encoder die effizientere Wahl
 darstellt.
 
-\section{Problemstellung, Forschungsfragen und Beitrag}
+\section{Zielsetzung und Forschungsfragen}
 \label{sec:problem_ziel}
 
 Mehrere Arbeiten vergleichen generative LLMs bereits mit Encoder-basierten
@@ -106,10 +106,9 @@ Die LLMs liegen auf vier Datensätzen um 2 bis 8 F$_1$-Punkte vorn,
 benötigen je Testbeispiel aber das 40- bis 220-Fache der Inferenzzeit des
 besten Encoders.
 
-In der hier gesichteten Literatur lassen diese Vergleiche zwei Lücken
-mit insgesamt vier Aspekten offen, die Abschnitt~\ref{sec:research_gap}
-ausführlich herleitet.
-Erstens verwenden sie entweder allgemeine Datensätze mit wenigen groben
+Für die vorliegende Arbeit sind dabei vier Aspekte relevant, die
+Abschnitt~\ref{sec:research_gap} ausführlich herleitet.
+Erstens verwenden die Studien allgemeine Datensätze mit wenigen groben
 Typen oder domänenspezifische Korpora; ein allgemeiner, feingranularer
 Datensatz wurde für den direkten Vergleich nicht herangezogen.
 Zweitens stammen die Encoder-Referenzwerte teilweise aus anderen
@@ -143,51 +142,48 @@ wie die Vorhersagen der Encoder.
 Neben der Erkennungsleistung werden die Trainingsdauer, die
 Inferenzlatenz und der GPU-Spitzenspeicher während der Inferenz erfasst.
 
-Daraus ergeben sich drei Forschungsfragen (FF1--FF3):
-\begin{description}
-  \item[FF1 (Erkennungsleistung):] Wie unterscheiden sich
-  DeBERTa-v3-Encoder mit vollständigem Fine-Tuning und Qwen3.5-LLMs im
-  Zero-Shot- und im QLoRA-Regime in ihrer Erkennungsleistung auf dem
-  englischen MultiNERD-Testsplit, und wie zuverlässig halten die LLMs das
-  vorgegebene Ausgabeformat ein (Formtreue)?
-  \item[FF2 (Modellgröße und Ressourcen):] Wie verändern sich
-  Erkennungsleistung, Trainingsdauer, Inferenzlatenz und
-  GPU-Spitzenspeicher der Inferenz mit der Modellgröße innerhalb beider
-  Modellfamilien?
-  \item[FF3 (Empfehlungen):] Welche Konfigurationen bieten unter gegebenen
-  Speicher- und Latenzbeschränkungen das günstigste Verhältnis von
-  Erkennungsleistung und Ressourcenbedarf, und unter welchen Bedingungen
-  rechtfertigt ein LLM den Mehraufwand gegenüber einem Encoder?
-\end{description}
+Daraus ergeben sich drei Forschungsfragen.
+Die erste Forschungsfrage (FF1) untersucht, wie sich
+DeBERTa-v3-Encoder mit vollständigem Fine-Tuning und Qwen3.5-LLMs im
+Zero-Shot- und im QLoRA-Regime in ihrer Erkennungsleistung auf dem
+englischen MultiNERD-Testsplit unterscheiden.
+Sie umfasst außerdem die Frage, wie zuverlässig die LLMs das vorgegebene
+Ausgabeformat einhalten (Formtreue).
 
-Die Arbeit leistet damit folgende Beiträge:
-\begin{itemize}
-  \item einen Vergleich von acht Konfigurationen beider Modellklassen in
-  einer gemeinsamen Pipeline mit eigener Encoder-Referenz statt
-  übernommener Werte; die fünf trainierten Konfigurationen werden mit je
-  drei Seeds ausgewertet, sodass sich insgesamt 18 Testevaluationen
-  ergeben;
-  \item eine Größenstaffelung über zwei Modellfamilien von rund 184~Mio.
-  bis 27~Mrd. Parametern mit gemeinsamer Erfassung von
-  Erkennungsleistung und Ressourcenbedarf;
-  \item die Übernahme eines indexbasierten JSON-Ausgabeformats nach
-  \textcite{semin2026spanLabeling} in eine trainierte Pipeline ohne
-  Constrained Decoding, sodass die Formtreue der LLM-Ausgaben eigens
-  gemessen werden kann;
-  \item einen ergänzenden Transfertest auf CrossNER, der prüft, wie sich
-  die jeweils größten auf MultiNERD angepassten Modelle beider Familien
-  auf Wikipedia-Texte aus fünf anderen Domänen übertragen
-  lassen~\cite{liu2021crossner};
-  \item eine Absicherung der Befunde durch gepaarte
-  Bootstrap-Konfidenzintervalle über die Testsätze und durch zwei
-  Sensitivitätsanalysen zum Ausgabelimit der LLM-Inferenz, die den
-  wichtigsten Störfaktor des Vergleichs quantifizieren.
-\end{itemize}
-Der Transfertest verwendet ausschließlich die Testsplits von CrossNER,
-ohne weiteres Training, und wertet nur die gemeinsamen Grobtypen Person,
-Organisation und Ort aus.
-Er dient der Einordnung der Hauptergebnisse, nicht dem Vergleich mit
-Bestwerten der Literatur.
+Die zweite Forschungsfrage (FF2) richtet sich auf die Modellgröße.
+Untersucht wird, wie sich Erkennungsleistung, Trainingsdauer,
+Inferenzlatenz und GPU-Spitzenspeicher während der Inferenz mit der
+Modellgröße innerhalb der beiden Modellfamilien verändern.
+
+Darauf aufbauend fragt die dritte Forschungsfrage (FF3), welche
+Konfigurationen unter gegebenen Speicher- und Latenzbeschränkungen das
+günstigste Verhältnis von Erkennungsleistung und Ressourcenbedarf bieten.
+Daraus soll hervorgehen, unter welchen Bedingungen der Einsatz eines LLM
+den Mehraufwand gegenüber einem Encoder rechtfertigt.
+
+Der Beitrag der Arbeit liegt in der gemeinsamen Untersuchung dieser
+Fragen anhand von acht Konfigurationen mit rund 184~Mio. bis 27~Mrd.
+Parametern und einer in derselben Pipeline trainierten Encoder-Referenz.
+Die fünf trainierten Konfigurationen werden mit je drei Seeds
+ausgewertet; zusammen mit den drei Zero-Shot-Konfigurationen ergeben sich
+18 Testevaluationen auf MultiNERD.
+Für die LLMs wird ein indexbasiertes JSON-Ausgabeformat nach
+\textcite{semin2026spanLabeling} in eine trainierte Pipeline übernommen.
+Da diese ohne Constrained Decoding arbeitet, lässt sich die Formtreue der
+generierten Ausgaben gesondert untersuchen.
+
+Ein ergänzender Transfertest auf CrossNER prüft, wie sich die jeweils
+größten auf MultiNERD angepassten Modelle beider Familien auf
+Wikipedia-Texte aus fünf anderen Domänen übertragen
+lassen~\cite{liu2021crossner}.
+Er verwendet ausschließlich die Testsplits, ohne weiteres Training, und
+wertet nur die gemeinsamen Grobtypen Person, Organisation und Ort aus.
+Damit dient er der Einordnung der Hauptergebnisse, nicht dem Vergleich
+mit Bestwerten der Literatur.
+Gepaarte Bootstrap-Konfidenzintervalle über die Testsätze und zwei
+Sensitivitätsanalysen zum Ausgabelimit der LLM-Inferenz ergänzen die
+Auswertung und ermöglichen eine Einordnung der Unsicherheit sowie des
+Einflusses begrenzter Ausgabelängen.
 
 \section{Abgrenzung der Arbeit}
 \label{sec:abgrenzung}
