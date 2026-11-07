@@ -13,6 +13,9 @@
 % Bessere Umbrüche / Vermeidung von Overfull hbox
 \usepackage{microtype}      % feine Laufweite, bessere Silbentrennung
 \emergencystretch=2em       % LaTeX darf Zeilen bei Bedarf "ziehen"
+\clubpenalty=10000          % keine Schusterjungen
+\widowpenalty=10000         % keine Hurenkinder
+\displaywidowpenalty=10000
 
 % =========================
 % BibLaTeX / APA-Zitierstil
@@ -80,7 +83,10 @@
   linkcolor=black,
   citecolor=blue!60!black,
   urlcolor=blue!60!black,
-  breaklinks=true
+  breaklinks=true,
+  unicode=true,
+  pdftitle={Fine-Tuning für Named Entity Recognition: Ein Vergleich von BERT-basierten Modellen und LLMs mit LoRA},
+  pdfauthor={Luaj Osman}
 ]{hyperref}
 
 \usepackage[noforwardlinks]{acronym}
@@ -177,6 +183,7 @@
 \input{frontmatter/deckblatt}
 \clearpage
 \hypersetup{pageanchor=true}
+\pagestyle{plain}   % römische Seitenzahlen im Vorspann sichtbar
 
 % Eigenständigkeitserklärung
 \input{frontmatter/eigenstaendigkeitserklaerung}
@@ -189,9 +196,6 @@
 
 % Inhaltsverzeichnis
 \begingroup
-\makeatletter
-\let\ps@plain\ps@empty
-\makeatother
 \begin{singlespace}
 \tableofcontents
 \clearpage

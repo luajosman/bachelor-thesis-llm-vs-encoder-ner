@@ -14,10 +14,18 @@
 Dieser Abschnitt ordnet den in Kapitel~\ref{chap:methodik} beschriebenen
 Läufen Konfigurationsdateien, Codestände, Revisionen und
 Ausgabeverzeichnisse zu und dokumentiert nachrangige Einstellungen.
-Konfigurationsdateien liegen im Repository unter
-\texttt{ba-ner/configs/}, Ausgabeverzeichnisse relativ zum
-Ergebnisverzeichnis unter \texttt{results/multinerd/} bzw.
-\texttt{results/crossner/}.
+Quellcode, Konfigurationsdateien, Auswertungsskripte und die aus den
+Laufartefakten erzeugten Tabellen liegen im Repository
+\url{https://github.com/luajosman/bachelor-thesis-llm-vs-encoder-ner}
+(Commits nach Tabelle~\ref{tab:app-revisionen}; der Stand der
+Zero-Shot-Läufe ist als Tag \texttt{zeroshot-runs-137bffd} markiert).
+Konfigurationsdateien liegen dort unter \texttt{ba-ner/configs/}, die
+Auswertung unter \texttt{thesis/scripts/aggregate\_results.py} mit den
+Kennzahlen in \texttt{thesis/generated/summary.json}.
+Die Laufartefakte selbst (Vorhersagen, Metriken, Adapter; rund 2~GB ohne
+Modellgewichte) liegen relativ zum Ergebnisverzeichnis unter
+\texttt{results/multinerd/} bzw. \texttt{results/crossner/} und werden
+den Prüfenden auf Anfrage bereitgestellt.
 
 \paragraph{Läufe und Artefakte.}
 Tabelle~\ref{tab:app-laeufe} nennt für jede Konfiguration die
@@ -92,6 +100,43 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
       nicht erhaltenen Änderungen; Kontroll- bzw. Vorlauf außerhalb der
       Hauptauswertung.} \\
   \end{tabularx}
+\end{table}
+
+\paragraph{Ausführungszeiten und Cluster-Jobs.}
+Die Trainings- und Inferenzläufe der Hauptstudie liefen im August 2026
+auf dem DFKI-Cluster (Partitionen und Hauptspeicher in
+Tabelle~\ref{tab:app-einstellungen}); ihre Slurm-Abrechnung liegt als
+\texttt{results/slurm\_accounting\_2026-08.csv} vor, die 27B-Läufe
+umfassen die Jobs 3254977, 3254980 und 3254983 (wiederholt eingereiht)
+sowie 3267440, 3267443 und 3267446.
+Die drei Zero-Shot-Läufe und der Greedy-Kontrolllauf entstanden am
+1.~August bzw. 29.~Juli 2026 (27B auf einer H100~NVL, 0.8B und 4B auf
+einer A100); ihre Job-IDs sind in den Laufartefakten nicht
+protokolliert.
+Die CrossNER-Evaluationen mit 256 Tokens liefen im Oktober 2026.
+Die Nachinferenz mit 1\,024 Tokens lief am 28.~Oktober 2026 (Jobs
+3673515 bis 3673523, H100~HBM3, Commit \texttt{ff91342}), der
+vollständige CrossNER-Neulauf mit 1\,024 Tokens vom 28.\ bis
+29.~Oktober 2026 (Jobs 3673475 bis 3673477, Aggregation 3673478); ein
+erster Versuch (Jobs 3672273 bis 3672276) brach wegen eines
+abweichenden Codestands vor der Inferenz ab.
+
+\paragraph{Explorative Vorläufe.}
+Tabelle~\ref{tab:app-vorlaeufe} dokumentiert die explorativen Vorläufe
+(Abschnitt~\ref{sec:datenaufteilung}), je ein Lauf mit Seed~42, die auf
+dem Testsplit ausgewertet wurden und nicht in die Hauptauswertung
+eingehen; ihre Abweichung vom jeweiligen Seed-42-Lauf der Hauptstudie
+beträgt höchstens 0,12 Punkte.
+
+\begin{table}[ht]
+  \centering
+  \footnotesize
+  \caption[Explorative Vorläufe]{Explorative Vorläufe (Seed~42) und ihr
+  Mikro-F$_1$ auf dem MultiNERD-Testsplit (256 Ausgabetokens) gegenüber
+  dem Seed-42-Lauf der Hauptstudie.}
+  \label{tab:app-vorlaeufe}
+  \setlength{\tabcolsep}{4pt}
+  \input{generated/tab-app-vorlaeufe}
 \end{table}
 
 \begin{table}[ht]
@@ -185,16 +230,19 @@ Each entity object must have exactly these fields: "start_token" (integer, inclu
 Token indices must refer exactly to the numbered token list shown by the user. Check the entire token list before answering. Return [] only when none of the listed named-entity categories occurs.
 \end{lstlisting}
 
+\clearpage
 \section{Ergänzende Ergebnistabellen}
 \label{app:ergebnistabellen}
 
 % Tabellenkörper werden von thesis/scripts/aggregate_results.py erzeugt
-% (thesis/generated/); die Beispiele in Tabelle A.8 (tab:app-beispiele) stammen aus den
-% Testvorhersagen der genannten Läufe (Seed 42).
+% (thesis/generated/); die Beispiele in tab:app-beispiele stammen aus den
+% Testvorhersagen der genannten Läufe (Listenindex in test_predictions.json).
 
 Tabelle~\ref{tab:app-seeds} nennt die Testwerte der einzelnen Seeds, aus
 denen die Mittelwerte in Tabelle~\ref{tab:haupt} gebildet wurden, sowie
 den Validierungs-F$_1$ und die Epoche des jeweils gewählten Checkpoints;
+Tabelle~\ref{tab:app-limit-seeds} ergänzt die Nachinferenz mit
+1\,024 Tokens (Tabelle~\ref{tab:limit-multinerd}) um die Werte je Seed;
 Tabelle~\ref{tab:app-typen-prf} ergänzt Tabelle~\ref{tab:typen} um
 Precision und Recall je Entitätstyp; die
 Tabellen~\ref{tab:app-crossner-seeds} und~\ref{tab:app-crossner-typen}
@@ -206,21 +254,35 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
 \begin{table}[ht]
   \centering
   \footnotesize
-  \caption[Mikro-F$_1$ der einzelnen Seeds und Validierungs-F$_1$ der gewählten Checkpoints]{Mikro-F$_1$ (strikt, in Punkten) der einzelnen Seeds auf dem
-  MultiNERD-Testsplit sowie Validierungs-F$_1$ des gewählten Checkpoints
-  mit Epoche in Klammern (Encoder: vollständiger Validierungssplit;
-  QLoRA: generative Validierung auf 200 Sätzen).}
+  \caption[Mikro-F$_1$ je Seed und Validierungs-F$_1$ der Checkpoints]{Mikro-F$_1$ (strikt, in Punkten) der einzelnen Seeds auf dem
+  MultiNERD-Testsplit (Hauptläufe mit 256 Ausgabetokens) sowie
+  Validierungs-F$_1$ des gewählten Checkpoints mit Epoche in Klammern
+  (Encoder: vollständiger Validierungssplit; QLoRA: generative
+  Validierung auf 200 Sätzen).}
   \label{tab:app-seeds}
   \input{generated/tab-app-seeds}
 \end{table}
 
 \begin{table}[ht]
   \centering
+  \footnotesize
+  \caption[Nachinferenz mit 1\,024 Tokens je Seed]{Nachinferenz der
+  abgeschnittenen Antworten mit 1\,024 Ausgabetokens je Seed: Mikro-F$_1$
+  bei 256 und 1\,024 Tokens, Differenz, Zahl der neu erzeugten und der
+  weiterhin abgeschnittenen Antworten sowie Zahl der Antworten, deren
+  erste 256 Tokens die gespeicherte Antwort reproduzieren.}
+  \label{tab:app-limit-seeds}
+  \setlength{\tabcolsep}{4pt}
+  \input{generated/tab-app-limit-seeds}
+\end{table}
+
+\begin{table}[ht]
+  \centering
   \scriptsize
-  \caption[Precision, Recall und F$_1$ je Entitätstyp]{Precision, Recall und F$_1$ je Entitätstyp (strikt, in Punkten)
-  für DeBERTa-v3-large und Qwen3.5-27B (QLoRA), Mittel über drei Seeds,
-  sowie für Qwen3.5-27B im Zero-Shot-Regime (Einzellauf). Support nach
-  Tabelle~\ref{tab:datensplits}.}
+  \caption[Precision, Recall und F$_1$ je Entitätstyp]{Precision, Recall und F$_1$ je Entitätstyp (strikt, in Punkten,
+  256 Ausgabetokens) für DeBERTa-v3-large und Qwen3.5-27B (QLoRA), Mittel
+  über drei Seeds, sowie für Qwen3.5-27B im Zero-Shot-Regime (Einzellauf).
+  Support nach Tabelle~\ref{tab:datensplits}.}
   \label{tab:app-typen-prf}
   \setlength{\tabcolsep}{3pt}
   \input{generated/tab-app-typen-prf}
@@ -229,9 +291,9 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
 \begin{table}[ht]
   \centering
   \footnotesize
-  \caption[CrossNER-Transfertest: F$_1$ je Domäne und Seed]{CrossNER-Transfertest:
-  F$_1$ (strikt, nur PER, ORG und LOC, in Punkten) je Domäne und Seed für
-  DeBERTa-v3-large und Qwen3.5-27B (QLoRA).
+  \caption[CrossNER-Transfertest: F$_1$ je Domäne und Seed]{CrossNER-Transfertest
+  mit 256 Ausgabetokens: F$_1$ (strikt, nur PER, ORG und LOC, in Punkten)
+  je Domäne und Seed für DeBERTa-v3-large und Qwen3.5-27B (QLoRA).
   Gepoolt: Mikrowert über alle 2\,506 Sätze; Domänenmittel: ungewichtetes
   Mittel der fünf Domänen.}
   \label{tab:app-crossner-seeds}
@@ -242,9 +304,9 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
 \begin{table}[ht]
   \centering
   \footnotesize
-  \caption[CrossNER-Transfertest: F$_1$ je Grobtyp und Domäne]{CrossNER-Transfertest:
-  F$_1$ je Grobtyp und Domäne (strikt, in Punkten, Mittel über drei Seeds)
-  mit Support je Typ.}
+  \caption[CrossNER-Transfertest: F$_1$ je Grobtyp und Domäne]{CrossNER-Transfertest
+  mit 256 Ausgabetokens: F$_1$ je Grobtyp und Domäne (strikt, in Punkten,
+  Mittel über drei Seeds) mit Support je Typ.}
   \label{tab:app-crossner-typen}
   \setlength{\tabcolsep}{3pt}
   \input{generated/tab-app-crossner-typen}
@@ -256,50 +318,58 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
   \caption[Beispiele typischer Fehler je Fehlerklasse]{Beispiele typischer Fehler je Fehlerklasse
   (Abschnitt~\ref{sec:erg-fehlertypen}) sowie der Formtreue-Kategorie
   \enquote{Unbekannter Typ} (Abschnitt~\ref{sec:erg-formtreue}) aus den
-  Testvorhersagen mit Seed~42. Referenz und Vorhersage als Span mit Typ; ein Strich bedeutet,
-  dass die Referenz bzw. die Vorhersage keinen Span an dieser Stelle
-  enthält.}
+  Testvorhersagen mit 256 Ausgabetokens. Illustrative, nicht zufällig
+  gezogene Auswahl; Nr.\ ist der nullbasierte Listenindex des Satzes in
+  \texttt{test\_predictions.json}; Sätze aus dem MultiNERD-Testsplit
+  \cite{tedeschi2022multinerd}. Referenz und Vorhersage als Span mit
+  Typ; ein Strich bedeutet, dass die Referenz bzw. die Vorhersage keinen
+  Span an dieser Stelle enthält. Seed~42, sofern nicht anders angegeben.}
   \label{tab:app-beispiele}
-  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X
-      >{\raggedright\arraybackslash}p{2.1cm}
-      >{\raggedright\arraybackslash}p{2.1cm}
-      >{\raggedright\arraybackslash}p{2.2cm}
-      >{\raggedright\arraybackslash}p{2.7cm}@{}}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabularx}{\linewidth}{@{}>{\raggedleft\arraybackslash}p{0.85cm}
+      >{\raggedright\arraybackslash}X
+      >{\raggedright\arraybackslash}p{1.95cm}
+      >{\raggedright\arraybackslash}p{1.95cm}
+      >{\raggedright\arraybackslash}p{2.15cm}
+      >{\raggedright\arraybackslash}p{2.55cm}@{}}
     \toprule
-    \textbf{Satz (gekürzt)} & \textbf{Referenz} & \textbf{Vorhersage} &
+    \textbf{Nr.} & \textbf{Satz (gekürzt)} & \textbf{Referenz} & \textbf{Vorhersage} &
     \textbf{Fehlerklasse} & \textbf{Konfiguration} \\
     \midrule
-    He is also in the band Filthy Friends, playing bass and accordion. &
+    327 & He is also in the band Filthy Friends, playing bass and accordion. &
       Filthy Friends (PER) & Filthy Friends (ORG) & Typfehler &
       DeBERTa-v3-large und Qwen3.5-27B (QLoRA) \\
-    The lake is home to perch, pike-perch, bream, roaches, whitefishes,
+    396 & The lake is home to perch, pike-perch, bream, roaches, whitefishes,
       smelt and other species of fish. &
       perch (ANIM) & perch (FOOD) & Typfehler & DeBERTa-v3-large \\
-    In 2000, the entire campus was designated as an arboretum, the
+    59 & In 2000, the entire campus was designated as an arboretum, the
       University of Georgia Campus Arboretum. &
       University of Georgia Campus Arboretum (ORG) &
-      University of Georgia Campus (ORG) & Grenzfehler & DeBERTa-v3-large \\
-    The wilderness provides habitat for wild burro, desert tortoise,
+      University of Georgia Campus (ORG); Arboretum (LOC) & Grenzfehler
+      (mit Zusatz) & DeBERTa-v3-large \\
+    59 & dito &
+      University of Georgia Campus Arboretum (ORG) &
+      University of Georgia (ORG); Campus Arboretum (LOC) &
+      Grenz- und Typfehler & DeBERTa-v3-large (Seed~123) \\
+    383 & The wilderness provides habitat for wild burro, desert tortoise,
       spotted bat and desert bighorn sheep. &
       burro (ANIM) & wild burro (ANIM) & Grenzfehler & Qwen3.5-27B (QLoRA) \\
-    It takes around 6,000 full-grown coconuts to produce one tonne of
+    35 & It takes around 6,000 full-grown coconuts to produce one tonne of
       copra. &
       copra (FOOD) & -- & Auslassung & DeBERTa-v3-large \\
-    Within city limits, the southwestern fence lizard and whiptails are
+    4 & Within city limits, the southwestern fence lizard and whiptails are
       common. &
       whiptails (ANIM) & -- & Auslassung & Qwen3.5-27B (QLoRA) \\
-    Commonly seen mammals include the coyote, rock squirrel, Gunnison's
+    5 & Commonly seen mammals include the coyote, rock squirrel, Gunnison's
       prairie dog, desert cottontail, and black-tailed jackrabbit. &
       -- & desert cottontail (ANIM) & Zusatz &
       DeBERTa-v3-large und Qwen3.5-27B (QLoRA) \\
-    Propranolol is a beta blocker that is mainly used to treat
+    10805 & Propranolol is a beta blocker that is mainly used to treat
       hypertension, but also prevents trembling. &
       -- & Propranolol (MED) & Unbekannter Typ & Qwen3.5-27B (Zero-Shot) \\
-    The municipal holiday is Easter Monday. &
+    2405 & The municipal holiday is Easter Monday. &
       Easter Monday (TIME) & Easter Monday (TME) & Unbekannter Typ &
       Qwen3.5-27B (Zero-Shot) \\
     \bottomrule
   \end{tabularx}
 \end{table}
-
-% Weitere Anhangsabschnitte (z. B. CrossNER-Werte je Seed) hier ergänzen.

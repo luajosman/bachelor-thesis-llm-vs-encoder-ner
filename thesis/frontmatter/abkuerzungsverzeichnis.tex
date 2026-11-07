@@ -1,5 +1,5 @@
 \chapter*{Abkürzungsverzeichnis}
-\thispagestyle{empty}
+\thispagestyle{plain}
 
 % Alphabetisch sortiert (Groß-/Kleinschreibung ignoriert).
 % Aufgenommen sind die fachspezifischen Abkürzungen, die in der Arbeit
@@ -9,9 +9,10 @@
 %   Modellnamen nur, wenn sie selbst Akronyme sind (BERT, GPT, ...),
 % - allgemein bekannte IT-Abkürzungen (API, JSON, XML, YAML, CPU, ...),
 % - Abkürzungen, die nur an einer Stelle vorkommen und dort im Text
-%   erklärt werden (NSP, DoRA, rsLoRA, HBM3, KV, ...),
+%   erklärt werden (NSP, DoRA, rsLoRA, KV, ...),
 % - seltene Tagging-Schema-Varianten (IOBES, BILOU, IOE), die in
-%   Kapitel 2 erläutert werden,
+%   Kapitel 2 erläutert werden; das Tagging-Schema IOB2 (auch BIO) steht
+%   unter IOB, da BIO in MultiNERD zugleich ein Entitätstyp ist,
 % - Maßeinheiten (GB, MiB, ms) und Entitätstypen-Labels (PER, LOC, ...).
 
 \begin{singlespace}
@@ -20,10 +21,10 @@
     \acro{BERT}{Bidirectional Encoder Representations from Transformers}
     \acro{BF16}{BFloat16 (Brain Floating Point, 16 Bit)}
     \acro{BiLSTM}{Bidirectional Long Short-Term Memory}
-    \acro{BIO}{Beginning, Inside, Outside (Tagging-Schema)}
     \acro{CoNLL}{Conference on Computational Natural Language Learning}
     \acro{CRF}{Conditional Random Field}
     \acro{DeBERTa}{Decoding-enhanced BERT with Disentangled Attention}
+    \acro{ELECTRA}{Efficiently Learning an Encoder that Classifies Token Replacements Accurately}
     \acro{F1}[F$_1$]{F$_1$-Score, harmonisches Mittel aus Precision und Recall}
     \acro{FF}{Forschungsfrage}
     \acro{FN}{False Negatives}
@@ -31,7 +32,8 @@
     \acro{FP32}{32-Bit-Gleitkommaformat (Single Precision)}
     \acro{GPT}{Generative Pre-trained Transformer}
     \acro{GPU}{Graphics Processing Unit}
-    \acro{IOB}{Inside, Outside, Beginning (Tagging-Schema; Varianten IOB1 und IOB2)}
+    \acro{HBM3}{High Bandwidth Memory 3 (GPU-Speichertechnologie)}
+    \acro{IOB}{Inside, Outside, Beginning (Tagging-Schema; Varianten IOB1 und IOB2, auch BIO genannt)}
     \acro{LLaMA}{Large Language Model Meta AI}
     \acro{LLM}{Large Language Model}
     \acro{LoRA}{Low-Rank Adaptation}

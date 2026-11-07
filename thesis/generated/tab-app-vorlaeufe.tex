@@ -1,0 +1,15 @@
+\begin{tabular}{llllrrr}
+    \toprule
+    \textbf{Vorlauf} & \textbf{Commit} & \textbf{GPU} & \textbf{Epochen} & \textbf{Mikro-F$_1$} &
+      \textbf{Hauptstudie} & $\Delta$ \\
+    \midrule
+    DeBERTa-v3-base & \texttt{cdf10db}$^{a}$ & A100 & 5 & 95,58 & 95,49 & $+$0,10 \\
+    DeBERTa-v3-large & \texttt{06b97be} & A100 & 4 & 95,84 & 95,83 & $+$0,01 \\
+    Qwen3.5-0.8B QLoRA & \texttt{4679bf1} & A100 & 3 & 93,32 & 93,24 & $+$0,07 \\
+    Qwen3.5-4B QLoRA & \texttt{137bffd} & A100 & 3 & 94,05 & 93,93 & $+$0,12 \\
+    Qwen3.5-27B QLoRA & \texttt{137bffd}$^{a}$ & H100 NVL & 2 & 94,54 & 94,53 & $+$0,00 \\
+    \bottomrule
+    \multicolumn{7}{@{}l}{\scriptsize $^{a}$ Arbeitskopie mit lokalen, nicht erhaltenen \"Anderungen. Epochen: gew\"ahlte} \\
+    \multicolumn{7}{@{}l}{\scriptsize Epoche (QLoRA) bzw. trainierte Epochen (Encoder); Hauptstudie: Seed-42-Lauf; $\Delta$ =} \\
+    \multicolumn{7}{@{}l}{\scriptsize Vorlauf minus Hauptstudie.} \\
+\end{tabular}
