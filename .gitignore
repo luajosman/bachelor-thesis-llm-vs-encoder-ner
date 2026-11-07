@@ -251,3 +251,4 @@ thesis/*.synctex.gz
 *.fdb_latexmk
 *.fls
 thesis/literatur/
+thesis/main_betreuerentwurf_*.pdf
