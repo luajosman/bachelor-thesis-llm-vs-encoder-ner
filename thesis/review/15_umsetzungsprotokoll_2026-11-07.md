@@ -140,6 +140,23 @@ Befunde R1–R8 aus Bericht 17 (Codex-Bewertung ≈ 1,3 / 8,5):
 ### Prüfung Block 4a – Kapitel 2 (Prüf-Agent, abgeschlossen Sa 7.11. abends)
 Sieben Befunde; Umsetzung: (1/2) `qwen2026card397b` (02:517, 01:55) und `geng2023grammar` (02:547, 04:849) stammen aus Codex' Arbeitsbaum-bib → bib committet (siehe oben); 397B-Aussage („397 Mrd. Parameter, 17 Mrd. aktiv") entspricht dem Modellnamen Qwen3.5-397B-A17B der Modellkarte. (3) Quellentausch Willard → Geng in A3: arXiv-Abstract 2305.13971 (Abruf 7.11.) belegt „guaranteeing that the output follows a given structure" → Paraphrase gedeckt; beibehalten, `willard2023outlines` bleibt entfernt. (4) Dettmers-Vergleichsmaßstab präzisiert: „volles Fine-Tuning bei GLUE und Super-NaturalInstructions, LoRA bei MMLU" (dettmers2023qlora.txt, Abschn. 4/App. C.1). (5) „304 Mio." nicht im DeBERTaV3-Paper (Tab. 9 nur base/small/xsmall) → zusätzlich `he2021debertav3cardlarge` zitiert (Modellkarte: 304M Backbone). (6) Wortlaut A1 belassen. (7) Satz je Zeile wiederhergestellt (02:545). Zahlen 32/32 belegt; Overlap 0 gegen Quelltexte; Labels/Refs/Umgebungen unverändert; terms.sh 0.
 
+### Zahlen-Audit Kapitel 1, 3–6 und Abstract (Prüf-Agent, abgeschlossen Sa 7.11. abends; Stand b4eddcf)
+2 745 Zahlen geprüft (numbers.py plus manuelle Prüfung von ≈ 95 Literaturzahlen und 22 abgeleiteten Werten); alle Latenz-, Speicher-, Trainingszeit-, Differenz-, Intervall- und Literaturzahlen in Kapitel 5/6 bestätigt (Liste im Agentenbericht). Rundungskonvention ohne Verstoß. Fünf Abweichungen und sieben Positionen ohne lokale Quelle; Umsetzung:
+| Befund | Umsetzung |
+|---|---|
+| A1 04:1120 „um höchstens 1 Minute darunter" gilt nur für Encoder (LLM bis 140,5 s) | → Schreib-Agent Block 7b (A-1) |
+| A2 05:592 „knapp das Dreißigfache" = 27,9 | → Schreib-Agent Block 5b: „rund das 28-Fache" |
+| A3 04:300 „UniversalNER: 10 000 Testbeispiele" mit Zhou-Zitat; Stichprobe stammt aus InstructUIE/GLiNER-Aufbereitung | → Schreib-Agent Block 7b (A-2) |
+| A4 03:491 „340 bis 435 Mio." vs. Quelle 336 | → Schreib-Agent Block 2b |
+| A5 02:371 „512 Positionen" nicht im DeBERTaV3-Paper; 02:420 „304 Mio." | 304 Mio.: Modellkarte zitiert (Commit 3cc4618); 512: config.json der Modellkarte (max_position_embeddings 512, Abruf 7.11.) → Schreib-Agent Block 4b (A-1) |
+| B 04:79/496 „71 bis 83 %" (Thinking-Vorlauf) | Skript: `analyse_vorlauf_thinking` liest `generative_eval_state.yaml` des Laufs `qwen35-4b-qlora-thinking-enabled-20260727-074436`: Epoche 1 0,71, Epoche 2 0,825 → `summary.json: vorlauf_thinking_4b` (Commit a0b2415) |
+| B 05:590 „70,8 h", 04:1135 „15,5 s" (27B-Vorlauf) | Skript: `results.yaml: train_runtime_seconds` 254 786,5 s = 70,77 h; Schritte = höchster Trainer-Checkpoint 16 410 → 15,53 s/Schritt (`vorlaeufe[…].train_runtime_h/steps/seconds_per_step`) |
+| B 05:266 „4 190 TIME-Zusätze mit Ziffer" | Skript: `error_profile` zählt Zusätze mit Ziffer im Spantext → `groups/qwen27-zs/agg/errors/additions_with_digit_by_type/TIME` = 4 190 (bestätigt) |
+| B Adapterdateigrößen 12,8/42,5/637,6 MB | konsistent mit Parameterzahlen × 2 bzw. 4 Byte; Quelle Dateigrößen (Cluster) → wandern mit Block 7b in den Anhang |
+| B 397 Mrd./17 Mrd./Februar 2026; GNER-Zahlen; OntoNotes 18 Typen | Modellkarte `qwen2026card397b` (Datum 2026-02-16) jetzt in der bib; GNER per WebFetch in Block 2a geprüft; OntoNotes-Typzahl aus der Datensatzdokumentation (Standardangabe) |
+| Hinweis des Prüf-Agenten: numbers.py wertet Teilstrings der generated-Tabellen als Beleg | bekannt; tragende Zahlen daher manuell geprüft |
+Tests: 10/10 grün; zwei Skriptläufe byte-identisch; nur `summary.json` geändert.
+
 ---
 
 # Arbeitsliste (Stand 7.11., Zeilen gegen HEAD 3c49499; verbindlich sind die Anker)
