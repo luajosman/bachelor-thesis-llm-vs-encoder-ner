@@ -545,8 +545,7 @@ Die vorliegende Arbeit betrachtet die Modellgröße daher innerhalb jeder
 Familie getrennt und deskriptiv, mit zwei Encoder- und drei LLM-Größen
 (Abschnitt~\ref{sec:groessenklassen}), die den Bereich der direkten
 Vergleiche nach unten und oben verlassen
-(Abschnitte~\ref{sec:methodischer-ansatz} und~\ref{sec:modellauswahl},
-Tabelle~\ref{tab:experiment-matrix}).
+(Tabelle~\ref{tab:experiment-matrix}).
 
 \section[Forschungslücke und Einordnung der eigenen Arbeit]{Forschungslücke und Einordnung der \mbox{eigenen} Arbeit}
 \label{sec:research_gap}
@@ -555,9 +554,8 @@ Die vorangegangenen Abschnitte zeigen, dass direkte Vergleiche zwischen
 Encodern und generativen LLMs für NER existieren und in ihren
 Ergebnissen weitgehend übereinstimmen; die Forschungslücke liegt in
 ihrer Reichweite.
-Tabelle~\ref{tab:related-overview} stellt die behandelten Arbeiten nach
-Modellen, Daten, Anpassungsverfahren, Art des Encoder-LLM-Vergleichs und
-erfassten Ressourcen zusammen und ordnet die vorliegende Arbeit ein.
+Tabelle~\ref{tab:related-overview} fasst die behandelten Arbeiten
+zusammen und ordnet die vorliegende Arbeit ein.
 
 \begin{table}[p]
   \centering
@@ -647,8 +645,8 @@ erfassten Ressourcen zusammen und ordnet die vorliegende Arbeit ein.
 Die erste Lücke betrifft Datenbasis und Pipeline, die ersten beiden der
 vier Aspekte aus Abschnitt~\ref{sec:problem_ziel}.
 Die direkten Vergleiche verwenden allgemeine Benchmarks wie CoNLL-2003
-mit vier und OntoNotes mit 18 Typen aus mehreren Genres wie
-Nachrichten, Rundfunk, Gesprächen und Webtexten~\cite{weischedel2013ontonotes,li2018survey}
+mit vier und OntoNotes mit 18 Typen aus mehreren
+Genres~\cite{weischedel2013ontonotes,li2018survey}
 oder Fachkorpora wie die biomedizinischen Datensätze bei
 \textcite{obeidat2025llm}.
 MultiCoNER~II bei \textcite{tan2023damo} ist mit 33 Typen zwar
@@ -663,8 +661,7 @@ Bei \textcite{sainz2024gollie} bleibt das Verhältnis der 32\,908
 Testbeispiele zu den offiziellen Splits offen.
 Eine gemeinsame Auswertung beider Modellfamilien auf den offiziellen
 englischen MultiNERD-Splits mit einer in derselben Pipeline trainierten
-Encoder-Referenz fehlt damit; zudem beruhen die Encoder-Referenzwerte
-der direkten Vergleiche teilweise auf übernommenen Baselines.
+Encoder-Referenz fehlt damit.
 Die generativen Ausgabeformate der direkten Vergleiche wachsen überdies
 mit der Eingabelänge: \textcite[Abschn.~IV]{obeidat2025llm} erzeugen je
 Eingabetoken ein IOB2-Tag, die Inline-Markierungen bei
@@ -675,15 +672,14 @@ DeBERTa-v3-base und -large sowie Qwen3.5 in drei Größen auf den
 offiziellen englischen MultiNERD-Splits in einer gemeinsamen Pipeline,
 mit derselben \texttt{seqeval}-Implementierung und derselben
 Silberreferenz.
-Trainingsdauer, Inferenzlatenz und GPU-Spitzenspeicher der Inferenz
-werden nach einem einheitlichen Protokoll erfasst
+Trainingsdauer, Inferenzlatenz und GPU-Spitzenspeicher werden einheitlich
+erfasst
 (Abschnitt~\ref{sec:effizienzmetriken}).
 Mit der Indexing-Ausgabe wird zudem ein Format verwendet, das statt des
 ganzen Satzes nur die Entitäten mit Indizes, Text und Typ ausgibt und
 dessen Formtreue eigens gemessen wird.
-Diese Lücke betrifft vor allem FF1 (Erkennungsleistung und Formtreue in
-einer gemeinsamen Pipeline) und FF3 (Empfehlungen unter Speicher- und
-Latenzbeschränkungen; Abschnitt~\ref{sec:problem_ziel}).
+Diese Lücke betrifft vor allem FF1 und FF3
+(Abschnitt~\ref{sec:problem_ziel}).
 
 Die zweite Lücke betrifft Ressourcenerfassung und Modellgröße, den
 dritten und vierten Aspekt.
@@ -702,7 +698,7 @@ Keine der Arbeiten in Tabelle~\ref{tab:related-overview} untersucht eine
 Größenstaffelung auf beiden Seiten mit gemeinsamer Leistungs- und
 Ressourcenerfassung.
 Die vorliegende Arbeit vergleicht drei Größen einer LLM-Familie zwischen
-0{,}8 und 27~Mrd. Parametern in zwei Regimen, Zero-Shot und QLoRA, mit
+0{,}8 und 27~Mrd. Parametern in zwei Regimen mit
 zwei Encoder-Größen derselben Architektur und erfasst für jede
 Konfiguration Leistung und Ressourcen sowie für die LLM-Ausgaben die
 Formtreue.
@@ -715,44 +711,38 @@ Wahrscheinlichkeit Teil der Pre-Training-Korpora der verwendeten LLMs
 sind.
 Die Zusammensetzung der Qwen3.5-Trainingsdaten ist nicht vollständig
 offengelegt, sodass sich dies weder belegen noch ausschließen lässt.
-Auf bekannte Lecks von Benchmark-Daten in LLM-Trainingsdaten weisen
-\textcite{zhan2026generativeNER} hin und ziehen deshalb mit CleanCoNLL
-einen Datensatz heran, dessen bereinigte Form kaum im Pre-Training
-enthalten sein dürfte.
+\textcite{zhan2026generativeNER} weisen auf bekannte Lecks von
+Benchmark-Daten hin und ziehen deshalb CleanCoNLL heran, dessen
+bereinigte Form kaum im Pre-Training enthalten sein dürfte.
 Ihr Befund, dass die Ergebnisse nicht von den Typbezeichnungen abhängen,
 spricht gegen eine Memorisierung von Entität-Typ-Paaren, gilt aber für
 CoNLL-2003 und CleanCoNLL; für MultiNERD bleibt die Frage offen.
 Die Referenz ist allerdings eine automatisch erzeugte Silberreferenz:
-Ein Modell, das den Wikipedia-Text kennt, kennt damit noch
-nicht die hier verwendeten Labels, auch wenn der Datensatz selbst seit
-2022 öffentlich verfügbar ist.
+Wer den Wikipedia-Text kennt, kennt damit nicht die hier verwendeten
+Labels, auch wenn der Datensatz seit 2022 öffentlich ist.
 Im QLoRA-Regime lernen alle Modelle das Typinventar ohnehin aus den
 Trainingsdaten; im Zero-Shot-Regime könnte Vorwissen über die Artikel die
-Ergebnisse dagegen begünstigen.
-Die Arbeit kann diese Frage nicht klären und berücksichtigt sie bei den
-Zero-Shot-Ergebnissen.
+Ergebnisse dagegen begünstigen; die Arbeit kann das nicht klären und
+berücksichtigt es bei den Zero-Shot-Ergebnissen.
 
 Die zweite Einschränkung betrifft die Vergleichsbedingungen: Die Arbeit
 hält nicht alle Bedingungen konstant und vergleicht deshalb konkrete
-Konfigurationen, keine isolierten Effekte einzelner Faktoren; die
-Abweichungen vom idealisierten Versuchsdesign weist
-Abschnitt~\ref{sec:validitaet} in Tabelle~\ref{tab:abweichungen} aus.
+Konfigurationen, keine isolierten Effekte einzelner Faktoren; die Abweichungen vom idealisierten Versuchsdesign weist
+Tabelle~\ref{tab:abweichungen} aus.
 Ähnliche Einschränkungen finden sich in den direkten Vergleichen der
 Literatur: \textcite{obeidat2025llm} betreiben die LLMs auf zwei und
 die Encoder auf einer GPU, \textcite{zhan2026generativeNER} berichten
-Trainingskosten, aber keine Inferenzbedingungen; der
-CrossNER-Ergänzungsversuch (Abschnitt~\ref{sec:crossner}) dient nur als
-Transfertest zur Einordnung.
+Trainingskosten, aber keine Inferenzbedingungen.
 
-Aus der Literatur folgen drei Erwartungen als Lesehilfe, die
-Kapitel~\ref{chap:fazit} je Forschungsfrage mit den Befunden abgleicht;
-ein Hypothesentest ist damit nicht beabsichtigt.
+Aus der Literatur folgen drei Erwartungen als Lesehilfe ohne
+Hypothesentest, die Kapitel~\ref{chap:fazit} je Forschungsfrage mit den
+Befunden abgleicht.
 E1 (zu FF1): Ein mit LoRA oder QLoRA angepasstes LLM erreicht das
 Niveau eines vollständig feinjustierten Encoders oder übertrifft es
 leicht~\cite{zhan2026generativeNER,obeidat2025llm}.
 E2 (zu FF2 und FF3): Die Inferenz generativer LLMs ist um ein Vielfaches
 langsamer als die eines Encoders; die Literatur nennt Faktoren von etwa
 40 bis 220~\cite[Tab.~IV]{obeidat2025llm}.
-E3 (zu FF1): Ohne Anpassung der Gewichte, also im Zero-Shot-Regime,
+E3 (zu FF1): Im Zero-Shot-Regime, also ohne Anpassung der Gewichte,
 bleiben per Prompting genutzte LLMs deutlich hinter feinjustierten
 Modellen zurück~\cite{keraghel2024recent,tan2023damo}.

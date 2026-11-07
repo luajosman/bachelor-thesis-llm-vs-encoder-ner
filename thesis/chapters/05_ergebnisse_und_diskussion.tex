@@ -28,12 +28,11 @@
 
 Dieses Kapitel berichtet die Ergebnisse der in Kapitel~\ref{chap:methodik}
 beschriebenen Experimente und diskutiert sie anschließend.
-Die Abschnitte~\ref{sec:erg-leistung} (Erkennungsleistung insgesamt und
-je Entitätstyp) und~\ref{sec:erg-formtreue} (Formtreue der LLM-Ausgaben)
+Die Abschnitte~\ref{sec:erg-leistung} und~\ref{sec:erg-formtreue}
 beantworten zusammen FF1, die Abschnitte~\ref{sec:erg-groesse}
-(Modellgröße) und~\ref{sec:erg-effizienz} (Ressourcenbedarf) FF2;
-Abschnitt~\ref{sec:erg-fehlertypen} vergleicht die Fehlerprofile der
-Modellklassen, Abschnitt~\ref{sec:erg-crossner} berichtet den
+und~\ref{sec:erg-effizienz} FF2;
+Abschnitt~\ref{sec:erg-fehlertypen} vergleicht die Fehlerprofile,
+Abschnitt~\ref{sec:erg-crossner} berichtet den
 CrossNER-Ergänzungsversuch.
 Die Abschnitte~\ref{sec:erg-leistung} bis~\ref{sec:erg-crossner}
 beschränken sich auf die Darstellung der Messwerte; Einordnungen stehen
@@ -146,8 +145,8 @@ Die beiden Modellklassen unterscheiden sich im Profil aus Precision und
 Recall: Bei den Encodern liegt der Recall über der Precision, bei den
 QLoRA-Modellen ist es umgekehrt (Tabelle~\ref{tab:haupt}).
 Die Precision-Punktwerte von bestem Encoder und bestem LLM liegen nahe
-beieinander (95,3 gegenüber 95,2); der Vorsprung des Encoders stammt fast
-vollständig aus dem Recall (96,4 gegenüber 93,8).
+beieinander; der Vorsprung des Encoders stammt fast vollständig aus dem
+Recall.
 
 \subsection{Ergebnisse nach Entitätstyp}
 \label{sec:erg-typen}
@@ -260,7 +259,7 @@ aus Tabelle~\ref{tab:formtreue} für die sechs LLM-Konfigurationen.
 \end{table}
 
 Im QLoRA-Regime ist die Parse-Fehlerrate mit rund 0,4\,\% gering; alle
-nicht parsebaren Antworten (im Seed-Mittel 65 bis 69) enden ohne
+nicht parsebaren Antworten enden ohne
 schließende Klammer und gehen auf das Limit von 256 Ausgabetokens
 zurück.
 Da nur 55 der 16\,454 Referenzantworten länger als 256 Tokens sind
@@ -425,9 +424,10 @@ größer aus, mit Zugewinnen von 28,8 und 34,5 Punkten je Schritt; die
 Formtreue-Kennzahlen der drei Größen stehen in
 Abschnitt~\ref{sec:erg-formtreue}.
 Über die Familien hinweg folgt die Leistung nicht der Parameterzahl.
-DeBERTa-v3-base erreicht mit 184~Mio. Parametern 95,5 Punkte, 2,4 Punkte
-mehr als Qwen3.5-0.8B im QLoRA-Regime mit dem Vierfachen und 1,0 Punkte
-mehr als Qwen3.5-27B mit dem 146-Fachen seiner Parameterzahl.
+DeBERTa-v3-base erreicht mit 184~Mio. Parametern 95,5 Punkte und liegt
+damit vor Qwen3.5-0.8B im QLoRA-Regime mit dem Vierfachen und vor
+Qwen3.5-27B mit dem 146-Fachen seiner Parameterzahl
+(Abschnitt~\ref{sec:erg-gesamt}).
 Mit zwei Encoder- und drei LLM-Größen bleibt diese Betrachtung
 deskriptiv (Abschnitt~\ref{sec:einfluss-parameteranzahl}).
 
@@ -453,7 +453,7 @@ gezogen.
   Testsätzen je Sekunde reiner Generierungszeit und maximal allokierter
   GPU-Speicher während der Testinferenz.
   GPU: H100 = H100 80\,GB HBM3, A100 = A100-SXM4 80\,GB, NVL = H100 NVL
-  94\,GB.}
+  94\,GB (Speichergrößen laut Herstellerangabe).}
   \label{tab:effizienz}
   \setlength{\tabcolsep}{3pt}
   \input{generated/tab-effizienz}
@@ -694,8 +694,8 @@ Beide Modelle liefen auf derselben H100 mit 80\,GB.
 \end{table}
 
 Gegenüber der MultiNERD-Referenz fällt der gepoolte F$_1$ auf CrossNER
-bei DeBERTa-v3-large um 14,5 Punkte auf 85,0 und bei Qwen3.5-27B um 26,8
-Punkte auf 71,7.
+bei DeBERTa-v3-large um 14,5 und bei Qwen3.5-27B um 26,8
+Punkte (Tabelle~\ref{tab:crossner-erg}).
 Der Encoder verliert 12,2 Punkte weniger, und das nach Domäne
 geschichtete Bootstrap-Intervall bestätigt die Richtung der Differenz bei
 256 Ausgabetokens (Tabelle~\ref{tab:crossner-ci} in
@@ -817,9 +817,9 @@ Limit von 256 Ausgabetokens abgeschnittenen Antworten
 Die Nachinferenz dieser Sätze (Tabelle~\ref{tab:limit-multinerd}) macht
 daraus einen Messwert: Mit vollständigen Antworten liegt das 27B-Modell
 knapp hinter DeBERTa-v3-large und 0,14 Punkte vor DeBERTa-v3-base; für
-diesen Vorsprung enthält das Bootstrap-Intervall null ($-$0,02 bis 0,30;
-Tabelle~\ref{tab:ci}). Im Makro-F$_1$ liegt das 27B-Modell mit
-1\,024 Tokens vor DeBERTa-v3-base (Intervall 0,61 bis 4,18); gegenüber
+diesen Vorsprung enthält das Bootstrap-Intervall null
+(Tabelle~\ref{tab:ci}). Im Makro-F$_1$ liegt das 27B-Modell mit
+1\,024 Tokens vor DeBERTa-v3-base (Tabelle~\ref{tab:ci}); gegenüber
 DeBERTa-v3-large wird kein eindeutiger Unterschied nachgewiesen.
 Das 4B- und das 0.8B-Modell bleiben auch mit 1\,024 Tokens 0,4 bzw. 1,2
 Punkte hinter DeBERTa-v3-base.
@@ -1072,9 +1072,7 @@ MultiNERD-Testsätze. Bei den sieben dort ausgewiesenen Vergleichen
 trainierter Konfigurationen mit 256 Ausgabetokens schließen die
 95-\%-Intervalle der Mikro-F$_1$-Differenzen null aus. Beim Makro-F$_1$
 enthalten vier dieser sieben Intervalle null, darunter beide Vergleiche
-der Encoder mit dem 27B-Modell und der Vergleich der beiden Encoder. Für
-diese Paare ist kein eindeutiger Makro-Unterschied nachgewiesen; eine
-praktische Äquivalenz folgt daraus nicht.
+der Encoder mit dem 27B-Modell und der Vergleich der beiden Encoder.
 
 Mit den bei 1\,024 Tokens nachgenerierten Antworten schließt das
 Intervall des Mikro-Abstands zwischen DeBERTa-v3-large und Qwen3.5-27B
@@ -1099,7 +1097,7 @@ Intelligenz und Literatur bleibt die Richtung unsicher.
   Einzellauf). Werte in Punkten; keine Korrektur für Mehrfachvergleiche.}
   \label{tab:ci}
   \scriptsize
-  \setlength{\tabcolsep}{2pt}
+  \setlength{\tabcolsep}{1.6pt}
   \input{generated/tab-ci}
 \end{table}
 
@@ -1126,7 +1124,6 @@ und die asymmetrische Checkpoint-Auswahl begrenzen darüber hinaus die
 Aussagekraft (Tabelle~\ref{tab:abweichungen}); ein Bootstrap kann diese
 Einflüsse nicht korrigieren. Ihre Auswirkungen auf die Rangfolge sind
 nicht generell bekannt; beim Ausgabelimit ist eine Änderung der Rangfolge
-auf CrossNER bereits nachgewiesen. Die Schlussfolgerungen beziehen sich
-daher auf die dokumentierten Konfigurationen, Ausgabelimits und
-Datensätze; die konkreten Grenzen führt Abschnitt~\ref{sec:limitationen}
-zusammen.
+auf CrossNER bereits nachgewiesen. Die Schlussfolgerungen gelten daher
+nur für die dokumentierten Konfigurationen, Ausgabelimits und Datensätze
+(Abschnitt~\ref{sec:limitationen}).

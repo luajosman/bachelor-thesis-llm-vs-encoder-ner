@@ -36,7 +36,7 @@ Evaluationsprotokoll über alle Konfigurationen konstant bleiben.
     und ohne Demonstrationsbeispiele im Prompt eingesetzt und geben die
     Entitäten als JSON aus.
     Das Regime beschreibt die Leistung dieser Checkpoints unter den
-    gewählten Prompt- und Decoding-Bedingungen ohne NER-spezifisches Training
+    gewählten Prompt- und Decoding-Bedingungen
     \cite{brown2020language,zhao2023survey}.
 
     \item \textbf{LLM Fine-Tuning mit LoRA (QLoRA-Regime):} Dieselben LLMs werden über
@@ -60,8 +60,7 @@ Aus den Regimen ergeben sich acht Konfigurationen
 Die fünf trainierten Konfigurationen werden mit den Seeds 42, 123 und 456
 jeweils unabhängig trainiert und evaluiert (15 Trainingsläufe); die drei
 Zero-Shot-Konfigurationen wurden je einmal mit Seed~42 ausgewertet.
-Die Hauptauswertung umfasst damit 18 Testevaluationen über eine Spanne
-von rund 184~Mio. bis 27~Mrd. Parametern.
+Die Hauptauswertung umfasst damit 18 Testevaluationen.
 
 Der Hauptstudie gingen explorative Vorläufe der fünf trainierten
 Konfigurationen mit Seed~42 voraus, die der Stabilisierung der Pipeline
@@ -131,8 +130,8 @@ Abschnitt~\ref{sec:validitaet} fasst diese Abweichungen zusammen.
 
 \paragraph{Aufbau der Pipelines.}
 Die Encoder-Pipeline behandelt NER als Token-Klassifikation: Ein
-DeBERTa-v3-Encoder liefert kontextualisierte Repräsentationen, aus denen
-ein linearer Klassifikationskopf für jedes Wort ein IOB2-Tag vorhersagt
+DeBERTa-v3-Encoder mit linearem Klassifikationskopf sagt für jedes Wort
+ein IOB2-Tag vorher
 \cite{he2021debertav3,wolf2020transformers,devlin2019bert}.
 Die LLM-Pipeline behandelt NER als strukturierte Generierung: Das Modell
 erhält einen Prompt mit nummerierter Tokenliste und erzeugt ein
@@ -143,9 +142,6 @@ Erst diese Rückkonvertierung erlaubt die Evaluation beider Pipelines auf
 derselben Repräsentation.
 Das Gesamt-F$_1$ bewertet damit die vollständige Vorhersagepipeline
 einschließlich Ausgabeformat und Validierung.
-Da die Ausgabestruktur nicht durch \emph{constrained decoding} erzwungen
-wird, bleibt ihre Formtreue selbst messbar
-(Abschnitt~\ref{sec:robustheit-ausgaben}).
 
 \section{Auswahl der Modelle}
 \label{sec:modellauswahl}
@@ -558,8 +554,6 @@ per argmax bestimmt.
 \label{sec:llm-pipeline}
 
 \paragraph{Gemeinsame Einstellungen.}
-Alle Modelle werden als reine Textmodelle geladen
-(Abschnitt~\ref{sec:llm-auswahl}, Anhang~\ref{app:durchfuehrung}).
 Die Prompts werden mit dem Chat-Template des Tokenizers gerendert und um
 den Beginn der Assistentenantwort ergänzt.
 Der Thinking-Modus von Qwen3.5 ist in allen generativen Schritten
@@ -635,8 +629,7 @@ vom Split ab, enthalten aber keine BIO- und INST-Entitäten
 Die nach F$_1$ gewählte Epoche stimmt nur in einem der neun LLM-Läufe
 (4B, Seed~42) und in keinem der sechs Encoder-Läufe mit dem Minimum des
 Validierungsverlusts überein.
-Bei den LLMs liegt dieses Minimum in Epoche 1 oder 2, das F$_1$-Maximum
-meist in Epoche 3.
+Bei den LLMs liegt dieses Minimum in Epoche 1 oder 2.
 Da 12 der 15 Läufe (8 von 9 LLM-, 4 von 6 Encoder-Läufen) die letzte
 Epoche wählten, ist ein Untertraining nicht auszuschließen
 (Abschnitt~\ref{sec:limitationen}).
@@ -746,9 +739,6 @@ Die Ergebnisse beziehen sich auf diese tatsächlich ausgeführte Variante.
 Der Einfluss von Double Quantization, anderer Adapterplatzierung oder
 eines auf die Antwort beschränkten Verlusts wurde nicht isoliert gemessen.
 
-Die übrigen Hyperparameter fasst Tabelle~\ref{tab:lora-hyperparams}
-zusammen; eine systematische Suche fand nicht statt.
-
 \begin{table}[ht]
   \centering
   \small
@@ -856,8 +846,8 @@ IOB2-Schema, sodass formal unzulässige Tag-Folgen keine Entität bilden
 Primäre Kennzahl ist der mikro-gemittelte F$_1$-Wert
 \cite{manning2008introduction,keraghel2024recent}; fehlen Vorhersagen
 oder Referenzentitäten, wird der betreffende Quotient als 0 definiert.
-Beide Pipelines nutzen dieselbe Implementierung und werden auf
-Wortebene gegen identische Referenzsequenzen ausgewertet
+Beide Pipelines werden auf Wortebene gegen identische Referenzsequenzen
+ausgewertet
 (Abschnitt~\ref{sec:datenvorverarbeitung}).
 
 Für trainierte Konfigurationen werden Mittelwert und
@@ -901,9 +891,9 @@ Für die Fehleranalyse werden Precision, Recall, F$_1$ und Support zusätzlich
 je Entitätstyp berechnet; sie sind für die Trainingsläufe der Hauptstudie
 gespeichert und für alle Konfigurationen aus den Testvorhersagen
 reproduzierbar.
-Wegen der unausgewogenen Typverteilung (Abschnitt~\ref{sec:datenaufteilung})
-sind typbezogene Werte seltener Klassen -- im Testsplit etwa 8 BIO- oder
-12 INST-Entitäten -- mit erheblicher Unsicherheit behaftet.
+Wegen der unausgewogenen Typverteilung (Abschnitt~\ref{sec:datenaufteilung},
+Tabelle~\ref{tab:datensplits}) sind typbezogene Werte seltener Klassen mit
+erheblicher Unsicherheit behaftet.
 
 Ergänzend wird der makro-gemittelte F$_1$-Wert als ungewichtetes Mittel der
 typbezogenen F$_1$-Werte über alle 15 Typen berichtet
@@ -980,13 +970,10 @@ Verbrauch werden nicht erfasst.
 Der GPU-Speicherbedarf während des Trainings wurde nicht protokolliert.
 
 \paragraph{Parameterzahlen.}
-Berichtet werden Gesamtzahl und Zahl der trainierbaren Parameter; ihr
-Verhältnis quantifiziert die Reduktion der aktualisierten Parameter durch
+Berichtet werden Gesamtzahl und Zahl der trainierbaren Parameter
+(Tabelle~\ref{tab:experiment-matrix}); ihr Verhältnis quantifiziert die Reduktion der aktualisierten Parameter durch
 das Adaptertraining \cite{hu2021lora,dettmers2023qlora}.
-Speicherbedarf und Trainingsdauer sind gesonderte Größen
-(Abschnitt~\ref{sec:erg-effizienz}).
-Bei den Encodern sind alle Parameter trainierbar; für die QLoRA-Modelle
-nennt Tabelle~\ref{tab:lora-hyperparams} Basismodell und Adapter getrennt,
+Für die QLoRA-Modelle nennt Tabelle~\ref{tab:lora-hyperparams} Basismodell und Adapter getrennt,
 da eine einfache Summierung der Tensorelemente die in 4~Bit gepackten
 Gewichte nur zur Hälfte erfasst.
 
