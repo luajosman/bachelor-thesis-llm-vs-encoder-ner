@@ -528,16 +528,19 @@ berichtet Abschnitt~\ref{sec:erg-crossner}.
 
 Tabelle~\ref{tab:app-seeds} nennt die Testwerte der einzelnen Seeds, aus
 denen die Mittelwerte in Tabelle~\ref{tab:haupt} gebildet wurden, sowie
-den Validierungs-F$_1$ und die Epoche des jeweils gewählten Checkpoints;
+den Validierungs-F$_1$ und die Epoche des jeweils gewählten Checkpoints.
 Tabelle~\ref{tab:app-limit-seeds} ergänzt die Nachinferenz mit
-1\,024 Tokens (Tabelle~\ref{tab:limit-multinerd}) um die Werte je Seed;
-Tabelle~\ref{tab:app-typen-prf} ergänzt Tabelle~\ref{tab:typen} um
-Precision und Recall je Entitätstyp; die
-Tabellen~\ref{tab:app-crossner-seeds} und~\ref{tab:app-crossner-typen}
+1\,024 Tokens (Tabelle~\ref{tab:limit-multinerd}) um die Werte je Seed.
+Die Tabellen~\ref{tab:typen} und~\ref{tab:groesse} enthalten die Werte
+zu den Abbildungen~\ref{fig:typen} und~\ref{fig:groesse};
+Tabelle~\ref{tab:app-typen-prf} ergänzt die Typwerte um Precision und
+Recall.
+Die Tabellen~\ref{tab:app-crossner-seeds} und~\ref{tab:app-crossner-typen}
 ergänzen Tabelle~\ref{tab:crossner-erg} um die Werte der einzelnen Seeds
-und um die Grobtypen je Domäne; Tabelle~\ref{tab:app-beispiele}
-zeigt Beispiele typischer Fehler je Fehlerklasse aus
-Abschnitt~\ref{sec:erg-fehlertypen}.
+und um die Grobtypen je Domäne; Tabelle~\ref{tab:crossner-ci} nennt die
+Bootstrap-Intervalle des Modellvergleichs je Domäne und gepoolt.
+Tabelle~\ref{tab:app-beispiele} zeigt Beispiele typischer Fehler je
+Fehlerklasse aus Abschnitt~\ref{sec:erg-fehlertypen}.
 
 \begin{table}[ht]
   \centering
@@ -566,6 +569,22 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
 
 \begin{table}[ht]
   \centering
+  \footnotesize
+  \caption[Typbezogene F$_1$-Werte ausgewählter Konfigurationen]{Typbezogene F$_1$-Werte (strikt, in Punkten) ausgewählter
+  Konfigurationen auf dem Testsplit; trainierte Konfigurationen als
+  Mittelwert über drei Seeds, Zero-Shot als Einzellauf.
+  Support: Zahl der Referenzentitäten im Testsplit
+  (Tabelle~\ref{tab:datensplits}).
+  Die Typen sind nach der Zuverlässigkeit ihrer Annotation gruppiert
+  (Abschnitt~\ref{sec:datenauswahl}).
+  Precision und Recall je Typ in Tabelle~\ref{tab:app-typen-prf}.}
+  \label{tab:typen}
+  \setlength{\tabcolsep}{3pt}
+  \input{generated/tab-typen}
+\end{table}
+
+\begin{table}[ht]
+  \centering
   \scriptsize
   \caption[Precision, Recall und F$_1$ je Entitätstyp]{Precision, Recall und F$_1$ je Entitätstyp (strikt, in Punkten,
   256 Ausgabetokens) für DeBERTa-v3-large und Qwen3.5-27B (QLoRA), Mittel
@@ -574,6 +593,20 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
   \label{tab:app-typen-prf}
   \setlength{\tabcolsep}{3pt}
   \input{generated/tab-app-typen-prf}
+\end{table}
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption[Mikro-F$_1$ nach Größenklasse und Regime]{Mikro-F$_1$ (in Punkten) nach Größenklasse und Regime.
+  S/M/L bezeichnen die relative Größe innerhalb der Familie
+  (Tabelle~\ref{tab:experiment-matrix}); $\Delta$ ist die Differenz zur
+  nächstkleineren Klasse.
+  Trainierte Konfigurationen als Mittelwert~$\pm$~Standardabweichung über
+  drei Seeds.}
+  \label{tab:groesse}
+  \setlength{\tabcolsep}{3pt}
+  \input{generated/tab-groesse}
 \end{table}
 
 \begin{table}[ht]
@@ -598,6 +631,20 @@ Abschnitt~\ref{sec:erg-fehlertypen}.
   \label{tab:app-crossner-typen}
   \setlength{\tabcolsep}{3pt}
   \input{generated/tab-app-crossner-typen}
+\end{table}
+
+\begin{table}[ht]
+  \centering
+  \footnotesize
+  \caption[Bootstrap-Intervalle des Modellvergleichs auf CrossNER]{Gepaarte
+  95-\%-Bootstrap-Intervalle auf CrossNER ($B = 2\,000$, nach Domäne
+  geschichtet). Differenz Qwen3.5-27B minus DeBERTa-v3-large in
+  Mikro-F$_1$-Punkten, gemittelt über drei feste Seeds, auf PER, ORG und
+  LOC. Die Domänenumfänge bleiben beim gepoolten Wert erhalten;
+  Intervalle ohne Korrektur für Mehrfachvergleiche.}
+  \label{tab:crossner-ci}
+  \setlength{\tabcolsep}{4pt}
+  \input{generated/tab-crossner-ci}
 \end{table}
 
 \begin{table}[ht]

@@ -96,8 +96,7 @@ Für die Differenz von 0,32 Punkten ergibt sich ein gepaartes
 größeren Variante (Tabelle~\ref{tab:ci}).
 Der Makro-F$_1$ liegt rund zehn bzw. neun Punkte unter dem Mikro-F$_1$,
 was auf die deutlich schwächeren Werte bei den seltenen und verrauschten
-Typen zurückgeht (Tabelle~\ref{tab:typen} in
-Abschnitt~\ref{sec:erg-typen}).
+Typen zurückgeht (Abschnitt~\ref{sec:erg-typen}).
 
 Die Streuung über die Seeds ist sehr gering; die drei Einzelwerte liegen
 jeweils innerhalb eines Zehntelpunkts.
@@ -153,24 +152,10 @@ vollständig aus dem Recall (96,4 gegenüber 93,8).
 \subsection{Ergebnisse nach Entitätstyp}
 \label{sec:erg-typen}
 
-\begin{table}[htbp]
-  \centering
-  \footnotesize
-  \caption[Typbezogene F$_1$-Werte ausgewählter Konfigurationen]{Typbezogene F$_1$-Werte (strikt, in Punkten) ausgewählter
-  Konfigurationen auf dem Testsplit; trainierte Konfigurationen als
-  Mittelwert über drei Seeds, Zero-Shot als Einzellauf.
-  Support: Zahl der Referenzentitäten im Testsplit
-  (Tabelle~\ref{tab:datensplits}).
-  Die Typen sind nach der Zuverlässigkeit ihrer Annotation gruppiert
-  (Abschnitt~\ref{sec:datenauswahl}).
-  Precision und Recall je Typ in Tabelle~\ref{tab:app-typen-prf}.}
-  \label{tab:typen}
-  \setlength{\tabcolsep}{3pt}
-  \input{generated/tab-typen}
-\end{table}
-
-Tabelle~\ref{tab:typen} und Abbildung~\ref{fig:typen} (drei
-Kernkonfigurationen) zeigen die F$_1$-Werte nach Entitätstyp.
+Abbildung~\ref{fig:typen} zeigt die F$_1$-Werte der drei
+Kernkonfigurationen nach Entitätstyp; die Werte weiterer
+Konfigurationen stehen in Tabelle~\ref{tab:typen} in
+Anhang~\ref{app:ergebnistabellen}.
 Bei den drei häufigen Typen PER, ORG und LOC, die 80\,\% der
 Testentitäten stellen, liegen alle trainierten Konfigurationen über
 97,5 Punkten. Die Unterschiede zwischen den Modellklassen betragen hier
@@ -367,23 +352,10 @@ jedoch keinen reinen Effekt der Antwortlänge.
 \section{Einfluss der Modellgröße auf die NER-Leistung}
 \label{sec:erg-groesse}
 
-Tabelle~\ref{tab:groesse} und Abbildung~\ref{fig:groesse} stellen die
-Erkennungsleistung über die Größenklassen aus
-Abschnitt~\ref{sec:groessenklassen} getrennt nach Familie und Regime dar.
-
-\begin{table}[htbp]
-  \centering
-  \small
-  \caption[Mikro-F$_1$ nach Größenklasse und Regime]{Mikro-F$_1$ (in Punkten) nach Größenklasse und Regime.
-  S/M/L bezeichnen die relative Größe innerhalb der Familie
-  (Tabelle~\ref{tab:experiment-matrix}); $\Delta$ ist die Differenz zur
-  nächstkleineren Klasse.
-  Trainierte Konfigurationen als Mittelwert~$\pm$~Standardabweichung über
-  drei Seeds.}
-  \label{tab:groesse}
-  \setlength{\tabcolsep}{3pt}
-  \input{generated/tab-groesse}
-\end{table}
+Abbildung~\ref{fig:groesse} stellt die Erkennungsleistung über die
+Größenklassen aus Abschnitt~\ref{sec:groessenklassen} getrennt nach
+Familie und Regime dar; die Werte mit Standardabweichungen nennt
+Tabelle~\ref{tab:groesse} in Anhang~\ref{app:ergebnistabellen}.
 
 \begin{figure}[htbp]
   \centering
@@ -726,7 +698,8 @@ bei DeBERTa-v3-large um 14,5 Punkte auf 85,0 und bei Qwen3.5-27B um 26,8
 Punkte auf 71,7.
 Der Encoder verliert 12,2 Punkte weniger, und das nach Domäne
 geschichtete Bootstrap-Intervall bestätigt die Richtung der Differenz bei
-256 Ausgabetokens (Tabelle~\ref{tab:crossner-ci}).
+256 Ausgabetokens (Tabelle~\ref{tab:crossner-ci} in
+Anhang~\ref{app:ergebnistabellen}).
 Die Profile unterscheiden sich im Ursprung des Verlusts: Der Encoder
 verliert Precision und Recall gleichmäßig, das LLM behält eine hohe
 Precision, verliert aber vor allem Recall.
@@ -788,20 +761,6 @@ Die Latenz je Satz lag auf dem Niveau der Hauptläufe
   \label{tab:limit}
   \setlength{\tabcolsep}{3pt}
   \input{generated/tab-limit}
-\end{table}
-
-\begin{table}[htbp]
-  \centering
-  \footnotesize
-  \caption[Bootstrap-Intervalle des Modellvergleichs auf CrossNER]{Gepaarte
-  95-\%-Bootstrap-Intervalle auf CrossNER ($B = 2\,000$, nach Domäne
-  geschichtet). Differenz Qwen3.5-27B minus DeBERTa-v3-large in
-  Mikro-F$_1$-Punkten, gemittelt über drei feste Seeds, auf PER, ORG und
-  LOC. Die Domänenumfänge bleiben beim gepoolten Wert erhalten;
-  Intervalle ohne Korrektur für Mehrfachvergleiche.}
-  \label{tab:crossner-ci}
-  \setlength{\tabcolsep}{4pt}
-  \input{generated/tab-crossner-ci}
 \end{table}
 
 \section{Diskussion der Ergebnisse}
