@@ -242,8 +242,10 @@ die für das Versuchsdesign nachrangig, für die Nachvollziehung der Läufe
 aber relevant sind.
 Er behandelt die explorativen Vorläufe und den Abbruch des
 Thinking-Vorlaufs, Architekturkennzahlen der Qwen3.5-Modelle,
-Pipeline-Module und Softwareversionen, die je Lauf protokollierten Felder,
-die Adapterdateien, den Trainingsverlauf der 27B-Läufe, die
+Pipeline-Module und Softwareversionen, den Prompt des QLoRA-Regimes, die
+Sampling-Einstellung des Zero-Shot-Regimes, die
+je Lauf protokollierten Felder, die Adapterdateien, den Trainingsverlauf
+der 27B-Läufe, einen Hardwareeffekt bei der Encoder-Inferenz, die
 Rückfallstrategien des Parsers und die Vorstudie zum Ausgabelimit.
 
 \subsection{Vorläufe und Thinking-Abbruch}
@@ -336,6 +338,69 @@ Transformers~5.14.1, PEFT~0.19.1, TRL~1.8.0, bitsandbytes~0.49.2,
 Accelerate~1.14.0, Datasets~5.0.0 und seqeval~1.2.2.
 Für im Code nicht explizit gesetzte Einstellungen gelten die
 Standardwerte dieser Versionen.
+Für die Attention verwenden alle LLM-Läufe die in PyTorch integrierte
+Implementierung \texttt{sdpa} (Scaled Dot-Product Attention) anstelle von
+FlashAttention-2.
+Die Längen der Referenzantworten (Abschnitt~\ref{sec:llm-pipeline})
+wurden mit dem Skript \texttt{scripts/answer\_lengths.py} bestimmt.
+
+\subsection{Prompt des QLoRA-Regimes}
+
+Listing~\ref{lst:prompt-task} zeigt den gerenderten Prompt des
+Standardprofils für einen Satz des Testsplits: eine Systemnachricht mit
+Aufgabe, Typinventar und Formatvorgaben sowie eine Nutzernachricht mit
+der nullbasiert nummerierten Tokenliste, ohne Demonstrationsbeispiele
+(Abschnitt~\ref{sec:prompt-design}).
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true,
+  breakatwhitespace=true, columns=fullflexible, keepspaces=true,
+  frame=single, captionpos=b, float=htbp,
+  postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
+  caption={Gerenderter Prompt des Standardprofils für einen Satz des
+  Testsplits (Chat-Template von Qwen3.5, Thinking deaktiviert);
+  automatische Zeilenumbrüche sind durch einen Pfeil markiert.},
+  label={lst:prompt-task}]
+<|im_start|>system
+You are a Named Entity Recognition (NER) system. Extract all named entities from the numbered token list.
+Return ONLY a JSON array. Do not use Markdown code blocks and do not add explanations.
+Each entity object must have exactly these fields: "start_token" (integer, inclusive), "end_token" (integer, exclusive), "text" (the exact text covered by the token span), and "type" (one of: PER, ORG, LOC, ANIM, BIO, CEL, DIS, EVE, FOOD, INST, MEDIA, MYTH, PLANT, TIME, VEHI).
+Token indices must refer exactly to the numbered token list shown by the user. If no entities are present, return exactly [].<|im_end|>
+<|im_start|>user
+Tokens:
+0: His
+1: family
+2: moved
+3: to
+4: Covington
+5: during
+6: his
+7: term
+8: .<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+\end{lstlisting}
+
+\noindent Die zugehörige Zielantwort, die im Training den Inhalt der
+Assistentennachricht bildet, lautet:
+
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, columns=fullflexible,
+  keepspaces=true, frame=single]
+[{"start_token": 4, "end_token": 5, "text": "Covington", "type": "LOC"}]
+\end{lstlisting}
+
+\subsection{Sampling-Einstellung des Zero-Shot-Regimes}
+
+Für den Non-Thinking-Modus empfiehlt die Qwen-Modellkarte bei
+allgemeinen Aufgaben Temperatur 0,7 und top-$p$ 0,8, bei
+Reasoning-Aufgaben Temperatur 1,0 und top-$p$ 0,95, jeweils mit
+top-$k = 20$, min-$p = 0$ und einer Presence-Penalty von 1,5
+\cite{qwen2026card27b}.
+Die im Zero-Shot-Regime gewählte Einstellung
+(Abschnitt~\ref{sec:llm-pipeline}) übernimmt top-$k$, min-$p$ und die
+Temperatur des Reasoning-Profils, verwendet aber unbeschränktes top-$p$
+und keine Presence-Penalty.
 
 \subsection{Protokollfelder je Lauf}
 
@@ -416,6 +481,15 @@ deren Größenordnung.
 Die drei Läufe liefen gleichzeitig auf demselben Knoten; der explorative
 Vorlauf mit zwei Epochen benötigte allein auf dem Knoten 15,5~s je
 Schritt.
+
+\subsection{Hardwareeffekt bei der Encoder-Inferenz}
+
+Wie groß der Einfluss des GPU-Typs auf die Laufzeit
+(Abschnitt~\ref{sec:effizienzmetriken}) sein kann, zeigt die
+Encoder-Inferenz.
+Im explorativen Vorlauf erreichte DeBERTa-v3-base auf einer A100 eine
+mittlere Latenz von 17,6\,ms je Satz, in der Hauptstudie auf einer H100
+dagegen 8,9\,ms (Mittel der drei Läufe).
 
 \subsection{Parsing-Fallbacks}
 
