@@ -1439,6 +1439,132 @@ def tab_limit_multinerd(G, L):
     return "\n".join(lines)
 
 
+# --------------------------------------------------------------------------- Transferreferenz, Synthese, Teilmengen (7.11.2026)
+COARSE_IDX = [TYPES.index(t) for t in COARSE]
+
+
+def coarse_reference(G, key):
+    """Gepoolter Mikro-F1 ueber PER/ORG/LOC auf dem MultiNERD-Testsplit je Lauf der Gruppe (Satzzaehler der drei
+    Typen summiert; entspricht score(records, ..., COARSE)) sowie Mittel/SD ueber die Seeds."""
+    per_seed = []
+    for r in G[key]["runs"]:
+        tp, fp, fn = (int(x) for x in np.asarray(r["sent_types"])[:, COARSE_IDX, :].sum(axis=(0, 1)))
+        p, rc, f = prf(tp, fp, fn)
+        per_seed.append(dict(run=r["name"], precision=p, recall=rc, f1=f, tp=tp, fp=fp, fn=fn))
+    out = {k: dict(zip(("mean", "std"), mean_std([s[k] for s in per_seed]))) for k in ("precision", "recall", "f1")}
+    out["per_seed"] = per_seed
+    return out
+
+
+def transfer_losses(G, C):
+    """Transferverlust je Bedingung = MultiNERD-Referenz (PER/ORG/LOC, gepoolt, Seed-Mittel) minus gepoolter
+    CrossNER-F1 (Seed-Mittel). Fuer das LLM getrennt nach Ausgabelimit 256 (Hauptlaeufe) und 1024 (Nachinferenz
+    auf MultiNERD gegen vollstaendigen CrossNER-Neulauf), damit Referenz und Transferwert dasselbe Limit haben."""
+    out = {}
+    enc = coarse_reference(G, "deberta-large")
+    cross_enc = C["aggregate"]["deberta-large"]["pooled_micro"]["f1_mean"]
+    out["deberta-large"] = dict(reference=enc, crossner_f1=cross_enc, loss=enc["f1"]["mean"] - cross_enc)
+    ref256 = coarse_reference(G, "qwen27-qlora")
+    cross256 = C["aggregate"]["qwen27-qlora"]["pooled_micro"]["f1_mean"]
+    out["qwen27-qlora"] = dict(reference_256=ref256, crossner_256=cross256, loss_256=ref256["f1"]["mean"] - cross256)
+    if "qwen27-qlora-1024" in G and C["output_limit_full"].get("complete"):
+        ref1024 = coarse_reference(G, "qwen27-qlora-1024")
+        cross1024 = C["output_limit_full"]["full"]["pooled_micro"]["1024"]["f1_mean"]
+        out["qwen27-qlora"].update(reference_1024=ref1024, crossner_1024=cross1024,
+                                   loss_1024=ref1024["f1"]["mean"] - cross1024)
+    return out
+
+
+def encoder_recall_on_truncated(G, L):
+    """Recall der Encoder auf den Saetzen, deren LLM-Antwort bei 256 Tokens abgeschnitten war (Teilmenge je
+    LLM-Seed aus den regenerated-Indizes), und LLM-Recall derselben Teilmenge bei 256 und 1024 Tokens."""
+    encoders = [k for k in ("deberta-large", "deberta-base") if k in G]
+    out = {}
+    for key in L:
+        per = []
+        for j, run in enumerate(G[key]["runs"]):
+            idx = np.asarray(run["regen"]["indices"], dtype=int)
+            sub = run["regen"]["subset_metrics"]
+            entry = dict(llm_seed=SEEDS[j], n=int(len(idx)), llm_recall_256=sub["baseline_256"]["recall"],
+                         llm_recall_1024=sub["output_limit"]["recall"], encoder={})
+            for enc in encoders:
+                vals = []
+                for er in G[enc]["runs"]:
+                    m = np.asarray(er["sent_micro"])[idx].sum(axis=0)
+                    tp, fn = int(m[0]), int(m[2])
+                    vals.append(tp / (tp + fn) if tp + fn else None)
+                entry["encoder"][enc] = dict(values=vals, seed_matched=vals[j] if j < len(vals) else None,
+                                             min=min(vals), max=max(vals))
+            per.append(entry)
+        out[key] = dict(per_llm_seed=per)
+        for enc in encoders:
+            out[key][enc] = dict(min=min(e["encoder"][enc]["min"] for e in per),
+                                 max=max(e["encoder"][enc]["max"] for e in per),
+                                 seed_matched=[e["encoder"][enc]["seed_matched"] for e in per])
+    return out
+
+
+def tab_synthese(G, C, boot):
+    """Vier Bedingungen (MultiNERD/CrossNER x Ausgabelimit 256/1024): DeBERTa-v3-large, Qwen3.5-27B (QLoRA),
+    Vorsprung des Encoders (Encoder minus LLM) mit 95-%-Bootstrap-Intervall. Encoderwerte sind limitunabhaengig."""
+
+    def interval(lo, hi):
+        return f"[{signed(lo, 2)}; {signed(hi, 2)}]" + ("$^{\\dagger}$" if lo <= 0 <= hi else "")
+
+    rows = []
+    enc = G["deberta-large"]["agg"]["f1"]["mean"] * 100
+    for size, key, pk in (("256", "qwen27-qlora", "qwen27-qlora->deberta-large"),
+                          ("1\\,024", "qwen27-qlora-1024", "qwen27-qlora-1024->deberta-large")):
+        if key in G and pk in boot["pairs"]:
+            p = boot["pairs"][pk]          # diff = Encoder - LLM
+            rows.append(("MultiNERD, 15 Typen", size, enc, G[key]["agg"]["f1"]["mean"] * 100, p["diff"], p["ci"]))
+    cb = C["bootstrap"]["domains"]["pooled_micro"]
+    for size, key in (("256", "qwen27-qlora"), ("1\\,024", "qwen27-qlora-1024")):
+        if key in cb["pairs"]:
+            p = cb["pairs"][key]           # diff = LLM - Encoder, daher Vorzeichen umkehren
+            rows.append(("CrossNER, PER/ORG/LOC gepoolt", size, cb["configs"]["deberta-large"], cb["configs"][key],
+                         -p["diff"], [-p["ci"][1], -p["ci"][0]]))
+    lines = ["\\begin{tabular}{llrrrl}", "    \\toprule",
+             "    \\textbf{Bedingung} & \\textbf{Limit} & \\textbf{DeBERTa-v3-large} & \\textbf{Qwen3.5-27B} &",
+             "      $\\Delta$ \\textbf{(Encoder $-$ LLM)} & \\textbf{95\\,\\%-KI} \\\\", "    \\midrule"]
+    last = None
+    for cond, size, e, l, d, ci in rows:
+        if last is not None and cond != last:
+            lines.append("    \\midrule")
+        lines.append(f"    {cond if cond != last else ''} & {size} & {de(e, 2)} & {de(l, 2)} & {signed(d, 2)} & {interval(*ci)} \\\\")
+        last = cond
+    lines.append("    \\bottomrule")
+    lines += note_rows("$^{\\dagger}$ Intervall schlie\\ss{}t 0 ein. Mikro-F$_1$, Seed-Mittel; MultiNERD: seedgleich "
+                       "gepaartes Satz-Bootstrap, CrossNER: nach Dom\\\"ane geschichtetes gepaartes Satz-Bootstrap "
+                       f"($B = {fmt_int(boot['settings']['B'])}$). Die Encoderwerte h\\\"angen nicht vom Ausgabelimit ab.", 6)
+    lines += ["\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
+def tab_app_limit_seeds(G, L):
+    """Anhang: Nachinferenz mit Limit 1024 je Seed (F1 bei 256/1024, Differenz, neu erzeugte und weiterhin
+    abgeschnittene Saetze, reproduzierte 256er-Praefixe)."""
+    lines = ["\\begin{tabular}{llrrrrrr}", "    \\toprule",
+             "    \\textbf{Modell} & \\textbf{Seed} & \\textbf{F$_1$ (256)} & \\textbf{F$_1$ (1\\,024)} & $\\Delta$\\textbf{F$_1$} &",
+             "      \\textbf{\\shortstack[c]{neu\\\\erzeugt}} & \\textbf{\\shortstack[c]{weiterhin\\\\abgeschnitten}} &",
+             "      \\textbf{\\shortstack[c]{Pr\\\"afix\\\\gleich}} \\\\", "    \\midrule"]
+    first = True
+    for key, base in LIMIT_GROUPS.items():
+        if key not in L:
+            continue
+        if not first:
+            lines.append("    \\midrule")
+        first = False
+        for j, (ps, run) in enumerate(zip(L[key]["per_seed"], G[key]["runs"])):
+            rg = run["regen"]
+            label = G[base]["label"] if j == 0 else ""
+            lines.append(f"    {label} & {SEEDS[j]} & {de(ps['f1_256'] * 100, 2)} & {de(ps['f1_1024'] * 100, 2)} & "
+                         f"{signed(ps['delta_f1'] * 100, 2)} & {fmt_int(ps['n_regenerated'])} & "
+                         f"{fmt_int(ps['n_limit_reached'])} & {fmt_int(rg['stored_prefix_match_count'])}/{fmt_int(rg['n_regenerated'])} \\\\")
+    lines += ["    \\bottomrule", "\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
 CI_PAIRS = ["qwen27-qlora->deberta-large", "deberta-base->qwen27-qlora", "deberta-base->deberta-large",
             "qwen4-qlora->qwen27-qlora", "qwen08-qlora->qwen4-qlora", "qwen08-qlora->deberta-base",
             "deberta-base->qwen4-qlora"]
@@ -1587,6 +1713,12 @@ def main():
 
     print(f"CrossNER-Satz-Bootstrap (B = {BOOT_B}, nach Domaene geschichtet) ...")
     C["bootstrap"] = crossner_bootstrap(C)
+    C["transfer"] = transfer_losses(G, C)
+    t = C["transfer"]
+    print(f"  Transferverlust PER/ORG/LOC: Encoder {t['deberta-large']['loss'] * 100:.2f}; "
+          f"LLM 256: {t['qwen27-qlora']['loss_256'] * 100:.2f}"
+          + (f"; LLM 1024: {t['qwen27-qlora']['loss_1024'] * 100:.2f}" if "loss_1024" in t["qwen27-qlora"] else ""))
+    encoder_subset = encoder_recall_on_truncated(G, L) if L else {}
     print("Tabellen und Abbildungsdaten schreiben ...")
     write(OUT / "tab-haupt.tex", tab_haupt(G))
     write(OUT / "tab-typen.tex", tab_typen(G))
@@ -1605,6 +1737,8 @@ def main():
         write(OUT / "tab-limit.tex", tab_limit(C))
     if L:
         write(OUT / "tab-limit-multinerd.tex", tab_limit_multinerd(G, L))
+        write(OUT / "tab-app-limit-seeds.tex", tab_app_limit_seeds(G, L))
+    write(OUT / "tab-synthese.tex", tab_synthese(G, C, boot))
     d_typen, d_groesse, d_tradeoff = fig_data(G)
     write(OUT / "fig-typen.dat", d_typen)
     write(OUT / "fig-groesse.dat", d_groesse)
@@ -1659,7 +1793,8 @@ def main():
         training_time_27b=training_time_27b,
         inference_wallclock_check=inference_wallclock_check,
         bootstrap=boot,
-        output_limit_multinerd=dict(available=list(L), missing=[k for k in LIMIT_GROUPS if k not in L], per_size=L),
+        output_limit_multinerd=dict(available=list(L), missing=[k for k in LIMIT_GROUPS if k not in L], per_size=L,
+                                    encoder_subset=encoder_subset),
     )
 
     def default(o):

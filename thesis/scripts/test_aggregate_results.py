@@ -117,5 +117,58 @@ class CrossnerBootstrapTests(unittest.TestCase):
         np.testing.assert_array_equal(micro, [[1, 0, 0], [0, 0, 1]])
 
 
+class TransferAndSubsetTests(unittest.TestCase):
+    """coarse_reference, transfer_losses, encoder_recall_on_truncated auf synthetischen Satzzaehlern."""
+
+    def setUp(self):
+        nt = len(agg.TYPES)
+        n = 4
+
+        def run(name, micro, coarse_counts, regen=None):
+            types = np.zeros((n, nt, 3), dtype=np.int32)
+            for j, t in enumerate(agg.COARSE):
+                types[:, agg.TYPES.index(t), :] = coarse_counts[j]
+            types[:, agg.TYPES.index("DIS"), :] = [[5, 5, 5]] * n      # Nicht-Grobtyp darf nicht zaehlen
+            r = dict(name=name, sent_micro=np.array(micro, dtype=np.int32), sent_types=types)
+            if regen is not None:
+                r["regen"] = regen
+            return r
+
+        # Encoder: je Satz tp/fp/fn; Satz 1 und 3 sind die "abgeschnittenen" Saetze des LLM-Seeds 42
+        enc = run("enc", [[2, 0, 0], [1, 0, 1], [3, 1, 0], [0, 0, 2]],
+                  coarse_counts=[[[1, 0, 0]] * n, [[1, 0, 1]] * n, [[0, 0, 0]] * n])
+        llm = run("llm", [[2, 0, 0]] * n, coarse_counts=[[[1, 1, 0]] * n, [[1, 0, 0]] * n, [[0, 0, 1]] * n],
+                  regen=dict(indices=[1, 3], subset_metrics=dict(baseline_256=dict(recall=0.25),
+                                                                 output_limit=dict(recall=0.75))))
+        self.G = {"deberta-large": dict(runs=[enc]), "qwen27-qlora": dict(runs=[llm]),
+                  "qwen27-qlora-1024": dict(runs=[llm])}
+
+    def test_coarse_reference_sums_only_coarse_types(self):
+        ref = agg.coarse_reference(self.G, "deberta-large")
+        s = ref["per_seed"][0]
+        self.assertEqual((s["tp"], s["fp"], s["fn"]), (8, 0, 4))      # PER 4/0/0 + ORG 4/0/4 + LOC 0
+        self.assertAlmostEqual(s["f1"], 2 * 8 / (2 * 8 + 0 + 4))
+        self.assertAlmostEqual(ref["f1"]["mean"], s["f1"])
+
+    def test_transfer_losses_use_matching_limit(self):
+        C = dict(aggregate={"deberta-large": {"pooled_micro": {"f1_mean": 0.5}},
+                            "qwen27-qlora": {"pooled_micro": {"f1_mean": 0.4}}},
+                 output_limit_full=dict(complete=True, full={"pooled_micro": {"1024": {"f1_mean": 0.6}}}))
+        t = agg.transfer_losses(self.G, C)
+        self.assertAlmostEqual(t["deberta-large"]["loss"], 2 * 8 / 20 - 0.5)
+        llm_f1 = 2 * 8 / (2 * 8 + 4 + 4)                                # PER 4/4/0 + ORG 4/0/0 + LOC 0/0/4
+        self.assertAlmostEqual(t["qwen27-qlora"]["loss_256"], llm_f1 - 0.4)
+        self.assertAlmostEqual(t["qwen27-qlora"]["loss_1024"], llm_f1 - 0.6)
+
+    def test_encoder_recall_on_truncated_subset(self):
+        L = {"qwen27-qlora-1024": {}}
+        out = agg.encoder_recall_on_truncated(self.G, L)
+        e = out["qwen27-qlora-1024"]["per_llm_seed"][0]
+        self.assertEqual(e["n"], 2)
+        self.assertAlmostEqual(e["encoder"]["deberta-large"]["values"][0], 1 / (1 + 3))   # Saetze 1 und 3: tp 1, fn 3
+        self.assertAlmostEqual(e["llm_recall_1024"], 0.75)
+        self.assertAlmostEqual(out["qwen27-qlora-1024"]["deberta-large"]["min"], 0.25)
+
+
 if __name__ == "__main__":
     unittest.main()

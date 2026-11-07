@@ -1,0 +1,19 @@
+\begin{tabular}{llrrrrrr}
+    \toprule
+    \textbf{Modell} & \textbf{Seed} & \textbf{F$_1$ (256)} & \textbf{F$_1$ (1\,024)} & $\Delta$\textbf{F$_1$} &
+      \textbf{\shortstack[c]{neu\\erzeugt}} & \textbf{\shortstack[c]{weiterhin\\abgeschnitten}} &
+      \textbf{\shortstack[c]{Pr\"afix\\gleich}} \\
+    \midrule
+    Qwen3.5-0.8B & 42 & 93,24 & 94,35 & $+$1,11 & 68 & 0 & 67/68 \\
+     & 123 & 93,14 & 94,29 & $+$1,14 & 68 & 0 & 67/68 \\
+     & 456 & 93,04 & 94,16 & $+$1,12 & 67 & 0 & 67/67 \\
+    \midrule
+    Qwen3.5-4B & 42 & 93,93 & 95,06 & $+$1,14 & 72 & 0 & 70/72 \\
+     & 123 & 94,02 & 95,15 & $+$1,14 & 67 & 0 & 66/67 \\
+     & 456 & 93,96 & 95,11 & $+$1,15 & 67 & 0 & 66/67 \\
+    \midrule
+    Qwen3.5-27B & 42 & 94,53 & 95,68 & $+$1,15 & 65 & 0 & 63/65 \\
+     & 123 & 94,39 & 95,57 & $+$1,18 & 68 & 0 & 67/68 \\
+     & 456 & 94,52 & 95,67 & $+$1,15 & 62 & 0 & 61/62 \\
+    \bottomrule
+\end{tabular}
