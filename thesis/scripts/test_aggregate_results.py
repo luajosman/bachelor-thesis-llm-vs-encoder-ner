@@ -172,3 +172,34 @@ class TransferAndSubsetTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ErrorProfileAdditionsTests(unittest.TestCase):
+    """Zusaetze (Vorhersagen ohne ueberlappende Referenz) und ihr Anteil mit Ziffer im Spantext."""
+
+    def test_counts_additions_with_digit_per_type(self):
+        recs = [
+            dict(tokens=["In", "1999", "he", "went", "to", "Paris"],
+                 gold=["O", "O", "O", "O", "O", "B-LOC"],
+                 pred=["O", "B-TIME", "O", "O", "O", "B-LOC"]),            # 1999: Zusatz TIME mit Ziffer
+            dict(tokens=["During", "the", "Middle", "Ages", "today"],
+                 gold=["O", "O", "B-TIME", "I-TIME", "O"],
+                 pred=["O", "O", "B-TIME", "I-TIME", "B-TIME"]),            # today: Zusatz TIME ohne Ziffer
+            dict(tokens=["Route", "66", "is", "long"],
+                 gold=["B-LOC", "I-LOC", "O", "O"],
+                 pred=["B-LOC", "I-LOC", "O", "B-ANIM"]),                 # long: Zusatz ANIM ohne Ziffer
+        ]
+        prof = agg.error_profile(recs, "gold", "pred")
+        self.assertEqual(prof["additions"], 3)
+        self.assertEqual(dict(prof["additions_by_type"]), {"TIME": 2, "ANIM": 1})
+        self.assertEqual(dict(prof["additions_with_digit_by_type"]), {"TIME": 1})
+        self.assertEqual(prof["counts"], {"korrekt": 3})
+
+    def test_vorlauf_steps_takes_highest_checkpoint(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            root = agg.Path(d)
+            for name in ("checkpoint-16000", "checkpoint-16410", "best_lora_adapter"):
+                (root / name).mkdir()
+            self.assertEqual(agg.vorlauf_steps(root), 16410)
+            self.assertIsNone(agg.vorlauf_steps(root / "best_lora_adapter"))

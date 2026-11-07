@@ -193,9 +193,11 @@ def error_profile(records, gold_key, pred_key):
     n_gold = 0
     additions = 0
     additions_by_type = Counter()
+    additions_with_digit_by_type = Counter()
     for rec in records:
         gold = entities(rec[gold_key])
         pred = entities(rec[pred_key])
+        tokens = rec.get("tokens") or []
         pset = set(pred)
         matched = set()
         for ge in gold:
@@ -229,9 +231,12 @@ def error_profile(records, gold_key, pred_key):
             if not any(pe[0] < ge[1] and ge[0] < pe[1] for ge in gold):
                 additions += 1
                 additions_by_type[pe[2]] += 1
+                if any(ch.isdigit() for ch in " ".join(tokens[pe[0]:pe[1]])):
+                    additions_with_digit_by_type[pe[2]] += 1
     return dict(counts=dict(counts), n_gold=n_gold, additions=additions,
                 confusion=confusion, boundary_by_type=boundary_by_type,
-                additions_by_type=additions_by_type)
+                additions_by_type=additions_by_type,
+                additions_with_digit_by_type=additions_with_digit_by_type)
 
 
 def mean_std(values):
@@ -635,6 +640,10 @@ def aggregate_group(runs):
     for r in runs:
         add.update(r["errors"]["additions_by_type"])
     agg["errors"]["additions_by_type"] = {t: c / len(runs) for t, c in add.most_common()}
+    add_digit = Counter()
+    for r in runs:
+        add_digit.update(r["errors"].get("additions_with_digit_by_type", {}))
+    agg["errors"]["additions_with_digit_by_type"] = {t: c / len(runs) for t, c in add_digit.most_common()}
     if "form" in runs[0]:
         agg["form"] = {}
         for k in runs[0]["form"]:
@@ -1571,11 +1580,39 @@ def analyse_vorlaeufe(G):
         res = load_yaml(res_path) if res_path.exists() else {}
         epochs = res.get("best_epoch") or res.get("num_train_epochs")
         canonical = G[base]["runs"][0]
+        runtime = res.get("train_runtime_seconds")
+        steps = vorlauf_steps(path)
         out.append(dict(run=run_dir, label=label, base=base, note=note, f1=r["f1"], gpu=r.get("gpu"),
                         commit=(git.get("commit") or "")[:7], dirty=bool(git.get("dirty")), epochs=epochs,
                         canonical_run=canonical["name"], canonical_f1=canonical["f1"],
-                        delta=r["f1"] - canonical["f1"]))
+                        delta=r["f1"] - canonical["f1"],
+                        train_runtime_h=runtime / 3600 if runtime else None, steps=steps,
+                        seconds_per_step=runtime / steps if runtime and steps else None))
     return out
+
+
+def vorlauf_steps(path: Path):
+    """Hoechste Schrittnummer der erhaltenen Trainer-Checkpoints (checkpoint-<schritt>)."""
+    steps = [int(p.name.split("-", 1)[1]) for p in path.glob("checkpoint-*") if p.name.split("-", 1)[1].isdigit()]
+    return max(steps) if steps else None
+
+
+VORLAUF_THINKING = "qwen35-4b-qlora-thinking-enabled-20260727-074436"
+
+
+def analyse_vorlauf_thinking():
+    """Abgebrochener 4B-Vorlauf mit aktiviertem Thinking-Modus: generative Validierung je Epoche."""
+    path = RES / "multinerd" / VORLAUF_THINKING / "generative_eval_state.yaml"
+    if not path.exists():
+        print(f"  Hinweis: Vorlauf {VORLAUF_THINKING} fehlt; uebersprungen")
+        return None
+    st = load_yaml(path)
+    rows = [dict(epoch=e.get("epoch"), dev_f1=e.get("dev_f1"), parse_failure_rate=e.get("parse_failure_rate"))
+            for e in st.get("epoch_results", [])]
+    rates = [e["parse_failure_rate"] for e in rows if e["parse_failure_rate"] is not None]
+    return dict(run=VORLAUF_THINKING, epochs=rows, best_epoch=st.get("best_epoch"), best_f1=st.get("best_f1"),
+                parse_failure_rate_min=min(rates) if rates else None,
+                parse_failure_rate_max=max(rates) if rates else None)
 
 
 def tab_app_vorlaeufe(V):
@@ -1853,6 +1890,7 @@ def main():
         output_limit_multinerd=dict(available=list(L), missing=[k for k in LIMIT_GROUPS if k not in L], per_size=L,
                                     encoder_subset=encoder_subset),
         vorlaeufe=V,
+        vorlauf_thinking_4b=analyse_vorlauf_thinking(),
     )
 
     def default(o):
