@@ -221,7 +221,7 @@ Größen dichte Decoder mit hybrider Attention
 (Tabelle~\ref{tab:qwen-architektur}): In jedem Block aus vier Schichten
 nutzen drei Schichten lineare Attention in Form von Gated DeltaNet, die
 vierte vollständige Softmax-Attention mit Grouped-Query-Attention und
-Ausgabe-Gating \cite{qwen2026qwen35blog}.
+Ausgabe-Gating \cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
 Jede Schicht enthält ein dichtes Feed-Forward-Netz; Komponenten nach dem
 Mixture-of-Experts-Prinzip besitzen die drei Größen nicht.
 Die hybride Attention ist für die Platzierung der LoRA-Adapter relevant
@@ -724,7 +724,7 @@ bestimmen.
 
 \paragraph{QLoRA-Regime.}
 Die Anpassung erfolgt mit \texttt{peft} \cite{mangrulkar2022peft} und dem
-\emph{SFTTrainer} aus \texttt{trl} \cite{vonwerra2020trl} als
+\emph{SFTTrainer} aus \texttt{trl} \cite{vonwerra2026trldocs} als
 Single-Turn-SFT: Jedes Trainingsbeispiel besteht aus Systemnachricht,
 Nutzernachricht und Zielantwort im Standardprofil
 (Abschnitt~\ref{sec:prompt-design}).
@@ -844,9 +844,9 @@ Assistentennachricht bildet, lautet:
 \end{lstlisting}
 
 Auf \emph{constrained decoding} wird bewusst verzichtet.
-Verfahren der geführten Generierung binden die Ausgabe zwar an eine
-formale Grammatik und erhöhen so die Formtreue
-\cite{willard2023outlines}, können aber die Modellleistung beeinträchtigen
+Verfahren der geführten Generierung begrenzen die Ausgabe auf die von
+einer formalen Grammatik zugelassenen Formen
+\cite{geng2023grammar}, können aber die Modellleistung beeinträchtigen
 \cite{tam2024speakfreely}.
 Freie Generierung mit nachgelagerter Validierung lässt dem Modell
 dagegen das volle Ausdrucksspektrum, macht die Formtreue messbar und
@@ -1073,8 +1073,12 @@ gespeicherten Vorhersagen bedingt. Es erfasst weder die Unsicherheit
 durch neue Trainingsläufe noch die Sampling-Streuung einer erneuten
 Zero-Shot-Inferenz. Die Sätze werden als unabhängige Einheiten behandelt;
 Abhängigkeiten innerhalb von Quelldokumenten werden nicht modelliert.
-Die Intervalle sind nicht für Mehrfachvergleiche korrigiert und werden
-als explorative Unsicherheitsangaben interpretiert. Sie beseitigen auch
+Als Hauptvergleiche gelten die in der Experimentmatrix angelegten
+Gegenüberstellungen bei 256 Ausgabetokens (DeBERTa-v3-large gegen
+Qwen3.5-27B im QLoRA-Regime sowie die Größenschritte innerhalb der
+Familien); die Vergleiche der nachträglichen Sensitivitätsanalysen
+(1\,024 Tokens, CrossNER-Domänen) sind explorativ.
+Die Intervalle sind nicht für Mehrfachvergleiche korrigiert. Sie beseitigen auch
 keine mögliche Verzerrung durch die frühere Testnutzung.
 Für die Fehleranalyse werden Precision, Recall, F$_1$ und Support zusätzlich
 je Entitätstyp berechnet; für die Trainingsläufe der Hauptstudie sind

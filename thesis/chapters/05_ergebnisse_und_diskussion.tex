@@ -714,7 +714,7 @@ was auch auf den GPU-Typ zurückgehen kann.
         table[x=vram_gb, y=f1] {generated/fig-tradeoff.dat};
     \end{axis}
   \end{tikzpicture}
-  \caption[Erkennungsleistung gegenüber Inferenzlatenz und GPU-Spitzenspeicher]{Mikro-F$_1$ gegenüber Modelllatenz (links) und
+  \caption[Erkennungsleistung gegenüber Inferenzlatenz und GPU-Spitzenspeicher]{Mikro-F$_1$ gegenüber Inferenzlatenz (links) und
   maximal allokiertem GPU-Speicher (rechts); die x-Achse ist jeweils logarithmisch.
   Symbolform nach Regime, Farbe nach Familie, Symbolgröße nach
   Größenklasse; LLM-Werte bei 256 Ausgabetokens nach Tabelle~\ref{tab:effizienz}.
@@ -1040,9 +1040,10 @@ wie der Annotation einer Band als PER.
 Für die Zero-Shot-Werte kommt die in Abschnitt~\ref{sec:research_gap}
 offen gelassene Frage der Datenkontamination hinzu.
 Die Modellkarten von Qwen3.5 nennen keine Vortrainingsdaten
-\cite{qwen2026card27b}; dass diese Wikipedia- und Wikinews-Texte
-enthalten, ist wegen deren Verbreitung in Webkorpora anzunehmen, aber
-nicht prüfbar, sodass die Modelle einzelne Artikel kennen könnten.
+\cite{qwen2026card27b}; ob Wikipedia- oder Wikinews-Artikel zum
+Vortraining gehörten, lässt sich daher nicht feststellen.
+Ein Vorwissen aus diesen Artikeln kann nicht ausgeschlossen werden, ist
+mit den verfügbaren Angaben aber nicht belegbar.
 Die niedrigen Werte und die dominierenden Format- und
 Typdefinitionsfehler erlauben keinen Rückschluss auf das Ausmaß einer
 möglichen Kontamination. Diese Unsicherheit betrifft auch die
@@ -1177,7 +1178,7 @@ GPUs angepasst.
 
 FF3 fragt nach dem Verhältnis von Erkennungsleistung und Ressourcenbedarf
 unter Speicher- und Latenzbeschränkungen. Auf MultiNERD erreichen die
-Encoder 95,5 bzw. 95,8 Punkte bei 8,9 bzw. 16,5~ms Modelllatenz und
+Encoder 95,5 bzw. 95,8 Punkte bei 8,9 bzw. 16,5~ms Inferenzlatenz und
 0,7 bzw. 1,7~GiB maximal allokiertem Inferenzspeicher. Die QLoRA-Läufe
 benötigen unter dem ursprünglichen Limit von 256 Tokens 1\,876 bis
 5\,505~ms und 0,9 bis 18,7~GiB. Der Vergleich von DeBERTa-v3-base und
@@ -1216,7 +1217,7 @@ damit eine gut gestützte Wahl. Eine pauschale Qualitätsempfehlung über
 Datensätze hinweg ergibt sich dagegen nicht: Auf CrossNER erreicht
 Qwen3.5-27B mit 1\,024 Ausgabetokens 87,1 Punkte gegenüber 85,0 für
 DeBERTa-v3-large. Das gepaarte Intervall der Differenz schließt null aus;
-gleichzeitig beträgt die Modelllatenz dort 12,9~s gegenüber 25,7~ms auf
+gleichzeitig beträgt die Inferenzlatenz dort 12,9~s gegenüber 25,7~ms auf
 demselben GPU-Typ. Ob dieser Qualitätsgewinn den Aufwand rechtfertigt,
 hängt von der Zielanwendung ab. Einzelne höhere Werte bei seltenen
 MultiNERD-Typen bleiben wegen ihres geringen Supports deskriptive

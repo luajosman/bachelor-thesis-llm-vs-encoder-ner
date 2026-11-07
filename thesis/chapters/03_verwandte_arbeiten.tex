@@ -763,7 +763,8 @@ Silberreferenz, und dabei Trainingsdauer, Inferenzlatenz und
 GPU-Spitzenspeicher der Inferenz nach einem einheitlichen Protokoll
 erfasst (Abschnitt~\ref{sec:effizienzmetriken}).
 Mit der Indexing-Ausgabe wird zudem ein Format verwendet, das den
-Eingabetext nicht reproduziert und dessen Formtreue eigens gemessen wird.
+Eingabetext nicht vollständig reproduziert und dessen Formtreue eigens
+gemessen wird.
 Diese Lücke betrifft vor allem FF1, den Vergleich von
 Erkennungsleistung und Formtreue in einer gemeinsamen Pipeline, sowie
 FF3, die Ableitung von Empfehlungen für die Auswahl geeigneter
@@ -788,7 +789,8 @@ Ressourcenerfassung.
 Die vorliegende Arbeit vergleicht drei Größen einer LLM-Familie zwischen
 0{,}8 und 27~Mrd. Parametern in zwei Regimen, Zero-Shot und QLoRA, mit
 zwei Encoder-Größen derselben Architektur und erfasst für jede
-Konfiguration Leistung, Formtreue und Ressourcen.
+Konfiguration Leistung und Ressourcen sowie für die LLM-Ausgaben die
+Formtreue.
 Sie adressiert damit FF2, die Veränderung von Erkennungsleistung und
 Ressourcenbedarf mit der Modellgröße, und liefert die Grundlage für die
 größenbezogenen Empfehlungen in FF3.
@@ -807,8 +809,8 @@ Pre-Training enthalten sein dürfte; ihr Befund, dass die Ergebnisse nicht
 von den Typbezeichnungen abhängen, spricht gegen eine Memorisierung von
 Entität-Typ-Paaren, gilt aber für CoNLL-2003 und CleanCoNLL.
 Für MultiNERD bleibt die Frage offen.
-Zu bedenken ist dabei, dass die Referenz ein automatisch erzeugter Silver
-Standard ist: Ein Modell, das den Wikipedia-Text kennt, kennt damit noch
+Zu bedenken ist dabei, dass die Referenz eine automatisch erzeugte
+Silberreferenz ist: Ein Modell, das den Wikipedia-Text kennt, kennt damit noch
 nicht die hier verwendeten Labels, auch wenn der Datensatz selbst seit
 2022 öffentlich verfügbar ist.
 Im QLoRA-Regime lernen alle Modelle das Typinventar ohnehin aus den
