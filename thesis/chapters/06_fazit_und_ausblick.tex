@@ -31,8 +31,10 @@ die Reihenfolge mit dem höheren Limit um (Tabelle~\ref{tab:synthese}).
 Erwartung E1 ist auf MultiNERD nur bei ausreichendem Ausgabelimit und
 nur teilweise bestätigt: Das mit QLoRA angepasste LLM liegt im Punktwert
 knapp vor DeBERTa-v3-base, ohne dass sich eine Rangfolge nachweisen
-lässt, bleibt aber knapp und nachweisbar hinter DeBERTa-v3-large.
-Der Rest ist kein isolierter Architektureffekt
+lässt, bleibt aber knapp hinter DeBERTa-v3-large.
+Das Intervall dieser Differenz, [0,02; 0,33], liegt knapp über null und
+gehört zu den explorativen Vergleichen.
+Der verbleibende Abstand ist kein isolierter Architektureffekt
 (Abschnitt~\ref{sec:disk-leistung}).
 
 Je Entitätstyp gibt es nur beobachtete Punktwertunterschiede ohne eigene
@@ -87,9 +89,11 @@ genügt mit 8,9~ms und 0,7~GiB dem engsten Budget, DeBERTa-v3-large bringt
 Die Ressourcenwerte bei 256 Tokens gelten dabei nicht für eine Pipeline
 mit 1\,024 Tokens, für die kein vollständiger Neulauf vorliegt.
 Auf CrossNER liegt Qwen3.5-27B bei 1\,024 Tokens mit 87,1 Punkten vor
-DeBERTa-v3-large mit 85,0, bei 12,9~s (mit 1\,024 Tokens) gegenüber
-25,7~ms Inferenzlatenz auf demselben GPU-Typ; unter ähnlichen Transferbedingungen und passender
-Latenztoleranz kann das LLM die bessere Wahl sein
+DeBERTa-v3-large mit 85,0.
+Seine Inferenzlatenz beträgt dabei 12,9~s je Satz gegenüber 25,7~ms auf
+demselben GPU-Typ.
+Unter ähnlichen Transferbedingungen und bei entsprechender
+Latenztoleranz kann das LLM daher die bessere Wahl sein
 (Abschnitt~\ref{sec:disk-effizienz}).
 Eine allgemeine Überlegenheit einer Modellklasse folgt daraus nicht; eine
 Erweiterung des Typinventars über den Prompt blieb ungeprüft
@@ -147,7 +151,7 @@ Betroffen ist FF1 im Betrag und teilweise in der Richtung der Vergleiche,
 Alle MultiNERD-Werte messen die Übereinstimmung mit einer Silberreferenz;
 für ANIM, BIO, FOOD und PLANT berichten \textcite{tedeschi2022multinerd}
 auf einer manuell geprüften Stichprobe Annotations-F$_1$-Werte von 0{,}52
-bis 0{,}71.
+bis 0{,}71, für INST von 0{,}67.
 Abweichungen von der Referenz können daher Modell- oder Annotationsfehler
 sein; die qualitative Fehleranalyse zeigt das nur an Beispielen.
 Die Hauptstudie umfasst Englisch, Wikipedia- und Wikinews-Texte und zwei
