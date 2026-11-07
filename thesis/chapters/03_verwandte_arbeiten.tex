@@ -672,8 +672,8 @@ DeBERTa-v3-base und -large sowie Qwen3.5 in drei Größen auf den
 offiziellen englischen MultiNERD-Splits in einer gemeinsamen Pipeline,
 mit derselben \texttt{seqeval}-Implementierung und derselben
 Silberreferenz.
-Trainingsdauer, Inferenzlatenz und GPU-Spitzenspeicher werden einheitlich
-erfasst
+Trainingsdauer, Inferenzlatenz und GPU-Spitzenspeicher der Inferenz
+werden einheitlich erfasst
 (Abschnitt~\ref{sec:effizienzmetriken}).
 Mit der Indexing-Ausgabe wird zudem ein Format verwendet, das statt des
 ganzen Satzes nur die Entitäten mit Indizes, Text und Typ ausgibt und
@@ -702,8 +702,8 @@ Die vorliegende Arbeit vergleicht drei Größen einer LLM-Familie zwischen
 zwei Encoder-Größen derselben Architektur und erfasst für jede
 Konfiguration Leistung und Ressourcen sowie für die LLM-Ausgaben die
 Formtreue.
-Sie adressiert damit FF2 und liefert die Grundlage für die
-größenbezogenen Empfehlungen in FF3.
+Sie adressiert damit FF2 und stützt die größenbezogenen Empfehlungen
+in FF3.
 
 Eine erste Einschränkung betrifft eine mögliche Datenkontamination.
 MultiNERD besteht aus Wikipedia- und Wikinews-Artikeln, die mit hoher
@@ -722,8 +722,8 @@ Wer den Wikipedia-Text kennt, kennt damit nicht die hier verwendeten
 Labels, auch wenn der Datensatz seit 2022 öffentlich ist.
 Im QLoRA-Regime lernen alle Modelle das Typinventar ohnehin aus den
 Trainingsdaten; im Zero-Shot-Regime könnte Vorwissen über die Artikel die
-Ergebnisse dagegen begünstigen; die Arbeit kann das nicht klären und
-berücksichtigt es bei den Zero-Shot-Ergebnissen.
+Ergebnisse dagegen begünstigen; diese Frage kann die Arbeit nicht
+klären.
 
 Die zweite Einschränkung betrifft die Vergleichsbedingungen: Die Arbeit
 hält nicht alle Bedingungen konstant und vergleicht deshalb konkrete
