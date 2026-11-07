@@ -1,7 +1,7 @@
 \begin{tabular}{lrlrl}
     \toprule
-    \textbf{Vergleich (A $-$ B)} & $\Delta$\,\textbf{Mikro-F$_1$} & \textbf{95\,\%-KI} &
-      $\Delta$\,\textbf{Makro-F$_1$} & \textbf{95\,\%-KI} \\
+    \textbf{Vergleich (A $-$ B)} & $\Delta$\,\textbf{Mikro-F$_1$} & \textbf{95-\%-Intervall} &
+      $\Delta$\,\textbf{Makro-F$_1$} & \textbf{95-\%-Intervall} \\
     \midrule
     DeBERTa-v3-large $-$ Qwen3.5-27B (QLoRA) & $+$1,34 & [$+$0,99; $+$1,68] & $-$0,17 & [$-$2,13; $+$1,27]$^{\dagger}$ \\
     Qwen3.5-27B (QLoRA) $-$ DeBERTa-v3-base & $-$1,02 & [$-$1,38; $-$0,67] & $+$1,47 & [$-$0,05; $+$3,55]$^{\dagger}$ \\
@@ -14,8 +14,8 @@
     Qwen3.5-27B (QLoRA, Limit 1\,024) $-$ DeBERTa-v3-base & $+$0,14 & [$-$0,02; $+$0,30]$^{\dagger}$ & $+$2,12 & [$+$0,61; $+$4,18] \\
     DeBERTa-v3-base $-$ Qwen3.5-0.8B (QLoRA, Limit 1\,024) & $+$1,24 & [$+$1,05; $+$1,43] & $+$2,17 & [$+$0,20; $+$4,22] \\
     \midrule
-    \textbf{Konfiguration} & \textbf{Mikro-F$_1$} & \textbf{95\,\%-KI} &
-      \textbf{Makro-F$_1$} & \textbf{95\,\%-KI} \\
+    \textbf{Konfiguration} & \textbf{Mikro-F$_1$} & \textbf{95-\%-Intervall} &
+      \textbf{Makro-F$_1$} & \textbf{95-\%-Intervall} \\
     \midrule
     DeBERTa-v3-base (Fine-Tuning) & 95,50 & [95,24; 95,76] & 85,39 & [82,20; 87,41] \\
     DeBERTa-v3-large (Fine-Tuning) & 95,82 & [95,57; 96,07] & 86,69 & [84,22; 88,37] \\

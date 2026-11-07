@@ -1157,9 +1157,9 @@ def training_footnote(a, sacct_ok):
     seeds_word = NUMBER_WORDS.get(len(profs), str(len(profs))).lower()
     same_node = f" Die {seeds_word} Seeds liefen gleichzeitig auf einem Knoten." if len(nodes) == 1 and len(profs) > 1 else ""
     if sacct_ok:
-        return (f"{n_word} Slurm-Zuteilungen {dates} wegen des 3-Tage-Limits, Summe laut Slurm-Abrechnung; "
-                f"Hochrechnung \\\"uber die Schrittrate des letzten Abschnitts: {est_h}~h "
-                f"(Abschnitt~\\ref{{sec:effizienzmetriken}}).{same_node}")
+        return (f"{n_word} Slurm-Zuteilungen wegen des 3-Tage-Limits, Summe laut Slurm-Abrechnung; "
+                f"Hochrechnung \\\"uber die Schrittrate des letzten Abschnitts: {est_h}~h; Daten der "
+                f"Zuteilungen in Anhang~\\ref{{app:durchfuehrung}}.{same_node}")
     return (f"Hochrechnung: {n_word} Slurm-Zuteilungen {dates} wegen des 3-Tage-Limits; der Trainer "
             f"protokollierte nur den letzten Abschnitt ab Schritt {resume} (Mittel {last_h}~h). Dessen Schrittrate "
             f"({rate}~s je Schritt) auf {total} Schritte hochgerechnet (Abschnitt~\\ref{{sec:effizienzmetriken}}).")
@@ -1538,7 +1538,7 @@ def tab_synthese(G, C, boot):
                          -p["diff"], [-p["ci"][1], -p["ci"][0]]))
     lines = ["\\begin{tabular}{llrrrl}", "    \\toprule",
              "    \\textbf{Bedingung} & \\textbf{Limit} & \\textbf{Encoder} & \\textbf{LLM} &",
-             "      $\\Delta$ \\textbf{(Enc.\\ $-$ LLM)} & \\textbf{95\\,\\%-KI} \\\\", "    \\midrule"]
+             "      $\\Delta$ \\textbf{(Enc.\\ $-$ LLM)} & \\textbf{95-\\%-Intervall} \\\\", "    \\midrule"]
     last = None
     for cond, size, e, l, d, ci in rows:
         if last is not None and cond != last:
@@ -1672,16 +1672,16 @@ def tab_ci(G, boot):
         return f"[{signed(lo, nd)}; {signed(hi, nd)}]" + ("$^{\\dagger}$" if lo <= 0 <= hi else "")
 
     lines = ["\\begin{tabular}{lrlrl}", "    \\toprule",
-             "    \\textbf{Vergleich (A $-$ B)} & $\\Delta$\\,\\textbf{Mikro-F$_1$} & \\textbf{95\\,\\%-KI} &",
-             "      $\\Delta$\\,\\textbf{Makro-F$_1$} & \\textbf{95\\,\\%-KI} \\\\", "    \\midrule"]
+             "    \\textbf{Vergleich (A $-$ B)} & $\\Delta$\\,\\textbf{Mikro-F$_1$} & \\textbf{95-\\%-Intervall} &",
+             "      $\\Delta$\\,\\textbf{Makro-F$_1$} & \\textbf{95-\\%-Intervall} \\\\", "    \\midrule"]
     for pk in [p for p in CI_PAIRS + CI_PAIRS_1024 if p in boot["pairs"]]:
         k1, k2 = pk.split("->")
         p = boot["pairs"][pk]
         lines.append(f"    {name(k2)} $-$ {name(k1)} & {signed(p['diff'], 2)} & {interval(*p['ci'])} & "
                      f"{signed(p['macro_diff'], 2)} & {interval(*p['macro_ci'])} \\\\")
     lines += ["    \\midrule",
-              "    \\textbf{Konfiguration} & \\textbf{Mikro-F$_1$} & \\textbf{95\\,\\%-KI} &",
-              "      \\textbf{Makro-F$_1$} & \\textbf{95\\,\\%-KI} \\\\", "    \\midrule"]
+              "    \\textbf{Konfiguration} & \\textbf{Mikro-F$_1$} & \\textbf{95-\\%-Intervall} &",
+              "      \\textbf{Makro-F$_1$} & \\textbf{95-\\%-Intervall} \\\\", "    \\midrule"]
     for key in TABLE_ORDER + [k for k in LIMIT_GROUPS if k in G]:
         c = boot["configs"][key]
         mi, ma = c["micro"]["ci_seed_mean"], c["macro"]["ci_seed_mean"]
