@@ -170,6 +170,24 @@ Um 18:40 stoppten alle laufenden Agenten am 5-Stunden-Limit. Die Schreib-Agenten
 - **Mechanische Prüfung (selbst):** Labels nur beabsichtigt geändert; alle Refs und Zitate aufgelöst; keine Sätze > 50 W in 02–05 und A.2; terms.sh 0; numbers.py: neue UNBELEGT-Werte sind verschobene oder vorbestehende Werte.
 - **Build:** zwei Overfull-Boxen behoben („Suche nach Hyperparametern"; Laufordner des Thinking-Vorlaufs als Zeitstempel), dann 114 Seiten, Haupttext S. 1–85 (vorher 95), Anhang ab S. 95; Overfull 0, Underfull 0, undefined 0. Commits f2d42dc (K2), 109ce36 (K3), bbe3b11 (K4 + Anhang), 3881b27 (K5); inhaltliche Prüfung durch zwei Sonnet-Prüf-Agenten läuft.
 
+### Prüfungen Phase B und zweite Verdichtungsrunde (So 8.11., 0:00–0:40)
+- **Prüfung K2/K3 (Sonnet):** keine Quellen- oder Zahlenfehler, Mindestinhalte vollständig. Umgesetzt: Verweis in 1.3 auf Keraghel jetzt `sec:encoder_ner` und `sec:k3-encoder-vergleich`; Kapitel-2-Satz zu Qwen3.5 verweist nur noch auf geladene Komponenten und deaktivierten Thinking-Modus; OntoNotes „18 Typen" zusätzlich mit `li2018survey` (li2018survey.txt Z. 460) in 2.8 und 3.5; Dagdelen-Satz mit „obwohl das Format bei der Generierung nicht erzwungen wird" (dagdelen2024structuredIE.txt Z. 419). Belassen: zusätzliche Straffungen des Schreib-Agenten in K3 (Tan, Keraghel-Folgerung, GNER-Details, LogitMatch-Satz; LogitMatch steht mit Semin Abschn. 4 in 5.7.2 und 6.3), Wegfall des Hu/Dettmers-Zitats am Ressourcen-Satz in 2.8 (Satz beschreibt jetzt die eigene Messung).
+- **Prüfung K4/K5/A.2 (Sonnet):** Mindestinhalte vollständig, Zahlen in A.2 gegen `summary.json` bestätigt. Umgesetzt: Skriptsatz (Neuberechnung, Abbruch bei Abweichung; `aggregate_results.py` Z. 342–687 `sys.exit`) in A.1; 5.4 Satz zur generativen Validierung als Teil der LLM-Trainingsdauer; 5.7.1 „kein isolierter Anpassungseffekt"; 5.1.4 „Hauptursache seines niedrigen Recalls"; 5.7.1 „in einer illustrativen Durchsicht"; „Flaschenhals" → „die Leistung begrenzen"; 4.3.1 MultiNERD-Testumfang „InstructUIE und UniversalNER: Testsplit mit 10 000 Beispielen" (wang2023instructuie Z. 305/1349, zhou2024universalner Z. 1984); Vorstudie „gab den Anlass für".
+- **Seitenumbruch:** 3.5 um vier Zeilen gestrafft, die Restseite vor Kapitel 4 entfällt.
+- **Zweite Verdichtungsrunde (P2, Sonnet-Schreiber, Commit 1353891):** K4 6 081 → 5 624 W, Prompt-Listings, Sampling-Empfehlung der Modellkarte, Hardware-Fußnote und sdpa nach A.2; K5 5 677 → 5 444 W (nur Tabellenwiederholungen und Ankündigungen; Schreiber stoppte bewusst vor Befunden); K6 1 515 → 1 483 W (selbst). Korrekturen nach Review: Epochenzahl des 27B-Vorlaufs eindeutig („im Vorlauf zwei, in der Hauptstudie drei"); Sampling-Profile der Modellkarte präzisiert (Non-Thinking: allgemein T 0,7/top-p 0,8, Reasoning T 1,0/top-p 0,95, jeweils top-k 20, min-p 0, Presence-Penalty 1,5; qwen2026card27b.txt Z. 757–766; gewählte Einstellung übernimmt top-k, min-p und die Temperatur des Reasoning-Profils); „Vorab festgelegt" in 5.7.5 und 6.2 durch „in der Experimentmatrix angelegt" ersetzt (wie 4.5.1, R4); Pareto-Satz in 5.7.4 entflochten; Abkürzungen IE, MTP, RE ergänzt.
+- **Build:** 113 Seiten, Haupttext S. 1–82, Overfull/Underfull/undefined 0.
+
+| Kapitel | Seiten 3c49499 | Seiten jetzt | Wörter 3c49499 | Wörter jetzt |
+|---|---|---|---|---|
+| 1 | 6 | 5 | 1 772 | 1 537 |
+| 2 | 17 | 15 | 5 063 | 4 160 |
+| 3 | 14 | 13 | 4 487 | 4 182 |
+| 4 | 24 | 22 | 6 347 | 5 624 |
+| 5 | 23 | 22 | 6 424 | 5 444 |
+| 6 | 6 | 5 | 1 735 | 1 483 |
+| Σ | 90 | 82 | 25 828 | 22 430 |
+Anhang: A.2 „Ergänzungen zur Durchführung" neu (≈ 1 200 W, Architekturtabelle, 27B-Verlaufstabelle, zwei Listings). Ziel ≤ 76 Seiten nicht erreicht; weitere Kürzungen träfen Befunde, Einschränkungen oder in Phase A ergänzte Pflichtinhalte (Datennutzungstabelle, Synthesetabelle, Lücke/E1–E3, Limitationen).
+
 ---
 
 # Arbeitsliste (Stand 7.11., Zeilen gegen HEAD 3c49499; verbindlich sind die Anker)
