@@ -188,6 +188,25 @@ Um 18:40 stoppten alle laufenden Agenten am 5-Stunden-Limit. Die Schreib-Agenten
 | Σ | 90 | 82 | 25 828 | 22 430 |
 Anhang: A.2 „Ergänzungen zur Durchführung" neu (≈ 1 200 W, Architekturtabelle, 27B-Verlaufstabelle, zwei Listings). Ziel ≤ 76 Seiten nicht erreicht; weitere Kürzungen träfen Befunde, Einschränkungen oder in Phase A ergänzte Pflichtinhalte (Datennutzungstabelle, Synthesetabelle, Lücke/E1–E3, Limitationen).
 
+### Block 9 – Gesamtabnahme (So 8.11., 0:40–2:00)
+- **Argumentationsgang und Runde 2 (Sonnet-Prüfer):** keine Zahlenabweichung zwischen Abstract, Kapitel 5, Kapitel 6 und `tab:synthese`. Umgesetzt: E1 „nur teilweise bestätigt" mit explorativem Intervall [0,02; 0,33]; Formtreue-Anteil am Zero-Shot-Größeneffekt als nicht isoliert (5.7.3, 6.1); Parse-Fehler „was auf das Limit hinweist"; FF3 mit Pareto-Front und Wahl zwischen base und large; CrossNER-Latenz mit Limitangabe; Hauptvergleiche in 4.5.1, 5.7.5 und 6.2 einheitlich „aus FF1 und FF2 abgeleitet, bei 256 Ausgabetokens"; Indexing-Format in 3.5 präzisiert; „Teilmenge des Testsplits" in 4.3.3 wiederhergestellt; Verweis in 5.7.3 auf `sec:erg-gesamt`.
+- **Zwei unabhängige Bewertungs-Agenten (Sonnet, ohne Zugriff auf frühere Bewertungen):** Befunde umgesetzt: Deckblatt (Datumszeile überlagerte die unteren Blöcke; gerendert mit Ghostscript im TeX-Live-Image, Blöcke angehoben), Tedeschi-F$_1$ 0,85 als Wert über alle Klassen (Tab. 5), INST-Annotationsqualität 0,67 in 2.8 und 6.2, Base-Vorsprung „bei 256 Ausgabetokens", FF3-Satz entflochten, „verbleibender Abstand", zwölf unzitierte Bib-Einträge entfernt (85 Einträge), Lafferty ohne Herausgeber. Nicht geändert: Erklärungswortlaut (TU-Berlin-Vorlage; Abstimmung beim Verfasser), englisches Abstract (Frage an Betreuer/Prüfungsamt). Zitatstichproben des Zweitgutachters: 14 Stellen, 12 korrekt, 1 ungenau (behoben), 1 unvollständig (behoben).
+- **Abschluss:** Build 113 Seiten, Haupttext 1–82, 0/0/0; Overlap gegen Literatur 0 in allen Kapiteln und im Abstract; Tests 10/10.
+
+| Teil | 7.11. vorher (Claude / Codex, Berichte 09–14) | 8.11. nachher (Betreuer-Agent / Zweitgutachter-Agent) |
+|---|---|---|
+| Frontmatter | 8 / 7,5–9 | 6 / 6 (Platzhalter Codex-Version, Deckblatt-Überlagerung – letztere behoben) |
+| Kapitel 1 | 7 / 8 | 8 / 9 |
+| Kapitel 2 | 7 / 8 | 7 / 9 |
+| Kapitel 3 | 7 / 7 | 8 / 9 |
+| Kapitel 4 | 8 / 8,5 | 8 / 8 |
+| Kapitel 5 | 8 / 8 | 8 / 8 |
+| Kapitel 6 | 7 / 8 | 8 / 8 |
+| Anhang | 8 / 8 | 8 / 8 |
+| Literatur/Quellenarbeit | 7,5 / 7,5 | 7 / 8 |
+| Gesamt | 8 / 8 (≈ 1,7) | 7,5 / 8 (je 1,7; Spielraum 1,3–2,0) |
+Die Spalten stammen von verschiedenen Gutachtern und sind nur eingeschränkt vergleichbar. Codex' Zwischenbewertung nach Phase A (Bericht 17): 8,5 / ≈ 1,3.
+
 ---
 
 # Arbeitsliste (Stand 7.11., Zeilen gegen HEAD 3c49499; verbindlich sind die Anker)

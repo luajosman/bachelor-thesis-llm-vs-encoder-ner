@@ -1,4 +1,22 @@
-# Stand der Bachelorarbeit (06.11.2026)
+# Stand der Bachelorarbeit (08.11.2026)
+
+## Umsetzung der 1,0-Überarbeitung (7./8.11., Claude Code)
+
+- **Stand:** 113 physische Seiten, Haupttext S. 1–82 (Ausgangsstand 7.11.: 112/90; nach den Korrekturen der Phase A 119/95). Build ohne Fehler, Overfull/Underfull 0, keine offenen Verweise oder Zitate; Aggregationsskript mit 10 Tests, zwei Läufe byte-identisch. Tag `betreuerentwurf-2026-11-08` markiert den Stand nach Phase A (Korrekturen), der aktuelle `main` enthält zusätzlich die Verdichtung.
+- **Umgesetzt (Details, Quellenfundstellen und Prüfergebnisse je Block):** `review/15_umsetzungsprotokoll_2026-11-07.md`. Kurz: Literatur ergänzt und vereinheitlicht (Ramponi, Mayhew, GNER, Bootstrap, Modellkarten, TRL-Doku; Preprints gekennzeichnet; Codex' Bereinigung übernommen; unzitierte Einträge entfernt); Kapitel 3 Quellenwiedergabe, Forschungslücke als zwei Lücken, Erwartungen E1–E3; Kapitel 1 abgestimmt; Kapitel 4 Datennutzungstabelle, Fairness, Belege, Checkpoint-Diagnose; Kapitel 5 Überdeutungen zurückgenommen, Synthesetabelle, alternative Erklärungen; Kapitel 6 Antworten je FF mit Erwartungsabgleich, Limitationen je FF, priorisierter Ausblick; Kapitel 2 technische Präzisierungen; Anhang mit Repositoryzugang, Laufdaten, Vorläufen, neuem Abschnitt A.2 „Ergänzungen zur Durchführung"; KI-Angabe; Deckblattdatum; Verdichtung in zwei Runden (Haupttext −13 % Wörter).
+- **Prüfungen:** Zahlen-Audit aller Kapitel (alle Werte aus `generated/summary.json` oder Quelltext belegt), Quellenprüfung je Block, 8-Wort-Overlap gegen 77 Quelltexte 0 Treffer, Argumentationsgang (Lücke → FF → Erwartungen → Antworten → Abstract). Zwei unabhängige Bewertungs-Agenten am 8.11.: Gesamt 7,5 bzw. 8 von 10, geschätzte Note jeweils 1,7 (Spielraum 1,3–2,0).
+- **Offen beim Verfasser:** Codex-Modell/Version in der KI-Angabe (roter Platzhalter); Abgabedatum auf dem Deckblatt prüfen; KI-Angabe und Erklärungswortlaut mit Betreuer bzw. Prüfungsamt abstimmen; englisches Abstract klären; eigene Sprachdurchsicht mindestens von 1.2, 3.5, 5.7 und 6.1; Begleitnotiz (`review/16_begleitnotiz_entwurf_2026-11-08.md`) anpassen und versenden; Repository vor Abgabe öffentlich schalten. Inhaltlich nur durch neue Läufe zu verbessern: vollständiger Neulauf mit 1 024 Tokens auf einheitlicher Hardware, Zero-Shot-Wiederholungen mit validierungsbasierter Prompt-Wahl.
+- **Werkzeuge:** Projekt-Agenten `thesis-schreiber`/`thesis-pruefer` (Sonnet) unter `.claude/agents/`; Prüfskripte unter `scripts/check/`.
+
+
+## Aktueller Arbeitsplan vom 07.11.
+
+- Abgabe am **26.11.2026** vom Verfasser bestätigt; internes Fertigstellungsziel **25.11.2026**. Die unten historisch erwähnte mögliche Verlängerung wird nicht eingeplant.
+- Vollständiger Zwischenstand für den Betreuer am Abend des **08.11.2026**: dafür zehn Stunden am 07.11. und acht Stunden am 08.11. eingeplant.
+- Aktuelles PDF nach Überarbeitung von Abschnitt 1.2 und Formatierungsprüfung: **112 physische Seiten, 90 Seiten Haupttext**. Alle 31 Tabellen und sieben Abbildungen sowie Listings und Deckblatt wurden visuell geprüft; Build ohne Fehler, offene Verweise/Zitate oder Overfull-/Underfull-Meldungen.
+- Höchste fachliche Priorität haben die weiterhin offenen Quellenkorrekturen aus `review/08_literatur_zitationsaudit_2026-11-06.md`, ihre Folgen für Forschungslücke und Diskussion sowie letzte methodische Präzisierungen. Die Formatierungsänderungen haben diese inhaltlichen Punkte nicht erledigt.
+- Aktuelle Gesamtbewertung, Kapitelwerte und konkreter 18-Stunden-Plan: `review/09_gesamtbewertung_und_18h_plan_2026-11-07.md`. Planungsbudget etwa 60 konzentrierte Stunden einschließlich der 18 Stunden bis zum Betreuerentwurf; anschließend etwa 42 Stunden. Endziel ungefähr 70–75 Seiten Haupttext, Arbeitsziel 73 Seiten.
+- Die aktuelle Prüfung hat Bewertungs- und Planungsdokumente aktualisiert; die vorgeschlagenen inhaltlichen Manuskriptkorrekturen sind noch umzusetzen.
 
 ## Methodische Überarbeitung am 06.11.
 
