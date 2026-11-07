@@ -90,7 +90,14 @@
 ]{hyperref}
 
 \usepackage[noforwardlinks]{acronym}
-\usepackage{titlesec}
+\usepackage[nobottomtitles*]{titlesec}
+% Überschriften, die im unteren Viertel einer Seite stehen würden, rücken
+% auf die nächste Seite; sonst beginnt das nächste Unterkapitel direkt
+% im Anschluss auf derselben Seite. titlesec misst den freien Platz vor
+% Abstand und Überschrift; .30 entspricht daher etwa dem unteren Viertel
+% für die Überschrift selbst.
+\renewcommand{\bottomtitlespace}{.30\textheight}
+\usepackage{placeins}  % \FloatBarrier: Floats im Anhang im eigenen Abschnitt halten
 \usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,calc,fit,backgrounds}
