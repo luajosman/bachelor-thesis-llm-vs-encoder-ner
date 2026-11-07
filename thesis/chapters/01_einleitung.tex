@@ -5,16 +5,6 @@
 \chapter{Einleitung}
 \label{chap:einleitung}
 
-Dieses Kapitel erläutert Motivation, Problemstellung und Zielsetzung der
-vorliegenden Arbeit.
-Abschnitt~\ref{sec:motivation_kontext} beschreibt den Anwendungskontext
-und die beiden untersuchten Modellklassen.
-Abschnitt~\ref{sec:problem_ziel} ordnet den Forschungsstand ein und leitet
-daraus die Forschungsfragen und den Beitrag der Arbeit ab.
-Abschnitt~\ref{sec:abgrenzung} legt den Untersuchungsumfang fest,
-Abschnitt~\ref{sec:aufbau_arbeit} gibt einen Überblick über die weiteren
-Kapitel.
-
 \section{Motivation und Kontext}
 \label{sec:motivation_kontext}
 
@@ -41,12 +31,6 @@ Krankheiten, in Nachrichtenartikeln Ereignisse oder Werke.
 Feingranulare Datensätze wie MultiNERD bilden solche Typen ab und
 unterscheiden 15 Kategorien, darunter Krankheiten, Ereignisse und
 Medien~\cite{tedeschi2022multinerd}.
-
-Die vorliegende Arbeit entstand am Deutschen Forschungszentrum für
-Künstliche Intelligenz (DFKI) in der Forschungsgruppe Speech and Language
-Technology (SLT).
-Dort bildet die strukturierte Extraktion von Informationen aus
-unstrukturierten Textbeständen ein zentrales Anwendungsfeld.
 
 Für NER stehen heute zwei Klassen vortrainierter Sprachmodelle zur
 Verfügung.
@@ -77,13 +61,17 @@ Auch die Anpassung ist bei LLMs aufwendiger: Ein vollständiges
 Fine-Tuning aller Gewichte erfordert zusätzlich Speicher für Gradienten
 und Optimiererzustände~\cite{hu2021lora}.
 Parameter-Efficient Fine-Tuning (PEFT) umfasst Verfahren, die stattdessen
-nur eine kleine Zahl zusätzlicher Parameter trainieren~\cite{han2024parameter};
+nur eine kleine Zahl zusätzlicher oder ausgewählter vorhandener Parameter
+trainieren~\cite{han2024parameter};
 mit QLoRA lassen sich so auch Modelle mit Dutzenden Milliarden Parametern
 auf einer einzelnen GPU anpassen~\cite{dettmers2023qlora}.
 Für die praktische Modellwahl stellt sich damit die Frage, wann der
 zusätzliche Aufwand eines LLM durch eine bessere Erkennungsleistung
 gerechtfertigt ist und wann ein kompakter Encoder die effizientere Wahl
 darstellt.
+Dieser Frage geht die vorliegende Arbeit nach, die am Deutschen
+Forschungszentrum für Künstliche Intelligenz (DFKI) in der
+Forschungsgruppe Speech and Language Technology (SLT) entstand.
 
 \section{Zielsetzung und Forschungsfragen}
 \label{sec:problem_ziel}
@@ -92,8 +80,9 @@ Mehrere Arbeiten vergleichen generative LLMs bereits mit Encoder-basierten
 NER-Verfahren.
 Ohne aufgabenspezifische Anpassung liegen LLMs dabei deutlich zurück:
 In der Vergleichsstudie von \textcite{keraghel2024recent} erreicht GPT-4o
-mit Few-Shot-Prompting auf CoNLL-2003 einen Makro-F$_1$ von 65{,}17, ein
-vollständig angepasstes DeBERTa-v3-large dagegen 90{,}98.
+mit Beispielentitäten im Prompt auf CoNLL-2003 einen Makro-F$_1$ von
+65{,}17, ein vollständig angepasstes DeBERTa-v3-large dagegen
+90{,}98~\cite[Tab.~5]{keraghel2024recent}.
 Mit LoRA angepasste LLMs schließen diesen Abstand.
 \textcite{zhan2026generativeNER} berichten für LLaMA3.1-8B im besten
 Ausgabeformat einen F$_1$ von 93{,}85 auf CoNLL-2003 gegenüber 93{,}04 für
@@ -107,34 +96,25 @@ benötigen je Testbeispiel aber das 40- bis 220-Fache der Inferenzzeit des
 besten Encoders.
 
 Für die vorliegende Arbeit sind dabei vier Aspekte relevant, die
-Abschnitt~\ref{sec:research_gap} ausführlich herleitet.
-Erstens verwenden die Studien allgemeine Datensätze mit wenigen groben
-Typen oder domänenspezifische Korpora; ein allgemeiner, feingranularer
-Datensatz wurde für den direkten Vergleich nicht herangezogen.
-Zweitens stammen die Encoder-Referenzwerte teilweise aus anderen
-Publikationen statt aus derselben Pipeline.
-Drittens werden Erkennungsleistung und Ressourcenbedarf nur teilweise
-gemeinsam erfasst: \textcite{obeidat2025llm} messen Inferenzzeiten, aber
-keinen Speicherbedarf, \textcite{zhan2026generativeNER} berichten nur
-Trainingskosten.
-Viertens stammen die adaptierten LLMs der direkten Vergleiche aus einer
-einzigen Größenklasse zwischen 3 und 9~Mrd. Parametern, sodass offen bleibt, wie deutlich
-kleinere oder größere Modelle im Vergleich zu Encodern abschneiden.
+Abschnitt~\ref{sec:research_gap} zu zwei Lücken bündelt: Datenbasis und
+Pipeline sowie Ressourcenerfassung und Modellgröße.
+Erstens nutzen die direkten Vergleiche etablierte allgemeine Benchmarks
+oder Fachkorpora, und veröffentlichte MultiNERD-Werte stützen sich auf
+übernommene Baselines oder eigene Aufbereitungen; zweitens fehlt eine
+gemeinsame Auswertung auf den offiziellen englischen Splits mit eigener
+Encoder-Referenz.
+Drittens erfassen die direkten Vergleiche Erkennungsleistung und
+Ressourcenbedarf nicht gemeinsam; viertens betrachten sie LLMs nur einer
+Größenklasse, während Größenstaffelungen nur innerhalb jeweils einer
+Modellfamilie untersucht wurden.
 
 Die vorliegende Arbeit setzt an diesen Punkten an.
 Sie vergleicht auf dem englischen Teil von MultiNERD mit seinen
 15 Entitätstypen~\cite{tedeschi2022multinerd} drei Regime:
 DeBERTa-v3-base und DeBERTa-v3-large mit vollständigem
 Fine-Tuning~\cite{he2021debertav3}, Qwen3.5-0.8B, Qwen3.5-4B und
-Qwen3.5-27B~\cite{qwen2026qwen35blog} im Zero-Shot-Einsatz sowie dieselben
+Qwen3.5-27B~\cite{qwen2026qwen35blog} im Zero-Shot-Regime sowie dieselben
 Qwen3.5-Modelle nach einer Anpassung mit QLoRA.
-Das Zero-Shot-Regime beschreibt die veröffentlichten Modelle ohne
-NER-spezifisches Training unter den gewählten Prompt- und
-Decoding-Bedingungen. Wegen weiterer Unterschiede zwischen den Regimen
-misst der Vergleich keinen isolierten Anpassungseffekt.
-QLoRA trainiert Low-Rank-Adapter auf einem in 4~Bit quantisierten,
-eingefrorenen Basismodell~\cite{hu2021lora,dettmers2023qlora} und macht
-so auch die Anpassung des 27B-Modells auf einer einzelnen GPU möglich.
 Alle Konfigurationen verwenden dieselben offiziellen Datensplits und werden
 mit derselben strikten Metrik auf Entitätsebene bewertet; die generierten
 Ausgaben der LLMs werden dazu in dieselbe Label-Repräsentation überführt
@@ -152,12 +132,14 @@ Ausgabeformat einhalten (Formtreue).
 
 Die zweite Forschungsfrage (FF2) richtet sich auf die Modellgröße.
 Untersucht wird, wie sich Erkennungsleistung, Trainingsdauer,
-Inferenzlatenz und GPU-Spitzenspeicher während der Inferenz mit der
-Modellgröße innerhalb der beiden Modellfamilien verändern.
+Inferenzlatenz und GPU-Spitzenspeicher während der Inferenz innerhalb
+der untersuchten Konfigurationen beider Modellfamilien mit der
+Modellgröße verändern.
 
 Darauf aufbauend fragt die dritte Forschungsfrage (FF3), welche
-Konfigurationen unter gegebenen Speicher- und Latenzbeschränkungen das
-günstigste Verhältnis von Erkennungsleistung und Ressourcenbedarf bieten.
+Konfigurationen unter den gemessenen Bedingungen bei gegebenen Speicher-
+und Latenzbeschränkungen das günstigste Verhältnis von
+Erkennungsleistung und Ressourcenbedarf bieten.
 Daraus soll hervorgehen, unter welchen Bedingungen der Einsatz eines LLM
 den Mehraufwand gegenüber einem Encoder rechtfertigt.
 
@@ -167,10 +149,14 @@ Parametern und einer in derselben Pipeline trainierten Encoder-Referenz.
 Die fünf trainierten Konfigurationen werden mit je drei Seeds
 ausgewertet; zusammen mit den drei Zero-Shot-Konfigurationen ergeben sich
 18 Testevaluationen auf MultiNERD.
-Für die LLMs wird ein indexbasiertes JSON-Ausgabeformat nach
-\textcite{semin2026spanLabeling} in eine trainierte Pipeline übernommen.
-Da diese ohne Constrained Decoding arbeitet, lässt sich die Formtreue der
-generierten Ausgaben gesondert untersuchen.
+Für die LLMs wird ein JSON-Ausgabeformat mit Wortindizes verwendet:
+Die Eingabetokens werden durchnummeriert, und das Modell gibt die
+Entitäten über diese Wortindizes aus~\cite[Tab.~9]{ramponi2025fallacy}.
+Die Einordnung als Indexing-Variante folgt
+\textcite{semin2026spanLabeling}; JSON-Schema und Nachverarbeitung sind
+eigene Umsetzungen dieser Arbeit.
+Da die LLM-Pipeline ohne Constrained Decoding arbeitet, lässt sich die
+Formtreue der generierten Ausgaben gesondert untersuchen.
 
 Ein ergänzender Transfertest auf CrossNER prüft, wie sich die jeweils
 größten auf MultiNERD angepassten Modelle beider Familien auf
@@ -188,17 +174,31 @@ Einflusses begrenzter Ausgabelängen.
 \section{Abgrenzung der Arbeit}
 \label{sec:abgrenzung}
 
-Der angemeldete Titel der Arbeit nennt BERT-basierte Modelle und LoRA.
-Auf der Encoder-Seite werden mit DeBERTa-v3-base und DeBERTa-v3-large
-zwei Weiterentwicklungen von BERT untersucht, die sich in vergleichenden
-NER-Studien als besonders leistungsfähig erwiesen haben
-(Abschnitt~\ref{sec:encoder_ner}); auf der LLM-Seite wird LoRA in seiner
-speicheroptimierten Form QLoRA eingesetzt, die das Training des
-27B-Modells auf einer einzelnen GPU erst möglich macht
-(Abschnitt~\ref{sec:lora}), und das Zero-Shot-Regime kommt als
-Bezugspunkt ohne Training hinzu.
-Im Folgenden werden die Verfahren daher mit diesen präziseren
-Bezeichnungen benannt.
+Der angemeldete Titel der Arbeit nennt BERT-basierte Modelle und LoRA;
+im Folgenden werden die Verfahren mit präziseren Bezeichnungen benannt,
+und das Zero-Shot-Regime kommt als Bezugspunkt hinzu.
+Auf der Encoder-Seite werden DeBERTa-v3-base und DeBERTa-v3-large
+eingesetzt, zwei Weiterentwicklungen von BERT, die sich in vergleichenden
+NER-Studien als besonders leistungsfähig erwiesen
+haben~\cite{keraghel2024recent} (Abschnitt~\ref{sec:encoder_ner}).
+Sie werden um einen linearen Klassifikationskopf ergänzt und
+ausschließlich mit vollständigem Fine-Tuning angepasst, bei dem
+Encoder-Gewichte und Klassifikationskopf gemeinsam trainiert
+werden~\cite{devlin2019bert}; ein Zero-Shot-Regime ist ohne trainierten
+Klassifikationskopf nicht möglich.
+Auf der LLM-Seite werden drei Größen der Qwen3.5-Familie untersucht, die
+einen Vergleich innerhalb einer Modellfamilie erlauben~\cite{qwen2026qwen35blog}.
+Sie werden ohne Training im Zero-Shot-Regime sowie nach einer Anpassung
+mit QLoRA eingesetzt, der speicheroptimierten Form von LoRA, bei der nur
+die Low-Rank-Adapter auf einem in 4~Bit quantisierten, eingefrorenen
+Basismodell trainiert werden~\cite{hu2021lora,dettmers2023qlora}.
+Erst diese Form macht das Training des 27B-Modells auf einer einzelnen
+GPU möglich (Abschnitt~\ref{sec:lora}).
+Nicht untersucht werden ein vollständiges Fine-Tuning der LLMs,
+alternative PEFT-Verfahren, Few-Shot-Prompting mit
+Demonstrationsbeispielen, Constrained Decoding und der Thinking-Modus
+der Qwen3.5-Modelle; weitere Modellfamilien und Verfahren werden nur im
+Literaturüberblick berücksichtigt.
 
 Die Untersuchung beschränkt sich auf NER in englischsprachigen Texten.
 Hauptdatenbasis sind die offiziellen Splits des englischen Teils von
@@ -206,35 +206,14 @@ MultiNERD mit Texten aus Wikipedia und Wikinews~\cite{tedeschi2022multinerd}.
 Da diese Splits automatisch annotiert wurden, messen die berichteten Werte
 die Übereinstimmung mit einer automatisch erzeugten Referenz
 (Abschnitte~\ref{sec:datasets_corpora} und~\ref{sec:datenauswahl}).
-CrossNER wird ausschließlich als Transfertest auf den Testsplits und für
-die Typen Person, Organisation und Ort ausgewertet~\cite{liu2021crossner}.
 CoNLL-2003 und OntoNotes dienen nur der Einordnung verwandter Arbeiten und
 werden nicht experimentell untersucht.
 Eine Übertragung der Schlussfolgerungen auf andere Sprachen oder
 Anwendungsdomänen wird nicht abgeleitet.
 
-Auf der Encoder-Seite werden DeBERTa-v3-base und DeBERTa-v3-large
-eingesetzt, die sich in vergleichenden NER-Untersuchungen als besonders
-leistungsfähig erwiesen haben~\cite{keraghel2024recent}.
-Sie werden um einen linearen Klassifikationskopf ergänzt und
-ausschließlich mit vollständigem Fine-Tuning angepasst, bei dem
-Encoder-Gewichte und Klassifikationskopf gemeinsam trainiert
-werden~\cite{devlin2019bert}; ein Zero-Shot-Einsatz ist ohne trainierten
-Klassifikationskopf nicht möglich.
-Auf der LLM-Seite werden drei Größen der Qwen3.5-Familie untersucht, die
-einen Vergleich innerhalb einer Modellfamilie erlauben~\cite{qwen2026qwen35blog}.
-Sie werden ohne Training im Zero-Shot-Regime sowie nach einer Anpassung
-mit QLoRA eingesetzt, bei der nur die Low-Rank-Adapter trainiert
-werden~\cite{hu2021lora,dettmers2023qlora}.
-Nicht untersucht werden ein vollständiges Fine-Tuning der LLMs,
-alternative PEFT-Verfahren, weitere Modellfamilien, Few-Shot-Prompting
-mit Demonstrationsbeispielen, Constrained Decoding und der Thinking-Modus
-der Qwen3.5-Modelle; andere Modellfamilien und Verfahren werden nur im
-Literaturüberblick berücksichtigt.
-
 Die Regime unterscheiden sich in mehreren Faktoren zugleich, darunter
-Vortraining, Architektur, Modellgröße, Quantisierung und
-Anpassungsverfahren; zudem liefen die Konfigurationen auf
+Vortraining, Architektur, Modellgröße, Quantisierung,
+Anpassungsverfahren sowie Prompt- und Decoding-Bedingungen; zudem liefen die Konfigurationen auf
 unterschiedlichen GPU-Typen (Abschnitt~\ref{sec:validitaet}).
 Die Ergebnisse sind daher als Vergleich konkreter Modell- und
 Anpassungskonfigurationen zu lesen; isolierte kausale Effekte einzelner
@@ -262,42 +241,21 @@ Annotation eines neuen Datensatzes.
 \section{Aufbau der Arbeit}
 \label{sec:aufbau_arbeit}
 
-Die weiteren Kapitel führen von den Grundlagen und dem Forschungsstand
-über die Methodik zu den Ergebnissen und Schlussfolgerungen.
-
-Kapitel~\ref{chap:grundlagen} führt in NLP und NER ein und beschreibt die
-Transformer-Architektur, Encoder-Modelle für NER, generative LLMs sowie
-parameter-effizientes Fine-Tuning mit LoRA und QLoRA.
-Nach einer Einordnung von Skalierungsgesetzen stellt es die verwendeten
-Datensätze, darunter MultiNERD und CrossNER, sowie die
+Kapitel~\ref{chap:grundlagen} führt in NLP, NER, Transformer-basierte
+Encoder, generative LLMs, parametereffizientes Fine-Tuning und
+Skalierungsgesetze ein und stellt die verwendeten Datensätze und
 Evaluationsmetriken vor.
-
-Kapitel~\ref{chap:verwandte_arbeiten} stellt Encoder-basierte und
-LLM-basierte NER-Ansätze einschließlich verschiedener Ausgabeformate vor.
-Es behandelt Arbeiten, die mit PEFT angepasste LLMs direkt mit Encodern
-vergleichen, fasst Befunde zum Einfluss der Modellgröße zusammen und
-leitet daraus die Forschungslücke ab.
-
+Kapitel~\ref{chap:verwandte_arbeiten} ordnet Encoder- und LLM-basierte
+NER-Ansätze sowie direkte Vergleiche beider Modellklassen ein und leitet
+daraus die Forschungslücke und die Erwartungen E1 bis E3 ab.
 Kapitel~\ref{chap:methodik} beschreibt die drei Vergleichsregime, die
-Auswahl von Modellen und Daten sowie die Encoder- und die LLM-Pipeline
-einschließlich Prompt-Design, QLoRA-Konfiguration und Nachverarbeitung der
-generierten Ausgaben.
-Darauf folgen das Evaluationskonzept für Erkennungsleistung,
-Ressourcenbedarf und Formtreue einschließlich der Nachinferenz am
-Ausgabelimit, das Versuchsdesign des CrossNER-Transfertests mit seiner
-Sensitivitätsanalyse zum Ausgabelimit und eine Zusammenfassung der
-bekannten Abweichungen vom idealisierten Versuchsdesign.
-
-Kapitel~\ref{chap:ergebnisse} präsentiert die Erkennungsleistung aller
-Konfigurationen insgesamt und je Entitätstyp sowie die Formtreue der
-LLM-Ausgaben, untersucht den Einfluss der Modellgröße und den
-Ressourcenbedarf, analysiert die Fehlerprofile der Modellklassen,
-berichtet die Ergebnisse des CrossNER-Transfertests und diskutiert die
-Befunde.
-
-Kapitel~\ref{chap:fazit} beantwortet die Forschungsfragen, erläutert die
-Grenzen der Untersuchung und skizziert weiterführende Arbeiten.
-Der Anhang dokumentiert die Reproduzierbarkeit der Läufe mit
-Konfigurationen, Codeständen, Modellrevisionen und nachrangigen
-Einstellungen sowie den vollständigen Zero-Shot-Prompt und ergänzt
-Ergebnistabellen je Seed, Entitätstyp und CrossNER-Domäne.
+beiden Pipelines und das Evaluationskonzept.
+Kapitel~\ref{chap:ergebnisse} berichtet und diskutiert die Ergebnisse
+einschließlich der Nachinferenz am Ausgabelimit und der
+Sensitivitätsanalyse des CrossNER-Transfertests.
+Kapitel~\ref{chap:fazit} beantwortet jede der drei Forschungsfragen,
+gleicht die Erwartungen E1 bis E3 mit den Befunden ab und benennt Grenzen
+und weiterführende Arbeiten.
+Der Anhang dokumentiert die Reproduzierbarkeit der Läufe, enthält den
+vollständigen Zero-Shot-Prompt und ergänzt Tabellen je Seed,
+Entitätstyp und CrossNER-Domäne.
