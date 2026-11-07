@@ -32,8 +32,9 @@ die Reihenfolge mit dem höheren Limit um (Tabelle~\ref{tab:synthese}).
 Erwartung E1 ist auf MultiNERD bei ausreichendem Ausgabelimit weitgehend
 bestätigt: Das mit QLoRA angepasste LLM liegt im Punktwert knapp vor
 DeBERTa-v3-base, ohne dass sich eine Rangfolge nachweisen lässt, und
-bleibt knapp hinter DeBERTa-v3-large; der CrossNER-Transfertest, der nur
-der Einordnung dient, zeigt dort einen Vorsprung des LLM.
+bleibt knapp hinter DeBERTa-v3-large.
+Der CrossNER-Transfertest, der nur der Einordnung dient, zeigt dort
+einen Vorsprung des LLM.
 Der Rest ist kein isolierter Architektureffekt
 (Abschnitt~\ref{sec:disk-leistung}).
 
@@ -64,12 +65,13 @@ Ein Skalierungsgesetz folgt daraus nicht, weil Hyperparameter und GPU-Typ
 mit der Größe variieren.
 Im Zero-Shot-Regime ist der Größeneffekt mit 28,8 und 34,5 Punkten je
 Schritt dagegen groß und vor allem ein Effekt der Formtreue.
-Der Ressourcenbedarf wächst erheblich steiler als die Leistung: Innerhalb
-der Encoder-Familie steigt die Inferenzlatenz je Satz von 8,9 auf
-16,5~ms, der Speicher von 0,7 auf 1,7~GiB und die Trainingsdauer von 0,4
-auf 1,2~h; innerhalb der QLoRA-Familie von 1\,876 auf 5\,505~ms, von 0,9
-auf 18,7~GiB und von 12 auf 266~h, wobei das 4B-Modell mit 62,9~h auf
-der A100 aus der Reihe fällt.
+Der Ressourcenbedarf wächst erheblich steiler als die Leistung.
+Innerhalb der Encoder-Familie steigt die Inferenzlatenz je Satz von 8,9
+auf 16,5~ms, der Speicher von 0,7 auf 1,7~GiB und die Trainingsdauer von
+0,4 auf 1,2~h.
+Innerhalb der QLoRA-Familie steigt die Latenz von 1\,876 auf 5\,505~ms,
+der Speicher von 0,9 auf 18,7~GiB und die Trainingsdauer von 12 auf
+266~h; das 4B-Modell fällt mit 62,9~h auf der A100 aus der Reihe.
 Hardwaregleich liegt die Latenz von Qwen3.5-0.8B um etwa das 210-Fache
 über der von DeBERTa-v3-base; der Zero-Shot-27B-Lauf in BF16 belegt
 50,7~GiB.
