@@ -31,11 +31,9 @@ Architekturen oder Trainingsverfahren zu entwickeln, stellt sie
 etablierte NER-Verfahren unter möglichst einheitlichen Bedingungen
 gegenüber.
 Tragfähige Vergleiche setzen voraus, dass Datensatz, Datenaufteilung und
-Evaluationsprotokoll über alle Konfigurationen konstant bleiben
-\cite{keraghel2024recent}.
+Evaluationsprotokoll über alle Konfigurationen konstant bleiben.
 
-\subsection*{Drei Vergleichsregime}
-
+\paragraph{Drei Vergleichsregime.}
 \begin{enumerate}
     \item \textbf{Encoder Fine-Tuning:} Vortrainierte Transformer-Encoder
     werden zusammen mit einem linearen Klassifikationskopf vollständig
@@ -65,8 +63,7 @@ somit kein Zero-Shot-Pendant besitzen; Generalisten wie GLiNER
 (Abschnitt~\ref{sec:encoder_ner_related}) bleiben als eigene Modellklasse außerhalb des
 Vergleichs.
 
-\subsection*{Experimentmatrix}
-
+\paragraph{Experimentmatrix.}
 Aus den Regimen ergeben sich acht Konfigurationen
 (Tabelle~\ref{tab:experiment-matrix}).
 Die fünf trainierten Konfigurationen werden mit den Seeds 42, 123 und 456
@@ -103,7 +100,6 @@ ohne lokale Änderungen, der im Repository als Tag
     NF4: 4-Bit-quantisiertes Basismodell; die Adapter werden mit
     BF16-Mixed-Precision trainiert (Abschnitt~\ref{sec:lora-konfiguration}).}
     \label{tab:experiment-matrix}
-    \label{tab:groessenklassen}
     \setlength{\tabcolsep}{4pt}
     \begin{tabular}{clllrrr}
         \toprule
@@ -123,8 +119,7 @@ ohne lokale Änderungen, der im Repository als Tag
     \end{tabular}
 \end{table}
 
-\subsection*{Variablen, Konstanten und Störgrößen}
-
+\paragraph{Variablen, Konstanten und Störgrößen.}
 Die Konfigurationen unterscheiden sich in \emph{Modellfamilie und
 Architektur} (Encoder-only gegenüber Decoder-only), \emph{Parameteranzahl}
 und \emph{Anpassungsregime}; diese Merkmale werden nicht unabhängig
@@ -151,8 +146,7 @@ lesen; ein isolierter kausaler Effekt einzelner Faktoren wird nicht
 bestimmt.
 Abschnitt~\ref{sec:validitaet} fasst diese Abweichungen zusammen.
 
-\subsection*{Aufbau der Pipelines}
-
+\paragraph{Aufbau der Pipelines.}
 Die Encoder-Pipeline behandelt NER als Token-Klassifikation: Ein
 DeBERTa-v3-Encoder liefert kontextualisierte Repräsentationen, aus denen
 ein linearer Klassifikationskopf für jedes Wort ein IOB2-Tag vorhersagt
@@ -192,7 +186,8 @@ leistungsfähigsten Encodern und dienen häufig als starke Baselines
 Base- und Large-Variante erlauben eine Skalierungsanalyse innerhalb
 derselben Architektur; einschließlich des Klassifikationskopfes umfassen
 sie 183\,855\,391 bzw. 434\,043\,935 Parameter.
-Beide Modelle stehen unter der MIT-Lizenz und sind über die
+Beide Modelle stehen laut ihren Modellkarten unter der MIT-Lizenz
+\cite{he2021debertav3card,he2021debertav3cardlarge} und sind über die
 \emph{Transformers}-Bibliothek verfügbar \cite{wolf2020transformers}.
 
 \subsection{LLM-Modelle (Qwen3.5)}
@@ -202,8 +197,10 @@ Auf der LLM-Seite werden drei Größen der Qwen3.5-Familie verwendet:
 Qwen3.5-0.8B, Qwen3.5-4B und Qwen3.5-27B.
 Qwen3.5 baut auf der Architektur- und Trainingstradition von Qwen2.5 und
 Qwen3 auf \cite{qwen2024qwen25,qwen2025qwen3,qwen2026qwen35blog}; die
-Modelle sind als offene Gewichte unter der Apache-2.0-Lizenz verfügbar
-und bieten mehrere Größenstufen innerhalb einer Familie.
+Modelle sind laut ihren Modellkarten als offene Gewichte unter der
+Apache-2.0-Lizenz verfügbar
+\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b} und bieten mehrere
+Größenstufen innerhalb einer Familie.
 Für die Familie sprachen neben der Lizenz die dichte Größenleiter mit
 gemeinsamem Tokenizer und Chat-Template, sodass Größeneffekte nicht mit
 Architekturwechseln vermischt werden; die drei Stufen wurden so gewählt,
@@ -212,11 +209,9 @@ Parametern (Abschnitt~\ref{sec:research_gap}) nach unten und oben
 verlassen und das Training mit einer einzelnen GPU je Lauf möglich
 bleibt.
 Verwendet werden die veröffentlichten Checkpoints, die laut
-Modellbeschreibung vor- und nachtrainiert sind (Pre- und Post-Training)
-und damit keine reinen Pre-Training-Checkpoints
-darstellen.\footnote{Modellkarten unter
-\url{https://huggingface.co/Qwen/Qwen3.5-0.8B}, \texttt{…/Qwen3.5-4B}
-und \texttt{…/Qwen3.5-27B}.}
+Modellkarten vor- und nachtrainiert sind (Pre- und Post-Training)
+und damit keine reinen Pre-Training-Checkpoints darstellen
+\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
 Der Begriff \emph{Basismodell} bezeichnet im Folgenden lediglich die
 eingefrorenen Ausgangsgewichte, auf die beim LoRA-Training Adapter
 aufgesetzt werden.
@@ -276,8 +271,9 @@ Zur Strukturierung der Auswertung werden die Modelle in die Klassen
 Die Klassen bezeichnen die relative Position innerhalb der jeweiligen
 Familie, nicht absolute Parametergrenzen; die Klasse L ist nur auf der
 LLM-Seite besetzt.
-Die Einteilung bildet die Grundlage der Analyse in
-Abschnitt~\ref{sec:einfluss-parameteranzahl}
+Die Einteilung ist eine Festlegung dieser Arbeit für die Analyse in
+Abschnitt~\ref{sec:einfluss-parameteranzahl}; Skalierungseffekte
+beschreibt die Literatur dagegen über mehrere Größenordnungen hinweg
 \cite{kaplan2020scaling,hoffmann2022training}.
 
 \section{Auswahl und Aufbereitung der Datensätze}
@@ -299,31 +295,44 @@ Zweitens kombiniert der Datensatz mit Wikipedia- und Wikinews-Artikeln
 zwei Textgenres \cite{tedeschi2022multinerd}.
 Drittens stehen offizielle \texttt{train}-, \texttt{validation}- und
 \texttt{test}-Splits zur Verfügung \cite{tedeschi2022multinerd}, die
-künftigen Arbeiten einen festen Bezugspunkt bieten, auch wenn bislang
-keine Vergleichswerte auf diesen Splits publiziert sind
+künftigen Arbeiten einen festen Bezugspunkt bieten.
+Veröffentlichte MultiNERD-Werte beruhen dagegen auf eigener Aufbereitung
+(UniversalNER: 10\,000 Testbeispiele \cite{zhou2024universalner}) oder
+einem abweichenden Testumfang (GoLLIE: 32\,908 Testbeispiele, etwa das
+Doppelte des englischen Testsplits \cite[Tab.~9]{sainz2024gollie});
+Werte auf den offiziellen Splits sind nicht nachweisbar
 (Abschnitt~\ref{sec:encoder_ner_related}).
 Viertens ist der englische Teil mit rund 164\,000 Sätzen groß genug für
 vollständiges Fine-Tuning der Encoder ebenso wie für LoRA-Training der
 LLMs.
-Gegenüber CoNLL-2003 mit vier groben Typen und OntoNotes mit seinen
-mehrschichtigen Annotationen bietet MultiNERD damit einen
-feingranularen, NER-zentrierten Benchmark
+Gegenüber CoNLL-2003 mit vier groben Typen und OntoNotes mit 18 Typen
+über mehrere Textgenres bietet MultiNERD damit einen feingranularen,
+NER-zentrierten Benchmark
 \cite{sang2003conll,keraghel2024recent}.
+Der Datensatz ist laut Datensatzkarte unter CC~BY-NC-SA~4.0
+veröffentlicht und auf nichtkommerzielle Forschung beschränkt
+\cite{babelscape2023multinerdcard}.
 
 Hinsichtlich der Annotationsqualität ist zu beachten, dass MultiNERD
 automatisch annotiert wurde \cite{tedeschi2022multinerd}.
-Die Autoren stellen zwar zusätzlich einen kleinen, manuell annotierten
-Testdatensatz vor; die hier verwendeten offiziellen Splits umfassen
-zusammen jedoch 164\,144 Sätze und damit den automatisch erzeugten
-englischen Datensatz.
+Die zusätzlich veröffentlichte, manuell geprüfte Stichprobe von 1\,000
+zufällig gezogenen englischen Sätzen (mindestens 20 Instanzen je Typ)
+wird nicht verwendet \cite[Tab.~5]{tedeschi2022multinerd}.
+Die Pipeline setzt auf den offiziellen Splits mit zusammen 164\,144
+Sätzen auf, und typbezogene Aussagen wären auf der kleinen Stichprobe
+mit großer Unsicherheit behaftet.
 Auch die Referenz des Testsplits ist somit eine Silberreferenz.
 Laut den Autoren gelten PER, ORG, LOC, CEL, DIS, EVE und MEDIA als
 besonders zuverlässig annotiert, während andere Klassen teils stark
 verrauscht sind \cite{tedeschi2022multinerd}.
-Der Vergleich bleibt intern fair, da alle Modelle mit denselben
-Trainingssignalen angepasst und gegen dieselbe Referenz evaluiert werden;
-absolute Werte messen jedoch die Übereinstimmung mit einer automatisch
-erzeugten Referenz.
+Die trainierten Konfigurationen nutzen dieselben annotierten
+Trainingssätze, alle Systeme werden gegen dieselbe Referenz bewertet;
+die Zero-Shot-Konfigurationen erhalten kein Training.
+Verlustfunktion, Anpassungsumfang (vollständiges Fine-Tuning gegenüber
+Adaptern) und Checkpoint-Auswahl unterscheiden sich jedoch, und die
+gemeinsame Silberreferenz garantiert nicht, dass ihre Fehler für beide
+Modellfamilien neutral wirken; absolute Werte messen zudem die
+Übereinstimmung mit einer automatisch erzeugten Referenz.
 
 \subsection{Datenvorverarbeitung}
 \label{sec:datenvorverarbeitung}
@@ -360,17 +369,18 @@ erhalten den Wert $-100$ und werden in Verlust und Evaluation ignoriert
 Zur Evaluation werden die Vorhersagen der ersten Subwörter auf die
 Wortebene zurückgeführt, sodass Vorhersage und Referenz genau ein Label
 pro Wort umfassen.
-Wörter jenseits der Längengrenze entfielen; im Testsplit betrifft dies
-keinen Satz, sodass alle 347\,025 Testwörter evaluiert werden.
-Für Trainings- und Validierungssplit wurde die Zahl gekürzter Sätze nicht
-protokolliert.
+Wörter jenseits dieser Längengrenze entfallen; im Testsplit betrifft
+dies keinen Satz, sodass alle 347\,025 Testwörter evaluiert werden.
+Für Trainings- und Validierungssplit wurde die Zahl der gekürzten Sätze
+nicht protokolliert.
 
 \paragraph{LLM-Pipeline.}
 Jedes Beispiel wird in eine Chat-Struktur aus Systemnachricht (Aufgabe
 und Typinventar), Nutzernachricht (nullbasiert nummerierte Tokenliste)
 und -- nur im Training -- Assistentennachricht mit der Zielantwort
-überführt (Abschnitt~\ref{sec:prompt-design}); die Nummerierung erlaubt
-die Rückabbildung generierter Spans auf die Tokenfolge
+überführt (Abschnitt~\ref{sec:prompt-design}); die Nummerierung der
+Eingabetokens nach \textcite[Tab.~9]{ramponi2025fallacy} erlaubt die
+Rückabbildung generierter Spans auf die Tokenfolge
 \cite{semin2026spanLabeling}.
 Die Zielantwort wird deterministisch aus der IOB2-Sequenz abgeleitet: Jede
 Entität wird in Satzreihenfolge mit Startindex (inklusiv), Endindex
@@ -462,6 +472,51 @@ nicht beziffern. Die Durchsatzmessung zur Präzisionswahl ist dabei von der
 an beobachteter Erkennungsleistung orientierten Prompt- und Decoding-Wahl
 zu unterscheiden. Auch die späteren Analysen des Ausgabelimits sind
 nachträgliche Sensitivitätsanalysen auf den bekannten Testsplits.
+Tabelle~\ref{tab:datennutzung} ordnet jeder Entscheidung Datengrundlage
+und Testbezug zu.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption[Datengrundlage der Konfigurationsentscheidungen]{Datengrundlage
+  der Konfigurationsentscheidungen und ihr Bezug zum MultiNERD-Testsplit.
+  Direkt: Entscheidung anhand von Beobachtungen auf dem Testsplit;
+  indirekt: im Vorlauf verwendet und nach dessen Testauswertung
+  beibehalten; post hoc: nach Kenntnis der Testergebnisse ergänzt.}
+  \label{tab:datennutzung}
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.0cm}%
+      >{\raggedright\arraybackslash}X%
+      >{\raggedright\arraybackslash}p{2.2cm}%
+      >{\raggedright\arraybackslash}p{3.0cm}@{}}
+    \toprule
+    \textbf{Entscheidung} & \textbf{Datengrundlage} & \textbf{Testbezug} &
+    \textbf{Folge} \\
+    \midrule
+    Thinking-Modus deaktiviert & generative Validierung eines
+      abgebrochenen 4B-Vorlaufs (Parse-Fehlerraten 71 bis 83\,\%) &
+      keiner & für alle Läufe übernommen \\
+    Hyperparameter der trainierten Konfigurationen & im Vorlauf
+      verwendet; nach dessen Testauswertung unverändert beibehalten &
+      indirekt & keine Anpassung an Testwerte \\
+    Epochenzahl 27B (2 auf 3) & Angleichung an die übrigen
+      QLoRA-Konfigurationen; Testwert des Vorlaufs bekannt & indirekt &
+      Hauptläufe mit drei Epochen \\
+    Zero-Shot-Prompt (Glossar) und Sampling & Vorlauf von Qwen3.5-0.8B
+      auf dem Testsplit (Greedy: fast nur leere Arrays) & direkt,
+      leistungsbezogen & als explorative Ergebnisse berichtet;
+      optimistische Verzerrung möglich \\
+    Inferenzpräzision BF16 (Zero-Shot) & Durchsatzmessung auf einer
+      Teilmenge des Testsplits (standardmäßig 96 Sätze) & direkt, nicht
+      leistungsbezogen & BF16 statt NF4 des QLoRA-Regimes \\
+    Ausgabelimit 256 Tokens & vor den Läufen ohne Längenanalyse
+      festgelegt & keiner & Hauptauswertung bei 256 Tokens \\
+    Nachinferenz und CrossNER-Neulauf mit 1\,024 Tokens & nach Kenntnis
+      der Testbefunde & post hoc & als Sensitivitätsanalysen berichtet \\
+    Checkpoint-Auswahl & Validierungssplit (LLM: erste 200 Sätze) &
+      keiner & -- \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
 \section{Versuchsaufbau}
 \label{sec:versuchsaufbau}
@@ -544,10 +599,11 @@ Die Zero-Shot-Ausgaben entstehen zudem durch Sampling; ihre exakte
 Wiederholung setzt daher auch eine ununterbrochene Ausführung voraus, da
 der Zustand des Zufallszahlengenerators bei einer Wiederaufnahme nicht
 wiederhergestellt wird.
-Tabelle~\ref{tab:app-laeufe} ordnet jedem Lauf Konfiguration,
-Commit, Revisionen und Ausgabeverzeichnis zu und dokumentiert
-nachrangige Einstellungen wie Validierungs-Batchgrößen und
-Checkpoint-Intervalle.
+Tabelle~\ref{tab:app-laeufe} ordnet jedem Lauf Konfigurationsdatei,
+Commit und Ausgabeverzeichnis zu, Tabelle~\ref{tab:app-revisionen} nennt
+die vollständigen Commits und Revisionen, und
+Tabelle~\ref{tab:app-einstellungen} dokumentiert nachrangige
+Einstellungen wie Validierungs-Batchgrößen und Checkpoint-Intervalle.
 
 \subsection{Encoder-basierte NER-Pipeline}
 \label{sec:encoder-pipeline}
@@ -640,6 +696,11 @@ erhalten denselben Prompt (Glossar-Profil,
 Abschnitt~\ref{sec:prompt-design}) und dieselben Decoding-Parameter.
 Abweichend vom QLoRA-Regime wird mit Sampling decodiert (Temperatur 1,0,
 top-$k = 20$, top-$p = 1{,}0$, min-$p = 0$, Seed~42).
+Die Qwen-Modellkarte empfiehlt je nach Modus Temperatur 0,7 oder 1,0,
+top-$p$ 0,8 oder 0,95, top-$k = 20$, min-$p = 0$ und eine
+Presence-Penalty von 1,5; die hier gewählte Einstellung übernimmt
+top-$k$ und min-$p$, verwendet aber Temperatur 1,0 bei unbeschränktem
+top-$p$ und keine Presence-Penalty \cite{qwen2026card27b}.
 Diese Einstellungen wurden nach einem explorativen Vorlauf mit
 Qwen3.5-0.8B festgelegt, in dem Greedy-Decoding für nahezu jeden Satz ein
 leeres Array erzeugte (strikter F$_1$-Wert 0,5 Punkte; 16\,052 von 16\,454
@@ -651,6 +712,9 @@ Decoding-Einstellung und Prompt-Änderung wurden damit gleichzeitig
 eingeführt; ihre Einzelbeiträge sind nicht trennbar, und die Übertragung
 der Sampling-Einstellung auf das 4B- und das 27B-Modell wurde nicht
 eigens geprüft (Abschnitt~\ref{sec:limitationen}).
+Für diese beiden Modelle erfolgte somit keine Konfigurationswahl anhand
+eigener Testergebnisse; die Eignung der übernommenen Einstellung bleibt
+ungeprüft.
 Die Ergebnisse beruhen auf jeweils einer Stichprobe aus der
 Ausgabeverteilung und beschreiben die veröffentlichten Checkpoints ohne
 NER-spezifische Anpassung unter genau diesen Prompt- und
@@ -666,11 +730,11 @@ Nutzernachricht und Zielantwort im Standardprofil
 (Abschnitt~\ref{sec:prompt-design}).
 Multi-Turn-Ansätze wie ChatIE werden zugunsten eines einfachen, klar
 evaluierbaren Setups nicht verwendet \cite{wei2023chatie}.
-Entsprechend dem Standardverhalten der verwendeten TRL-Version für
-Konversationsdaten wird der Verlust über die gesamte Tokenfolge berechnet
-und nicht auf die Assistentenantwort beschränkt (TRL-Option
-\texttt{assistant\_only\_loss} nicht gesetzt); ein Teil des Lernsignals entfällt damit auf die Reproduktion des
-konstanten Prompts.
+Entsprechend dem Standardverhalten von TRL~1.8.0 für Konversationsdaten
+wird der Verlust über die gesamte Tokenfolge berechnet und nicht auf die
+Assistentenantwort beschränkt (Option \texttt{assistant\_only\_loss},
+Standardwert \texttt{False} \cite{vonwerra2026trldocs}); ein Teil des
+Lernsignals entfällt damit auf die Reproduktion des konstanten Prompts.
 Trainingssequenzen werden auf 1\,024 Tokens begrenzt und bei Überlänge
 am Ende gekürzt, was auch die Zielantwort abschneiden kann; dies betrifft
 48 der 131\,280 Trainings- und 11 der 16\,410 Validierungsbeispiele.
@@ -684,6 +748,17 @@ Verlust dient nur der Überwachung.
 Verwendet wird der Adapter der Epoche mit dem höchsten Wert, bei
 Gleichstand der frühere; in acht der neun Läufe war dies die dritte, in
 einem Lauf (4B, Seed~42) die zweite Epoche.
+Die 200 Sätze weichen in den Typanteilen um höchstens 3,1 Prozentpunkte
+vom Split ab, enthalten aber keine BIO- und INST-Entitäten
+(\texttt{thesis/generated/validation\_subset\_stats.md}).
+Die nach F$_1$ gewählte Epoche stimmt nur in einem der neun LLM-Läufe
+(4B, Seed~42) und in keinem der sechs Encoder-Läufe mit dem Minimum des
+Validierungsverlusts überein.
+Bei den LLMs liegt dieses Minimum in Epoche 1 oder 2, das F$_1$-Maximum
+meist in Epoche 3.
+Da 12 der 15 Läufe (8 von 9 LLM-, 4 von 6 Encoder-Läufen) die letzte
+Epoche wählten, ist ein Untertraining nicht auszuschließen
+(Abschnitt~\ref{sec:limitationen}).
 Die Beschränkung auf 200 Sätze hält die generative Validierung je Epoche bei
 Batchgröße~1 im Bereich von Minuten (beim 27B-Modell rund 18 Minuten
 gegenüber rund 25 Stunden für den vollständigen Split); sie macht die
@@ -700,8 +775,8 @@ Für die Testinferenz wird der Adapter ohne Merge auf das
 
 Jeder Prompt besteht aus einer Systemnachricht mit Aufgabe, Typinventar
 und Formatvorgaben sowie einer Nutzernachricht mit der nummerierten
-Tokenliste im Format \texttt{Index: Token}
-\cite{semin2026spanLabeling,dagdelen2024structuredIE}.
+Tokenliste im Format \texttt{Index: Token}; die Nummerierung der
+Eingabetokens geht auf \textcite[Tab.~9]{ramponi2025fallacy} zurück.
 Erwartet wird ein JSON-Array, dessen Objekte genau vier Felder
 enthalten: \texttt{start\_token} (Index des ersten Tokens, inklusiv),
 \texttt{end\_token} (Index nach dem letzten Token, exklusiv),
@@ -712,10 +787,11 @@ Eine Entität, die nur das Token mit Index~4 umfasst, wird also durch
 Die Adressierung über Indizes bleibt auch bei mehrfach vorkommenden
 Oberflächenformen eindeutig; das redundante Feld \texttt{text} ermöglicht
 eine Konsistenzprüfung (Abschnitt~\ref{sec:postprocessing}).
-Das Format entspricht der \emph{Indexing}-Familie der von
-\textcite{semin2026spanLabeling} beschriebenen Span-Labeling-Strategien und
-nutzt JSON als verbreitetes Austauschformat strukturierter
-Informationsextraktion \cite{dagdelen2024structuredIE}.
+Das Format entspricht der \emph{Indexing}-Familie mit Wortnummerierung,
+die \textcite[Abschn.~3.2]{semin2026spanLabeling} systematisieren, und
+nutzt JSON als verbreitetes, maschinell parsebares Austauschformat
+strukturierter Informationsextraktion \cite{dagdelen2024structuredIE};
+Feldschema und Nachverarbeitung sind eigene Umsetzungen dieser Arbeit.
 
 Es werden zwei Prompt-Profile verwendet, die jeweils wortgleich für alle
 drei Modellgrößen gelten.
@@ -781,10 +857,12 @@ zugänglich ist \cite{dagdelen2024structuredIE}.
 \label{sec:lora-konfiguration}
 
 LoRA wird gewählt, weil LLMs ohne aufgabenspezifisches Fine-Tuning bei
-token-level NER nur eingeschränkt konkurrenzfähig sind
+NER auf Tokenebene nur eingeschränkt konkurrenzfähig sind
 \cite{lu2024llmstruggle} und Adapter den Speicher- und Rechenbedarf
 gegenüber vollständigem Fine-Tuning erheblich senken
 \cite{hu2021lora,han2024parameter,obeidat2025llm}.
+In den Prüffällen von \textcite[Anh.~D]{zhan2026generativeNER} liegt
+LoRA zudem 0,14 bis 0,48 F$_1$-Punkte vor vollständigem Fine-Tuning.
 Ausgewählte Gewichtsmatrizen $W$ werden um eine Low-Rank-Korrektur
 $\Delta W = BA$ ergänzt, von der nur $A$ und $B$ trainiert werden
 (Abschnitt~\ref{sec:lora}).
@@ -895,16 +973,21 @@ deterministischen, regelbasierten Kette in IOB2-Sequenzen überführt:
     parsebar; die erfolgreiche Strategie wird protokolliert.
 
     \item \textbf{Validierung:} Jedes Array-Element wird einzeln geprüft
-    und verworfen, sobald eine Bedingung verletzt ist:
-    Es muss ein Objekt mit allen vier Feldern sein, wobei zusätzliche
-    Felder toleriert und verworfen werden; \texttt{text} und
-    \texttt{type} müssen nicht-leere Zeichenketten sein; die Indizes
-    müssen ganze Zahlen mit $0 \leq s < e \leq n$ sein ($s$, $e$: Start-
-    und Endindex, $n$: Tokenanzahl); der Typ muss nach Entfernen
-    umgebenden Leerraums und ohne Beachtung der Groß- und
-    Kleinschreibung im Inventar enthalten sein; und \texttt{text} muss
-    nach Entfernen umgebenden Leerraums exakt dem mit Leerzeichen
-    verbundenen Text der indizierten Tokens entsprechen.
+    und verworfen, sobald eine der vier Regeln verletzt ist:
+    \begin{itemize}
+        \item \emph{Schema:} Das Element muss ein Objekt mit allen vier
+        Feldern sein, wobei zusätzliche Felder toleriert und verworfen
+        werden; \texttt{text} und \texttt{type} müssen nicht-leere
+        Zeichenketten sein.
+        \item \emph{Indizes:} Start- und Endindex $s$ und $e$ müssen
+        ganze Zahlen mit $0 \leq s < e \leq n$ sein ($n$: Tokenanzahl).
+        \item \emph{Typ:} Der Typ muss nach Entfernen umgebenden
+        Leerraums und ohne Beachtung der Groß- und Kleinschreibung im
+        Inventar enthalten sein.
+        \item \emph{Exakter Text:} \texttt{text} muss nach Entfernen
+        umgebenden Leerraums exakt dem mit Leerzeichen verbundenen Text
+        der indizierten Tokens entsprechen.
+    \end{itemize}
     Gültige Typen werden auf die kanonische Schreibweise normalisiert;
     unbekannte Typen werden nicht auf Inventartypen abgebildet, sondern
     verworfen.
@@ -967,13 +1050,18 @@ Zero-Shot-Konfigurationen der jeweilige Einzellauf. Die
 Standardabweichung beschreibt die beobachtete Streuung der Trainingsläufe
 und dient nicht als Schwelle für die Bewertung von Unterschieden.
 Die Unsicherheit durch die Auswahl der Testsätze wird mit einem
-gepaarten Satz-Bootstrap beziffert: Aus den 16\,454 Testsätzen werden
-2\,000 Stichproben mit Zurücklegen gezogen, und für jede Stichprobe werden
-Mikro- und Makro-F$_1$ aller Läufe sowie die Differenzen zwischen
-Konfigurationen neu berechnet, wobei dieselbe Stichprobe für alle Läufe
-gilt. Pro Stichprobe werden die Laufwerte über die drei festen Seeds
-gemittelt; berichtet werden 95-\%-Perzentilintervalle dieser Mittelwerte
-und ihrer Differenzen. Bei Zero-Shot geht der jeweilige Einzellauf ein.
+gepaarten Satz-Bootstrap beziffert, der dem Bootstrap nach
+\textcite{efron1993bootstrap} folgt und wie bei
+\textcite{koehn2004bootstrap} dieselben Satzstichproben für alle
+verglichenen Systeme zieht.
+Aus den 16\,454 Testsätzen werden 2\,000 Stichproben mit Zurücklegen
+gezogen; für jede Stichprobe werden Mikro- und Makro-F$_1$ aller Läufe
+sowie die Differenzen zwischen Konfigurationen neu berechnet.
+Pro Stichprobe werden die Laufwerte über die drei festen Seeds
+gemittelt; berichtet werden 95-\%-Perzentilintervalle (2,5- und
+97,5-Perzentil) dieser Mittelwerte und ihrer Differenzen.
+Bei Zero-Shot geht der jeweilige Einzellauf ein und wird gegen jeden der
+drei Seeds der Vergleichskonfiguration gepaart.
 Ein Differenzintervall, das null ausschließt, spricht unter diesen
 Annahmen für eine gerichtete Differenz. Enthält es null, wird kein
 eindeutiger Unterschied festgestellt; Gleichwertigkeit ist damit nicht
@@ -1025,7 +1113,7 @@ von Modell und Daten, Training, Validierung nach jeder Epoche (bei den
 LLMs inklusive generativer Validierung), Speichern von Checkpoints und
 Export.
 Die vom Trainer zusätzlich protokollierte Dauer ohne Laden und Export
-liegt bei den ununterbrochenen Läufen um höchstens 1 Minuten darunter.
+liegt bei den ununterbrochenen Läufen um höchstens 1 Minute darunter.
 Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
 Tagen und wurden vom Scheduler dreimal neu eingereiht; jeder Lauf
 bestand damit aus vier Zuteilungen (Start am 7., 12., 15. und
@@ -1075,8 +1163,11 @@ Der GPU-Speicherbedarf während des Trainings wurde nicht protokolliert.
 
 \paragraph{Parameterzahlen.}
 Berichtet werden Gesamtzahl und Zahl der trainierbaren Parameter; ihr
-Verhältnis quantifiziert den Effizienzvorteil des Adaptertrainings
-\cite{hu2021lora,dettmers2023qlora}.
+Verhältnis quantifiziert die Reduktion der aktualisierten Parameter durch
+das Adaptertraining \cite{hu2021lora,dettmers2023qlora}.
+Speicherbedarf und Trainingsdauer sind gesonderte Größen: Das
+27B-Adaptertraining dauerte im Mittel rund 266 Stunden, das
+Encoder-Training 0,4 bzw. 1,2 Stunden (Abschnitt~\ref{sec:erg-effizienz}).
 Bei den Encodern sind alle Parameter trainierbar.
 Für die QLoRA-Modelle werden die Parameter des Basismodells und die
 Gesamtzahl einschließlich Adapter getrennt angegeben
@@ -1110,7 +1201,7 @@ hervorgehen und vier Fehlerklassen zugeordnet sind:
 Indizes und Text zur Tokenliste \cite{semin2026spanLabeling} --,
 \emph{Schema-Treue} -- werden Struktur und Typinventar eingehalten, wobei
 Typen außerhalb des Inventars als halluzinierte Kategorien gelten
-\cite{tedeschi2022multinerd,tam2024speakfreely} -- und \emph{Konsistenz}
+\cite{tedeschi2022multinerd} -- und \emph{Konsistenz}
 -- überlappen gültige Spans einander, sodass nur der zuerst übernommene
 bleibt.
 Für Encoder entfallen diese Kennzahlen; gerade dieser strukturelle
@@ -1175,12 +1266,12 @@ Fehleranalyse als Hinweis darauf.
 
 Der Einfluss der Parameteranzahl auf Performanz, Effizienz und Formtreue
 wird getrennt nach Regime über die Größenklassen
-(Abschnitt~\ref{sec:groessenklassen}) betrachtet
-\cite{kaplan2020scaling,hoffmann2022training}.
+(Abschnitt~\ref{sec:groessenklassen}) betrachtet.
 Mit zwei Encoder- und drei LLM-Größen ist die Zahl der Stützstellen
 gering: Die drei Seeds erlauben zwar, Größenunterschiede gegen die
 Variabilität zwischen Trainingsläufen abzugrenzen, Skalierungsgesetze im
-Sinne von Regressions- oder Potenzgesetzfits lassen sich aber nicht
+Sinne von Regressions- oder Potenzgesetzfits
+\cite{kaplan2020scaling,hoffmann2022training} lassen sich aber nicht
 bestimmen.
 Da zudem Hyperparameter und Hardware mit der Größe variieren, bleibt die
 Auswertung deskriptiv.
@@ -1233,6 +1324,9 @@ auf domänenspezifische Texte übertragen lassen.
 Grundlage ist CrossNER mit den Domänen künstliche Intelligenz, Literatur,
 Musik, Politik und Naturwissenschaften und jeweils domänenspezifischen
 Entitätstypen \cite{liu2021crossner}.
+Die Daten stehen laut der Lizenzdatei des Repositories
+\texttt{zliucr/CrossNER} (Commit in Tabelle~\ref{tab:app-revisionen})
+unter der MIT-Lizenz.
 Der Versuch ist ein reiner Transfertest: Auf CrossNER findet weder
 Training noch Checkpoint-Auswahl statt.
 
@@ -1372,7 +1466,8 @@ Limitationsdiskussion im Fazit berücksichtigt.
       deterministischer Lauf je Größe & \ref{sec:llm-pipeline} \\
     Testnutzung & Testsplit bereits in Vorläufen ausgewertet;
       Zero-Shot-Prompt und Decoding nach Testbeobachtungen gewählt;
-      Präzision anhand von Durchsatzmessungen & \ref{sec:datenaufteilung} \\
+      Präzision anhand von Durchsatzmessungen & \ref{sec:datenaufteilung},
+      Tab.~\ref{tab:datennutzung} \\
     Provenienz & Zero-Shot-Läufe ohne Revisions-Pins und mit reduzierten
       Metadaten; keine bitgenaue Reproduzierbarkeit &
       \ref{sec:rechenumgebung} \\
