@@ -9,19 +9,16 @@
 \chapter{Methodik}
 \label{chap:methodik}
 
-Dieses Kapitel beschreibt den methodischen Ansatz und die untersuchten
-Konfigurationen (Abschnitt~\ref{sec:methodischer-ansatz}), die Auswahl
-von Modellen und Daten (Abschnitte~\ref{sec:modellauswahl}
-und~\ref{sec:datensaetze}), die Implementierung
-(Abschnitt~\ref{sec:versuchsaufbau}), das Evaluationskonzept
-(Abschnitt~\ref{sec:evaluationskonzept}) und den ergänzenden
-CrossNER-Versuch (Abschnitt~\ref{sec:crossner}).
-Abschnitt~\ref{sec:validitaet} fasst die bekannten Abweichungen vom
-idealisierten Versuchsdesign zusammen.
-Alle Angaben zu Implementierung und Laufumgebung beruhen auf dem
-versionierten Quellcode und den gespeicherten Metadaten der
-ausgewerteten Läufe; Anhang~\ref{app:reproduzierbarkeit} ordnet jedem
-Lauf Konfiguration, Codestand, Revisionen und Ausgabeverzeichnis zu.
+Dieses Kapitel beschreibt den methodischen Ansatz
+(Abschnitt~\ref{sec:methodischer-ansatz}), die Modell- und Datenauswahl
+(Abschnitte~\ref{sec:modellauswahl} und~\ref{sec:datensaetze}), die
+Implementierung (Abschnitt~\ref{sec:versuchsaufbau}), das
+Evaluationskonzept (Abschnitt~\ref{sec:evaluationskonzept}), den
+CrossNER-Versuch (Abschnitt~\ref{sec:crossner}) und bekannte
+Abweichungen vom idealisierten Design (Abschnitt~\ref{sec:validitaet}).
+Anhang~\ref{app:reproduzierbarkeit} ordnet jedem Lauf Konfiguration,
+Codestand, Revisionen und Ausgabeverzeichnis zu,
+Anhang~\ref{app:durchfuehrung} ergänzt Durchführungsdetails.
 
 \section{Methodischer Ansatz}
 \label{sec:methodischer-ansatz}
@@ -73,16 +70,13 @@ Die Hauptauswertung umfasst damit 18 Testevaluationen über eine Spanne
 von rund 184~Mio. bis 27~Mrd. Parametern.
 
 Der Hauptstudie gingen explorative Vorläufe der fünf trainierten
-Konfigurationen mit Seed~42 voraus, die unter anderem der Stabilisierung
-der Pipeline dienten; so wurde ein erster Lauf des 4B-Modells mit
-aktiviertem Thinking-Modus abgebrochen, nachdem die generative
-Validierung Parse-Fehlerraten von 71 bis 83\,\% ergeben hatte, und der
-Thinking-Modus daraufhin für alle Läufe deaktiviert
-(Abschnitt~\ref{sec:llm-pipeline}).
-Da für mehrere Vorläufe der exakte Quellcodestand nicht rekonstruierbar
-ist, wurden alle trainierten Konfigurationen für die Hauptstudie aus
-versionierten Codeständen ohne lokale Änderungen neu trainiert; die
-Vorläufe gehen nicht in die Auswertung ein.
+Konfigurationen mit Seed~42 voraus, die der Stabilisierung der Pipeline
+dienten und nicht in die Auswertung eingehen
+(Tabelle~\ref{tab:datennutzung}, Tabelle~\ref{tab:app-vorlaeufe}).
+Der Thinking-Modus wurde nach der generativen Validierung eines
+abgebrochenen 4B-Vorlaufs auf Validierungsdaten mit Parse-Fehlerraten von
+71 bis 83\,\% für alle Läufe deaktiviert
+(Abschnitt~\ref{sec:llm-pipeline}, Anhang~\ref{app:durchfuehrung}).
 Die Zero-Shot-Läufe stammen aus einem eindeutig identifizierbaren Commit
 ohne lokale Änderungen, der im Repository als Tag
 \texttt{zeroshot-runs-137bffd} erreichbar ist
@@ -140,10 +134,6 @@ zentralen Bibliotheken (Abschnitt~\ref{sec:rechenumgebung}).
 Nicht konstant sind dagegen der GPU-Typ, die je Modellgröße gewählten
 Hyperparameter sowie Prompt, Decoding und numerische Präzision der
 Zero-Shot- gegenüber den QLoRA-Läufen.
-Wie bereits in der Abgrenzung der Arbeit festgehalten, sind beobachtete
-Unterschiede daher als Unterschiede zwischen konkreten Konfigurationen zu
-lesen; ein isolierter kausaler Effekt einzelner Faktoren wird nicht
-bestimmt.
 Abschnitt~\ref{sec:validitaet} fasst diese Abweichungen zusammen.
 
 \paragraph{Aufbau der Pipelines.}
@@ -173,13 +163,6 @@ wird, bleibt ihre Formtreue selbst messbar
 
 Auf der Encoder-Seite werden DeBERTa-v3-base und DeBERTa-v3-large
 eingesetzt.
-DeBERTa erweitert BERT um disentangled Attention, die Inhalts- und
-Positionsinformationen getrennt repräsentiert, sowie um einen erweiterten
-Masken-Decoder, der absolute Positionen erst unmittelbar vor der
-Vorhersage maskierter Tokens einbezieht \cite{he2020deberta}.
-DeBERTa-v3 kombiniert diese Architektur mit ELECTRA-artigem Pre-Training
-(Replaced Token Detection) und gradient-disentangled embedding sharing
-\cite{he2021debertav3}.
 DeBERTa-Varianten zählen auf mehreren NER-Benchmarks zu den
 leistungsfähigsten Encodern und dienen häufig als starke Baselines
 \cite{keraghel2024recent}.
@@ -199,26 +182,23 @@ Qwen3.5 baut auf der Architektur- und Trainingstradition von Qwen2.5 und
 Qwen3 auf \cite{qwen2024qwen25,qwen2025qwen3,qwen2026qwen35blog}; die
 Modelle sind laut ihren Modellkarten als offene Gewichte unter der
 Apache-2.0-Lizenz verfügbar
-\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b} und bieten mehrere
-Größenstufen innerhalb einer Familie.
+\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
 Für die Familie sprachen neben der Lizenz die dichte Größenleiter mit
 gemeinsamem Tokenizer und Chat-Template, sodass Größeneffekte nicht mit
-Architekturwechseln vermischt werden; die drei Stufen wurden so gewählt,
-dass sie den in der Literatur untersuchten Bereich von 3 bis 9~Mrd.
-Parametern (Abschnitt~\ref{sec:research_gap}) nach unten und oben
-verlassen und das Training mit einer einzelnen GPU je Lauf möglich
-bleibt.
-Verwendet werden die veröffentlichten Checkpoints, die laut
-Modellkarten vor- und nachtrainiert sind (Pre- und Post-Training)
-und damit keine reinen Pre-Training-Checkpoints darstellen
-\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
-Der Begriff \emph{Basismodell} bezeichnet im Folgenden lediglich die
-eingefrorenen Ausgangsgewichte, auf die beim LoRA-Training Adapter
-aufgesetzt werden.
+Architekturwechseln vermischt werden.
+Die drei Stufen wurden so gewählt, dass sie den in der Literatur
+untersuchten Bereich von 3 bis 9~Mrd. Parametern
+(Abschnitt~\ref{sec:research_gap}) nach unten und oben verlassen und das
+Training mit einer einzelnen GPU je Lauf möglich bleibt.
+Verwendet werden die veröffentlichten, laut Modellkarten vor- und
+nachtrainierten Checkpoints
+\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}; der Begriff
+\emph{Basismodell} bezeichnet im Folgenden lediglich die eingefrorenen
+Ausgangsgewichte, auf die beim LoRA-Training Adapter aufgesetzt werden.
 
 Laut den Konfigurationsdateien der verwendeten Revisionen sind alle drei
 Größen dichte Decoder mit hybrider Attention
-(Tabelle~\ref{tab:qwen-architektur}): In jedem Block aus vier Schichten
+(Tabelle~\ref{tab:app-qwen-architektur}): In jedem Block aus vier Schichten
 nutzen drei Schichten lineare Attention in Form von Gated DeltaNet, die
 vierte vollständige Softmax-Attention mit Grouped-Query-Attention und
 Ausgabe-Gating \cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
@@ -227,40 +207,14 @@ Mixture-of-Experts-Prinzip besitzen die drei Größen nicht.
 Die hybride Attention ist für die Platzierung der LoRA-Adapter relevant
 (Abschnitt~\ref{sec:lora-konfiguration}).
 
-Die Checkpoints sind multimodal angelegt und enthalten neben dem
-Textmodell einen Vision-Encoder sowie Module für Multi-Token-Prediction
-(MTP).
-Beide Pipelines laden die Modelle jedoch über
-\texttt{AutoModelForCausalLM}, das für Qwen3.5 ausschließlich das
-Textmodell (\texttt{Qwen3\_5ForCausalLM}) instanziiert;
-Vision-Encoder und MTP-Module werden verworfen.
+Die Checkpoints sind multimodal angelegt; beide Pipelines laden jedoch
+über die Klasse \texttt{AutoModelForCausalLM} nur das Textmodell, Vision-Encoder
+und Module für Multi-Token-Prediction werden verworfen
+(Tabelle~\ref{tab:app-qwen-architektur} in Anhang~\ref{app:durchfuehrung}).
 Alle Parameterangaben beziehen sich daher auf das Textmodell, das mit
 rund 0,75, 4,21 bzw. 26,90~Mrd. Parametern von den nominellen
-Größenbezeichnungen abweicht.
-Die konfigurierte Kontextlänge von 262\,144 Positionen ist bei den hier
-verwendeten Sequenzlängen nicht limitierend.
-
-\begin{table}[ht]
-    \centering
-    \small
-    \caption[Architekturkennzahlen der Qwen3.5-Modelle]{Architekturkennzahlen der Qwen3.5-Modelle laut
-    Modellkonfiguration der verwendeten Revisionen.
-    Parameterzahlen aus den Tensorformen der Checkpoints; das Textmodell
-    schließt die Ausgabeschicht ein.}
-    \label{tab:qwen-architektur}
-    \begin{tabular}{lrrr}
-        \toprule
-        \textbf{Kennzahl} & \textbf{0.8B} & \textbf{4B} & \textbf{27B} \\
-        \midrule
-        Schichten (DeltaNet/voll)  & 24 (18/6) & 32 (24/8) & 64 (48/16) \\
-        Hidden/FFN-Dimension       & 1\,024/3\,584 & 2\,560/9\,216 & 5\,120/17\,408 \\
-        Attention-Köpfe (Q/KV)     & 8/2 & 16/4 & 24/4 \\
-        Vokabular/Kontextlänge     & \multicolumn{3}{c}{248\,320/262\,144} \\
-        Parameter Textmodell       & 0,752\,B & 4,206\,B & 26,896\,B \\
-        Vision-Encoder/MTP (nicht geladen) & 100,6/20,5\,M & 333,5/120,6\,M & 460,7/424,7\,M \\
-        \bottomrule
-    \end{tabular}
-\end{table}
+Größenbezeichnungen abweicht; die Stufen unterscheiden sich damit um den
+Faktor 5,6 bzw. 6,4.
 
 \subsection{Größenklassen}
 \label{sec:groessenklassen}
@@ -269,12 +223,9 @@ Zur Strukturierung der Auswertung werden die Modelle in die Klassen
 \emph{Small} (S), \emph{Medium} (M) und \emph{Large} (L) eingeteilt
 (Tabelle~\ref{tab:experiment-matrix}).
 Die Klassen bezeichnen die relative Position innerhalb der jeweiligen
-Familie, nicht absolute Parametergrenzen; die Klasse L ist nur auf der
-LLM-Seite besetzt.
-Die Einteilung ist eine Festlegung dieser Arbeit für die Analyse in
-Abschnitt~\ref{sec:einfluss-parameteranzahl}; Skalierungseffekte
-beschreibt die Literatur dagegen über mehrere Größenordnungen hinweg
-\cite{kaplan2020scaling,hoffmann2022training}.
+Familie, nicht absolute Parametergrenzen; L ist nur auf der LLM-Seite
+besetzt, und die Einteilung ist eine Festlegung dieser Arbeit für die
+Analyse in Abschnitt~\ref{sec:einfluss-parameteranzahl}.
 
 \section{Auswahl und Aufbereitung der Datensätze}
 \label{sec:datensaetze}
@@ -297,7 +248,9 @@ Drittens stehen offizielle \texttt{train}-, \texttt{validation}- und
 \texttt{test}-Splits zur Verfügung \cite{tedeschi2022multinerd}, die
 künftigen Arbeiten einen festen Bezugspunkt bieten.
 Veröffentlichte MultiNERD-Werte beruhen dagegen auf eigener Aufbereitung
-(UniversalNER: 10\,000 Testbeispiele \cite{zhou2024universalner}) oder
+(UniversalNER übernimmt die aus InstructUIE stammende Aufbereitung mit
+10\,000 Testbeispielen je Datensatz
+\cite{wang2023instructuie,zhou2024universalner}) oder
 einem abweichenden Testumfang (GoLLIE: 32\,908 Testbeispiele, etwa das
 Doppelte des englischen Testsplits \cite[Tab.~9]{sainz2024gollie});
 Werte auf den offiziellen Splits sind nicht nachweisbar
@@ -313,18 +266,16 @@ Der Datensatz ist laut Datensatzkarte unter CC~BY-NC-SA~4.0
 veröffentlicht und auf nichtkommerzielle Forschung beschränkt
 \cite{babelscape2023multinerdcard}.
 
-Hinsichtlich der Annotationsqualität ist zu beachten, dass MultiNERD
-automatisch annotiert wurde \cite{tedeschi2022multinerd}.
+MultiNERD ist automatisch annotiert \cite{tedeschi2022multinerd}; auch
+die Referenz des Testsplits ist somit eine Silberreferenz.
 Die zusätzlich veröffentlichte, manuell geprüfte Stichprobe von 1\,000
-zufällig gezogenen englischen Sätzen (mindestens 20 Instanzen je Typ)
-wird nicht verwendet \cite[Tab.~5]{tedeschi2022multinerd}.
-Die Pipeline setzt auf den offiziellen Splits mit zusammen 164\,144
-Sätzen auf, und typbezogene Aussagen wären auf der kleinen Stichprobe
-mit großer Unsicherheit behaftet.
-Auch die Referenz des Testsplits ist somit eine Silberreferenz.
+zufällig gezogenen englischen Sätzen wird nicht verwendet, da die
+Pipeline auf den offiziellen Splits aufsetzt und typbezogene Aussagen auf
+der kleinen Stichprobe sehr unsicher wären
+\cite[Tab.~5]{tedeschi2022multinerd}.
 Laut den Autoren gelten PER, ORG, LOC, CEL, DIS, EVE und MEDIA als
-besonders zuverlässig annotiert, während andere Klassen teils stark
-verrauscht sind \cite{tedeschi2022multinerd}.
+besonders zuverlässig annotiert, andere Klassen teils als stark
+verrauscht \cite{tedeschi2022multinerd}.
 Die trainierten Konfigurationen nutzen dieselben annotierten
 Trainingssätze, alle Systeme werden gegen dieselbe Referenz bewertet;
 die Zero-Shot-Konfigurationen erhalten kein Training.
@@ -356,10 +307,6 @@ Tabelle~\ref{tab:datensplits} auf Labelnamen abgebildet.
 \paragraph{Encoder-Pipeline.}
 Die wortweise vorliegenden Sätze werden mit dem Tokenizer von DeBERTa-v3
 in Subwörter zerlegt.
-Dieser basiert nicht auf WordPiece wie bei BERT, sondern auf
-SentencePiece mit Unigram-Vokabular; jedes Wort wird mit vorangestelltem
-Leerzeichen tokenisiert, sodass seine Zerlegung nicht von der
-Satzposition abhängt.
 Sequenzen werden auf 256 Subwort-Tokens einschließlich Sondertokens
 gekürzt.
 Beim Label-Alignment erhält das erste Subwort jedes Wortes dessen Label;
@@ -461,9 +408,7 @@ bereits ausgewerteten Testsplits nicht wieder her.
 Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
 (Abschnitt~\ref{sec:llm-pipeline}), und die Inferenzpräzision wurde
-anhand von Durchsatzmessungen auf einer Teilmenge des Testsplits gewählt
-(standardmäßig 96 gleichmäßig verteilte Sätze; der tatsächliche Umfang
-wurde nicht protokolliert).
+anhand von Durchsatzmessungen auf einer Teilmenge des Testsplits gewählt.
 Die Zero-Shot-Ergebnisse werden deshalb als explorative Ergebnisse der
 nach Testbeobachtungen gewählten Konfigurationen berichtet. Solche
 Auswahlentscheidungen können zu einer optimistischen Verzerrung führen
@@ -521,16 +466,9 @@ und Testbezug zu.
 \section{Versuchsaufbau}
 \label{sec:versuchsaufbau}
 
-Beide Pipelines nutzen gemeinsame Module für Datensatzladung,
-Metrikberechnung und Metadatenprotokollierung.
-Gesteuert werden sie über Konfigurationsdateien im YAML-Format, die beim
-Start gegen ein zentrales Experimentregister (Modell, Regime, Datensatz,
-Ausgabeverzeichnis) validiert werden; Training, Testinferenz und
-Evaluation laufen als getrennte SLURM-Jobs.
-Für die Trainingsläufe der Hauptstudie überwacht zusätzlich eine
-Laufverwaltung Status und Phasen, verhindert konkurrierende Ausführungen
-desselben Laufs und stellt über Prüfsummen von Konfiguration und Code
-sicher, dass alle Seeds einer Konfiguration denselben Stand verwenden.
+Beide Pipelines teilen eine gemeinsame Infrastruktur aus Daten-,
+Trainings-, Inferenz- und Auswertungsmodulen, die über
+YAML-Konfigurationsdateien gesteuert wird (Anhang~\ref{app:durchfuehrung}).
 
 \subsection{Rechenumgebung und Reproduzierbarkeit}
 \label{sec:rechenumgebung}
@@ -541,12 +479,9 @@ Abhängig von Modellgröße und Verfügbarkeit der Partitionen kamen drei
 GPU-Typen zum Einsatz (Tabelle~\ref{tab:hardware}); der angeforderte
 Hauptspeicher reichte von 32\,GB (DeBERTa-v3-base) bis 160\,GB
 (Qwen3.5-27B).
-Die MultiNERD-Läufe verwenden -- soweit protokolliert -- dieselben
-Softwareversionen: Python~3.12.3, PyTorch~2.13.0 (CUDA~13.0),
-Transformers~5.14.1, PEFT~0.19.1, TRL~1.8.0, bitsandbytes~0.49.2,
-Accelerate~1.14.0, Datasets~5.0.0 und seqeval~1.2.2.
-Für im Code nicht explizit gesetzte Einstellungen gelten die
-Standardwerte dieser Versionen.
+Die MultiNERD-Läufe verwenden, soweit protokolliert, einheitliche
+Softwareversionen (Anhang~\ref{app:durchfuehrung}); für im Code nicht
+explizit gesetzte Einstellungen gelten deren Standardwerte.
 
 \begin{table}[ht]
     \centering
@@ -577,28 +512,15 @@ Standardwerte dieser Versionen.
     \end{tabular}
 \end{table}
 
-Der Umfang der Reproduzierbarkeitsangaben unterscheidet sich zwischen den
-Kohorten.
-Die Trainingsläufe der Hauptstudie laden Datensatz, Modelle und Tokenizer
-über feste Revisions-Hashes, setzen ihren Seed für Python, NumPy und
-PyTorch einschließlich CUDA und übergeben ihn zusätzlich als Seed für
-Training und Datenreihenfolge an den Trainer.
-Protokolliert werden Git-Commit und Zustand der Arbeitskopie,
-Paketversionen, CUDA-, cuDNN- (9.20) und Treiberversion (595.58.03),
-GPU-Bezeichnung und SLURM-Job-Informationen; die Laufverwaltung ergänzt
-Prüfsummen von Konfiguration und Code, Fingerprints der Datensplits, eine
-Phasenhistorie und die Checkpoint-Auswahl.
-Die Zero-Shot-Läufe luden Modelle und Datensatz dagegen ohne explizite
-Revisionsangabe; ihre Metadaten umfassen Git-Commit und GPU-Bezeichnung,
-aber unter anderem keine Treiber- und cuDNN-Versionen und keine Angaben
-der Laufverwaltung.
-Eine bitgenaue Reproduzierbarkeit wird für keine Kohorte beansprucht:
-Deterministische Algorithmen werden nicht erzwungen, und Ergebnisse
-können bei abweichender Hard- oder Software variieren.
-Die Zero-Shot-Ausgaben entstehen zudem durch Sampling; ihre exakte
-Wiederholung setzt daher auch eine ununterbrochene Ausführung voraus, da
-der Zustand des Zufallszahlengenerators bei einer Wiederaufnahme nicht
-wiederhergestellt wird.
+Die Trainingsläufe der Hauptstudie laden Datensatz und Modelle über feste
+Revisions-Hashes, setzen ihren Seed für Python, NumPy und PyTorch und
+protokollieren je Lauf Git-Commit, Paketversionen, GPU- und
+SLURM-Angaben (Anhang~\ref{app:durchfuehrung}); die Zero-Shot-Läufe
+luden Modelle und Datensatz dagegen ohne Revisions-Pins und mit
+reduzierten Metadaten.
+Eine bitgenaue Reproduzierbarkeit wird für keine Kohorte beansprucht;
+die Zero-Shot-Ausgaben entstehen zudem durch Sampling, dessen
+Generatorzustand bei einer Wiederaufnahme nicht wiederhergestellt wird.
 Tabelle~\ref{tab:app-laeufe} ordnet jedem Lauf Konfigurationsdatei,
 Commit und Ausgabeverzeichnis zu, Tabelle~\ref{tab:app-revisionen} nennt
 die vollständigen Commits und Revisionen, und
@@ -629,12 +551,10 @@ Nach jeder Epoche wird der vollständige Validierungssplit ausgewertet
 Abschnitt~\ref{sec:performanzmetriken}) und ein Checkpoint gespeichert;
 für die Testevaluation wird der Checkpoint mit dem höchsten
 Validierungs-F$_1$ geladen.
-Die konfigurierte Early-Stopping-Patience von fünf (base) bzw. vier
-Epochen (large) entspricht der maximalen Epochenzahl, sodass das
-Kriterium nicht auslösen kann.
-Alle sechs Läufe durchliefen die volle Epochenzahl; ausgewählt wurde bei
-DeBERTa-v3-base die vierte (Seed~42) bzw. fünfte Epoche (Seeds 123 und
-456), bei DeBERTa-v3-large entsprechend die dritte bzw. vierte Epoche.
+Die konfigurierte Early-Stopping-Patience entspricht der maximalen
+Epochenzahl, sodass das Kriterium nicht auslösen kann; alle sechs Läufe
+durchliefen die volle Epochenzahl, die je Lauf gewählte Epoche nennt
+Tabelle~\ref{tab:app-seeds} (Abschnitt~\ref{sec:erg-gesamt}).
 In der Testinferenz wird jeder Satz einzeln verarbeitet und die Klasse
 per argmax bestimmt.
 
@@ -715,12 +635,10 @@ eigens geprüft (Abschnitt~\ref{sec:limitationen}).
 Für diese beiden Modelle erfolgte somit keine Konfigurationswahl anhand
 eigener Testergebnisse; die Eignung der übernommenen Einstellung bleibt
 ungeprüft.
-Die Ergebnisse beruhen auf jeweils einer Stichprobe aus der
-Ausgabeverteilung und beschreiben die veröffentlichten Checkpoints ohne
-NER-spezifische Anpassung unter genau diesen Prompt- und
-Decoding-Bedingungen. Ein isolierter Effekt der Anpassung lässt sich aus
-dem Vergleich mit dem QLoRA-Regime wegen der weiteren Änderungen nicht
-bestimmen.
+Die Ergebnisse sind je eine Stichprobe aus der Ausgabeverteilung der
+unangepassten Checkpoints unter genau diesen Prompt- und
+Decoding-Bedingungen; ein isolierter Effekt der Anpassung ist wegen der
+weiteren Änderungen gegenüber dem QLoRA-Regime nicht bestimmbar.
 
 \paragraph{QLoRA-Regime.}
 Die Anpassung erfolgt mit \texttt{peft} \cite{mangrulkar2022peft} und dem
@@ -759,14 +677,12 @@ meist in Epoche 3.
 Da 12 der 15 Läufe (8 von 9 LLM-, 4 von 6 Encoder-Läufen) die letzte
 Epoche wählten, ist ein Untertraining nicht auszuschließen
 (Abschnitt~\ref{sec:limitationen}).
-Die Beschränkung auf 200 Sätze hält die generative Validierung je Epoche bei
-Batchgröße~1 im Bereich von Minuten (beim 27B-Modell rund 18 Minuten
-gegenüber rund 25 Stunden für den vollständigen Split); sie macht die
-Auswahl aber von einem kleinen, nicht zufällig gezogenen Ausschnitt
-abhängig. Ob eine größere oder zufällig gezogene Validierungsstichprobe
-dieselben Checkpoints ausgewählt hätte, wurde nicht geprüft; aus der
-häufigen Auswahl der letzten Epoche folgt keine nachgewiesene
-Folgenlosigkeit dieser Beschränkung (Abschnitt~\ref{sec:limitationen}).
+Die Beschränkung auf 200 Sätze hält die generative Validierung je Epoche
+im Bereich von Minuten (27B-Modell: rund 18 Minuten gegenüber rund
+25 Stunden für den vollständigen Split), macht die Auswahl aber von einem
+kleinen, nicht zufällig gezogenen Ausschnitt abhängig.
+Ob eine größere oder zufällige Stichprobe dieselben Checkpoints gewählt
+hätte, wurde nicht geprüft (Abschnitt~\ref{sec:limitationen}).
 Für die Testinferenz wird der Adapter ohne Merge auf das
 4-Bit-quantisierte Basismodell aufgesetzt und greedy decodiert.
 
@@ -784,14 +700,9 @@ enthalten: \texttt{start\_token} (Index des ersten Tokens, inklusiv),
 Typabkürzungen); ohne Entitäten ist das leere Array zurückzugeben.
 Eine Entität, die nur das Token mit Index~4 umfasst, wird also durch
 \texttt{start\_token}~=~4 und \texttt{end\_token}~=~5 beschrieben.
-Die Adressierung über Indizes bleibt auch bei mehrfach vorkommenden
-Oberflächenformen eindeutig; das redundante Feld \texttt{text} ermöglicht
-eine Konsistenzprüfung (Abschnitt~\ref{sec:postprocessing}).
-Das Format entspricht der \emph{Indexing}-Familie mit Wortnummerierung,
-die \textcite[Abschn.~3.2]{semin2026spanLabeling} systematisieren, und
-nutzt JSON als verbreitetes, maschinell parsebares Austauschformat
-strukturierter Informationsextraktion \cite{dagdelen2024structuredIE};
-Feldschema und Nachverarbeitung sind eigene Umsetzungen dieser Arbeit.
+Die Einordnung des Formats in die \emph{Indexing}-Familie nach
+\textcite[Abschn.~3.2]{semin2026spanLabeling} gibt
+Abschnitt~\ref{sec:k3-ausgabeformate}.
 
 Es werden zwei Prompt-Profile verwendet, die jeweils wortgleich für alle
 drei Modellgrößen gelten.
@@ -858,13 +769,11 @@ zugänglich ist \cite{dagdelen2024structuredIE}.
 
 LoRA wird gewählt, weil LLMs ohne aufgabenspezifisches Fine-Tuning bei
 NER auf Tokenebene nur eingeschränkt konkurrenzfähig sind
-\cite{lu2024llmstruggle} und Adapter den Speicher- und Rechenbedarf
+\cite{lu2024llmstruggle}, Adapter den Speicher- und Rechenbedarf
 gegenüber vollständigem Fine-Tuning erheblich senken
-\cite{hu2021lora,han2024parameter,obeidat2025llm}.
-In den Prüffällen von \textcite[Anh.~D]{zhan2026generativeNER} liegt
-LoRA zudem 0,14 bis 0,48 F$_1$-Punkte vor vollständigem Fine-Tuning.
-Ausgewählte Gewichtsmatrizen $W$ werden um eine Low-Rank-Korrektur
-$\Delta W = BA$ ergänzt, von der nur $A$ und $B$ trainiert werden
+\cite{hu2021lora,han2024parameter,obeidat2025llm} und in den Prüffällen
+von \textcite[Anh.~D]{zhan2026generativeNER} zudem 0,14 bis 0,48
+F$_1$-Punkte vor vollständigem Fine-Tuning liegen
 (Abschnitt~\ref{sec:lora}).
 Der Rang beträgt $r = 16$ für die 0.8B- und 4B-Modelle und $r = 32$ für
 das 27B-Modell, die Skalierung jeweils $\alpha = 2r$; der Adapter-Dropout
@@ -895,10 +804,10 @@ gerechnet wird in BF16, trainiert mit BF16-Mixed-Precision und Gradient
 Checkpointing.
 Nicht quantisierte Komponenten wie Embeddings und
 Normalisierungsschichten bleiben in höherer Präzision.
-Die Adapter werden mit BF16-Mixed-Precision trainiert; die gespeicherten
-Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor (12,8 bzw. 42,5~MB),
-die der 27B-Läufe nach der Wiederaufnahme aus Checkpoints
-(Abschnitt~\ref{sec:effizienzmetriken}) in FP32 (637,6~MB).
+Die gespeicherten Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor, die
+der 27B-Läufe nach der Wiederaufnahme aus Checkpoints
+(Abschnitt~\ref{sec:effizienzmetriken}) in FP32
+(Anhang~\ref{app:durchfuehrung}).
 In zwei Punkten weicht die Umsetzung vom QLoRA-Standardrezept
 \cite{dettmers2023qlora} ab: Double Quantization war vorgesehen, wurde
 aber wegen eines fehlerhaft benannten Konfigurationsparameters nicht
@@ -913,13 +822,7 @@ eines auf die Antwort beschränkten Verlusts wurde nicht isoliert gemessen.
 
 Die übrigen Hyperparameter fasst Tabelle~\ref{tab:lora-hyperparams}
 zusammen.
-Die Lernrate sinkt mit der Modellgröße; die effektive Batchgröße beträgt
-stets 16, setzt sich aber je nach Speicherbedarf unterschiedlich aus
-Mikro-Batch und Gradientenakkumulation zusammen.
-Alle Größen werden über drei Epochen (24\,615 Optimierungsschritte)
-trainiert; im Vorlauf war das 27B-Modell nur über zwei Epochen trainiert
-worden.
-Ein systematischer Hyperparameter-Suchlauf fand nicht statt.
+Eine systematische Suche nach Hyperparametern fand nicht statt.
 
 \begin{table}[ht]
   \centering
@@ -961,14 +864,10 @@ Die generierten Antworten werden in beiden LLM-Regimen mit derselben
 deterministischen, regelbasierten Kette in IOB2-Sequenzen überführt:
 
 \begin{enumerate}
-    \item \textbf{Bereinigung:} Umgebender Leerraum und eventuelle
-    Denkblöcke zwischen \texttt{<think>} und \texttt{</think>} werden
-    entfernt.
-
-    \item \textbf{Parsing:} Die Antwort wird zunächst vollständig als JSON
-    interpretiert, bei Bedarf danach der Inhalt des ersten
-    Markdown-Codeblocks und zuletzt der erste per regulärem Ausdruck
-    gefundene Abschnitt in eckigen Klammern.
+    \item \textbf{Bereinigung und Parsing:} Die Antwort wird von
+    umgebendem Leerraum und Denkblöcken befreit und als JSON-Array
+    geparst, bei Bedarf über zwei Rückfallstrategien
+    (Anhang~\ref{app:durchfuehrung}).
     Liefert keine Strategie ein JSON-Array, gilt die Antwort als nicht
     parsebar; die erfolgreiche Strategie wird protokolliert.
 
@@ -1032,11 +931,9 @@ Eine Entität gilt nur als korrekt erkannt, wenn Spangrenzen und Typ exakt
 mit der Referenz übereinstimmen, was dem \emph{strict}-Modus der
 SemEval-2013-Auswertung entspricht \cite{segura2013semeval}.
 Berechnet werden die Werte mit \texttt{seqeval}
-\cite{nakayama2018seqeval}; strikter Modus und IOB2-Schema werden
-explizit gesetzt, da die Bibliothek standardmäßig eine nachsichtigere,
-an das CoNLL-Skript angelehnte Entitätsextraktion verwendet.
-Formal unzulässige Tag-Folgen, etwa ein \texttt{I}-Tag ohne passendes
-vorangehendes \texttt{B}-Tag, bilden dadurch keine Entität.
+\cite{nakayama2018seqeval} bei explizit gesetztem striktem Modus und
+IOB2-Schema, sodass formal unzulässige Tag-Folgen keine Entität bilden
+(Abschnitt~\ref{sec:evaluation}).
 Primäre Kennzahl ist der mikro-gemittelte F$_1$-Wert
 \cite{manning2008introduction,keraghel2024recent}; fehlen Vorhersagen
 oder Referenzentitäten, wird der betreffende Quotient als 0 definiert.
@@ -1098,8 +995,9 @@ Klasse zugeordnet: korrekt erkannt (Grenzen und Typ stimmen überein),
 \emph{Typfehler} (gleiche Grenzen, anderer Typ), \emph{Grenzfehler}
 (überlappender Span, gleicher Typ), \emph{Grenz- und Typfehler}
 (überlappender Span, anderer Typ) oder \emph{Auslassung} (keine
-überlappende Vorhersage); vorhergesagte Spans ohne Überlappung mit einer
-Referenzentität zählen als \emph{Zusätze}.
+überlappende Vorhersage).
+Vorhergesagte Spans ohne Überlappung mit einer Referenzentität zählen
+gesondert als \emph{Zusätze}.
 Die Zuordnung folgt der Logik der nachsichtigen Evaluationsmodi von
 \textcite{segura2013semeval}, dient aber nur der Beschreibung; bewertet
 wird in allen Fällen strikt.
@@ -1117,22 +1015,20 @@ von Modell und Daten, Training, Validierung nach jeder Epoche (bei den
 LLMs inklusive generativer Validierung), Speichern von Checkpoints und
 Export.
 Die vom Trainer zusätzlich protokollierte Dauer ohne Laden und Export
-liegt bei den ununterbrochenen Läufen um höchstens 1 Minute darunter.
+liegt bei den ununterbrochenen Läufen darunter: bei den Encodern um 30
+bis 49~s, bei den 0.8B- und 4B-Läufen um 32 bis 141~s (Maximum beim
+4B-Modell mit Seed~42).
 Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
-Tagen und wurden vom Scheduler dreimal neu eingereiht; jeder Lauf
-bestand damit aus vier Zuteilungen (Start am 7., 12., 15. und
-18.~August 2026, Abschluss am 20.~August), und der vom Trainer
-gespeicherte Wert erfasst nur die letzte Zuteilung ab Schritt 20\,000
-bzw. 19\,500 von 24\,615.
-Für diese Läufe ist die Trainingsdauer die Summe der vier Zuteilungen;
-sie schließt das erneute Laden von Modell und Daten je Zuteilung ein und
-ist mit den übrigen Läufen nur näherungsweise vergleichbar.
-Als Plausibilitätsprüfung dient die Hochrechnung der Schrittrate des
-letzten Abschnitts auf alle Schritte.
+Tagen und wurden vom Scheduler dreimal neu eingereiht
+(Anhang~\ref{app:durchfuehrung}); ihre Trainingsdauer ist die Summe der
+vier Zuteilungen einschließlich des erneuten Ladens und mit den übrigen
+Läufen nur näherungsweise vergleichbar.
+Als Plausibilitätsprüfung dient die Hochrechnung der Schrittrate der
+letzten Zuteilung auf alle Schritte.
 Die Trainingsdauer hängt zudem von der Auslastung des Knotens ab: Die
 drei 27B-Läufe liefen gleichzeitig auf demselben Knoten und benötigten
 rund 38~s je Optimierungsschritt, der explorative Vorlauf mit zwei
-Epochen allein auf dem Knoten 15{,}5~s.
+Epochen allein auf dem Knoten 15{,}5~s je Schritt.
 Sie beschreibt daher den tatsächlich angefallenen Aufwand dieser Jobs;
 ein von Auslastung und Neustarts unabhängiger Trainingsbedarf der
 Modellkonfiguration wird daraus nicht abgeleitet.
@@ -1183,7 +1079,7 @@ Gewichte nur zur Hälfte erfasst.
 Da die Konfigurationen auf unterschiedlichen GPU-Typen liefen
 (Tabelle~\ref{tab:hardware}), enthalten Unterschiede in der Laufzeit
 auch Hardwareeffekte.\footnote{Wie groß dieser Effekt sein kann, zeigt die
-Encoder-Inferenz: Im explorativen Vorlauf erreichte DeBERTa-v3-base auf
+Encoder-Inferenz. Im explorativen Vorlauf erreichte DeBERTa-v3-base auf
 einer A100 eine mittlere Latenz von 17,6\,ms je Satz, in der Hauptstudie
 auf einer H100 dagegen 8,9\,ms (Mittel der drei Läufe).}
 Zero-Shot- und QLoRA-Inferenz unterscheiden sich zudem in Präzision und
@@ -1197,21 +1093,19 @@ und Präzisionsbedingungen interpretiert.
 Während Encoder per Konstruktion genau ein Label pro Wort aus dem festen
 Inventar liefern, können LLMs syntaktisch oder inhaltlich unzulässige
 Ausgaben erzeugen.
-Diese werden über die Kennzahlen in Tabelle~\ref{tab:formtreue} erfasst,
-die direkt aus der Validierungskette (Abschnitt~\ref{sec:postprocessing})
-hervorgehen und vier Fehlerklassen zugeordnet sind:
-\emph{JSON-Validität} -- lässt sich überhaupt ein Array gewinnen
-\cite{dagdelen2024structuredIE} --, \emph{Span-Alignment} -- passen
-Indizes und Text zur Tokenliste \cite{semin2026spanLabeling} --,
-\emph{Schema-Treue} -- werden Struktur und Typinventar eingehalten, wobei
-Typen außerhalb des Inventars als halluzinierte Kategorien gelten
-\cite{tedeschi2022multinerd} -- und \emph{Konsistenz}
--- überlappen gültige Spans einander, sodass nur der zuerst übernommene
-bleibt.
-Für Encoder entfallen diese Kennzahlen; gerade dieser strukturelle
-Unterschied ist Teil des Vergleichs, da LLMs Ausgabeformat und
-Typinventar erst über Prompt und Fine-Tuning erlernen müssen
-\cite{dagdelen2024structuredIE,wei2023chatie}.
+Diese erfasst Tabelle~\ref{tab:formtreue} über Kennzahlen der
+Validierungskette (Abschnitt~\ref{sec:postprocessing}) in vier
+Fehlerklassen.
+\emph{JSON-Validität} fragt, ob sich überhaupt ein Array gewinnen lässt
+\cite{dagdelen2024structuredIE}, \emph{Span-Alignment}, ob Indizes und
+Text zur Tokenliste passen \cite{semin2026spanLabeling}.
+\emph{Schema-Treue} prüft Struktur und Typinventar, wobei Typen außerhalb
+des Inventars als halluzinierte Kategorien gelten
+\cite{tedeschi2022multinerd}; \emph{Konsistenz} erfasst Überlappungen
+gültiger Spans, von denen nur der zuerst übernommene bleibt.
+Für Encoder entfallen diese Kennzahlen; der Unterschied ist Teil des
+Vergleichs, da LLMs Ausgabeformat und Typinventar erst über Prompt und
+Fine-Tuning erlernen müssen \cite{dagdelen2024structuredIE,wei2023chatie}.
 
 \begin{table}[ht]
   \centering
@@ -1270,18 +1164,14 @@ Fehleranalyse als Hinweis darauf.
 
 Der Einfluss der Parameteranzahl auf Performanz, Effizienz und Formtreue
 wird getrennt nach Regime über die Größenklassen
-(Abschnitt~\ref{sec:groessenklassen}) betrachtet.
-Mit zwei Encoder- und drei LLM-Größen ist die Zahl der Stützstellen
-gering: Die drei Seeds erlauben zwar, Größenunterschiede gegen die
-Variabilität zwischen Trainingsläufen abzugrenzen, Skalierungsgesetze im
-Sinne von Regressions- oder Potenzgesetzfits
-\cite{kaplan2020scaling,hoffmann2022training} lassen sich aber nicht
-bestimmen.
-Da zudem Hyperparameter und Hardware mit der Größe variieren, bleibt die
-Auswertung deskriptiv.
-Untersucht wird vor allem, ob Leistungsgewinne größerer LLMs in einem
-angemessenen Verhältnis zum zusätzlichen Ressourcenbedarf stehen und
-wann kompakte Encoder eine attraktive Alternative sind
+(Abschnitt~\ref{sec:groessenklassen}) deskriptiv betrachtet.
+Mit zwei Encoder- und drei LLM-Größen, bei denen Hyperparameter und
+Hardware mitvariieren, lassen sich Größenunterschiede zwar gegen die
+Variabilität zwischen den Seeds abgrenzen, Skalierungsgesetze im Sinne
+von Potenzgesetzfits \cite{kaplan2020scaling,hoffmann2022training} aber
+nicht bestimmen.
+Leitfrage ist das Verhältnis von Leistungsgewinn und Ressourcenbedarf
+größerer LLMs gegenüber kompakten Encodern
 \cite{keraghel2024recent,obeidat2025llm}.
 
 \subsection{Nachinferenz am Ausgabelimit}
@@ -1302,15 +1192,15 @@ Grund nicht parsebare Antwort würde unter Greedy-Decoding identisch
 reproduziert; abgeschnittene, aber zufällig parsebare Antworten lassen
 sich in den gespeicherten Daten dagegen nicht erkennen.
 Bei identischen Logits und Greedy-Decoding bliebe eine Antwort, die vor
-dem Limit mit dem Ende-Token abschließt, unverändert. Da die ursprünglichen
-Läufe den Stoppgrund nicht protokollierten, lässt sich diese Bedingung
-für die übernommenen Antworten nicht vollständig prüfen.
-Da die Nachinferenz auf einem anderen GPU-Typ lief als die
-ursprüngliche Testinferenz (Tabelle~\ref{tab:hardware}), wird diese Annahme geprüft: Für jeden
-nachgenerierten Satz wird festgehalten, ob die ersten 256 erzeugten Tokens
-mit der gespeicherten Antwort übereinstimmen, und in einem Vorlauf wurden
-zusätzlich fünf nicht abgeschnittene Sätze neu generiert und mit den
-gespeicherten Antworten verglichen.
+dem Limit mit dem Ende-Token abschließt, unverändert; da die
+ursprünglichen Läufe den Stoppgrund nicht protokollierten, ist diese
+Bedingung für die übernommenen Antworten nicht vollständig prüfbar.
+Weil die Nachinferenz auf einem anderen GPU-Typ lief als die
+ursprüngliche Testinferenz (Tabelle~\ref{tab:hardware}), wird die Annahme
+geprüft: Für jeden nachgenerierten Satz wird festgehalten, ob die ersten
+256 erzeugten Tokens mit der gespeicherten Antwort übereinstimmen.
+In einem Vorlauf wurden zusätzlich fünf nicht abgeschnittene Sätze neu
+generiert und mit den gespeicherten Antworten verglichen.
 Die zusammengeführten Vorhersagen werden mit derselben strikten Metrik über
 alle 16\,454 Sätze ausgewertet und je Seed den Werten bei 256 Tokens
 gegenübergestellt.
@@ -1388,16 +1278,13 @@ zu einem gepoolten Mikrowert über alle Domänen sowie zu einem gleich
 gewichteten Domänenmittel aggregiert; berichtet werden Mittelwert und
 Stichprobenstandardabweichung über die Seeds.
 Für die Differenz zwischen Qwen3.5-27B und DeBERTa-v3-large wird zusätzlich
-ein gepaartes Satz-Bootstrap mit 2\,000 Replikaten berechnet. Innerhalb
-jeder Domäne werden mit Zurücklegen genauso viele Sätze wie im
-jeweiligen Testsplit gezogen; dieselbe Auswahl gilt für alle Modelle,
-Seeds und beide Ausgabelimits. Für den gepoolten Mikro-F$_1$ werden je
-Replikat die Entitätszähler über die Domänen addiert, bevor die F$_1$-Werte
-berechnet und über die Seeds gemittelt werden. Damit bleibt die
-Domänenzusammensetzung fest. Die 95-\%-Perzentilintervalle unterliegen
-denselben Einschränkungen wie das MultiNERD-Bootstrap
-(Abschnitt~\ref{sec:performanzmetriken}); insbesondere sind die
-domänenweisen Vergleiche explorativ und nicht für Mehrfachvergleiche
+ein gepaartes Satz-Bootstrap mit 2\,000 Replikaten berechnet, das je
+Domäne geschichtet so viele Sätze mit Zurücklegen zieht, wie der
+jeweilige Testsplit enthält; dieselbe Ziehung gilt für beide Systeme,
+alle Seeds und beide Ausgabelimits.
+Die 95-\%-Perzentilintervalle unterliegen denselben Einschränkungen wie
+das MultiNERD-Bootstrap (Abschnitt~\ref{sec:performanzmetriken}); die
+domänenweisen Vergleiche sind explorativ und nicht für Mehrfachvergleiche
 korrigiert.
 Bezugsgröße ist der F$_1$-Wert derselben Modelle auf dem MultiNERD-Testsplit,
 ebenfalls auf PER, ORG und LOC beschränkt.
@@ -1425,12 +1312,9 @@ nicht parsebar und zählt als leere Vorhersage.
 Ob die nicht parsebaren Antworten ausnahmslos auf dieses Limit
 zurückgehen und wie stark Recall und F$_1$ des LLM dadurch unterschätzt
 werden, prüft Abschnitt~\ref{sec:erg-crossner}.
-In einer Vorstudie wurde die Inferenz des 27B-Modells (Seed~42) mit
-einem Limit von 1\,024 Ausgabetokens auf den jeweils ersten 25 Sätzen der
-Testsplits von Musik und Politik wiederholt und auf denselben Sätzen mit
-dem Hauptlauf verglichen; die beiden Domänen wurden gewählt, weil dort bei
-256 Tokens besonders viele Antworten nicht parsebar waren, die Stichprobe
-ist also weder zufällig noch repräsentativ.
+Eine Vorstudie auf den jeweils ersten 25 Sätzen der Domänen Musik und
+Politik, einer nicht repräsentativen Stichprobe, ging dem vollständigen
+Neulauf mit 1\,024 Ausgabetokens voraus (Anhang~\ref{app:durchfuehrung}).
 Anschließend wurde die Inferenz des 27B-Modells mit 1\,024 Ausgabetokens
 für alle drei Seeds auf allen 2\,506 Sätzen der fünf Domänen wiederholt;
 Prompt, Parser, Typabbildung und Greedy-Decoding blieben unverändert, nur

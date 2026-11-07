@@ -231,6 +231,217 @@ Token indices must refer exactly to the numbered token list shown by the user. C
 \end{lstlisting}
 
 \clearpage
+\section{Ergänzungen zur Durchführung}
+\label{app:durchfuehrung}
+
+Dieser Abschnitt ergänzt Kapitel~\ref{chap:methodik} um Durchführungsdetails,
+die für das Versuchsdesign nachrangig, für die Nachvollziehung der Läufe
+aber relevant sind.
+Er behandelt die explorativen Vorläufe und den Abbruch des
+Thinking-Vorlaufs, Architekturkennzahlen der Qwen3.5-Modelle,
+Pipeline-Module und Softwareversionen, die je Lauf protokollierten Felder,
+die Adapterdateien, den Trainingsverlauf der 27B-Läufe, die
+Rückfallstrategien des Parsers und die Vorstudie zum Ausgabelimit.
+
+\subsection{Vorläufe und Thinking-Abbruch}
+
+Der Hauptstudie gingen explorative Vorläufe der fünf trainierten
+Konfigurationen mit Seed~42 voraus (Tabelle~\ref{tab:app-vorlaeufe}), die
+unter anderem der Stabilisierung der Pipeline dienten.
+Da für mehrere Vorläufe der exakte Quellcodestand nicht rekonstruierbar
+ist (Arbeitskopien mit lokalen, nicht erhaltenen Änderungen bei
+DeBERTa-v3-base und Qwen3.5-27B), wurden alle trainierten
+Konfigurationen für die Hauptstudie aus versionierten Codeständen ohne
+lokale Änderungen neu trainiert; die Vorläufe gehen nicht in die
+Auswertung ein (Abschnitt~\ref{sec:datenaufteilung}).
+% Quelle: summary.json, Schlüssel vorlaeufe[*].gpu, .train_runtime_h,
+% .steps, .seconds_per_step (Reihenfolge base, large, 0.8B, 4B, 27B).
+Mit Ausnahme des 27B-Modells (H100 NVL) liefen die Vorläufe auf einer
+A100; die vom Trainer protokollierte Trainingsdauer betrug 0,41~h
+(DeBERTa-v3-base), 1,12~h (DeBERTa-v3-large), 8,25~h (Qwen3.5-0.8B),
+58,0~h (Qwen3.5-4B) und 70,8~h (Qwen3.5-27B, zwei Epochen,
+16\,410 Schritte).
+Beim 27B-Vorlauf entspricht das 15,5~s je Optimierungsschritt gegenüber
+rund 38~s in den drei gleichzeitig auf einem Knoten ausgeführten
+Hauptläufen (Abschnitt~\ref{sec:effizienzmetriken}).
+
+% Quelle: summary.json, Schlüssel vorlauf_thinking_4b (run, epochs[*].dev_f1,
+% epochs[*].parse_failure_rate: 0,71 und 0,825).
+Ein erster Lauf des 4B-Modells mit aktiviertem Thinking-Modus
+(Laufordner mit dem Zeitstempel 20260727-074436) wurde
+abgebrochen, nachdem die generative Validierung auf Validierungsdaten nach
+der ersten und zweiten Epoche Parse-Fehlerraten von 71,0 bzw. 82,5\,\%
+bei strikten F$_1$-Werten von 38,1 bzw. 20,3 ergeben hatte.
+Der Thinking-Modus wurde daraufhin für alle Läufe deaktiviert
+(Abschnitt~\ref{sec:llm-pipeline}); diese Entscheidung beruht
+ausschließlich auf Validierungsdaten (Tabelle~\ref{tab:datennutzung}).
+
+\subsection{Architekturkennzahlen der Qwen3.5-Modelle}
+
+Die Checkpoints sind multimodal angelegt und enthalten neben dem
+Textmodell einen Vision-Encoder sowie Module für Multi-Token-Prediction
+(MTP).
+Beide Pipelines laden die Modelle jedoch über
+\texttt{AutoModelForCausalLM}, das für Qwen3.5 ausschließlich das
+Textmodell (\texttt{Qwen3\_5ForCausalLM}) instanziiert;
+Vision-Encoder und MTP-Module werden verworfen.
+Tabelle~\ref{tab:app-qwen-architektur} nennt die Kennzahlen laut
+Modellkonfiguration der verwendeten Revisionen
+(Tabelle~\ref{tab:app-revisionen}); die Schichtstruktur mit Gated DeltaNet
+und voller Attention beschreibt Abschnitt~\ref{sec:llm-auswahl}.
+Die konfigurierte Kontextlänge von 262\,144 Positionen ist bei den hier
+verwendeten Sequenzlängen nicht limitierend.
+
+\begin{table}[ht]
+    \centering
+    \small
+    \caption[Architekturkennzahlen der Qwen3.5-Modelle]{Architekturkennzahlen der Qwen3.5-Modelle laut
+    Modellkonfiguration der verwendeten Revisionen.
+    Parameterzahlen aus den Tensorformen der Checkpoints; das Textmodell
+    schließt die Ausgabeschicht ein.}
+    \label{tab:app-qwen-architektur}
+    \begin{tabular}{lrrr}
+        \toprule
+        \textbf{Kennzahl} & \textbf{0.8B} & \textbf{4B} & \textbf{27B} \\
+        \midrule
+        Schichten (DeltaNet/voll)  & 24 (18/6) & 32 (24/8) & 64 (48/16) \\
+        Hidden/FFN-Dimension       & 1\,024/3\,584 & 2\,560/9\,216 & 5\,120/17\,408 \\
+        Attention-Köpfe (Q/KV)     & 8/2 & 16/4 & 24/4 \\
+        Vokabular/Kontextlänge     & \multicolumn{3}{c}{248\,320/262\,144} \\
+        Parameter Textmodell       & 0,752\,B & 4,206\,B & 26,896\,B \\
+        Vision-Encoder/MTP (nicht geladen) & 100,6/20,5\,M & 333,5/120,6\,M & 460,7/424,7\,M \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Pipeline-Module und Softwareversionen}
+
+Beide Pipelines nutzen gemeinsame Module für Datensatzladung,
+Metrikberechnung und Metadatenprotokollierung.
+Gesteuert werden sie über Konfigurationsdateien im YAML-Format, die beim
+Start gegen ein zentrales Experimentregister (Modell, Regime, Datensatz,
+Ausgabeverzeichnis) validiert werden; Training, Testinferenz und
+Evaluation laufen als getrennte SLURM-Jobs.
+Für die Trainingsläufe der Hauptstudie überwacht zusätzlich eine
+Laufverwaltung Status und Phasen, verhindert konkurrierende Ausführungen
+desselben Laufs und stellt über Prüfsummen von Konfiguration und Code
+sicher, dass alle Seeds einer Konfiguration denselben Stand verwenden.
+
+Die MultiNERD-Läufe verwenden -- soweit protokolliert -- dieselben
+Softwareversionen: Python~3.12.3, PyTorch~2.13.0 (CUDA~13.0),
+Transformers~5.14.1, PEFT~0.19.1, TRL~1.8.0, bitsandbytes~0.49.2,
+Accelerate~1.14.0, Datasets~5.0.0 und seqeval~1.2.2.
+Für im Code nicht explizit gesetzte Einstellungen gelten die
+Standardwerte dieser Versionen.
+
+\subsection{Protokollfelder je Lauf}
+
+Der Umfang der Reproduzierbarkeitsangaben unterscheidet sich zwischen den
+Kohorten.
+Die Trainingsläufe der Hauptstudie laden Datensatz, Modelle und Tokenizer
+über feste Revisions-Hashes (Tabelle~\ref{tab:app-revisionen}), setzen
+ihren Seed für Python, NumPy und PyTorch einschließlich CUDA und
+übergeben ihn zusätzlich als Seed für Training und Datenreihenfolge an
+den Trainer.
+Protokolliert werden Git-Commit und Zustand der Arbeitskopie,
+Paketversionen, CUDA-, cuDNN- (9.20) und Treiberversion (595.58.03),
+GPU-Bezeichnung und SLURM-Job-Informationen; die Laufverwaltung ergänzt
+Prüfsummen von Konfiguration und Code, Fingerprints der Datensplits, eine
+Phasenhistorie und die Checkpoint-Auswahl.
+Die Zero-Shot-Läufe luden Modelle und Datensatz dagegen ohne explizite
+Revisionsangabe; ihre Metadaten umfassen Git-Commit und GPU-Bezeichnung,
+aber unter anderem keine Treiber- und cuDNN-Versionen und keine Angaben
+der Laufverwaltung.
+Eine bitgenaue Reproduzierbarkeit wird für keine Kohorte beansprucht:
+Deterministische Algorithmen werden nicht erzwungen, und Ergebnisse
+können bei abweichender Hard- oder Software variieren.
+Die Zero-Shot-Ausgaben entstehen zudem durch Sampling; ihre exakte
+Wiederholung setzt daher auch eine ununterbrochene Ausführung voraus, da
+der Zustand des Zufallszahlengenerators bei einer Wiederaufnahme nicht
+wiederhergestellt wird.
+
+\subsection{Adapterdateien}
+
+Die Adapter werden mit BF16-Mixed-Precision trainiert; die gespeicherten
+Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor (12,8 bzw. 42,5~MB),
+die der 27B-Läufe nach der Wiederaufnahme aus Checkpoints
+(Abschnitt~\ref{sec:effizienzmetriken}) in FP32 (637,6~MB).
+% Rechnung: 6,39 M x 2 Byte = 12,8 MB; 21,23 M x 2 Byte = 42,5 MB;
+% 159,38 M x 4 Byte = 637,5 MB (Dateigröße 637,6 MB einschließlich Kopf).
+Die Dateigrößen entsprechen den rund 6,39, 21,23 bzw. 159,38~Mio.
+Adapterparametern aus Tabelle~\ref{tab:lora-hyperparams} bei 2 (BF16)
+bzw. 4 Byte (FP32) je Parameter.
+
+\subsection{Trainingsverlauf der 27B-Läufe}
+
+Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
+Tagen und wurden vom Scheduler dreimal neu eingereiht; jeder Lauf
+bestand damit aus vier Zuteilungen (Start am 7., 12., 15. und
+18.~August 2026, Abschluss am 20.~August).
+% Quelle: summary.json, Schlüssel training_time_27b (resume_steps,
+% steps_logged, last_allocation_h, seconds_per_step, estimate_h, sacct_h,
+% wallclock_span_h, n_allocations; Reihenfolge Seeds 42, 123, 456).
+Der vom Trainer gespeicherte Wert erfasst nur die letzte Zuteilung ab
+Schritt 20\,000 (Seeds 42 und 123) bzw. 19\,500 (Seed~456) von
+24\,615; die Kennzahlen je Seed nennt die folgende Übersicht.
+
+\begin{center}
+  \small
+  \begin{tabular}{lrrr}
+    \toprule
+    \textbf{Kennzahl} & \textbf{Seed 42} & \textbf{Seed 123} & \textbf{Seed 456} \\
+    \midrule
+    Zuteilungen & 4 & 4 & 4 \\
+    Wiederaufnahme der letzten Zuteilung (Schritt) & 20\,000 & 20\,000 & 19\,500 \\
+    Protokollierte Schritte der letzten Zuteilung & 4\,615 & 4\,615 & 5\,115 \\
+    Dauer der letzten Zuteilung (h) & 49,3 & 48,4 & 53,8 \\
+    Schrittrate der letzten Zuteilung (s/Schritt) & 38,4 & 37,8 & 37,8 \\
+    Hochrechnung auf 24\,615 Schritte (h) & 262,5 & 258,3 & 258,6 \\
+    Summe der Zuteilungen laut \texttt{sacct} (h) & 265,0 & 264,2 & 269,5 \\
+    Spanne vom ersten Start bis zum Abschluss (h) & 305,6 & 304,7 & 311,6 \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+Die Trainingsdauer in Kapitel~\ref{chap:ergebnisse} ist die Summe der
+vier Zuteilungen laut \texttt{sacct}; sie schließt das erneute Laden von
+Modell und Daten je Zuteilung ein und ist mit den übrigen Läufen nur
+näherungsweise vergleichbar.
+Die Hochrechnung der Schrittrate der letzten Zuteilung auf alle Schritte
+liegt 2,5 bis 10,9~h unter der Summe laut \texttt{sacct} und bestätigt
+deren Größenordnung.
+Die drei Läufe liefen gleichzeitig auf demselben Knoten; der explorative
+Vorlauf mit zwei Epochen benötigte allein auf dem Knoten 15,5~s je
+Schritt.
+
+\subsection{Parsing-Fallbacks}
+
+Vor dem Parsing werden umgebender Leerraum und eventuelle Denkblöcke
+zwischen \texttt{<think>} und \texttt{</think>} entfernt.
+Die Antwort wird zunächst vollständig als JSON interpretiert, bei Bedarf
+danach der Inhalt des ersten Markdown-Codeblocks und zuletzt der erste
+per regulärem Ausdruck gefundene Abschnitt in eckigen Klammern.
+Liefert keine Strategie ein JSON-Array, gilt die Antwort als nicht
+parsebar; die erfolgreiche Strategie wird protokolliert und in
+Tabelle~\ref{tab:formtreue} als Kennzahl Parse-Strategien geführt.
+Die anschließende Validierung der Array-Elemente beschreibt
+Abschnitt~\ref{sec:postprocessing}.
+
+\subsection{Vorstudie zum Ausgabelimit}
+
+In einer Vorstudie wurde die Inferenz des 27B-Modells (Seed~42) mit
+einem Limit von 1\,024 Ausgabetokens auf den jeweils ersten 25 Sätzen der
+Testsplits von Musik und Politik wiederholt und auf denselben Sätzen mit
+dem Hauptlauf verglichen (Codestand in Tabelle~\ref{tab:app-revisionen}).
+Die beiden Domänen wurden gewählt, weil dort bei 256 Tokens besonders
+viele Antworten nicht parsebar waren; die Stichprobe ist also weder
+zufällig noch repräsentativ.
+Auf dieser Grundlage wurde die Inferenz des 27B-Modells mit 1\,024
+Ausgabetokens für alle drei Seeds auf allen 2\,506 Sätzen der fünf
+Domänen wiederholt (Abschnitt~\ref{sec:crossner}); die Ergebnisse
+berichtet Abschnitt~\ref{sec:erg-crossner}.
+
+\clearpage
 \section{Ergänzende Ergebnistabellen}
 \label{app:ergebnistabellen}
 
