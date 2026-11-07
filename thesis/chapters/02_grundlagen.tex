@@ -19,7 +19,7 @@ Abschnitt~\ref{sec:transformer} beschreibt die Transformer-Architektur,
 auf der beide in dieser Arbeit untersuchten Modellklassen beruhen.
 Die Abschnitte~\ref{sec:encoder_ner} und~\ref{sec:llms} behandeln
 Encoder-Modelle für NER und generative Large Language Models.
-Abschnitt~\ref{sec:lora} erklärt parameter-effizientes Fine-Tuning mit
+Abschnitt~\ref{sec:lora} erklärt parametereffizientes Fine-Tuning mit
 LoRA und QLoRA, Abschnitt~\ref{sec:model_size} Skalierungsgesetze und
 ihre Grenzen.
 Die Abschnitte~\ref{sec:datasets_corpora} und~\ref{sec:evaluation}
@@ -51,13 +51,14 @@ nachgeschalteter Klassifikator die relevante Information leichter
 extrahieren kann.
 Die gelernten Repräsentationen sind dichte Vektoren
 (\emph{distributed representations}): Jede Einheit wird durch einen
-reellwertigen Vektor mit einigen hundert Dimensionen beschrieben, und die
+reellwertigen Vektor mit typischerweise einigen hundert bis tausend
+Dimensionen beschrieben, und die
 Information verteilt sich über alle Dimensionen, statt an einzelnen,
 für sich interpretierbaren Merkmalen zu hängen.
 
 Den ersten Schritt bildeten Wortvektoren, die aus großen Textmengen so
 gelernt werden, dass Wörter mit ähnlichen Kontexten im Vektorraum nahe
-beieinander liegen~\cite{goldberg2017neural}.
+beieinander liegen~\cite{goldberg2016primer}.
 Ein solcher Vektor ist jedoch für jedes Wort fest, unabhängig vom Satz,
 in dem es steht.
 Kontextualisierte Repräsentationen heben diese Einschränkung auf: Ein
@@ -83,7 +84,7 @@ Kategorie zuzuordnen~\cite{li2018survey}.
 Formal erhält ein NER-System eine Tokenfolge $t_1, \dots, t_n$ und gibt
 eine Menge von Tripeln $(I_s, I_e, \tau)$ zurück, wobei $I_s$ und $I_e$
 den Start- und Endindex einer Erwähnung und $\tau$ ihren Typ
-bezeichnen~\cite{li2018survey}.
+bezeichnen (eigene Formalisierung nach \textcite{li2018survey}).
 Eine Erwähnung ist damit ein zusammenhängender Abschnitt der Tokenfolge,
 ein \emph{Span}; korrekt ist eine Vorhersage nur, wenn Grenzen und Typ
 stimmen.
@@ -260,8 +261,8 @@ Abbildung~\ref{fig:transformer-architektur} zeigt den Aufbau.
   (rechts).
   Jede Encoder-Schicht enthält Multi-Head-Self-Attention und ein
   Feed-Forward-Netz, jeweils mit Residualverbindung und
-  Layer-Normalisierung; der Decoder ergänzt eine maskierte Self-Attention
-  und eine Attention über die Encoder-Ausgabe.
+  Layer-Normalisierung; der Decoder ersetzt die Self-Attention durch eine
+  maskierte und ergänzt eine Attention über die Encoder-Ausgabe.
   Eigene Darstellung in Anlehnung an \textcite{vaswani2017attention}.}
   \label{fig:transformer-architektur}
 \end{figure}
@@ -275,14 +276,18 @@ Encoder-Attention; durch die kausale Maske eignen sie sich zur
 Texterzeugung Token für Token~\cite{brown2020language}.
 Encoder-Decoder-Modelle entsprechen dem Original und bilden eine Eingabe-
 auf eine Ausgabesequenz ab.
-Für NER folgt daraus der zentrale Unterschied der beiden in dieser Arbeit
-verglichenen Modellklassen: Ein Encoder liefert für jedes Token eine
+Für NER folgt daraus der zentrale Unterschied der beiden verglichenen
+Modellklassen: Ein Encoder liefert für jedes Token eine
 beidseitig kontextualisierte Repräsentation, aus der ein Label
-klassifiziert werden kann; ein Decoder sieht beim Erzeugen eines Tokens
-nur die Vergangenheit und muss die Entitäten als Text ausgeben.
-Der beidseitige Kontext ist für NER unmittelbar relevant, weil der Typ
-eines Tokens oft erst aus dem rechten Kontext hervorgeht, etwa ob
-\enquote{Washington} eine Person oder einen Ort bezeichnet.
+klassifiziert werden kann.
+Ein Decoder verarbeitet die Sequenz kausal und gibt in der hier
+verwendeten Pipeline die Entitäten als Text aus; da der ganze
+Eingabesatz im Prompt liegt, kann er den rechten Satzkontext nutzen.
+Mit Klassifikationskopf und entfernter kausaler Maske eignen sich
+Decoder auch für Sequenzlabeling~\cite{dukic2024lookingright}.
+Der rechte Kontext ist für NER unmittelbar relevant, weil der Typ eines
+Tokens oft erst aus ihm hervorgeht, etwa ob \enquote{Washington} eine
+Person oder einen Ort bezeichnet.
 
 Die Kosten der Self-Attention wachsen quadratisch mit der
 Sequenzlänge~$n$, da für jedes Tokenpaar ein Relevanzwert berechnet und
@@ -302,8 +307,8 @@ nur linear mit $n$ wächst~\cite{yang2025gated}.
 Hybride Architekturen kombinieren beides, indem sie lineare Schichten
 mit einzelnen Schichten voller Attention
 abwechseln~\cite{qwen2026card27b}.
-Quantisierung dagegen betrifft nicht die Attention, sondern die
-Darstellung der Gewichte: Sie speichert Parameter mit weniger Bits und
+Quantisierung dagegen betrifft die Darstellung der Gewichte und lässt
+die Attention unverändert: Sie speichert Parameter mit weniger Bits und
 senkt damit Speicherbedarf und Speicherbandbreite unabhängig von der
 Sequenzlänge~\cite{dettmers2022llmint8}.
 Sie wird in Abschnitt~\ref{sec:lora} im Zusammenhang mit QLoRA
@@ -408,8 +413,10 @@ nennen dies \emph{Tug-of-war} und lösen es durch
 \emph{Gradient-Disentangled Embedding Sharing}: Der Diskriminator nutzt
 die Generator-Embeddings, aber seine Gradienten fließen nicht in sie
 zurück.
-DeBERTa-v3 wurde mit denselben Einstellungen und Daten wie DeBERTa
-vortrainiert; die Base-Variante hat zwölf Schichten mit 86~Mio.
+DeBERTa-v3 wurde mit weitgehend denselben Einstellungen wie DeBERTa und
+mit 160~GB Daten wie DeBERTa-v2
+vortrainiert~\cite[Abschn.~4.1]{he2021debertav3}.
+Die Base-Variante hat zwölf Schichten mit 86~Mio.
 Parametern im Backbone, die Large-Variante 24 Schichten mit 304~Mio.,
 jeweils zuzüglich der Embedding-Parameter des großen
 Vokabulars~\cite{he2021debertav3}.
@@ -444,12 +451,15 @@ anhängt.
 Jedes erzeugte Token erfordert einen eigenen Vorwärtsdurchlauf, wobei
 die Keys und Values der bisherigen Tokens zwischengespeichert werden
 (Abschnitt~\ref{sec:transformer}).
-Die Inferenzzeit wächst damit vor allem mit der Länge der Ausgabe, nicht
-der Eingabe, was bei generativer NER die Wahl des Ausgabeformats zu einer
-Effizienzfrage macht (Abschnitt~\ref{sec:llm_ner_related}).
+Die Eingabe wird in einem Durchlauf verarbeitet (\emph{Prefill});
+jeder Decoding-Schritt wird mit wachsendem Kontext teurer.
+Die Ausgabelänge ist neben der Eingabelänge ein wesentlicher Faktor der
+Inferenzzeit, was bei generativer NER die Wahl des Ausgabeformats zu
+einer Effizienzfrage macht (Abschnitt~\ref{sec:llm_ner_related}).
 Wie das Token ausgewählt wird, legt das \emph{Decoding} fest.
-Greedy-Decoding wählt stets das wahrscheinlichste Token und ist
-deterministisch.
+Greedy-Decoding wählt stets das wahrscheinlichste Token und ist als
+Auswahlregel deterministisch; Gleitkommaarithmetik und Batching können
+hardwareseitig Abweichungen verursachen.
 Beim Sampling wird ein Token zufällig aus der Verteilung gezogen; eine
 Temperatur skaliert die Verteilung, Top-$k$ beschränkt die Auswahl auf
 die $k$ wahrscheinlichsten Tokens, und Top-$p$ (\emph{Nucleus Sampling})
@@ -504,7 +514,7 @@ Qwen3 führte Modelle ein, die zwischen Thinking- und Non-Thinking-Modus
 wechseln~\cite{qwen2025qwen3}.
 Qwen3.5 erschien im Februar 2026 zunächst als Mixture-of-Experts-Modell
 mit 397~Mrd. Parametern, von denen je Token 17~Mrd. aktiv
-sind~\cite{qwen2026qwen35blog}; es folgten Modelle ohne
+sind~\cite{qwen2026qwen35blog,qwen2026card397b}; es folgten Modelle ohne
 Mixture-of-Experts-Komponenten, darunter Qwen3.5-27B sowie Qwen3.5-4B
 und Qwen3.5-0.8B~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b}.
 Diese drei Modelle werden in der vorliegenden Arbeit verwendet.
@@ -532,8 +542,11 @@ Ausgabeformat und Nachverarbeitung werden damit Teil des Systems, und
 die Ausgabe kann formal fehlerhaft sein, etwa durch ungültige Indizes
 oder Typen außerhalb des Inventars~\cite{semin2026spanLabeling}.
 Verfahren des \emph{Constrained Decoding} binden die Erzeugung an eine
-formale Grammatik und schließen solche Fehler aus~\cite{willard2023outlines};
-alternativ wird frei generiert und die Ausgabe nachträglich geprüft.
+formale Grammatik. Syntax- und Schemafehler lassen sich dadurch nur
+ausschließen, soweit die betreffenden Regeln in der Grammatik kodiert
+sind~\cite{geng2023grammar}; ob die Entitäten inhaltlich stimmen und im
+Eingabetext vorkommen, bleibt ungesichert.
+Alternativ wird frei generiert und die Ausgabe nachträglich geprüft.
 Welche Ausgabestrategien untersucht wurden und wie sie abschneiden,
 behandelt Abschnitt~\ref{sec:llm_ner_related}; das Format dieser Arbeit
 beschreibt Abschnitt~\ref{sec:prompt-design}.
@@ -577,8 +590,9 @@ ergibt.
 $W_0$ bleibt eingefroren; trainiert werden nur $A$ und $B$.
 Der Rang $r$ bestimmt die Kapazität des Adapters und die Zahl der
 trainierbaren Parameter $r\,(d + k)$ anstelle von $d \cdot k$; die
-Konstante $\alpha$ skaliert den Beitrag des Adapters, sodass bei einer
-Änderung von $r$ die Lernrate nicht neu eingestellt werden muss.
+Konstante $\alpha$ skaliert den Beitrag des Adapters, was den Bedarf
+verringern kann, die Lernrate bei einer Änderung von $r$ neu
+abzustimmen~\cite[Abschn.~4.1]{hu2021lora}.
 Für eine quadratische Matrix mit $d = k = 4\,096$ und $r = 16$ ersetzt
 der Adapter rund 16{,}8~Mio. Gewichte durch rund 131\,000 trainierbare
 Parameter, also weniger als ein Prozent.
@@ -625,9 +639,9 @@ zurückgerechnet~\cite{dettmers2022llmint8}.
 Der Speicherbedarf sinkt entsprechend der Bitbreite, der Rundungsfehler
 hängt von der Verteilung der Gewichte und der Blockgröße ab.
 
-QLoRA verbindet beides: Das Basismodell wird quantisiert gespeichert und
-eingefroren, die LoRA-Adapter werden in 16-Bit-Präzision
-trainiert~\cite{dettmers2023qlora}.
+QLoRA verbindet beides: Das Basismodell wird eingefroren und mit 4~Bit
+gespeichert, gerechnet wird in 16~Bit, und die LoRA-Adapter werden in
+16-Bit-Präzision trainiert~\cite{dettmers2023qlora}.
 \textcite{dettmers2023qlora} führen dazu drei Komponenten ein.
 Der Datentyp \emph{4-Bit-NormalFloat} (NF4) legt seine 16 Stufen so
 fest, dass bei normalverteilten Gewichten in jede Stufe gleich viele
@@ -637,15 +651,17 @@ gleichabständige Stufen.
 Skalierungskonstanten der Blöcke, die bei kleinen Blöcken selbst
 spürbar Speicher belegen.
 \emph{Paged Optimizers} lagern die Optimiererzustände bei
-Speicherspitzen automatisch in den Hauptspeicher aus und verhindern so
-Abbrüche wegen Speichermangels.
+Speicherspitzen automatisch in den Hauptspeicher aus und verringern so
+das Risiko von Abbrüchen wegen Speichermangels.
 Im Vorwärts- und Rückwärtsdurchlauf werden die 4-Bit-Gewichte blockweise
 in den Rechendatentyp BFloat16 zurückgerechnet; die Gradienten fließen
 durch das eingefrorene quantisierte Modell, aktualisiert werden nur die
 Adapter.
 Mit diesem Verfahren lässt sich ein Modell mit 65~Mrd. Parametern auf
-einer einzelnen GPU mit 48~GB feinjustieren, ohne gegenüber dem
-16-Bit-Fine-Tuning an Aufgabenleistung zu verlieren~\cite{dettmers2023qlora}.
+einer einzelnen GPU mit 48~GB feinjustieren; auf den von
+\textcite{dettmers2023qlora} geprüften Benchmarks GLUE,
+Super-NaturalInstructions und MMLU bleibt die Aufgabenleistung des
+16-Bit-Fine-Tunings erhalten.
 Weitere Varianten verbinden LoRA mit quantisierungsbewusstem Training
 oder mit einer Zerlegung der Gewichte in einen quantisierten und einen
 Low-Rank-Anteil~\cite{xu2024qalora,guo2024lqlora}.
@@ -676,8 +692,9 @@ Faktoren begrenzend wirkt: die Zahl der Parameter ohne Embeddings $N$ mit
 $\alpha_N \approx 0{,}076$, der Datensatzumfang $D$ in Tokens mit
 $\alpha_D \approx 0{,}095$ und der optimal eingesetzte Rechenaufwand
 $C_{\min}$ mit $\alpha_C \approx 0{,}050$.
-Diese Beziehungen gelten über mehrere Größenordnungen, wie
-Abbildung~\ref{fig:skalierungsgesetz} zeigt.
+Diese Beziehungen gelten über mehrere Größenordnungen, nach
+\textcite{kaplan2020scaling} einzelne Trends über mehr als sieben;
+Abbildung~\ref{fig:skalierungsgesetz} zeigt sie schematisch.
 Größere Modelle sind zudem stichprobeneffizienter: Sie erreichen
 denselben Verlust mit weniger Trainingsschritten und weniger Daten.
 Bei festem Rechenbudget ist es daher am effizientesten, ein sehr großes
@@ -767,12 +784,14 @@ widerspricht.
 Die offiziellen Trainings-, Validierungs- und Testsplits sind damit ein
 \emph{Silver Standard} (im Folgenden Silberreferenz): Ihre Labels stammen nicht von Menschen, und auch
 die Testreferenz kann Fehler enthalten.
-Zusätzlich stellen die Autoren eine kleine, manuell geprüfte englische
-Teststichprobe bereit, auf der sie die Annotationsqualität je Typ
-messen; PER, ORG, LOC, CEL, DIS, EVE und MEDIA (Kürzel nach
-Tabelle~\ref{tab:datensplits}) gelten danach als
-zuverlässig annotiert, während ANIM, BIO, FOOD und PLANT häufig
-verwechselt oder nicht erkannt werden~\cite{tedeschi2022multinerd}.
+Zusätzlich messen die Autoren die Annotationsqualität je Typ auf
+1\,000 zufällig gezogenen, manuell geprüften englischen Sätzen mit
+mindestens 20 Instanzen pro Typ~\cite[Tab.~5]{tedeschi2022multinerd}.
+Danach gelten PER (Person), ORG (Organisation), LOC (Ort), CEL
+(Himmelskörper), DIS (Krankheit), EVE (Ereignis) und MEDIA (Medien,
+Werke) als zuverlässig annotiert, während ANIM (Tier), BIO (biologische
+Entität), FOOD (Lebensmittel) und PLANT (Pflanze) häufig verwechselt
+oder nicht erkannt werden~\cite{tedeschi2022multinerd}.
 Der englische Teil mit rund 164\,000 Sätzen bildet die Hauptdatenbasis
 dieser Arbeit (Abschnitt~\ref{sec:datenauswahl}).
 Da Wikipedia- und Wikinews-Texte mit hoher Wahrscheinlichkeit auch in
@@ -914,16 +933,17 @@ nicht definiert und wird in der Praxis als null gewertet.
 \textcite{hripcsak2005agreement} zeigen zudem, dass das F-Maß beim
 Vergleich zweier Annotationen der positiven spezifischen Übereinstimmung
 entspricht.
-Ein F$_1$-Score misst damit die Übereinstimmung mit der Referenz, nicht
-die Richtigkeit an sich; bei einer Silberreferenz wie MultiNERD ist
+Ein F$_1$-Score misst damit die Übereinstimmung mit der Referenz und
+nur mittelbar die Richtigkeit; bei einer Silberreferenz wie MultiNERD ist
 diese Lesart zu berücksichtigen.
 
 Neben der Erkennungsleistung erfasst diese Arbeit den Ressourcenbedarf.
 Übliche Kennzahlen sind die Trainingsdauer, die Latenz je Eingabe bei
 der Inferenz, der maximal belegte GPU-Speicher sowie die Zahl der
-gesamten und der trainierbaren Parameter, deren Verhältnis den
-Effizienzgewinn parameter-effizienter Verfahren
-beschreibt~\cite{hu2021lora,dettmers2023qlora}.
+gesamten und der trainierbaren Parameter, deren Verhältnis allein die
+Parameterreduktion durch parametereffiziente Verfahren quantifiziert;
+Speicherbedarf, Durchsatz und Trainingszeit sind gesondert zu
+messen~\cite{hu2021lora,dettmers2023qlora}.
 Diese Größen hängen von Hardware, numerischer Präzision und
 Implementierung ab und sind nur unter vergleichbaren Bedingungen
 interpretierbar; das Messprotokoll beschreibt
