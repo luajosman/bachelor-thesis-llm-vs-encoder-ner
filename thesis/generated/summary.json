@@ -18414,5 +18414,77 @@
     }
    }
   }
- }
+ },
+ "vorlaeufe": [
+  {
+   "run": "deberta-v3-base",
+   "label": "DeBERTa-v3-base",
+   "base": "deberta-base",
+   "note": "Latenzvorlauf auf A100; Arbeitskopie",
+   "f1": 0.9558498896247241,
+   "gpu": "NVIDIA A100-SXM4-80GB",
+   "commit": "cdf10db",
+   "dirty": true,
+   "epochs": 5,
+   "canonical_run": "deberta-v3-base-canonical",
+   "canonical_f1": 0.9548703682237936,
+   "delta": 0.0009795214009304942
+  },
+  {
+   "run": "deberta-v3-large",
+   "label": "DeBERTa-v3-large",
+   "base": "deberta-large",
+   "note": "",
+   "f1": 0.9583859253937123,
+   "gpu": "NVIDIA A100-SXM4-80GB",
+   "commit": "06b97be",
+   "dirty": false,
+   "epochs": 4,
+   "canonical_run": "deberta-v3-large-canonical",
+   "canonical_f1": 0.958300978412797,
+   "delta": 8.494698091521258e-05
+  },
+  {
+   "run": "qwen35-08b-qlora",
+   "label": "Qwen3.5-0.8B QLoRA",
+   "base": "qwen08-qlora",
+   "note": "",
+   "f1": 0.933155395062213,
+   "gpu": "NVIDIA A100-SXM4-80GB",
+   "commit": "4679bf1",
+   "dirty": false,
+   "epochs": 3,
+   "canonical_run": "qwen35-08b-qlora-canonical",
+   "canonical_f1": 0.9324199658468604,
+   "delta": 0.0007354292153526343
+  },
+  {
+   "run": "qwen35-4b-qlora",
+   "label": "Qwen3.5-4B QLoRA",
+   "base": "qwen4-qlora",
+   "note": "",
+   "f1": 0.9404511809632262,
+   "gpu": "NVIDIA A100-SXM4-80GB",
+   "commit": "137bffd",
+   "dirty": false,
+   "epochs": 3,
+   "canonical_run": "qwen35-4b-qlora-canonical",
+   "canonical_f1": 0.939265066144047,
+   "delta": 0.0011861148191791848
+  },
+  {
+   "run": "qwen35-27b-qlora",
+   "label": "Qwen3.5-27B QLoRA",
+   "base": "qwen27-qlora",
+   "note": "zwei Epochen; Arbeitskopie",
+   "f1": 0.9453611884137497,
+   "gpu": "NVIDIA H100 NVL",
+   "commit": "137bffd",
+   "dirty": true,
+   "epochs": 2,
+   "canonical_run": "qwen35-27b-qlora-3ep",
+   "canonical_f1": 0.9453373678626164,
+   "delta": 2.3820551133368895e-05
+  }
+ ]
 }

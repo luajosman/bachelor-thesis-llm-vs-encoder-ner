@@ -490,7 +490,10 @@ def training_time_profile(run_dir: Path, res, meta, sacct, is_llm: bool):
     logged = res.get("train_runtime_seconds")
     resumed = bool(res.get("resumed"))
     resume_step = int(re.search(r"checkpoint-(\d+)", res["resume_checkpoint"]).group(1)) if resumed else 0
-    hist = load_json(run_dir / "training_history.json")
+    hist_path = run_dir / "training_history.json"
+    if not hist_path.exists():          # explorative Vorlaeufe ohne Trainingsprotokoll
+        return None
+    hist = load_json(hist_path)
     total_steps = max(e["step"] for e in hist if "step" in e)
     if is_llm and total_steps != TOTAL_STEPS_QLORA:
         sys.exit(f"ABBRUCH: Schrittzahl {run_dir.name}: {total_steps} != {TOTAL_STEPS_QLORA}")
@@ -1317,8 +1320,8 @@ def tab_app_typen_prf(G):
     cols = ["deberta-large", "qwen27-qlora", "qwen27-zs"]
     lines = ["\\begin{tabular}{lrrrrrrrrrr}", "    \\toprule",
              "    & & \\multicolumn{3}{c}{\\textbf{DeBERTa-v3-large}} &",
-             "      \\multicolumn{3}{c}{\\textbf{Qwen3.5-27B QLoRA}} &",
-             "      \\multicolumn{3}{c}{\\textbf{Qwen3.5-27B Zero-Shot}} \\\\",
+             "      \\multicolumn{3}{c}{\\textbf{Qwen3.5-27B (QLoRA)}} &",
+             "      \\multicolumn{3}{c}{\\textbf{Qwen3.5-27B (Zero-Shot)}} \\\\",
              "    \\cmidrule(lr){3-5}\\cmidrule(lr){6-8}\\cmidrule(lr){9-11}",
              "    \\textbf{Typ} & \\textbf{Support} & P & R & F$_1$ & P & R & F$_1$ & P & R & F$_1$ \\\\",
              "    \\midrule"]
@@ -1517,16 +1520,16 @@ def tab_synthese(G, C, boot):
                           ("1\\,024", "qwen27-qlora-1024", "qwen27-qlora-1024->deberta-large")):
         if key in G and pk in boot["pairs"]:
             p = boot["pairs"][pk]          # diff = Encoder - LLM
-            rows.append(("MultiNERD, 15 Typen", size, enc, G[key]["agg"]["f1"]["mean"] * 100, p["diff"], p["ci"]))
+            rows.append(("MultiNERD (15 Typen)", size, enc, G[key]["agg"]["f1"]["mean"] * 100, p["diff"], p["ci"]))
     cb = C["bootstrap"]["domains"]["pooled_micro"]
     for size, key in (("256", "qwen27-qlora"), ("1\\,024", "qwen27-qlora-1024")):
         if key in cb["pairs"]:
             p = cb["pairs"][key]           # diff = LLM - Encoder, daher Vorzeichen umkehren
-            rows.append(("CrossNER, PER/ORG/LOC gepoolt", size, cb["configs"]["deberta-large"], cb["configs"][key],
+            rows.append(("CrossNER (PER/ORG/LOC)", size, cb["configs"]["deberta-large"], cb["configs"][key],
                          -p["diff"], [-p["ci"][1], -p["ci"][0]]))
     lines = ["\\begin{tabular}{llrrrl}", "    \\toprule",
-             "    \\textbf{Bedingung} & \\textbf{Limit} & \\textbf{DeBERTa-v3-large} & \\textbf{Qwen3.5-27B} &",
-             "      $\\Delta$ \\textbf{(Encoder $-$ LLM)} & \\textbf{95\\,\\%-KI} \\\\", "    \\midrule"]
+             "    \\textbf{Bedingung} & \\textbf{Limit} & \\textbf{Encoder} & \\textbf{LLM} &",
+             "      $\\Delta$ \\textbf{(Enc.\\ $-$ LLM)} & \\textbf{95\\,\\%-KI} \\\\", "    \\midrule"]
     last = None
     for cond, size, e, l, d, ci in rows:
         if last is not None and cond != last:
@@ -1534,9 +1537,60 @@ def tab_synthese(G, C, boot):
         lines.append(f"    {cond if cond != last else ''} & {size} & {de(e, 2)} & {de(l, 2)} & {signed(d, 2)} & {interval(*ci)} \\\\")
         last = cond
     lines.append("    \\bottomrule")
-    lines += note_rows("$^{\\dagger}$ Intervall schlie\\ss{}t 0 ein. Mikro-F$_1$, Seed-Mittel; MultiNERD: seedgleich "
-                       "gepaartes Satz-Bootstrap, CrossNER: nach Dom\\\"ane geschichtetes gepaartes Satz-Bootstrap "
-                       f"($B = {fmt_int(boot['settings']['B'])}$). Die Encoderwerte h\\\"angen nicht vom Ausgabelimit ab.", 6)
+    dagger = "$^{\\dagger}$ Intervall schlie\\ss{}t 0 ein. " if any(ci[0] <= 0 <= ci[1] for *_, ci in rows) else ""
+    lines += note_rows(dagger + "Encoder: DeBERTa-v3-large; LLM: Qwen3.5-27B (QLoRA). Mikro-F$_1$, Seed-Mittel; "
+                       "MultiNERD: seedgleich gepaartes Satz-Bootstrap, CrossNER: nach Dom\\\"ane geschichtetes "
+                       f"gepaartes Satz-Bootstrap ($B = {fmt_int(boot['settings']['B'])}$). Die Encoderwerte "
+                       "h\\\"angen nicht vom Ausgabelimit ab.", 6, width=88)
+    lines += ["\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
+VORLAEUFE = [
+    # (Laufordner, Bezeichnung, LLM?, Gruppe der Hauptstudie, Bemerkung)
+    ("deberta-v3-base", "DeBERTa-v3-base", False, "deberta-base", "Latenzvorlauf auf A100; Arbeitskopie"),
+    ("deberta-v3-large", "DeBERTa-v3-large", False, "deberta-large", ""),
+    ("qwen35-08b-qlora", "Qwen3.5-0.8B QLoRA", True, "qwen08-qlora", ""),
+    ("qwen35-4b-qlora", "Qwen3.5-4B QLoRA", True, "qwen4-qlora", ""),
+    ("qwen35-27b-qlora", "Qwen3.5-27B QLoRA", True, "qwen27-qlora", "zwei Epochen; Arbeitskopie"),
+]
+
+
+def analyse_vorlaeufe(G):
+    """Explorative Vorlaeufe (ein Lauf je Konfiguration, Seed 42) gegen den Seed-42-Lauf der Hauptstudie."""
+    out = []
+    for run_dir, label, is_llm, base, note in VORLAEUFE:
+        path = RES / "multinerd" / run_dir
+        if not (path / "test_predictions.json").exists():
+            print(f"  Hinweis: Vorlauf {run_dir} fehlt; uebersprungen")
+            continue
+        r = analyse_multinerd_run(path, is_llm)
+        im = load_yaml(path / "inference_metrics.yaml")
+        git = im.get("run_metadata", {}).get("git", {})
+        res_path = path / "results.yaml"
+        res = load_yaml(res_path) if res_path.exists() else {}
+        epochs = res.get("best_epoch") or res.get("num_train_epochs")
+        canonical = G[base]["runs"][0]
+        out.append(dict(run=run_dir, label=label, base=base, note=note, f1=r["f1"], gpu=r.get("gpu"),
+                        commit=(git.get("commit") or "")[:7], dirty=bool(git.get("dirty")), epochs=epochs,
+                        canonical_run=canonical["name"], canonical_f1=canonical["f1"],
+                        delta=r["f1"] - canonical["f1"]))
+    return out
+
+
+def tab_app_vorlaeufe(V):
+    lines = ["\\begin{tabular}{llllrrr}", "    \\toprule",
+             "    \\textbf{Vorlauf} & \\textbf{Commit} & \\textbf{GPU} & \\textbf{Epochen} & \\textbf{Mikro-F$_1$} &",
+             "      \\textbf{Hauptstudie} & $\\Delta$ \\\\", "    \\midrule"]
+    for v in V:
+        gpu = (v["gpu"] or "--").replace("NVIDIA ", "").replace("-SXM4-80GB", "").replace(" 80GB HBM3", " HBM3")
+        commit = f"\\texttt{{{v['commit']}}}" + ("$^{a}$" if v["dirty"] else "")
+        lines.append(f"    {v['label']} & {commit} & {gpu} & {v['epochs'] if v['epochs'] is not None else '--'} & "
+                     f"{de(v['f1'] * 100, 2)} & {de(v['canonical_f1'] * 100, 2)} & {signed(v['delta'] * 100, 2)} \\\\")
+    lines.append("    \\bottomrule")
+    lines += note_rows("$^{a}$ Arbeitskopie mit lokalen, nicht erhaltenen \\\"Anderungen. Epochen: gew\\\"ahlte Epoche "
+                       "(QLoRA) bzw. trainierte Epochen (Encoder); Hauptstudie: Seed-42-Lauf; $\\Delta$ = Vorlauf minus "
+                       "Hauptstudie.", 7, width=88)
     lines += ["\\end{tabular}", ""]
     return "\n".join(lines)
 
@@ -1739,6 +1793,9 @@ def main():
         write(OUT / "tab-limit-multinerd.tex", tab_limit_multinerd(G, L))
         write(OUT / "tab-app-limit-seeds.tex", tab_app_limit_seeds(G, L))
     write(OUT / "tab-synthese.tex", tab_synthese(G, C, boot))
+    V = analyse_vorlaeufe(G)
+    if V:
+        write(OUT / "tab-app-vorlaeufe.tex", tab_app_vorlaeufe(V))
     d_typen, d_groesse, d_tradeoff = fig_data(G)
     write(OUT / "fig-typen.dat", d_typen)
     write(OUT / "fig-groesse.dat", d_groesse)
@@ -1795,6 +1852,7 @@ def main():
         bootstrap=boot,
         output_limit_multinerd=dict(available=list(L), missing=[k for k in LIMIT_GROUPS if k not in L], per_size=L,
                                     encoder_subset=encoder_subset),
+        vorlaeufe=V,
     )
 
     def default(o):

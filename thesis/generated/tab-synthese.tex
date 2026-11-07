@@ -1,15 +1,16 @@
 \begin{tabular}{llrrrl}
     \toprule
-    \textbf{Bedingung} & \textbf{Limit} & \textbf{DeBERTa-v3-large} & \textbf{Qwen3.5-27B} &
-      $\Delta$ \textbf{(Encoder $-$ LLM)} & \textbf{95\,\%-KI} \\
+    \textbf{Bedingung} & \textbf{Limit} & \textbf{Encoder} & \textbf{LLM} &
+      $\Delta$ \textbf{(Enc.\ $-$ LLM)} & \textbf{95\,\%-KI} \\
     \midrule
-    MultiNERD, 15 Typen & 256 & 95,82 & 94,48 & $+$1,34 & [$+$0,99; $+$1,68] \\
+    MultiNERD (15 Typen) & 256 & 95,82 & 94,48 & $+$1,34 & [$+$0,99; $+$1,68] \\
      & 1\,024 & 95,82 & 95,64 & $+$0,18 & [$+$0,02; $+$0,33] \\
     \midrule
-    CrossNER, PER/ORG/LOC gepoolt & 256 & 84,99 & 71,69 & $+$13,29 & [$+$11,28; $+$15,45] \\
+    CrossNER (PER/ORG/LOC) & 256 & 84,99 & 71,69 & $+$13,29 & [$+$11,28; $+$15,45] \\
      & 1\,024 & 84,99 & 87,12 & $-$2,13 & [$-$2,80; $-$1,47] \\
     \bottomrule
-    \multicolumn{6}{@{}l}{\scriptsize $^{\dagger}$ Intervall schlie\ss{}t 0 ein. Mikro-F$_1$, Seed-Mittel; MultiNERD: seedgleich gepaartes} \\
-    \multicolumn{6}{@{}l}{\scriptsize Satz-Bootstrap, CrossNER: nach Dom\"ane geschichtetes gepaartes Satz-Bootstrap ($B = 2\,000$). Die} \\
-    \multicolumn{6}{@{}l}{\scriptsize Encoderwerte h\"angen nicht vom Ausgabelimit ab.} \\
+    \multicolumn{6}{@{}l}{\scriptsize Encoder: DeBERTa-v3-large; LLM: Qwen3.5-27B (QLoRA). Mikro-F$_1$, Seed-Mittel;} \\
+    \multicolumn{6}{@{}l}{\scriptsize MultiNERD: seedgleich gepaartes Satz-Bootstrap, CrossNER: nach Dom\"ane geschichtetes} \\
+    \multicolumn{6}{@{}l}{\scriptsize gepaartes Satz-Bootstrap ($B = 2\,000$). Die Encoderwerte h\"angen nicht vom} \\
+    \multicolumn{6}{@{}l}{\scriptsize Ausgabelimit ab.} \\
 \end{tabular}
