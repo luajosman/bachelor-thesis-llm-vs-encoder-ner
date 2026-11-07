@@ -248,8 +248,7 @@ Drittens stehen offizielle \texttt{train}-, \texttt{validation}- und
 \texttt{test}-Splits zur Verfügung \cite{tedeschi2022multinerd}, die
 künftigen Arbeiten einen festen Bezugspunkt bieten.
 Veröffentlichte MultiNERD-Werte beruhen dagegen auf eigener Aufbereitung
-(UniversalNER übernimmt die aus InstructUIE stammende Aufbereitung mit
-10\,000 Testbeispielen je Datensatz
+(InstructUIE und UniversalNER: Testsplit mit 10\,000 Beispielen
 \cite{wang2023instructuie,zhou2024universalner}) oder
 einem abweichenden Testumfang (GoLLIE: 32\,908 Testbeispiele, etwa das
 Doppelte des englischen Testsplits \cite[Tab.~9]{sainz2024gollie});
@@ -1313,9 +1312,10 @@ Ob die nicht parsebaren Antworten ausnahmslos auf dieses Limit
 zurückgehen und wie stark Recall und F$_1$ des LLM dadurch unterschätzt
 werden, prüft Abschnitt~\ref{sec:erg-crossner}.
 Eine Vorstudie auf den jeweils ersten 25 Sätzen der Domänen Musik und
-Politik, einer nicht repräsentativen Stichprobe, ging dem vollständigen
-Neulauf mit 1\,024 Ausgabetokens voraus (Anhang~\ref{app:durchfuehrung}).
-Anschließend wurde die Inferenz des 27B-Modells mit 1\,024 Ausgabetokens
+Politik, einer nicht repräsentativen Stichprobe, gab den Anlass für
+einen vollständigen Neulauf mit 1\,024 Ausgabetokens
+(Anhang~\ref{app:durchfuehrung}).
+Dazu wurde die Inferenz des 27B-Modells mit 1\,024 Ausgabetokens
 für alle drei Seeds auf allen 2\,506 Sätzen der fünf Domänen wiederholt;
 Prompt, Parser, Typabbildung und Greedy-Decoding blieben unverändert, nur
 das Limit wurde angehoben.

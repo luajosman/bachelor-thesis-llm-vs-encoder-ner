@@ -22,6 +22,9 @@ Zero-Shot-Läufe ist als Tag \texttt{zeroshot-runs-137bffd} markiert).
 Konfigurationsdateien liegen dort unter \texttt{ba-ner/configs/}, die
 Auswertung unter \texttt{thesis/scripts/aggregate\_results.py} mit den
 Kennzahlen in \texttt{thesis/generated/summary.json}.
+Das Skript erzeugt alle Tabellenkörper aus den Laufartefakten, berechnet
+die strikten Werte unabhängig neu und bricht ab, wenn sie von den in den
+Läufen gespeicherten Werten abweichen.
 Die Laufartefakte selbst (Vorhersagen, Metriken, Adapter; rund 2~GB ohne
 Modellgewichte) liegen relativ zum Ergebnisverzeichnis unter
 \texttt{results/multinerd/} bzw. \texttt{results/crossner/} und werden

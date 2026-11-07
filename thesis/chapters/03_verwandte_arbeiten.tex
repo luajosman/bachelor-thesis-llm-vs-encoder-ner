@@ -221,8 +221,9 @@ Zeichenpositionen der generativen Arbeitsweise der Modelle schlecht
 entspricht.
 Für materialwissenschaftliche Extraktion mit feinjustiertem GPT-3 und
 LoRA-angepasstem Llama-2 berichten \textcite{dagdelen2024structuredIE},
-dass JSON-Ausgaben in rund 99\,\% der Fälle parsebar sind, JSON aber
-mehr Tokens benötigt als satzförmige Schemata.
+dass JSON-Ausgaben in rund 99\,\% der Fälle parsebar sind, obwohl das
+Format bei der Generierung nicht erzwungen wird; JSON benötigt aber
+mehr Tokens als satzförmige Schemata.
 Auf die Kosten der Ausgabelänge weisen \textcite{lu2024padellm} hin: Die
 Latenz generativer NER entsteht vor allem durch die sequenzielle
 Dekodierung langer Ausgaben, und Inline-Formate verlängern die Ausgabe,
@@ -646,7 +647,7 @@ Die erste Lücke betrifft Datenbasis und Pipeline, die ersten beiden der
 vier Aspekte aus Abschnitt~\ref{sec:problem_ziel}.
 Die direkten Vergleiche verwenden allgemeine Benchmarks wie CoNLL-2003
 mit vier und OntoNotes mit 18 Typen aus mehreren Genres wie
-Nachrichten, Rundfunk, Gesprächen und Webtexten~\cite{weischedel2013ontonotes}
+Nachrichten, Rundfunk, Gesprächen und Webtexten~\cite{weischedel2013ontonotes,li2018survey}
 oder Fachkorpora wie die biomedizinischen Datensätze bei
 \textcite{obeidat2025llm}.
 MultiCoNER~II bei \textcite{tan2023damo} ist mit 33 Typen zwar

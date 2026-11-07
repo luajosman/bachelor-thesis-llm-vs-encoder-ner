@@ -323,8 +323,8 @@ erfundene Bezeichnungen wie \texttt{EVENT}, \texttt{PLACE},
 \texttt{PERSON}, \texttt{N/A}, \texttt{PUNCT} und \texttt{NOUN}.
 Das 4B-Modell erzeugt überwiegend gültiges JSON, verwirft aber Tausende
 Elemente wegen Text-Abweichungen und gibt häufig leere Arrays aus: Für
-61\,\% des Testsplits bleibt kein übernommener Span übrig, was seinen
-niedrigen Recall erklärt.
+61\,\% des Testsplits bleibt kein übernommener Span übrig; das ist die
+Hauptursache seines niedrigen Recalls.
 Das 27B-Modell hält Syntax und Typinventar fast ein (unbekannte Typen
 wie \texttt{MED}, \texttt{DRUG} oder \texttt{PRODUCT} sind selten),
 verliert aber 3\,397 Elemente durch Text-Abweichungen. Text- und
@@ -519,9 +519,11 @@ erhöht ist; der explorative Vorlauf mit zwei Epochen allein auf dem
 Knoten brauchte 70,8~h für zwei Drittel der Schritte.
 Selbst das kleinste Adaptertraining dauert rund das 28-Fache des
 vollständigen Fine-Tunings von DeBERTa-v3-base, obwohl es nur 6,4~Mio.
-Parameter aktualisiert; der Aufwand entsteht durch die Vorwärts- und
-Rückwärtsdurchläufe durch das vollständige Basismodell und die längeren
-Sequenzen mit Prompt.
+Parameter aktualisiert; der Aufwand entsteht vor allem durch die
+Vorwärts- und Rückwärtsdurchläufe durch das vollständige Basismodell und
+die längeren Sequenzen mit Prompt.
+Hinzu kommt die generative Validierung auf 200 Sätzen je Epoche, die bei
+den Encodern entfällt.
 Auch die Testinferenz über die 16\,454 Sätze ist aufwendig: Sie dauerte
 für die Encoder rund 3 bzw. 5,5 Minuten, für die QLoRA-Modelle 8,6 bis
 25,2~h (Tabelle~\ref{tab:effizienz}).
@@ -899,8 +901,9 @@ Effekt der Modellarchitektur.
 Unabhängig von der Richtung ist der Abstand zwischen den trainierten
 Konfigurationen klein im Verhältnis zum Abstand zwischen den Regimen:
 Die QLoRA-Konfigurationen erreichen 25 bis 87 Punkte mehr als die
-Zero-Shot-Konfigurationen (zur Zerlegung dieses Abstands
-Abschnitt~\ref{sec:disk-validitaet}).
+Zero-Shot-Konfigurationen; wegen gleichzeitiger Unterschiede in Prompt,
+Decoding und Präzision ist das kein isolierter Anpassungseffekt
+(Abschnitt~\ref{sec:disk-validitaet}).
 Der beobachtete Abstand passt zu den Ergebnissen, die
 \textcite{keraghel2024recent} mit GPT-4o und Beispielentitäten im Prompt
 (65{,}17 gegenüber 90{,}98 auf CoNLL-2003) und \textcite{tan2023damo}
@@ -931,7 +934,8 @@ Für diese Typen berichten \textcite{tedeschi2022multinerd} auf ihrer
 manuell geprüften Stichprobe F$_1$-Werte der Annotation zwischen 0{,}52
 und 0{,}71.
 Die Fehleranalyse stützt diesen Vorbehalt an Beispielen, nicht
-quantitativ: Unter den häufigsten Zusätzen finden sich Spans, die nach
+quantitativ: Unter den häufigsten Zusätzen finden sich in einer
+illustrativen Durchsicht Spans, die nach
 den Richtlinien des Datensatzes Entitäten wären, in der Referenz aber
 fehlen (Abschnitt~\ref{sec:erg-fehlertypen}). Ein Teil der betrachteten
 Typfehler folgt Referenzentscheidungen wie der Annotation einer Band als
@@ -988,7 +992,7 @@ Dazu kommt beim 4B-Modell die Neigung, leere Arrays auszugeben, und beim
 abweicht.
 Unter den gewählten Sampling-Bedingungen (Temperatur 1,0) und für einen
 Einzellauf zeigt das, dass Formatvorgabe und Typinventar ohne
-Training zum Flaschenhals werden, wie es \textcite{lu2024llmstruggle} für
+Training die Leistung begrenzen, wie es \textcite{lu2024llmstruggle} für
 NER auf Tokenebene beschreiben (zur Sampling-Streuung
 Abschnitt~\ref{sec:limitationen}). Die Nachverarbeitung aus
 Abschnitt~\ref{sec:postprocessing} rettet gültige Elemente, repariert
