@@ -705,8 +705,7 @@ Die vorliegende Arbeit vergleicht drei Größen einer LLM-Familie zwischen
 zwei Encoder-Größen derselben Architektur und erfasst für jede
 Konfiguration Leistung und Ressourcen sowie für die LLM-Ausgaben die
 Formtreue.
-Sie adressiert damit FF2, die Veränderung von Erkennungsleistung und
-Ressourcenbedarf mit der Modellgröße, und liefert die Grundlage für die
+Sie adressiert damit FF2 und liefert die Grundlage für die
 größenbezogenen Empfehlungen in FF3.
 
 Eine erste Einschränkung betrifft eine mögliche Datenkontamination.
@@ -722,15 +721,15 @@ enthalten sein dürfte.
 Ihr Befund, dass die Ergebnisse nicht von den Typbezeichnungen abhängen,
 spricht gegen eine Memorisierung von Entität-Typ-Paaren, gilt aber für
 CoNLL-2003 und CleanCoNLL; für MultiNERD bleibt die Frage offen.
-Zu bedenken ist dabei, dass die Referenz eine automatisch erzeugte
-Silberreferenz ist: Ein Modell, das den Wikipedia-Text kennt, kennt damit noch
+Die Referenz ist allerdings eine automatisch erzeugte Silberreferenz:
+Ein Modell, das den Wikipedia-Text kennt, kennt damit noch
 nicht die hier verwendeten Labels, auch wenn der Datensatz selbst seit
 2022 öffentlich verfügbar ist.
 Im QLoRA-Regime lernen alle Modelle das Typinventar ohnehin aus den
 Trainingsdaten; im Zero-Shot-Regime könnte Vorwissen über die Artikel die
 Ergebnisse dagegen begünstigen.
-Die Arbeit kann diese Frage nicht klären und berücksichtigt sie bei der
-Interpretation der Zero-Shot-Ergebnisse.
+Die Arbeit kann diese Frage nicht klären und berücksichtigt sie bei den
+Zero-Shot-Ergebnissen.
 
 Die zweite Einschränkung betrifft die Vergleichsbedingungen: Die Arbeit
 hält nicht alle Bedingungen konstant und vergleicht deshalb konkrete
@@ -741,8 +740,8 @@ Abschnitt~\ref{sec:validitaet} in Tabelle~\ref{tab:abweichungen} aus.
 Literatur: \textcite{obeidat2025llm} betreiben die LLMs auf zwei und
 die Encoder auf einer GPU, \textcite{zhan2026generativeNER} berichten
 Trainingskosten, aber keine Inferenzbedingungen; der
-CrossNER-Ergänzungsversuch (Abschnitt~\ref{sec:crossner}) ist ein reiner
-Transfertest zur Einordnung, nicht zum Benchmark-Vergleich.
+CrossNER-Ergänzungsversuch (Abschnitt~\ref{sec:crossner}) dient nur als
+Transfertest zur Einordnung.
 
 Aus der Literatur folgen drei Erwartungen als Lesehilfe, die
 Kapitel~\ref{chap:fazit} je Forschungsfrage mit den Befunden abgleicht;
