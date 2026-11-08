@@ -22,8 +22,8 @@ wenn keine begutachtete Fassung vorliegt und die Arbeit unmittelbar
 einschlägig ist.
 Die Auswahl beruht auf einer narrativen Recherche in Google Scholar,
 arXiv und der ACL Anthology (2019 bis 2025, ergänzt um zwei Preprints
-aus 2026~\cite{zhan2026generativeNER,semin2026spanLabeling}) mit
-Stichwörtern wie
+aus 2026~\cite{zhan2026generativeNER,semin2026spanLabeling} und eine
+gezielte Nachsuche vom 8.~November 2026) mit Stichwörtern wie
 \enquote{LLM named entity recognition}, \enquote{generative NER},
 \enquote{instruction tuning NER}, \enquote{LoRA/QLoRA NER},
 \enquote{DeBERTa NER}, \enquote{MultiNERD} und \enquote{CrossNER}.
@@ -219,6 +219,12 @@ dort im Mittel auf rund 54 fällt.
 Die Autoren führen dies darauf zurück, dass das Berechnen von
 Zeichenpositionen der generativen Arbeitsweise der Modelle schlecht
 entspricht.
+\textcite{ravikumar2026lostformatting} trainieren Modelle mit 3 bis 32~Mrd.
+Parametern per QLoRA auf sechs Ausgabeformaten, darunter JSON mit
+Spantext, Inline-XML und spaltenweise BIO-Tags, und werten für NER unter
+anderem OntoNotes~5.0 mit strikter Mikro-F$_1$ aus.
+Allein das Format verschiebt F$_1$ teils um mehr als 40\,\%, kein Format
+liegt durchgängig vorn, und ein Indexformat prüfen sie nicht.
 Für materialwissenschaftliche Extraktion mit feinjustiertem GPT-3 und
 LoRA-angepasstem Llama-2 berichten \textcite{dagdelen2024structuredIE},
 dass JSON-Ausgaben in rund 99\,\% der Fälle parsebar sind, obwohl das

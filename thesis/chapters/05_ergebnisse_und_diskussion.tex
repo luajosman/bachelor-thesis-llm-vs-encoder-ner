@@ -877,15 +877,13 @@ Typfehler folgt Referenzentscheidungen wie der Annotation einer Band als
 PER.
 % Quelle: ba-ner/scripts/check_sample.py (population.json); Seed 42, strikte Spans nach IOB2,
 % 27B mit den zusammengeführten 1024-Token-Vorhersagen.
-Eine Auszählung auf Span-Ebene zeigt die Größenordnung, ohne zu
-entscheiden, welche Seite richtig liegt: Für Seed~42 trifft auf dem
-Testsplit nur DeBERTa-v3-large 319 Referenzspans exakt in Grenzen und
-Typ, nur das 27B-Modell mit 1\,024 Tokens 331.
-In 699 Fällen sagen dagegen beide Modelle übereinstimmend einen Span
-vorher, den die Referenz in dieser Form nicht enthält; drei Viertel davon
-(530) betreffen ANIM, BIO, FOOD und PLANT.
-Ob dahinter Annotationsfehler oder gemeinsame Modellfehler stehen, wurde
-nicht manuell geprüft.
+Auf Span-Ebene (Seed~42) trifft nur DeBERTa-v3-large 319 Referenzspans
+exakt in Grenzen und Typ, nur das 27B-Modell mit 1\,024 Tokens 331; in
+699 Fällen sagen beide Modelle übereinstimmend einen Span vorher, den die
+Referenz so nicht enthält, zu drei Vierteln (530) aus ANIM, BIO, FOOD und
+PLANT.
+Ob das Annotations- oder gemeinsame Modellfehler sind, wurde nicht
+manuell geprüft.
 Für die Zero-Shot-Werte kommt die in Abschnitt~\ref{sec:research_gap}
 offen gelassene Frage der Datenkontamination hinzu. Die Modellkarten von
 Qwen3.5 nennen keine Vortrainingsdaten \cite{qwen2026card27b}, sodass
@@ -1032,12 +1030,11 @@ Ressourcenwerten des 256er-Laufs zu einer neuen Pareto-Aussage
 kombiniert. DeBERTa-v3-large bleibt auf MultiNERD im Mikro-F$_1$ knapp vorn.
 
 Nach den Ressourcenschwellen (Abschnitt~\ref{sec:effizienzmetriken},
-Werte in Tabelle~\ref{tab:effizienz}) lässt eine Latenzgrenze ab
-8,9~ms DeBERTa-v3-base zu, ab 16,5~ms DeBERTa-v3-large, ab 1,9~s das
-erste LLM (Qwen3.5-0.8B, QLoRA) und ab 5,5~s alle LLMs. Beim Speicher
-liegen die Schwellen der trainierten Konfigurationen bei 0,7
-(DeBERTa-v3-base), 0,9 (0.8B), 1,7 (DeBERTa-v3-large), 3,5 (4B) und
-18,7~GiB (27B).
+Tabelle~\ref{tab:effizienz}) lässt eine Latenzgrenze ab 8,9~ms
+DeBERTa-v3-base zu, ab 16,5~ms DeBERTa-v3-large, ab 1,9~s das erste LLM
+(Qwen3.5-0.8B, QLoRA) und ab 5,5~s alle LLMs; die Speicherschwellen der
+trainierten Konfigurationen liegen bei 0,7 (DeBERTa-v3-base), 0,9 (0.8B),
+1,7 (DeBERTa-v3-large), 3,5 (4B) und 18,7~GiB (27B).
 Auf MultiNERD ist damit unter jeder Kombination von Grenzen, die
 überhaupt eine Konfiguration zulässt, ein Encoder die beste gemessene
 Wahl. DeBERTa-v3-base ist überall zulässig, wo ein LLM es ist, und liegt
@@ -1061,15 +1058,20 @@ Hinweise. Eine gleichwertige Makro-Leistung wurde nicht nachgewiesen;
 eine Änderung des Typinventars per Prompt wurde nicht untersucht (Prompt
 unverändert, CrossNER-Typen per Tabelle abgebildet).
 
-Für die Umkehr auf CrossNER kommen neben dem Ausgabelimit weitere,
-ungeprüfte Erklärungen in Betracht: Vortrainingswissen des LLM über die
+Für die Umkehr auf CrossNER kommen neben dem Ausgabelimit weitere
+Erklärungen in Betracht: Vortrainingswissen des LLM über die
 Wikipedia-nahen CrossNER-Entitäten und die Abbildung der feinen
-CrossNER-Typen auf PER, ORG und LOC (Abschnitt~\ref{sec:crossner}). Bei
-dieser Abbildung dürften nicht abgebildete Fachtypen als Zusätze zählen;
-domänenweise ausgezählt wurden sie nicht.
-Hinzu kommen die manuelle Annotation von CrossNER gegenüber der
-Silberreferenz von MultiNERD und die Neuinferenz allein des LLM mit dem
-höheren Limit; trennen lassen sich diese Vermutungen hier nicht
+CrossNER-Typen auf PER, ORG und LOC (Abschnitt~\ref{sec:crossner}).
+% Quelle: ba-ner/scripts/crossner_unmapped_fp.py (Mittel über die Seeds 42, 123, 456).
+Gepoolt erreichen beide Modelle denselben Recall (85,5); der Vorsprung
+des LLM entsteht allein in der Precision (88,8 gegenüber 84,5).
+Von den falsch positiven Spans liegen beim LLM 53\,\%, beim Encoder
+61\,\% ganz oder teilweise auf Entitäten nicht abgebildeter Typen (je
+Domäne 33 bis 79\,\%); ohne sie schrumpfte der Abstand von 2,1 auf 0,5
+Punkte, sofern man auch Teilspans solcher Entitäten nicht als Fehler
+wertet.
+Vortrainingswissen, die manuelle Annotation von CrossNER und die
+Neuinferenz allein des LLM lassen sich davon nicht trennen
 (Abschnitt~\ref{sec:limitationen}).
 
 Die Zero-Shot-Konfigurationen erreichen in der gewählten Pipeline

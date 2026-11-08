@@ -95,6 +95,9 @@ Auf CrossNER liegt Qwen3.5-27B bei 1\,024 Tokens mit 87,1 Punkten vor
 DeBERTa-v3-large mit 85,0 und ist ab rund 12,9~s je Satz und 18,6~GiB
 die beste gemessene Wahl; DeBERTa-v3-large benötigt 25,7~ms auf demselben
 GPU-Typ.
+Rund drei Viertel dieses Vorsprungs gehen allerdings auf Vorhersagen für
+Entitäten nicht abgebildeter CrossNER-Typen zurück, die als Fehler zählen
+(Abschnitt~\ref{sec:disk-effizienz}).
 Das LLM rechtfertigt seinen Mehraufwand damit nur unter ähnlichen
 Transferbedingungen und bei einer Latenztoleranz von mehreren Sekunden
 je Satz.
