@@ -875,6 +875,17 @@ den Richtlinien des Datensatzes Entitäten wären
 (Abschnitt~\ref{sec:erg-fehlertypen}). Ein Teil der betrachteten
 Typfehler folgt Referenzentscheidungen wie der Annotation einer Band als
 PER.
+% Quelle: ba-ner/scripts/check_sample.py (population.json); Seed 42, strikte Spans nach IOB2,
+% 27B mit den zusammengeführten 1024-Token-Vorhersagen.
+Eine Auszählung auf Span-Ebene zeigt die Größenordnung, ohne zu
+entscheiden, welche Seite richtig liegt: Für Seed~42 trifft auf dem
+Testsplit nur DeBERTa-v3-large 319 Referenzspans exakt in Grenzen und
+Typ, nur das 27B-Modell mit 1\,024 Tokens 331.
+In 699 Fällen sagen dagegen beide Modelle übereinstimmend einen Span
+vorher, den die Referenz in dieser Form nicht enthält; drei Viertel davon
+(530) betreffen ANIM, BIO, FOOD und PLANT.
+Ob dahinter Annotationsfehler oder gemeinsame Modellfehler stehen, wurde
+nicht manuell geprüft.
 Für die Zero-Shot-Werte kommt die in Abschnitt~\ref{sec:research_gap}
 offen gelassene Frage der Datenkontamination hinzu. Die Modellkarten von
 Qwen3.5 nennen keine Vortrainingsdaten \cite{qwen2026card27b}, sodass
