@@ -27,12 +27,13 @@ Halten Sie dieses Vorgehen für ausreichend? Falls Sie den vollständigen Neulau
 
 **Weitere Fragen, gern bis 15. November:**
 
-1. Reicht die Offenlegung der früheren Testnutzung (Tabelle 4.3 und Abschnitt 6.2)? Die manuell geprüfte MultiNERD-Stichprobe von Tedeschi und Navigli ist in den veröffentlichten Daten nicht enthalten. Wäre stattdessen eine eigene manuelle Prüfung einer kleinen Stichprobe von Abweichungen zwischen Modellen und Silberreferenz sinnvoll?
-2. Erwarten Sie für FF3 konkrete Budgetszenarien für Latenz und Speicher, oder genügt die Antwort über die Pareto-Front?
-3. Sind 82 Seiten Haupttext für das Fachgebiet angemessen?
-4. Gibt es ein Bewertungsraster des Fachgebiets? Wird neben dem deutschen Abstract eine englische Fassung erwartet? Ist das DFKI-Logo auf dem Deckblatt in Ordnung?
-5. Ist die KI-Angabe in der Eigenständigkeitserklärung in Form und Umfang so in Ordnung?
-6. Ist der angemeldete Titel mit der Abgrenzung in Abschnitt 1.3 ausreichend behandelt?
+1. Wo sehen Sie die größten Schwächen der Arbeit, und was würde sie aus Ihrer Sicht am meisten stärken?
+2. Reicht die Offenlegung der früheren Testnutzung (Tabelle 4.3 und Abschnitt 6.2)? Die manuell geprüfte MultiNERD-Stichprobe von Tedeschi und Navigli ist in den veröffentlichten Daten nicht enthalten. Stattdessen prüfe ich selbst blind rund 180 Abweichungen zwischen den besten Modellen und der Silberreferenz, um Modell- von Annotationsfehlern zu trennen.
+3. Erwarten Sie für FF3 konkrete Budgetszenarien für Latenz und Speicher, oder genügt die Antwort über die Pareto-Front?
+4. Sind 82 Seiten Haupttext für das Fachgebiet angemessen?
+5. Gibt es ein Bewertungsraster des Fachgebiets? Wird neben dem deutschen Abstract eine englische Fassung erwartet? Ist das DFKI-Logo auf dem Deckblatt in Ordnung?
+6. Ist die KI-Angabe in der Eigenständigkeitserklärung in Form und Umfang so in Ordnung?
+7. Ist der angemeldete Titel mit der Abgrenzung in Abschnitt 1.3 ausreichend behandelt?
 
 Offen sind noch meine eigene sprachliche Durchsicht, das Abgabedatum auf dem Deckblatt und die Veröffentlichung des Repositorys. Code, Konfigurationen und Auswertungsskripte stelle ich Ihnen gern vorab bereit.
 
