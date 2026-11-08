@@ -230,11 +230,10 @@ wenn ihre Grenzen und ihr Typ mit der Referenz
 Zentrale Kennzahl ist der Mikro-F$_1$-Score.
 Für die LLMs wird zusätzlich die Formtreue ihrer Ausgaben erfasst
 (Abschnitt~\ref{sec:robustheit-ausgaben}).
-Der Ressourcenbedarf umfasst die Trainingsdauer, die Inferenzlatenz bei
-einzeln verarbeiteten Sätzen und den GPU-Spitzenspeicher während der
-Inferenz (Abschnitt~\ref{sec:effizienzmetriken}).
-Nicht erfasst werden der Speicherbedarf während des Trainings, ein durch
-Batching optimierter Durchsatz sowie Energieverbrauch und Kosten.
+Die Inferenzlatenz wird für einzeln verarbeitete Sätze gemessen
+(Abschnitt~\ref{sec:effizienzmetriken}); nicht erfasst werden der
+Speicherbedarf während des Trainings, ein durch Batching optimierter
+Durchsatz sowie Energieverbrauch und Kosten.
 Eine mögliche Kontamination der Vortrainingsdaten der LLMs mit
 MultiNERD-Texten wird diskutiert, aber nicht empirisch geprüft
 (Abschnitt~\ref{sec:research_gap}).
@@ -260,6 +259,7 @@ Sensitivitätsanalyse des CrossNER-Transfertests.
 Kapitel~\ref{chap:fazit} beantwortet jede der drei Forschungsfragen,
 gleicht die Erwartungen E1 bis E3 mit den Befunden ab und benennt Grenzen
 und weiterführende Arbeiten.
-Der Anhang dokumentiert die Reproduzierbarkeit der Läufe, enthält die
-Systemnachricht des Zero-Shot-Prompts und ergänzt Tabellen je Seed,
-Entitätstyp und CrossNER-Domäne.
+Der Anhang dokumentiert die Reproduzierbarkeit der Läufe und die
+verwendeten Prompts, ergänzt Details der Durchführung und enthält
+weitere Ergebnistabellen, unter anderem je Seed, Entitätstyp und
+CrossNER-Domäne.
