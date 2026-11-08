@@ -231,6 +231,7 @@ Die Spalten stammen von verschiedenen Gutachtern und sind nur eingeschränkt ver
 - **Nutzerangabe:** jeweils die besten Modelle von Anthropic und OpenAI der letzten fünf Monate, bei Claude Fable 5.1 und Opus.
 - **Belege:** Claude-Code-Protokolle dieses Projekts: `claude-opus-5-5` (27.10.–8.11.), `claude-fable-5-1` (28.10.–7.11.), `claude-sonnet-5-5` (7.–8.11., Prüf-Agenten); ältere Sitzungen nach 30 Tagen gelöscht. Codex-Sitzungen mit Arbeitsverzeichnis im Thesis-Repository: `gpt-5.3-codex` (1.3.), `gpt-5.4` (7.–8.4.), `gpt-5.5` (26.4.–21.5.), `gpt-6-astra` (1.–7.11.), `gpt-5.6-luna` (6.–7.11.), `gpt-6-luna` (7.11.), dazu `codex-auto-review` (7.11., interne Prüffunktion, nicht aufgeführt). ChatGPT im Browser nicht protokolliert.
 - **Umsetzung:** `frontmatter/eigenstaendigkeitserklaerung.tex`: belegte Modelle genannt, frühere Monate als „jeweils aktuelle Modelle"; Codex-Zeitraum ab März laut Protokoll. Roter Platzhalter entfernt; Erklärung bleibt einseitig, 116 Seiten, Build 0/0.
+- **Nachtrag auf Wunsch des Verfassers:** OpenAI-Angabe auf Juli bis November 2026 beschränkt; genannt nur `gpt-5.6-luna`, `gpt-6-luna`, `gpt-6-astra` (die Modelle bis Mai bleiben unerwähnt). Build 0/0, 116 Seiten.
 
 ---
 
