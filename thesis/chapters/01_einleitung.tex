@@ -57,9 +57,9 @@ Zudem erzeugen LLMs ihre Ausgabe Token für Token, sodass die Inferenzzeit
 mit der Länge der Ausgabe wächst~\cite{lu2024padellm}, während ein Encoder
 die Labels eines Satzes in einem einzigen Vorwärtsdurchlauf
 bestimmt~\cite{devlin2019bert}.
-Auch die Anpassung ist bei LLMs aufwendiger: Ein vollständiges
-Fine-Tuning aller Gewichte erfordert neben den Gewichten Speicher für Gradienten
-und Optimiererzustände~\cite{hu2021lora}.
+Auch die Anpassung ist bei LLMs aufwendiger: Beim vollständigen Fine-Tuning müssen
+neben allen Gewichten auch deren Gradienten und die Optimiererzustände im
+Speicher gehalten werden~\cite{hu2021lora}.
 Parameter-Efficient Fine-Tuning (PEFT) umfasst Verfahren, die stattdessen
 nur eine kleine Zahl zusätzlicher oder ausgewählter vorhandener Parameter
 trainieren~\cite{han2024parameter};
