@@ -227,6 +227,11 @@ Die Spalten stammen von verschiedenen Gutachtern und sind nur eingeschränkt ver
 - **Vorher/nachher (gemessen):** Fließtextwörter 22 343 → 22 111 (−232; K1 −3, K2 −37, K3 −67, K4 −58, K5 −63, K6 −4). Seiten unverändert: 116 physisch, Haupttext 1–82, alle Kapitelanfänge gleich. Füllung der letzten Kapitelseite: K1 86→83 %, K2 95→90 %, K3 98→98 %, K4 90→90 %, K5 99→99 %, K6 99→99 %. Build 0 Overfull/Underfull/undefined/Float too large.
 - **Layout:** Keine Überschrift im unteren Viertel; 4.4.1 jetzt bei 71 % (vorher 82 %, gestapelt). Früh endende Seiten verschieben sich: S. 38 und 43 enden nicht mehr früh, dafür S. 49 (4.5.2 mit zwei Zeilen, Absatztitel „Trainingsdauer" auf S. 50) und S. 50 (Absatztitel „GPU-Speicher" auf S. 51). Ursache ist die bestehende Regel, die auch `\paragraph`-Titel erfasst; keine Änderung.
 
+### Nachtrag So 8.11. – KI-Angabe
+- **Nutzerangabe:** jeweils die besten Modelle von Anthropic und OpenAI der letzten fünf Monate, bei Claude Fable 5.1 und Opus.
+- **Belege:** Claude-Code-Protokolle dieses Projekts: `claude-opus-5-5` (27.10.–8.11.), `claude-fable-5-1` (28.10.–7.11.), `claude-sonnet-5-5` (7.–8.11., Prüf-Agenten); ältere Sitzungen nach 30 Tagen gelöscht. Codex-Sitzungen mit Arbeitsverzeichnis im Thesis-Repository: `gpt-5.3-codex` (1.3.), `gpt-5.4` (7.–8.4.), `gpt-5.5` (26.4.–21.5.), `gpt-6-astra` (1.–7.11.), `gpt-5.6-luna` (6.–7.11.), `gpt-6-luna` (7.11.), dazu `codex-auto-review` (7.11., interne Prüffunktion, nicht aufgeführt). ChatGPT im Browser nicht protokolliert.
+- **Umsetzung:** `frontmatter/eigenstaendigkeitserklaerung.tex`: belegte Modelle genannt, frühere Monate als „jeweils aktuelle Modelle"; Codex-Zeitraum ab März laut Protokoll. Roter Platzhalter entfernt; Erklärung bleibt einseitig, 116 Seiten, Build 0/0.
+
 ---
 
 # Arbeitsliste (Stand 7.11., Zeilen gegen HEAD 3c49499; verbindlich sind die Anker)
