@@ -241,11 +241,12 @@ veröffentlicht und auf nichtkommerzielle Forschung beschränkt
 MultiNERD ist automatisch annotiert \cite{tedeschi2022multinerd}; auch
 die Referenz des Testsplits ist somit eine Silberreferenz.
 Die von den Autoren manuell geprüfte Stichprobe von 1\,000 zufällig
-gezogenen englischen Sätzen wird nicht verwendet: Sie ist in den
-veröffentlichten Daten nicht enthalten, aus welchem Split ihre Sätze
-stammen, ist nicht angegeben, sodass Überschneidungen mit den
-Trainingsdaten nicht auszuschließen sind, und typbezogene Aussagen wären
-auf ihr sehr unsicher \cite[Tab.~5]{tedeschi2022multinerd}.
+gezogenen englischen Sätzen wird nicht verwendet.
+Sie ist in den veröffentlichten Daten nicht enthalten, und aus welchem
+Split ihre Sätze stammen, ist nicht angegeben, sodass Überschneidungen
+mit den Trainingsdaten nicht auszuschließen sind.
+Typbezogene Aussagen wären auf ihr zudem sehr unsicher
+\cite[Tab.~5]{tedeschi2022multinerd}.
 Nach dieser Stichprobe unterscheidet sich die Annotationsqualität stark
 zwischen den Typen (Abschnitt~\ref{sec:datasets_corpora}).
 Die trainierten Konfigurationen nutzen dieselben annotierten
@@ -1001,6 +1002,16 @@ Da die Konfigurationen auf unterschiedlichen GPU-Typen liefen
 auch Hardwareeffekte (Beispiel in Anhang~\ref{app:durchfuehrung}).
 Zero-Shot- und QLoRA-Inferenz unterscheiden sich zudem in Präzision und
 Decoding.
+
+\paragraph{Ressourcenschwellen für FF3.}
+Speicher- und Latenzbudgets wurden vor den Läufen nicht festgelegt.
+FF3 wird deshalb über Schwellen beantwortet, die nachträglich aus den
+gemessenen Werten abgeleitet sind: Mittlere Latenz und Inferenzspeicher
+jeder Konfiguration geben an, ab welcher Grenze sie zulässig ist, und für
+jede Kombination solcher Grenzen wird die zulässige Konfiguration mit dem
+höchsten Mikro-F$_1$ bestimmt (Abschnitt~\ref{sec:disk-effizienz}).
+Die Schwellen beschreiben die gemessenen Bedingungen (Batchgröße~1,
+jeweiliger GPU-Typ), keine Anforderungen einer konkreten Anwendung.
 Effizienzvergleiche werden daher vorrangig innerhalb gleicher Hardware-
 und Präzisionsbedingungen interpretiert.
 

@@ -1031,17 +1031,31 @@ anderer Hardware erfasst, werden ihre Qualitätswerte nicht mit den
 Ressourcenwerten des 256er-Laufs zu einer neuen Pareto-Aussage
 kombiniert. DeBERTa-v3-large bleibt auf MultiNERD im Mikro-F$_1$ knapp vorn.
 
-Für Anwendungen mit einem festen Inventar von 15 Typen, einer Datenbasis
-wie MultiNERD und niedriger Latenztoleranz sind die untersuchten Encoder
-damit eine gut gestützte Wahl; eine solche Empfehlung bei kleinen
-Qualitätsunterschieden diskutieren auch \textcite{obeidat2025llm}. Eine pauschale Qualitätsempfehlung über
-Datensätze hinweg ergibt sich dagegen nicht. Auf CrossNER liegt
-Qwen3.5-27B mit 1\,024 Ausgabetokens vor DeBERTa-v3-large, und das
-gepaarte Intervall der Differenz schließt null aus
-(Tabelle~\ref{tab:synthese}); gleichzeitig beträgt die Inferenzlatenz
-dort 12,9~s gegenüber 25,7~ms auf demselben GPU-Typ. Ob dieser
-Qualitätsgewinn den Aufwand rechtfertigt,
-hängt von der Zielanwendung ab. Einzelne höhere Werte bei seltenen
+Nach den Ressourcenschwellen (Abschnitt~\ref{sec:effizienzmetriken},
+Werte in Tabelle~\ref{tab:effizienz}) lässt eine Latenzgrenze ab
+8,9~ms DeBERTa-v3-base zu, ab 16,5~ms DeBERTa-v3-large, ab 1,9~s das
+erste LLM (Qwen3.5-0.8B, QLoRA) und ab 5,5~s alle LLMs. Beim Speicher
+liegen die Schwellen der trainierten Konfigurationen bei 0,7
+(DeBERTa-v3-base), 0,9 (0.8B), 1,7 (DeBERTa-v3-large), 3,5 (4B) und
+18,7~GiB (27B).
+Auf MultiNERD ist damit unter jeder Kombination von Grenzen, die
+überhaupt eine Konfiguration zulässt, ein Encoder die beste gemessene
+Wahl. DeBERTa-v3-base ist überall zulässig, wo ein LLM es ist, und liegt
+im Punktwert vor dem 0.8B- und dem 4B-Modell, auch mit 1\,024 Tokens.
+Wo das 27B-Modell zulässig ist, ist es auch DeBERTa-v3-large, das auch
+mit 1\,024 Tokens vor ihm liegt.
+Ein LLM wird erst ab mehr als dem Hundertfachen der Encoder-Latenz
+zulässig; Zero-Shot-Konfigurationen sind unter keiner Grenze die beste
+Wahl.
+Eine solche Empfehlung bei kleinen Qualitätsunterschieden diskutieren
+auch \textcite{obeidat2025llm}.
+Eine pauschale Qualitätsempfehlung über Datensätze hinweg ergibt sich
+dagegen nicht. Auf CrossNER ist Qwen3.5-27B mit 1\,024 Ausgabetokens ab
+rund 12,9~s je Satz und 18,6~GiB die beste gemessene Wahl: 2,1 Punkte vor
+DeBERTa-v3-large (Intervall ohne null, Tabelle~\ref{tab:synthese}) bei
+rund dem 500-Fachen von dessen Latenz (25,7~ms, gleicher GPU-Typ).
+Ob dieser Qualitätsgewinn den Aufwand rechtfertigt, hängt von der
+Zielanwendung ab. Einzelne höhere Werte bei seltenen
 MultiNERD-Typen bleiben wegen ihres geringen Supports deskriptive
 Hinweise. Eine gleichwertige Makro-Leistung wurde nicht nachgewiesen;
 eine Änderung des Typinventars per Prompt wurde nicht untersucht (Prompt

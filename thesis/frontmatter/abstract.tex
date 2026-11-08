@@ -25,7 +25,7 @@ kehrt sich die Rangfolge bei höherem Limit um: Das LLM erreicht
 Differenz beträgt 1,47 bis 2,80 Punkte.
 
 Die Encoder benötigen auf MultiNERD 9 bis 17~ms Inferenzlatenz je Satz
-und unter 2~GiB Inferenzspeicher. Die QLoRA-Läufe mit 256 Ausgabetokens
+und 0,7 bis 1,7~GiB Inferenzspeicher. Die QLoRA-Läufe mit 256 Ausgabetokens
 benötigen 1,9 bis 5,5~s und bis zu 18,7~GiB; ein Vergleich auf gleicher
 Hardware ergibt für Qwen3.5-0.8B gegenüber DeBERTa-v3-base einen
 Latenzfaktor von etwa 210. Die
@@ -34,8 +34,9 @@ Prompt- und Decoding-Wahl wurde durch Testbeobachtungen beeinflusst;
 zusätzliche Unterschiede in Prompt, Decoding und Präzision verhindern
 die Bestimmung eines isolierten Fine-Tuning-Effekts.
 
-Die Ergebnisse stützen den Einsatz der untersuchten Encoder bei
-vergleichbaren Daten und geringen Latenzbudgets. Der Qualitätsvergleich
+Auf MultiNERD ist damit unter jedem gemessenen Latenz- und
+Speicherbudget ein Encoder die beste Wahl; das LLM ist nur im Transfer auf
+CrossNER und erst ab rund 13~s je Satz vorzuziehen. Der Qualitätsvergleich
 hängt jedoch wesentlich von Ausgabelimit und Datensatz ab. Die Arbeit
 zeigt damit sowohl den Ressourcenunterschied der konkreten Pipelines
 als auch die Bedeutung ausreichender Ausgabelängen für die Bewertung

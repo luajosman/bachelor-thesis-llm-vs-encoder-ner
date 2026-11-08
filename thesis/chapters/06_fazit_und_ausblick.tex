@@ -78,28 +78,46 @@ Die Trainingsdauern beschreiben den Aufwand dieser Studie einschließlich
 Neustarts und Clusterlast, keinen allgemeinen Bedarf.
 
 \paragraph{FF3: Empfehlungen.}
+Budgets waren nicht vorab festgelegt; die Antwort beruht auf Schwellen
+aus den gemessenen Latenz- und Speicherwerten
+(Abschnitt~\ref{sec:disk-effizienz}).
 Für MultiNERD und vergleichbar annotierte Wikipedia-Texte mit festem
-Typinventar sowie engem Latenz- und Speicherbudget (gemessener
-allokierter Inferenzspeicher unter 2~GiB) sind die untersuchten
-DeBERTa-Konfigurationen eine gut gestützte Wahl.
-Bei 256 Ausgabetokens bilden sie allein die Pareto-Front: DeBERTa-v3-base
-genügt mit 8,9~ms und 0,7~GiB dem engsten Budget, DeBERTa-v3-large bringt
-0,3 Punkte mehr bei 16,5~ms und 1,7~GiB.
+Typinventar ist danach unter jedem Latenz- und Speicherbudget, das
+überhaupt eine Konfiguration zulässt, ein Encoder die beste gemessene
+Wahl: DeBERTa-v3-base ab 8,9~ms und 0,7~GiB, DeBERTa-v3-large mit
+0,3 Punkten mehr ab 16,5~ms und 1,7~GiB.
+Bei 256 Ausgabetokens bilden beide allein die Pareto-Front; ein LLM wird
+erst ab 1,9~s je Satz zulässig und liegt auch mit 1\,024 Tokens nicht
+vor DeBERTa-v3-large.
 Die Ressourcenwerte bei 256 Tokens gelten dabei nicht für eine Pipeline
 mit 1\,024 Tokens, für die kein vollständiger Neulauf vorliegt.
 Auf CrossNER liegt Qwen3.5-27B bei 1\,024 Tokens mit 87,1 Punkten vor
-DeBERTa-v3-large mit 85,0.
-Seine Inferenzlatenz beträgt dabei 12,9~s je Satz gegenüber 25,7~ms auf
-demselben GPU-Typ.
-Unter ähnlichen Transferbedingungen und bei entsprechender
-Latenztoleranz kann das LLM daher die bessere Wahl sein
-(Abschnitt~\ref{sec:disk-effizienz}).
+DeBERTa-v3-large mit 85,0 und ist ab rund 12,9~s je Satz und 18,6~GiB
+die beste gemessene Wahl; DeBERTa-v3-large benötigt 25,7~ms auf demselben
+GPU-Typ.
+Das LLM rechtfertigt seinen Mehraufwand damit nur unter ähnlichen
+Transferbedingungen und bei einer Latenztoleranz von mehreren Sekunden
+je Satz.
 Eine allgemeine Überlegenheit einer Modellklasse folgt daraus nicht; eine
 Erweiterung des Typinventars über den Prompt blieb ungeprüft
 (unveränderter Prompt, tabellarische Abbildung der CrossNER-Typen).
 Erwartung E2 ist bestätigt: Der hardwaregleiche Faktor von etwa 210 liegt
 am oberen Rand der Literaturspanne von 40 bis 220, die Faktoren über
 GPU-Typen hinweg darüber.
+
+\paragraph{Beitrag.}
+Der Beitrag der Arbeit liegt erstens in einem Vergleich beider
+Modellklassen auf den offiziellen englischen MultiNERD-Splits in einer
+gemeinsamen Pipeline, mit Größenstaffelung auf beiden Seiten und
+gemeinsamer Ressourcenmessung.
+Zweitens zeigt sie, dass das Wortindex-Format im QLoRA-Regime nahezu
+formtreu ist: Mit 1\,024 Ausgabetokens bleibt keine Antwort
+unparsebar.
+Drittens folgt eine methodische Lehre für generative NER: Ausgabelimits
+sind vor der Evaluation an den Antwortlängen von Trainings- und
+Validierungsdaten zu prüfen, denn ein zu knappes Limit verschob hier den
+Abstand auf MultiNERD um gut einen Punkt und kehrte auf CrossNER die
+Rangfolge um.
 
 \section{Limitationen der Arbeit}
 \label{sec:limitationen}
