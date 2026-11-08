@@ -1,6 +1,6 @@
 # Mail an den Betreuer (Philippe Thomas) – Stand 8.11.2026, spätabends, im gewohnten lockeren Ton
 
-Anhang: `thesis/main_betreuerentwurf_0816513.pdf` (frischer Build aus Commit 0816513: Sprachprüfung plus bündiges Abkürzungsverzeichnis, 118 Seiten). Grundlage ist die vom Nutzer eingefügte Fassung; aktualisiert wurden Seitenzahlen, CrossNER-Einschränkung, Scheduler-Termin (squeue am 8.11. abends: Smoke-Job 3724607 voraussichtlich 12.11. 02:26), Frage 2 (abgeleitete Schwellen) und Frage 4 („ohne Hilfe Dritter“). Frühere Fassungen in der Git-Historie.
+Anhang: `thesis/main_betreuerentwurf_9e06de8.pdf` (frischer Build aus Commit 9e06de8: Sprachprüfung, bündiges Abkürzungsverzeichnis, Leitfaden-Abgleich; 118 Seiten). Grundlage ist die vom Nutzer eingefügte Fassung; aktualisiert wurden Seitenzahlen, CrossNER-Einschränkung, Scheduler-Termin (squeue am 8.11. abends: Smoke-Job 3724607 voraussichtlich 12.11. 02:26), Frage 2 (abgeleitete Schwellen) und Frage 4 („ohne Hilfe Dritter“). Frühere Fassungen in der Git-Historie.
 
 ---
 
