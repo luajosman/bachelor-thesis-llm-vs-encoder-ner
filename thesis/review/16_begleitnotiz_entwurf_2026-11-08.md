@@ -22,6 +22,8 @@ Ein paar kurze Fragen noch:
 3. Braucht es zusätzlich ein englisches Abstract?
 4. Passt die KI-Angabe in der Eigenständigkeitserklärung so?
 5. Sind 82 Seiten Haupttext okay?
+6. Weißt du, worauf Möller und Küpper bei der Bewertung besonders achten? Gibt es dafür ein Raster?
+7. Ist es okay, wenn ich das Repository mit Code und Auswertungen öffentlich mache, oder lieber nur mit Zugang für die Gutachter?
 
 Danke dir schon mal!
 
