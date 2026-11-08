@@ -190,8 +190,6 @@ Größen dichte Decoder mit hybrider Attention
 nutzen drei Schichten lineare Attention in Form von Gated DeltaNet, die
 vierte vollständige Softmax-Attention mit Grouped-Query-Attention und
 Ausgabe-Gating \cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
-Die hybride Attention ist für die Platzierung der LoRA-Adapter relevant
-(Abschnitt~\ref{sec:lora-konfiguration}).
 
 Von den multimodal angelegten Checkpoints laden beide Pipelines mit der
 Klasse \texttt{AutoModelForCausalLM} nur das Textmodell; Vision-Encoder
@@ -230,12 +228,9 @@ Drittens stehen offizielle \texttt{train}-, \texttt{validation}- und
 \texttt{test}-Splits zur Verfügung \cite{tedeschi2022multinerd}, die
 künftigen Arbeiten einen festen Bezugspunkt bieten.
 Veröffentlichte MultiNERD-Werte beruhen dagegen auf eigener Aufbereitung
-(InstructUIE und UniversalNER: Testsplit mit 10\,000 Beispielen
-\cite{wang2023instructuie,zhou2024universalner}) oder
-einem abweichenden Testumfang (GoLLIE: 32\,908 Testbeispiele, etwa das
-Doppelte des englischen Testsplits \cite[Tab.~9]{sainz2024gollie});
-Werte auf den offiziellen Splits sind nicht nachweisbar
-(Abschnitt~\ref{sec:encoder_ner_related}).
+oder abweichendem Testumfang; Werte auf den offiziellen Splits sind
+nicht nachweisbar (Abschnitte~\ref{sec:k3-multinerd}
+und~\ref{sec:research_gap}).
 Viertens ist der englische Teil mit rund 164\,000 Sätzen groß genug für
 vollständiges Fine-Tuning der Encoder ebenso wie für LoRA-Training der
 LLMs.
@@ -252,9 +247,8 @@ zufällig gezogenen englischen Sätzen wird nicht verwendet, da die
 Pipeline auf den offiziellen Splits aufsetzt und typbezogene Aussagen auf
 der kleinen Stichprobe sehr unsicher wären
 \cite[Tab.~5]{tedeschi2022multinerd}.
-Laut den Autoren gelten PER, ORG, LOC, CEL, DIS, EVE und MEDIA als
-besonders zuverlässig annotiert, andere Klassen teils als stark
-verrauscht \cite{tedeschi2022multinerd}.
+Nach dieser Stichprobe unterscheidet sich die Annotationsqualität stark
+zwischen den Typen (Abschnitt~\ref{sec:datasets_corpora}).
 Die trainierten Konfigurationen nutzen dieselben annotierten
 Trainingssätze, alle Systeme werden gegen dieselbe Referenz bewertet;
 die Zero-Shot-Konfigurationen erhalten kein Training.
@@ -385,17 +379,16 @@ bereits ausgewerteten Testsplits nicht wieder her.
 Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
 (Abschnitt~\ref{sec:llm-pipeline}), die Inferenzpräzision auf
-Durchsatzmessungen an einer Teilmenge des Testsplits.
+Durchsatzmessungen an einer Teilmenge des Testsplits, nicht auf der
+Erkennungsleistung.
 Die Zero-Shot-Ergebnisse werden deshalb als explorative Ergebnisse der
 nach Testbeobachtungen gewählten Konfigurationen berichtet. Solche
 Auswahlentscheidungen können zu einer optimistischen Verzerrung führen
 \cite{cawley2010selectionbias}; deren Umfang lässt sich mit den vorhandenen Daten
-nicht beziffern. Die Durchsatzmessung zur Präzisionswahl ist dabei von der
-an beobachteter Erkennungsleistung orientierten Prompt- und Decoding-Wahl
-zu unterscheiden. Auch die späteren Analysen des Ausgabelimits sind
-nachträgliche Sensitivitätsanalysen auf den bekannten Testsplits.
+nicht beziffern.
 Tabelle~\ref{tab:datennutzung} ordnet jeder Entscheidung Datengrundlage
-und Testbezug zu.
+und Testbezug zu, einschließlich der nachträglichen
+Sensitivitätsanalysen zum Ausgabelimit.
 
 \begin{table}[ht]
   \centering
@@ -706,7 +699,7 @@ gegenüber vollständigem Fine-Tuning erheblich senken
 \cite{hu2021lora,han2024parameter,obeidat2025llm} und in den Prüffällen
 von \textcite[Anh.~D]{zhan2026generativeNER} zudem 0,14 bis 0,48
 F$_1$-Punkte vor vollständigem Fine-Tuning liegen
-(Abschnitt~\ref{sec:lora}).
+(Abschnitte~\ref{sec:lora} und~\ref{sec:peft_ner_related}).
 Der Rang beträgt $r = 16$ für die 0.8B- und 4B-Modelle und $r = 32$ für
 das 27B-Modell, die Skalierung jeweils $\alpha = 2r$
 (Tabelle~\ref{tab:lora-hyperparams}).
