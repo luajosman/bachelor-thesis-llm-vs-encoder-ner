@@ -1,6 +1,6 @@
 # Mail an den Betreuer (Philippe Thomas) – Stand 8.11.2026, abends, im gewohnten lockeren Ton
 
-Anhang: `thesis/main_betreuerentwurf_f63af31.pdf` (frischer Build aus Commit f63af31, 119 Seiten). Frühere, formellere Fassungen in der Git-Historie.
+Anhang: `thesis/main_betreuerentwurf_ed693be.pdf` (frischer Build aus Commit ed693be, 118 Seiten). Frühere, formellere Fassungen in der Git-Historie.
 
 ---
 
@@ -8,7 +8,7 @@ Betreff: Entwurf meiner BA
 
 Hi Philippe,
 
-wie angekündigt, hier der aktuelle Stand meiner Bachelorarbeit (85 Seiten Haupttext, 119 insgesamt). Alle Kapitel, Abstract und Anhang sind drin. Kurz zu den Ergebnissen: Mit 256 Ausgabetokens liegt DeBERTa-v3-large 1,34 F1-Punkte vor Qwen3.5-27B, nach einer Nachinferenz der abgeschnittenen Antworten nur noch 0,18. Auf CrossNER dreht sich die Reihenfolge mit dem höheren Limit sogar um, wobei rund drei Viertel dieses Vorsprungs an der Abbildung der CrossNER-Typen hängen, und das kleinste Qwen-Modell ist auf gleicher Hardware rund 210-mal langsamer als DeBERTa-v3-base.
+wie angekündigt, hier der aktuelle Stand meiner Bachelorarbeit (85 Seiten Haupttext, 118 insgesamt). Alle Kapitel, Abstract und Anhang sind drin. Kurz zu den Ergebnissen: Mit 256 Ausgabetokens liegt DeBERTa-v3-large 1,34 F1-Punkte vor Qwen3.5-27B, nach einer Nachinferenz der abgeschnittenen Antworten nur noch 0,18. Auf CrossNER dreht sich die Reihenfolge mit dem höheren Limit sogar um, wobei rund drei Viertel dieses Vorsprungs an der Abbildung der CrossNER-Typen hängen, und das kleinste Qwen-Modell ist auf gleicher Hardware rund 210-mal langsamer als DeBERTa-v3-base.
 
 Es wäre super, wenn du mir wieder das Liebermann-Feedbackdokument ausfüllen könntest, gerne auch mit den größten Schwächen, die du siehst. Wenn die Zeit knapp ist, sind mir Kapitel 4 (Methodik) und 5 (Ergebnisse und Diskussion) am wichtigsten. Wenn du es bis etwa 16.11. schaffst, hätte ich noch genug Zeit zum Einarbeiten.
 
