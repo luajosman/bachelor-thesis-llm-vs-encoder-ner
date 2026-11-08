@@ -49,13 +49,11 @@ Encoder mit Klassifikationskopf bilden seit BERT den Standard für
 \subsection{MultiNERD und seine Referenzwerte}
 \label{sec:k3-multinerd}
 
-\textcite{tedeschi2022multinerd} stellen mit MultiNERD einen Datensatz
-vor, der zehn Sprachen, die Genres Wikipedia und Wikinews sowie
-15 Entitätstypen abdeckt; der englische Teil umfasst rund 164\,000 Sätze.
-Die Annotation erfolgt automatisch über BabelNet-Synsets und ein
-iteratives Bereinigungsverfahren (Abschnitt~\ref{sec:datasets_corpora});
-das dafür auf den Silberdaten trainierte mBERT-Modell mit BiLSTM und CRF
-ist zugleich die einzige in der Arbeit trainierte Architektur.
+Den Aufbau des automatisch annotierten Datensatzes MultiNERD
+\cite{tedeschi2022multinerd} beschreibt Abschnitt~\ref{sec:datasets_corpora};
+einzige in der Originalarbeit trainierte Architektur ist das für die
+iterative Bereinigung auf den Silberdaten trainierte mBERT-Modell mit
+BiLSTM und CRF.
 Evaluiert wird auf Gold-Benchmarks wie CoNLL-2003 nach Abbildung auf die
 vier groben CoNLL-Typen sowie auf 1\,000 englischen Sätzen mit manuell
 geprüfter Annotation, nicht auf den eigenen Splits.
@@ -166,11 +164,11 @@ CrossNER.
 Keine der Arbeiten stellt beide Modellfamilien feinjustiert in
 derselben Pipeline auf den offiziellen MultiNERD-Splits mit gemeinsamer
 Ressourcenmessung gegenüber.
-Da die MultiNERD-Originalarbeit keine Referenzwerte für die offiziellen
-Splits liefert und die Testreferenz eine Silberreferenz ist, müssen
-Vergleiche auf diesem Datensatz innerhalb einer gemeinsamen Pipeline
-erfolgen und absolute Werte als Übereinstimmung mit einer automatisch
-erzeugten Referenz lesen (Abschnitt~\ref{sec:datenauswahl}).
+Mangels Referenzwerten für die offiziellen Splits
+(Abschnitt~\ref{sec:k3-multinerd}) müssen Vergleiche auf MultiNERD
+innerhalb einer gemeinsamen Pipeline erfolgen; absolute Werte messen die
+Übereinstimmung mit einer Silberreferenz
+(Abschnitt~\ref{sec:datenauswahl}).
 
 \section{LLM-basierte Ansätze für NER}
 \label{sec:llm_ner_related}
@@ -256,8 +254,6 @@ Wortindex-Variante nicht evaluiert, und ihre Befunde beruhen auf per
 Prompting genutzten, nicht feinjustierten Modellen; ob die Vorteile der
 angereicherten Indizierung auch im QLoRA-Regime und bei 15 Typen tragen,
 ist eine empirische Frage dieser Arbeit.
-Auf Constrained Decoding wird verzichtet, damit die Formtreue der
-Ausgaben selbst messbar bleibt (Abschnitt~\ref{sec:robustheit-ausgaben}).
 
 \subsection{Prompting ohne Anpassung der Gewichte}
 \label{sec:k3-prompting}
@@ -422,9 +418,6 @@ Inferenzlatenz und Decoding-Einstellungen werden nicht berichtet.
 Eine Fehleranalyse für LLaMA3.1-8B und BERT-MRC zeigt unterschiedliche
 Profile: Der Encoder übersieht vor allem Entitäten, das LLM weist ihnen
 vor allem falsche Typen zu.
-Ersetzt man die Typbezeichnungen auf CoNLL-2003 und CleanCoNLL durch
-bedeutungslose Symbole, ändern sich die Ergebnisse kaum, was die Autoren
-gegen eine bloße Memorisierung von Entität-Typ-Paaren anführen.
 Die Arbeit ist zur Veröffentlichung in den Findings der EMNLP 2026
 angenommen.
 
@@ -680,8 +673,9 @@ eigener Aufbereitung: \textcite{zhou2024universalner} übernehmen die
 BERT-Werte aus InstructUIE auf dessen Datensatzvariante,
 \textcite{zaratiana2024gliner} werten GLiNER auf der
 InstructUIE-Aufbereitung mit 10\,000 Testbeispielen aus.
-Bei \textcite{sainz2024gollie} bleibt das Verhältnis der 32\,908
-Testbeispiele zu den offiziellen Splits offen.
+Bei \textcite[Tab.~9]{sainz2024gollie} umfasst der Test 32\,908
+Beispiele, etwa das Doppelte des englischen Testsplits; ihr Verhältnis
+zu den offiziellen Splits bleibt offen.
 Eine gemeinsame Auswertung beider Modellfamilien auf den offiziellen
 englischen MultiNERD-Splits mit einer in derselben Pipeline trainierten
 Encoder-Referenz fehlt damit.
@@ -737,7 +731,8 @@ offengelegt, sodass sich dies weder belegen noch ausschließen lässt.
 \textcite{zhan2026generativeNER} weisen auf bekannte Lecks von
 Benchmark-Daten hin und ziehen deshalb CleanCoNLL heran, dessen
 bereinigte Form kaum im Pre-Training enthalten sein dürfte.
-Ihr Befund, dass die Ergebnisse nicht von den Typbezeichnungen abhängen,
+Ihr Befund, dass sich die Ergebnisse beim Ersetzen der Typbezeichnungen
+durch bedeutungslose Symbole kaum ändern,
 spricht gegen eine Memorisierung von Entität-Typ-Paaren, gilt aber für
 CoNLL-2003 und CleanCoNLL; für MultiNERD bleibt die Frage offen.
 Die Referenz ist allerdings eine automatisch erzeugte Silberreferenz:
