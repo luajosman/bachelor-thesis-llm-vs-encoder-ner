@@ -125,10 +125,6 @@ Die Checkpoint-Auswahl nutzte allein Validierungsdaten, bei den LLMs
 200 Sätze ohne BIO- und INST-Entitäten, deren Typanteile um höchstens
 3,1 Prozentpunkte vom Split abweichen; ob eine größere oder zufällig
 gezogene Stichprobe dieselben Epochen gewählt hätte, bleibt offen.
-Die nach F$_1$ gewählte Epoche fällt nur in einem von neun LLM- und in
-keinem von sechs Encoder-Läufen mit dem Verlustminimum zusammen; 12 von
-15 Läufen wählten die letzte Epoche, ein Untertraining ist nicht
-auszuschließen.
 Die Sensitivitätsanalysen liefen post hoc auf dem bekannten Testsplit;
 neue Seeds stellen keine Unabhängigkeit her.
 Betroffen sind FF1, besonders im Zero-Shot-Regime, und die Empfehlungen in
@@ -174,6 +170,10 @@ Hyperparametersuche (Tabelle~\ref{tab:abweichungen}).
 Der Einfluss dieser Einstellungen wurde nicht isoliert gemessen; beim
 Zero-Shot-Vergleich kommen abweichende Prompts, Decoding-Verfahren und
 Präzisionsregime hinzu.
+Die nach F$_1$ gewählte Epoche fällt nur in einem von neun LLM- und in
+keinem von sechs Encoder-Läufen mit dem Verlustminimum zusammen; 12 von
+15 Läufen wählten die letzte Epoche, ein Untertraining ist nicht
+auszuschließen.
 Betroffen sind FF1 und FF2.
 
 \paragraph{Effizienzmessung.}
@@ -196,8 +196,8 @@ Abhängigkeiten zwischen Sätzen desselben Dokuments bleiben
 unberücksichtigt.
 Als Hauptvergleiche gelten nur die aus FF1 und FF2 abgeleiteten
 Vergleiche bei 256 Ausgabetokens (Abschnitt~\ref{sec:performanzmetriken}); die übrigen sind explorativ, keines der Intervalle ist für
-Mehrfachvergleiche korrigiert, und knappe Differenzen bei 1\,024 Tokens
-sowie Einzeldomänenvergleiche sind vorsichtig zu lesen
+Mehrfachvergleiche korrigiert, und knappe Differenzen sowie
+Einzeldomänenvergleiche sind vorsichtig zu lesen
 (Abschnitt~\ref{sec:disk-validitaet}).
 Keine Unsicherheitsangabe korrigiert Verzerrungen durch Testnutzung,
 Referenzqualität oder Konfigurationswahl.
