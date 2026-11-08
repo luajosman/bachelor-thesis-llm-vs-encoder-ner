@@ -50,8 +50,8 @@ Die Ausgabeverzeichnisse enthalten folgende Artefakte:
     (\texttt{best\_\allowbreak model} bzw.
     \texttt{best\_\allowbreak lora\_\allowbreak adapter}; Adapter 12,8, 42,5
     bzw. 637,6~MB), aufgelöste Konfiguration
-    (\texttt{config\_\allowbreak resolved.yaml}), wissenschaftlicher
-    Vertrag mit Code- und Revisions-Hashes
+    (\texttt{config\_\allowbreak resolved.yaml}), Festlegung der
+    wissenschaftlichen Laufparameter mit Code- und Revisions-Hashes
     (\texttt{scientific\_\allowbreak contract.yaml}), Paketversionen
     (\texttt{environment/}), Metadaten der Laufverwaltung
     (\texttt{run\_\allowbreak metadata.yaml}, \texttt{status.json};
@@ -139,9 +139,9 @@ abweichenden Codestands vor der Inferenz ab.
 
 \paragraph{Explorative Vorläufe.}
 Tabelle~\ref{tab:app-vorlaeufe} dokumentiert die explorativen Vorläufe
-(Abschnitt~\ref{sec:datenaufteilung}), je ein Lauf mit Seed~42, die auf
-dem Testsplit ausgewertet wurden und nicht in die Hauptauswertung
-eingehen; ihre Abweichung vom jeweiligen Seed-42-Lauf der Hauptstudie
+(Abschnitt~\ref{sec:datenaufteilung}; je ein Lauf mit Seed~42).
+Sie wurden auf dem Testsplit ausgewertet und gehen nicht in die
+Hauptauswertung ein; ihre Abweichung vom jeweiligen Seed-42-Lauf der Hauptstudie
 beträgt höchstens 0,12 Punkte.
 
 \begin{table}[ht]
@@ -161,7 +161,7 @@ beträgt höchstens 0,12 Punkte.
   \footnotesize
   \caption[Vollständige Commits und Revisionen]{Vollständige Commits und Revisionen.
   Die Modell- und Datensatzrevisionen gelten für die Trainingsläufe der
-  Hauptstudie, den CrossNER-Versuch und die Sensitivitätsanalysen; die
+  Hauptstudie, den CrossNER-Transfertest und die Sensitivitätsanalysen; die
   Zero-Shot-Läufe luden Modelle und Datensatz ohne explizite
   Revisionsangabe.}
   \label{tab:app-revisionen}
@@ -221,7 +221,7 @@ mittelbar betreffen oder die Ausführung auf dem Cluster beschreiben.
       \multicolumn{3}{c}{0,05 (LoRA)} \\
     Optimierungsschritte gesamt & 41\,025 & 32\,820 & 24\,615 & 24\,615 &
       24\,615 \\
-    SLURM-Partition & H100 & H100 & H100 & A100-80GB & H100-Trails \\
+    Slurm-Partition & H100 & H100 & H100 & A100-80GB & H100-Trails \\
     Angeforderter Hauptspeicher & 32\,GB & 48\,GB & 64\,GB & 96\,GB &
       160\,GB \\
     \bottomrule
@@ -252,7 +252,7 @@ Token indices must refer exactly to the numbered token list shown by the user. C
 \label{app:durchfuehrung}
 
 Dieser Abschnitt ergänzt Kapitel~\ref{chap:methodik} um Durchführungsdetails,
-die für das Versuchsdesign nachrangig, für die Nachvollziehung der Läufe
+die für das Versuchsdesign nachrangig, für die Nachvollziehbarkeit der Läufe
 aber relevant sind.
 Er behandelt die explorativen Vorläufe und den Abbruch des
 Thinking-Vorlaufs, Architekturkennzahlen der Qwen3.5-Modelle,
@@ -294,8 +294,7 @@ Hauptläufen (Abschnitt~\ref{sec:effizienzmetriken}).
 % epochs[*].parse_failure_rate: 0,71 und 0,825).
 Ein erster Lauf des 4B-Modells mit aktiviertem Thinking-Modus
 (Laufordner mit dem Zeitstempel 20260727-074436) wurde
-abgebrochen, nachdem die generative Validierung auf Validierungsdaten nach
-der ersten und zweiten Epoche Parse-Fehlerraten von 71,0 bzw. 82,5\,\%
+abgebrochen, nachdem die generative Validierung nach der ersten und zweiten Epoche Parse-Fehlerraten von 71,0 bzw. 82,5\,\%
 bei strikten F$_1$-Werten von 38,1 bzw. 20,3 ergeben hatte.
 Der Thinking-Modus wurde daraufhin für alle Läufe deaktiviert
 (Abschnitt~\ref{sec:llm-pipeline}); diese Entscheidung beruht
@@ -306,7 +305,7 @@ ausschließlich auf Validierungsdaten (Tabelle~\ref{tab:datennutzung}).
 Die Checkpoints sind multimodal angelegt und enthalten neben dem
 Textmodell einen Vision-Encoder sowie Module für Multi-Token-Prediction
 (MTP).
-Beide Pipelines laden die Modelle jedoch über
+Beide LLM-Regime laden die Modelle jedoch über
 \texttt{AutoModelForCausalLM}, das für Qwen3.5 ausschließlich das
 Textmodell (\texttt{Qwen3\_5ForCausalLM}) instanziiert;
 Vision-Encoder und MTP-Module werden verworfen.
@@ -341,12 +340,12 @@ verwendeten Sequenzlängen nicht limitierend.
 
 \subsection{Pipeline-Module und Softwareversionen}
 
-Beide Pipelines nutzen gemeinsame Module für Datensatzladung,
-Metrikberechnung und Metadatenprotokollierung.
+Beide Pipelines nutzen gemeinsame Module für das Laden der Datensätze,
+die Metrikberechnung und die Protokollierung der Metadaten.
 Gesteuert werden sie über Konfigurationsdateien im YAML-Format, die beim
 Start gegen ein zentrales Experimentregister (Modell, Regime, Datensatz,
 Ausgabeverzeichnis) validiert werden; Training, Testinferenz und
-Evaluation laufen als getrennte SLURM-Jobs.
+Evaluation laufen als getrennte Slurm-Jobs.
 Für die Trainingsläufe der Hauptstudie überwacht zusätzlich eine
 Laufverwaltung Status und Phasen, verhindert konkurrierende Ausführungen
 desselben Laufs und stellt über Prüfsummen von Konfiguration und Code
@@ -424,8 +423,8 @@ und keine Presence-Penalty.
 
 \subsection{Protokollfelder je Lauf}
 
-Der Umfang der Reproduzierbarkeitsangaben unterscheidet sich zwischen den
-Kohorten.
+Der Umfang der Reproduzierbarkeitsangaben unterscheidet sich zwischen
+Trainings- und Zero-Shot-Läufen.
 Die Trainingsläufe der Hauptstudie laden Datensatz, Modelle und Tokenizer
 über feste Revisions-Hashes (Tabelle~\ref{tab:app-revisionen}), setzen
 ihren Seed für Python, NumPy und PyTorch einschließlich CUDA und
@@ -433,20 +432,20 @@ ihren Seed für Python, NumPy und PyTorch einschließlich CUDA und
 den Trainer.
 Protokolliert werden Git-Commit und Zustand der Arbeitskopie,
 Paketversionen, CUDA-, cuDNN- (9.20) und Treiberversion (595.58.03),
-GPU-Bezeichnung und SLURM-Job-Informationen; die Laufverwaltung ergänzt
+GPU-Bezeichnung und Slurm-Job-Informationen; die Laufverwaltung ergänzt
 Prüfsummen von Konfiguration und Code, Fingerprints der Datensplits, eine
 Phasenhistorie und die Checkpoint-Auswahl.
 Die Zero-Shot-Läufe luden Modelle und Datensatz dagegen ohne explizite
 Revisionsangabe; ihre Metadaten umfassen Git-Commit und GPU-Bezeichnung,
 aber unter anderem keine Treiber- und cuDNN-Versionen und keine Angaben
 der Laufverwaltung.
-Eine bitgenaue Reproduzierbarkeit wird für keine Kohorte beansprucht:
+Eine bitgenaue Reproduzierbarkeit wird für keinen der Läufe beansprucht:
 Deterministische Algorithmen werden nicht erzwungen, und Ergebnisse
 können bei abweichender Hard- oder Software variieren.
-Die Zero-Shot-Ausgaben entstehen zudem durch Sampling; ihre exakte
-Wiederholung setzt daher auch eine ununterbrochene Ausführung voraus, da
-der Zustand des Zufallszahlengenerators bei einer Wiederaufnahme nicht
-wiederhergestellt wird.
+Die Zero-Shot-Ausgaben entstehen zudem durch Sampling.
+Weil der Zustand des Zufallszahlengenerators bei einer Wiederaufnahme
+nicht wiederhergestellt wird, setzt ihre exakte Wiederholung auch eine
+ununterbrochene Ausführung voraus.
 
 \subsection{Adapterdateien}
 
@@ -469,7 +468,7 @@ bestand damit aus vier Zuteilungen (Start am 7., 12., 15. und
 % Quelle: summary.json, Schlüssel training_time_27b (resume_steps,
 % steps_logged, last_allocation_h, seconds_per_step, estimate_h, sacct_h,
 % wallclock_span_h, n_allocations; Reihenfolge Seeds 42, 123, 456).
-Der vom Trainer gespeicherte Wert erfasst nur die letzte Zuteilung ab
+Die vom Trainer gespeicherte Trainingsdauer erfasst nur die letzte Zuteilung ab
 Schritt 20\,000 (Seeds 42 und 123) bzw. 19\,500 (Seed~456) von
 24\,615; die Kennzahlen je Seed nennt die folgende Übersicht.
 
@@ -499,8 +498,8 @@ Die Hochrechnung der Schrittrate der letzten Zuteilung auf alle Schritte
 liegt 2,5 bis 10,9~h unter der Summe laut \texttt{sacct} und bestätigt
 deren Größenordnung.
 Die drei Läufe liefen gleichzeitig auf demselben Knoten; der explorative
-Vorlauf mit zwei Epochen benötigte allein auf dem Knoten 15,5~s je
-Schritt.
+Vorlauf mit zwei Epochen lief allein auf dem Knoten und benötigte
+15,5~s je Schritt.
 
 \subsection{Hardwareeffekt bei der Encoder-Inferenz}
 
@@ -511,7 +510,7 @@ Im explorativen Vorlauf erreichte DeBERTa-v3-base auf einer A100 eine
 mittlere Latenz von 17,6\,ms je Satz, in der Hauptstudie auf einer H100
 dagegen 8,9\,ms (Mittel der drei Läufe).
 
-\subsection{Parsing-Fallbacks}
+\subsection{Rückfallstrategien des Parsers}
 
 Vor dem Parsing werden umgebender Leerraum und eventuelle Denkblöcke
 zwischen \texttt{<think>} und \texttt{</think>} entfernt.
@@ -520,7 +519,7 @@ danach der Inhalt des ersten Markdown-Codeblocks und zuletzt der erste
 per regulärem Ausdruck gefundene Abschnitt in eckigen Klammern.
 Liefert keine Strategie ein JSON-Array, gilt die Antwort als nicht
 parsebar; die erfolgreiche Strategie wird protokolliert und in
-Tabelle~\ref{tab:formtreue} als Kennzahl Parse-Strategien geführt.
+Tabelle~\ref{tab:formtreue} als Kennzahl \enquote{Parse-Strategien} geführt.
 Die anschließende Validierung der Array-Elemente beschreibt
 Abschnitt~\ref{sec:postprocessing}.
 
@@ -597,7 +596,7 @@ Fehlerklasse aus Abschnitt~\ref{sec:erg-fehlertypen}.
   (Tabelle~\ref{tab:datensplits}).
   Die Typen sind nach der Zuverlässigkeit ihrer Annotation gruppiert
   (Abschnitt~\ref{sec:datenauswahl}).
-  Precision und Recall je Typ in Tabelle~\ref{tab:app-typen-prf}.}
+  Precision und Recall je Typ nennt Tabelle~\ref{tab:app-typen-prf}.}
   \label{tab:typen}
   \setlength{\tabcolsep}{3pt}
   \input{generated/tab-typen}
@@ -658,7 +657,7 @@ Fehlerklasse aus Abschnitt~\ref{sec:erg-fehlertypen}.
   \footnotesize
   \caption[Bootstrap-Intervalle des Modellvergleichs auf CrossNER]{Gepaarte
   95-\%-Bootstrap-Intervalle auf CrossNER ($B = 2\,000$, nach Domäne
-  geschichtet). Differenz Qwen3.5-27B minus DeBERTa-v3-large in
+  geschichtet). Differenz DeBERTa-v3-large minus Qwen3.5-27B in
   Mikro-F$_1$-Punkten, gemittelt über drei feste Seeds, auf PER, ORG und
   LOC. Die Domänenumfänge bleiben beim gepoolten Wert erhalten;
   Intervalle ohne Korrektur für Mehrfachvergleiche.}

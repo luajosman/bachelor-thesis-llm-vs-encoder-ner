@@ -1044,8 +1044,9 @@ def tab_crossner_ci(C):
         cells = [label]
         for key in keys:
             p = C["bootstrap"]["domains"][dom]["pairs"][key]
-            cells.extend([signed(p["diff"]),
-                          f"[{signed(p['ci'][0])}; {signed(p['ci'][1])}]"])
+            # Richtung Encoder minus LLM wie in tab_synthese und tab_ci (gespeichert ist LLM minus Encoder).
+            cells.extend([signed(-p["diff"]),
+                          f"[{signed(-p['ci'][1])}; {signed(-p['ci'][0])}]"])
         lines.append("    " + " & ".join(cells) + r" \\")
     return "\n".join(lines + ["    \\bottomrule", "\\end{tabular}", ""])
 
@@ -1258,7 +1259,7 @@ def tab_fehlertypen(G):
              "    \\textbf{Modell} & \\textbf{Regime} & \\textbf{Korrekt} &",
              "    \\textbf{\\shortstack[c]{Typ-\\\\fehler}} & \\textbf{\\shortstack[c]{Grenz-\\\\fehler}} &",
              "    \\textbf{\\shortstack[c]{Grenz- und\\\\Typfehler}} &",
-             "    \\textbf{\\shortstack[c]{Aus-\\\\lassung}} & \\textbf{Zus\\\"atze} \\\\", "    \\midrule"]
+             "    \\textbf{\\shortstack[c]{Aus-\\\\lassungen}} & \\textbf{Zus\\\"atze} \\\\", "    \\midrule"]
     for key in keys:
         g = G[key]
         e = g["agg"]["errors"]
@@ -1549,7 +1550,7 @@ def tab_synthese(G, C, boot):
     dagger = "$^{\\dagger}$ Intervall schlie\\ss{}t 0 ein. " if any(ci[0] <= 0 <= ci[1] for *_, ci in rows) else ""
     lines += note_rows(dagger + "Encoder: DeBERTa-v3-large; LLM: Qwen3.5-27B (QLoRA). Mikro-F$_1$, Seed-Mittel; "
                        "MultiNERD: seedgleich gepaartes Satz-Bootstrap, CrossNER: nach Dom\\\"ane geschichtetes "
-                       f"gepaartes Satz-Bootstrap ($B = {fmt_int(boot['settings']['B'])}$). Die Encoderwerte "
+                       f"gepaartes Satz-Bootstrap ($B = {fmt_int(boot['settings']['B'])}$). Die Encoder-Werte "
                        "h\\\"angen nicht vom Ausgabelimit ab.", 6, width=88)
     lines += ["\\end{tabular}", ""]
     return "\n".join(lines)

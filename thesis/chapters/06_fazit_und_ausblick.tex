@@ -22,8 +22,8 @@ benennen die Grenzen und skizzieren weiterführende Arbeiten.
 Bei 256 Ausgabetokens liegt DeBERTa-v3-large mit einem Mikro-F$_1$ von
 95,8 Punkten 1,34 Punkte [0,99; 1,68] vor Qwen3.5-27B im QLoRA-Regime
 (94,5).
-Nach der Nachinferenz am Ausgabelimit mit 1\,024 Tokens, die die am
-Limit abgeschnittenen Antworten ersetzt, erreicht das LLM 95,6 Punkte;
+Ersetzt eine Nachinferenz mit 1\,024 Tokens die am Limit abgeschnittenen
+Antworten, erreicht das LLM 95,6 Punkte;
 der Rückstand schrumpft auf 0,18 Punkte [0,02; 0,33].
 Auf CrossNER kehrt sich die Reihenfolge mit dem höheren Limit um
 (Tabelle~\ref{tab:synthese}).
@@ -68,7 +68,7 @@ Der Ressourcenbedarf wächst erheblich steiler als die Leistung.
 Innerhalb der Encoder-Familie steigt die Inferenzlatenz je Satz von 8,9
 auf 16,5~ms, der Speicher von 0,7 auf 1,7~GiB und die Trainingsdauer von
 0,4 auf 1,2~h.
-Innerhalb der QLoRA-Familie steigt die Latenz von 1\,876 auf 5\,505~ms,
+Innerhalb der QLoRA-Konfigurationen steigt die Latenz von 1\,876 auf 5\,505~ms,
 der Speicher von 0,9 auf 18,7~GiB und die Trainingsdauer von 12 auf
 266~h; das 4B-Modell fällt mit 62,9~h auf der A100 aus der Reihe.
 Hardwaregleich liegt die Latenz von Qwen3.5-0.8B um etwa das 210-Fache
@@ -95,9 +95,11 @@ Auf CrossNER liegt Qwen3.5-27B bei 1\,024 Tokens mit 87,1 Punkten vor
 DeBERTa-v3-large mit 85,0 und ist ab rund 12,9~s je Satz und 18,6~GiB
 die beste gemessene Wahl; DeBERTa-v3-large benötigt 25,7~ms auf demselben
 GPU-Typ.
-Rund drei Viertel dieses Vorsprungs gehen allerdings auf Vorhersagen für
-Entitäten nicht abgebildeter CrossNER-Typen zurück, die als Fehler zählen
-(Abschnitt~\ref{sec:disk-effizienz}).
+Rund drei Viertel dieses Vorsprungs entfallen allerdings auf falsch
+positive Spans, die auf Entitäten nicht abgebildeter CrossNER-Typen liegen
+und die der Encoder häufiger erzeugt als das LLM
+(Abschnitt~\ref{sec:disk-effizienz}); das gilt, sofern man auch
+Teilspans solcher Entitäten nicht als Fehler wertet.
 Das LLM rechtfertigt seinen Mehraufwand damit nur unter ähnlichen
 Transferbedingungen und bei einer Latenztoleranz von mehreren Sekunden
 je Satz.
@@ -114,8 +116,8 @@ Modellklassen auf den offiziellen englischen MultiNERD-Splits in einer
 gemeinsamen Pipeline, mit Größenstaffelung auf beiden Seiten und
 gemeinsamer Ressourcenmessung.
 Zweitens zeigt sie, dass das Wortindex-Format im QLoRA-Regime nahezu
-formtreu ist: Mit 1\,024 Ausgabetokens bleibt keine Antwort
-unparsebar.
+formtreu ist: Mit 1\,024 Ausgabetokens sind alle
+Antworten parsebar.
 Drittens folgt eine methodische Lehre für generative NER: Ausgabelimits
 sind vor der Evaluation an den Antwortlängen von Trainings- und
 Validierungsdaten zu prüfen, denn ein zu knappes Limit verschob hier den
@@ -245,9 +247,9 @@ Die zweite Anschlussfrage ist ein vollständiger Neulauf mit ausreichendem
 Ausgabelimit, der Qualität und Ressourcen gemeinsam erfasst.
 Er sollte das Zero-Shot-Regime einschließen, dessen nicht parsebare
 Antworten 3,8 bis 16,2\,\% der Referenzentitäten enthalten
-(Abschnitt~\ref{sec:erg-formtreue}), sowie Batching und einheitliche
-Hardware, was die Empfehlungen zu FF3 auf die Offline-Verarbeitung
-ausweiten würde.
+(Abschnitt~\ref{sec:erg-formtreue}).
+Zudem sollte er Batching und einheitliche Hardware verwenden; das würde
+die Empfehlungen zu FF3 auf die Offline-Verarbeitung ausweiten.
 
 Die dritte Anschlussfrage ist ein kontrollierter Vergleich von
 Anpassungsverfahren, Ausgabeformat, Prompt und Decoding unter sonst

@@ -27,8 +27,8 @@ gezielte Nachsuche vom 8.~November 2026) mit Stichwörtern wie
 \enquote{LLM named entity recognition}, \enquote{generative NER},
 \enquote{instruction tuning NER}, \enquote{LoRA/QLoRA NER},
 \enquote{DeBERTa NER}, \enquote{MultiNERD} und \enquote{CrossNER}.
-Ergänzend wurde entlang der Zitationen der Schlüsselarbeiten per
-Schneeballsuche gesucht.
+Ergänzend wurden die Zitationen der Schlüsselarbeiten per
+Schneeballsuche verfolgt.
 Trefferzahlen wurden nicht protokolliert; die Auswahl beansprucht keine
 systematische Vollständigkeit.
 Grundlagen (Kapitel~\ref{chap:grundlagen}) werden nicht wiederholt.
@@ -78,8 +78,8 @@ Das System kombiniert XLM-RoBERTa-large mit einer CRF-Schicht und einem
 Retrieval-Modul, das Wikipedia-Passagen sowie Wikidata-Entitäten und
 -Typen als zusätzlichen Kontext liefert.
 Auf dem englischen Track erreicht es einen Makro-F$_1$ von 85{,}53.
-Ergänzend prompten die Autoren ChatGPT (\texttt{gpt-3.5-turbo}) in drei
-Varianten auf dem Validierungssplit.
+Ergänzend testen die Autoren ChatGPT (\texttt{gpt-3.5-turbo}) mit drei
+Prompt-Varianten auf dem Validierungssplit.
 Selbst die beste Variante mit Demonstrationsbeispielen erreicht im Mittel
 über die Sprachen nur einen Mikro-F$_1$ von 14{,}78, gegenüber 92{,}77
 für das eigene System auf demselben Split~\cite[Tab.~4]{tan2023damo}.
@@ -94,7 +94,7 @@ BERT, XLM-RoBERTa-large,
 DeBERTa-v3-base und DeBERTa-v3-large, ein feinjustiertes GLiNER-Modell
 sowie GPT-4o mit Beispielentitäten im Prompt.
 MultiNERD ist nicht enthalten.
-Unter den Transformer-Modellen erweisen sich die DeBERTa-Varianten als am
+Unter den Transformer-Modellen erweisen sich die DeBERTa-Varianten als die
 effektivsten; nach einem Nemenyi-Test teilen sich DeBERTa-v3-large und
 das feinjustierte GLiNER-Modell die besten Ränge, ohne sich signifikant
 zu unterscheiden.
@@ -124,7 +124,7 @@ Trainiert wird auf Pile-NER, den von ChatGPT erzeugten Annotationen, die
 auch UniversalNER verwendet (Abschnitt~\ref{sec:llm_ner_related}).
 Im Zero-Shot-Vergleich auf sieben Datensätzen außerhalb der
 Trainingsverteilung, darunter die fünf CrossNER-Domänen, erreicht die
-mittlere Variante mit rund 90~Mio. Parametern im Mittel einen F$_1$ von
+mittelgroße Variante mit rund 90~Mio. Parametern durchschnittlich einen F$_1$ von
 55{,}4 und damit das Niveau des etwa 140-mal größeren UniNER-13B.
 Die größte Variante liegt im Mittel rund fünf Punkte darüber, und selbst
 die kleinste Variante mit 50~Mio. Parametern übertrifft ChatGPT; das
@@ -134,7 +134,7 @@ Inferenzzeiten messen die Autoren nicht; sie verweisen auf die parallele
 Span-Klassifikation und die Lauffähigkeit auf CPUs.
 
 \textcite{bogdanov2024nuner} verfolgen mit NuNER einen verwandten Weg,
-setzen aber auf ein Pre-Training für die anschließende Feinjustierung
+setzen aber auf ein Vortraining für die anschließende Feinjustierung
 statt auf das Zero-Shot-Regime.
 Ein RoBERTa-base-Modell wird kontrastiv auf 4{,}38~Mio.
 Entitätsannotationen vortrainiert, die GPT-3.5 für Sätze aus dem
@@ -196,7 +196,8 @@ mehrsprachigen UNER-Benchmark mit den Typen Person, Organisation und
 Ort.
 Gemeint ist der Datensatz Universal NER von \textcite{mayhew2024uner},
 nicht das gleichnamige Modell von \textcite{zhou2024universalner}.
-Tagging erweist sich als robusteste, aber tokenintensivste Strategie;
+Tagging erweist sich als die robusteste, aber auch tokenintensivste
+Strategie;
 Matching ist konkurrenzfähig und tokeneffizient; Indexing mit
 Zeichenindizes ist nur dann konkurrenzfähig, wenn die Eingabe selbst mit
 Zeichenindizes angereichert wird, weil die Modelle Zeichenpositionen
@@ -204,26 +205,27 @@ sonst nur indirekt schätzen können.
 Eine auf \textcite[Tab.~9]{ramponi2025fallacy} zurückgehende
 Indexing-Variante mit nummerierten Wörtern statt Zeichenpositionen wird
 beschrieben, aber nicht evaluiert.
-Die Arbeit liegt bislang nur als Preprint vor.
+Die Arbeit von \textcite{semin2026spanLabeling} liegt bislang nur als
+Preprint vor.
 
-Dass das Format auch bei feinjustierten Modellen ein Faktor erster
-Ordnung ist, zeigen \textcite{zhan2026generativeNER}.
-Sie trainieren acht offene LLMs mit LoRA auf fünf Ausgabeformaten: zwei
+Dass das Format auch bei feinjustierten Modellen die Leistung
+maßgeblich beeinflusst, zeigen \textcite{zhan2026generativeNER}.
+Sie trainieren acht offene LLMs per LoRA mit fünf Ausgabeformaten: zwei
 Inline-Formate, die Entitäten mit Klammern oder XML-Tags im
 reproduzierten Satz markieren, und drei JSON-Formate, die Entitäten nach
 Typ gruppieren, mit einem Vorkommensindex versehen oder mit Zeichenoffsets
 angeben.
 Die Inline-Formate erreichen über alle Modelle die besten Mittelwerte,
-auf den flachen Datensätzen rund 92 F$_1$, während JSON mit Zeichenoffsets
-dort im Mittel auf rund 54 fällt.
+auf den flachen Datensätzen rund 92 F$_1$-Punkte, während JSON mit
+Zeichenoffsets dort im Mittel auf rund 54 Punkte fällt.
 Die Autoren führen dies darauf zurück, dass das Berechnen von
 Zeichenpositionen der generativen Arbeitsweise der Modelle schlecht
 entspricht.
 \textcite{ravikumar2026lostformatting} trainieren Modelle mit 3 bis 32~Mrd.
-Parametern per QLoRA auf sechs Ausgabeformaten, darunter JSON mit
-Spantext, Inline-XML und spaltenweise BIO-Tags, und werten für NER unter
+Parametern per QLoRA mit sechs Ausgabeformaten, darunter JSON mit
+Spantext, Inline-XML und spaltenweise IOB2-Tags, und werten für NER unter
 anderem OntoNotes~5.0 mit strikter Mikro-F$_1$ aus.
-Allein das Format verschiebt F$_1$ teils um mehr als 40\,\%, kein Format
+Allein das Format verschiebt den F$_1$-Wert teils um mehr als 40\,\%, kein Format
 liegt durchgängig vorn, und ein Indexformat prüfen sie nicht.
 Für materialwissenschaftliche Extraktion mit feinjustiertem GPT-3 und
 LoRA-angepasstem Llama-2 berichten \textcite{dagdelen2024structuredIE},
@@ -231,12 +233,12 @@ dass JSON-Ausgaben in rund 99\,\% der Fälle parsebar sind, obwohl das
 Format bei der Generierung nicht erzwungen wird; JSON benötigt aber
 mehr Tokens als satzförmige Schemata.
 Auf die Kosten der Ausgabelänge weisen \textcite{lu2024padellm} hin: Die
-Latenz generativer NER entsteht vor allem durch die sequenzielle
-Dekodierung langer Ausgaben, und Inline-Formate verlängern die Ausgabe,
+Latenz generativer NER entsteht vor allem durch das sequenzielle
+Decoding langer Ausgaben, und Inline-Formate verlängern die Ausgabe,
 weil sie den gesamten Eingabetext wiederholen.
 Ihr paralleles Decoding, das Erwähnungen je Typ gleichzeitig erzeugt,
-verkürzt die Inferenz um das 1{,}76- bis
-10{,}22-Fache bei unveränderter Erkennungsleistung.
+beschleunigt die Inferenz um den Faktor 1{,}76 bis
+10{,}22 bei unveränderter Erkennungsleistung.
 
 Vor diesem Hintergrund lässt sich die Ausgabestrategie dieser Arbeit
 einordnen (Abschnitt~\ref{sec:prompt-design}): Das Modell erhält eine
@@ -246,7 +248,7 @@ Das Format gehört zur Indexing-Familie in der angereicherten Variante auf
 Wortebene: Die nummerierten Eingabetokens und die Wortindizes in der
 Ausgabe folgen \textcite{ramponi2025fallacy}, die Einordnung
 \textcite{semin2026spanLabeling}; JSON-Schema und Nachverarbeitung sind
-eigene Umsetzung.
+eigene Umsetzungen.
 Erwartet wird erstens, dass die explizit in der Eingabe stehenden
 Indizes den von \textcite{zhan2026generativeNER} bei Zeichenoffsets
 beobachteten Einbruch vermeiden.
@@ -273,8 +275,8 @@ Marker \texttt{@@} und \texttt{\#\#} eingefasst sind; die
 Demonstrationsbeispiele wählt in der stärksten Variante eine
 Nachbarschaftssuche auf den Repräsentationen eines feinjustierten
 NER-Taggers aus~\cite[Abschn.~3.2.2]{wang2025gptner}.
-Weil GPT-3 auch Eingaben ohne Entität des abgefragten Typs überkonfident
-annotiert, ergänzen die Autoren eine Selbstverifikation, in der das
+Weil GPT-3 auch in Eingaben ohne Entität des abgefragten Typs mit
+übermäßiger Sicherheit Entitäten markiert, ergänzen die Autoren eine Selbstverifikation, in der das
 Modell jede extrahierte Entität bestätigt.
 Auf CoNLL-2003 erreicht GPT-NER so einen F$_1$ von 90{,}91 gegenüber
 92{,}8 für einen feinjustierten BERT-Tagger~\cite[Tab.~1]{wang2025gptner};
@@ -284,7 +286,8 @@ sie die Aufgabe in eine Abfrage je Entitätstyp zerlegen, ergänzt um
 syntaktische Hinweise und ein Mehrheitsvotum über mehrere Antworten.
 Die Zerlegung verbessert die Ergebnisse auf allen sieben untersuchten
 Benchmarks, vervielfacht aber die Zahl der Modellaufrufe je Satz; die
-mitgeführten überwachten Bestwerte liegen weiterhin weit darüber.
+zum Vergleich berichteten Bestwerte überwachter Verfahren liegen weiterhin
+weit darüber.
 
 \textcite{ashok2023promptner} erweitern das Prompting mit PromptNER um
 textuelle Typdefinitionen und verlangen vom Modell eine Kandidatenliste
@@ -300,7 +303,7 @@ Trainingsdaten verwendet werden.
 In den Domänen \emph{AI} und \emph{Science} bleiben die bisherigen
 Verfahren vorn.
 
-\subsection{Instruktionsgetunte und angepasste LLMs}
+\subsection{LLMs mit Instruction-Tuning und Anpassung}
 \label{sec:k3-angepasst}
 
 Eine zweite Gruppe passt offene LLMs gezielt an NER an.
@@ -308,7 +311,7 @@ Für UniversalNER lassen \textcite{zhou2024universalner} ChatGPT Passagen
 aus dem Pile-Korpus mit Entitäten frei gewählter Typen annotieren und
 trainieren damit LLaMA-Modelle mit 7 und 13~Mrd. Parametern.
 Auf einem Benchmark aus 43 Datensätzen in neun Domänen übertreffen die
-Studentenmodelle im Zero-Shot-Regime ihren Lehrer deutlich, mit
+Schülermodelle im Zero-Shot-Regime ihr Lehrermodell deutlich, mit
 mittleren F$_1$-Werten von 41{,}7 bzw. 43{,}4 gegenüber 34{,}9 für
 ChatGPT; Adapterverfahren werden nicht erwähnt, Ressourcen nicht
 gemessen.
@@ -383,15 +386,15 @@ UniversalNER misst keinen Trainings- oder Inferenzaufwand; GoLLIE
 dokumentiert Trainingszeit und CO$_2$ je Größe (7B: eine A100,
 44{,}5~h; 13B: 79{,}5~h; 34B: zwei A100, 94{,}6~h), aber keine
 Inferenzlatenz und keinen
-Encodervergleich~\cite[Anh.~D.3, Tab.~10]{sainz2024gollie}.
-Für den CrossNER-Ergänzungsversuch dieser Arbeit
+Encoder-Vergleich~\cite[Anh.~D.3, Tab.~10]{sainz2024gollie}.
+Für den CrossNER-Transfertest dieser Arbeit
 (Abschnitt~\ref{sec:crossner}) liefern PromptNER und GoLLIE Orientierung,
 aber keine Vergleichswerte: PromptNER sieht zwei Beispiele aus der
 Zieldomäne, GoLLIE trainiert auf den Richtlinien vieler Datensätze, und
 beide werten die domänenspezifischen Typinventare von CrossNER aus.
 Der Versuch dieser Arbeit ist dagegen ein reiner Transfertest ohne
 Zielbeispiele auf den Grobtypen PER, ORG und LOC.
-Die berichteten Werte belegen deshalb nur, dass der Domänenwechsel auch
+Die von beiden Arbeiten berichteten CrossNER-Werte belegen deshalb nur, dass der Domänenwechsel auch
 für generative Modelle eine erhebliche Hürde bleibt, nicht das auf dem
 reduzierten Typinventar erwartbare Niveau.
 
@@ -445,9 +448,9 @@ dem fünften knapp (0{,}5 Punkte) hinter dem besten
 Encoder~\cite[Tab.~III]{obeidat2025llm}.
 Der Vorsprung ist bei Entitäten ab drei Tokens am größten und geht vor
 allem auf eine höhere Precision zurück.
-Dem stehen Inferenzzeiten gegenüber, die je Testbeispiel um das 40- bis
-220-Fache über denen des besten Encoders
-liegen~\cite[Tab.~IV]{obeidat2025llm}; die LLMs benötigten zudem zwei
+Dem stehen Inferenzzeiten gegenüber, die je Testbeispiel das 40- bis
+220-Fache derjenigen des besten Encoders
+betragen~\cite[Tab.~IV]{obeidat2025llm}; die LLMs benötigten zudem zwei
 statt einer H100-GPU.
 Die Autoren führen die Latenz unter anderem darauf zurück, dass das
 IOB2-Format je Eingabetoken ein Tag erzeugen lässt und lange
@@ -460,26 +463,28 @@ Typen zu seltenen Krankheiten.
 Lokale LLMs mit 7~Mrd. Parametern sowie GPT-3.5 und GPT-4 werden
 aufgefordert, IOB2-Tags zu erzeugen.
 Im Zero-Shot-Regime erreicht LLaMA-2-7B für den Typ \emph{Rare Disease}
-einen F$_1$ von 0{,}149 und GPT-4 einen von 0{,}576.
-Nach einem LoRA-Fine-Tuning nähert sich das medizinisch vortrainierte
-Llama2-MedTuned-7B nach Darstellung der Autoren dem feinjustierten
+einen F$_1$ von 0{,}149 und GPT-4 einen von 0{,}576 (Skala 0 bis 1 wie
+in der Quelle).
+Mit LoRA-Fine-Tuning nähert sich das medizinisch vortrainierte
+Llama2-MedTuned-7B laut den Autoren dem feinjustierten
 BioClinicalBERT an, bleibt aber auf allen Typen darunter; vollständiges
 Fine-Tuning könnte den Abstand nach Vermutung der Autoren schließen.
-Diese Vermutung relativieren \textcite[Tab.~11]{zhan2026generativeNER}:
-In ihren Prüffällen auf CoNLL-2003 und GENIA liegt LoRA um 0{,}14 bis
+Als Gründe für die Schwierigkeiten nennen sie die Abhängigkeit
+tokenbasierter NER von Einzeltoken-Repräsentationen, das darauf nicht
+ausgerichtete Vortrainingsziel der Decoder und die für die Modelle
+ungesehenen IOB2-Symbole.
+Die Modellgröße variiert die Arbeit nicht.
+Die Vermutung zum vollständigen Fine-Tuning relativieren
+\textcite[Anh.~D, Tab.~11]{zhan2026generativeNER}:
+In ihren Vergleichen auf CoNLL-2003 und GENIA liegt LoRA um 0{,}14 bis
 0{,}48 F$_1$-Punkte über vollständigem Fine-Tuning, was für Qwen3.5 und
 MultiNERD jedoch keine Gleichwertigkeit belegt.
-Als Gründe nennen sie die Abhängigkeit tokenbasierter NER von
-Einzeltoken-Repräsentationen, das darauf nicht ausgerichtete
-Pre-Training-Ziel der Decoder und die für die Modelle ungesehenen
-IOB2-Symbole.
-Die Modellgröße variiert die Arbeit nicht.
 
 Einen konstruktiven Umgang mit genau diesem Unterschied zeigen
 \textcite{dukic2024lookingright}.
 Sie setzen auf Llama-2-7B und Mistral-7B einen Klassifikationskopf und
 entfernen während eines
-QLoRA-Fine-Tunings die kausale Aufmerksamkeitsmaske schichtweise, sodass
+QLoRA-Fine-Tunings die kausale Maske schichtweise, sodass
 die Decoder bidirektional auf den Kontext zugreifen können.
 Auf CoNLL-2003 steigt der F$_1$ von Llama-2-7B durch die Entfernung der
 Maske in allen Schichten von 0{,}744 auf 0{,}908, und beide Decoder
@@ -489,7 +494,7 @@ Die Decoder werden hier also wie Encoder und nicht generativ eingesetzt,
 was die Formatfrage umgeht, aber eine Suche über
 Maskierungskonfigurationen erfordert.
 
-Drei der vier Arbeiten konvergieren in einem Punkt: Mit Adaptern
+Drei der vier Arbeiten stimmen in einem Punkt überein: Mit Adaptern
 feinjustierte LLMs erreichen auf etablierten Benchmarks das Niveau
 feinjustierter Encoder oder übertreffen es
 leicht~\cite{zhan2026generativeNER,obeidat2025llm,dukic2024lookingright};
@@ -501,21 +506,21 @@ Generativ arbeiten dabei \textcite{zhan2026generativeNER},
 einsetzen; den Mehraufwand bei der Inferenz beziffern allein
 \textcite{obeidat2025llm}, und dort fällt der Leistungsgewinn im
 Verhältnis dazu klein aus.
-Die Grenzen dieser Vergleiche, Datenbasis, Ausgabeformate,
+Die Grenzen dieser Vergleiche (Datenbasis, Ausgabeformate,
 Ressourcenerfassung, Größenbereich und Herkunft der
-Encoder-Referenzwerte, bündelt Abschnitt~\ref{sec:research_gap} zur
+Encoder-Referenzwerte) bündelt Abschnitt~\ref{sec:research_gap} zur
 Forschungslücke.
 
 \section{Einfluss der Modellgröße in verwandten Arbeiten}
 \label{sec:model_size_related}
 
-Skalierungsgesetze beschreiben den Pre-Training-Verlust
+Skalierungsgesetze beschreiben den Verlust im Vortraining
 (Abschnitt~\ref{sec:model_size}); die zuvor vorgestellten Arbeiten
 erlauben zur Rolle der Modellgröße bei NER nur indirekte Aussagen, weil
 die Größe fast immer gemeinsam mit anderen Faktoren variiert.
 
 Innerhalb einer LLM-Familie sind Größeneffekte sichtbar, aber klein.
-UniversalNER gewinnt beim Übergang vom 7B- zum 13B-Studenten im
+UniversalNER gewinnt beim Übergang vom 7B- zum 13B-Schülermodell im
 Zero-Shot-Regime leicht hinzu~\cite{zhou2024universalner}.
 GoLLIE zeigt von 7 über 13 bis 34~Mrd. Parametern im Mittel steigende
 Zero-Shot-Werte bei stark unterschiedlichem Gewinn je Datensatz.
@@ -539,7 +544,7 @@ Bei Encodern selbst ist die größere Variante nicht durchgehend besser:
 Bei \textcite{keraghel2024recent} liegt DeBERTa-v3-base auf CoNLL-2003
 und NCBI Disease knapp vor DeBERTa-v3-large, auf den meisten anderen
 Datensätzen ist es umgekehrt.
-Und \textcite{dukic2024lookingright} beobachten, dass ihre
+Zudem beobachten \textcite{dukic2024lookingright}, dass ihre
 Maskenentfernung erst ab einer gewissen Modellgröße wirkt.
 Die vorliegende Arbeit betrachtet die Modellgröße daher innerhalb jeder
 Familie getrennt und deskriptiv, mit zwei Encoder- und drei LLM-Größen
@@ -597,11 +602,11 @@ zusammen und ordnet die vorliegende Arbeit ein.
       Fine-Tuning; Prompting mit Beispielentitäten & ja & -- \\
     \addlinespace[1pt]
     \textcite{zaratiana2024gliner} & DeBERTa-v3 (50--300 Mio.) &
-      Pile-NER; CrossNER, MIT & Pre-Training; Zero-Shot &
+      Pile-NER; CrossNER, MIT & Vortraining; Zero-Shot &
       berichtete Werte & -- \\
     \addlinespace[1pt]
     \textcite{bogdanov2024nuner} & RoBERTa-base; UniNER-7B; GPT-3.5/4 &
-      C4-Annotationen; 4 Datensätze & Pre-Training; Few-Shot-FT &
+      C4-Annotationen; 4 Datensätze & Vortraining; Few-Shot-FT &
       ja & Annotationskosten (unter 500~\$); keine Latenz- oder Speichermessung \\
     \addlinespace[2.5pt]
     \multicolumn{6}{@{}l}{\textit{LLM-basierte Ansätze (Abschnitt~\ref{sec:llm_ner_related})}} \\
@@ -685,8 +690,8 @@ zu den offiziellen Splits bleibt offen.
 Eine gemeinsame Auswertung beider Modellfamilien auf den offiziellen
 englischen MultiNERD-Splits mit einer in derselben Pipeline trainierten
 Encoder-Referenz fehlt damit.
-Die generativen Ausgabeformate der direkten Vergleiche wachsen überdies
-mit der Eingabelänge: \textcite[Abschn.~IV]{obeidat2025llm} erzeugen je
+Die Ausgaben der generativen Formate in den direkten Vergleichen wachsen
+überdies mit der Eingabelänge: \textcite[Abschn.~IV]{obeidat2025llm} erzeugen je
 Eingabetoken ein IOB2-Tag, die Inline-Markierungen bei
 \textcite{zhan2026generativeNER} wiederholen den Satz, was nach den
 Befunden aus Abschnitt~\ref{sec:k3-ausgabeformate} die Latenz erhöht.
@@ -711,8 +716,7 @@ ohne Inferenz oder gar keine Messung.
 Zudem betrachten die direkten Vergleiche LLMs einer einzigen
 Größenklasse zwischen 3 und 9~Mrd. Parametern.
 Größenstaffelungen finden sich nur innerhalb von LLM-Familien, bei
-GoLLIE mit Trainingsressourcen je Größe, aber ohne gemeinsamen
-Encodervergleich mit
+GoLLIE mit Trainingsressourcen je Größe, aber ohne gemeinsamen Encoder-Vergleich mit
 Inferenzmessung~\cite{zhou2024universalner,sainz2024gollie}, während
 Encoder-Studien die Größe nur innerhalb ihrer Klasse
 variieren~\cite{keraghel2024recent}.
@@ -729,13 +733,13 @@ in FF3.
 
 Eine erste Einschränkung betrifft eine mögliche Datenkontamination.
 MultiNERD besteht aus Wikipedia- und Wikinews-Artikeln, die mit hoher
-Wahrscheinlichkeit Teil der Pre-Training-Korpora der verwendeten LLMs
+Wahrscheinlichkeit Teil der Vortrainingskorpora der verwendeten LLMs
 sind.
 Die Zusammensetzung der Qwen3.5-Trainingsdaten ist nicht vollständig
 offengelegt, sodass sich dies weder belegen noch ausschließen lässt.
 \textcite{zhan2026generativeNER} weisen auf bekannte Lecks von
 Benchmark-Daten hin und ziehen deshalb CleanCoNLL heran, dessen
-bereinigte Form kaum im Pre-Training enthalten sein dürfte.
+bereinigte Form kaum im Vortraining enthalten sein dürfte.
 Ihr Befund, dass sich die Ergebnisse beim Ersetzen der Typbezeichnungen
 durch bedeutungslose Symbole kaum ändern,
 spricht gegen eine Memorisierung von Entität-Typ-Paaren, gilt aber für
@@ -745,8 +749,8 @@ Wer den Wikipedia-Text kennt, kennt damit nicht die hier verwendeten
 Labels, auch wenn der Datensatz seit 2022 öffentlich ist.
 Im QLoRA-Regime lernen alle Modelle das Typinventar ohnehin aus den
 Trainingsdaten; im Zero-Shot-Regime könnte Vorwissen über die Artikel die
-Ergebnisse dagegen begünstigen; diese Frage kann die Arbeit nicht
-klären.
+Ergebnisse dagegen begünstigen.
+Diese Frage kann die Arbeit nicht klären.
 
 Die zweite Einschränkung betrifft die Vergleichsbedingungen: Die Arbeit
 hält nicht alle Bedingungen konstant und vergleicht deshalb konkrete
