@@ -25,15 +25,13 @@ Bei 256 Ausgabetokens liegt DeBERTa-v3-large mit einem Mikro-F$_1$ von
 Nach der Nachinferenz am Ausgabelimit mit 1\,024 Tokens, die die am
 Limit abgeschnittenen Antworten ersetzt, erreicht das LLM 95,6 Punkte;
 der Rückstand schrumpft auf 0,18 Punkte [0,02; 0,33].
-Zu DeBERTa-v3-base ergibt sich dann keine Rangfolge, weil das
-Differenzintervall [$-$0,02; 0,30] null enthält; auf CrossNER kehrt sich
-die Reihenfolge mit dem höheren Limit um (Tabelle~\ref{tab:synthese}).
+Auf CrossNER kehrt sich die Reihenfolge mit dem höheren Limit um
+(Tabelle~\ref{tab:synthese}).
 Erwartung E1 ist auf MultiNERD nur bei ausreichendem Ausgabelimit und
 nur teilweise bestätigt: Das mit QLoRA angepasste LLM liegt im Punktwert
 knapp vor DeBERTa-v3-base, ohne dass sich eine Rangfolge nachweisen
-lässt, bleibt aber knapp hinter DeBERTa-v3-large.
-Das Intervall dieser Differenz, [0,02; 0,33], liegt knapp über null und
-gehört zu den explorativen Vergleichen.
+lässt ([$-$0,02; 0,30]), und bleibt knapp hinter DeBERTa-v3-large.
+Das Intervall dieses explorativen Vergleichs liegt nur knapp über null.
 Der verbleibende Abstand ist kein isolierter Architektureffekt
 (Abschnitt~\ref{sec:disk-leistung}).
 
@@ -47,8 +45,9 @@ daraus nicht.
 Die Formtreue ist im QLoRA-Regime hoch: Rund 0,4\,\% der Antworten sind
 nicht parsebar; sie enden ohne schließende Klammer, was auf das Limit von
 256 Tokens hinweist, und sind mit 1\,024 Tokens parsebar.
-Im Zero-Shot-Regime erreichen die drei Modelle nur 6,2 bis 69,4
-F$_1$-Punkte; das bestätigt Erwartung E3.
+Im Zero-Shot-Regime erreichen die drei Modelle unter den gewählten
+Prompt- und Decoding-Bedingungen nur 6,2 bis 69,4 F$_1$-Punkte; das
+stützt Erwartung E3.
 Dort scheitert das 0.8B-Modell an Syntax und Typinventar, das 4B- und
 das 27B-Modell verlieren 3\,930 bzw. 3\,397 Elemente durch inkonsistente
 Text- und Indexfelder (Abschnitt~\ref{sec:disk-format}).
@@ -215,7 +214,8 @@ Validierungsdaten festgelegt und auf einem unberührten oder manuell
 geprüften Testsplit evaluiert werden.
 Eine manuell geprüfte Stichprobe wie die 1\,000 Sätze mit mindestens
 20 Instanzen je Typ, die \textcite{tedeschi2022multinerd} für ihre
-Qualitätsmessung nutzen, würde für die häufigen, verrauschten Typen ANIM,
+Qualitätsmessung nutzen, würde, sofern sie zugänglich ist und nicht mit
+dem Trainingssplit überlappt, für die häufigen, verrauschten Typen ANIM,
 FOOD und PLANT zwischen Modell- und Annotationsfehlern trennen.
 Für seltene Typen wie BIO und INST bliebe sie mit wenigen Dutzend
 Instanzen wenig belastbar.

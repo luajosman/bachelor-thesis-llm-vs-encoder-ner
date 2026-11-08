@@ -19,10 +19,11 @@ LLM-basierte NER, sie verwenden MultiNERD oder CrossNER, oder sie
 variieren die Modellgröße.
 Begutachtete Fassungen werden bevorzugt; Preprints werden einbezogen,
 wenn keine begutachtete Fassung vorliegt und die Arbeit unmittelbar
-einschlägig ist, darunter zwei Arbeiten aus dem Jahr
-2026~\cite{zhan2026generativeNER,semin2026spanLabeling}.
+einschlägig ist.
 Die Auswahl beruht auf einer narrativen Recherche in Google Scholar,
-arXiv und der ACL Anthology (2019 bis 2025) mit Stichwörtern wie
+arXiv und der ACL Anthology (2019 bis 2025, ergänzt um zwei Preprints
+aus 2026~\cite{zhan2026generativeNER,semin2026spanLabeling}) mit
+Stichwörtern wie
 \enquote{LLM named entity recognition}, \enquote{generative NER},
 \enquote{instruction tuning NER}, \enquote{LoRA/QLoRA NER},
 \enquote{DeBERTa NER}, \enquote{MultiNERD} und \enquote{CrossNER}.
@@ -658,8 +659,7 @@ zusammen und ordnet die vorliegende Arbeit ein.
   \end{tabular}
 \end{table}
 
-Die erste Lücke betrifft Datenbasis und Pipeline, die ersten beiden der
-vier Aspekte aus Abschnitt~\ref{sec:problem_ziel}.
+Die erste Lücke betrifft Datenbasis und Pipeline.
 Die direkten Vergleiche verwenden allgemeine Benchmarks wie CoNLL-2003
 mit vier und OntoNotes mit 18 Typen aus mehreren
 Genres~\cite{weischedel2013ontonotes,li2018survey}
@@ -698,8 +698,7 @@ dessen Formtreue eigens gemessen wird.
 Diese Lücke betrifft vor allem FF1 und FF3
 (Abschnitt~\ref{sec:problem_ziel}).
 
-Die zweite Lücke betrifft Ressourcenerfassung und Modellgröße, den
-dritten und vierten Aspekt.
+Die zweite Lücke betrifft Ressourcenerfassung und Modellgröße.
 Leistung und Ressourcen werden in den direkten Vergleichen nur
 ausschnittsweise erfasst: Inferenzzeiten ohne Speicher, Trainingskosten
 ohne Inferenz oder gar keine Messung.

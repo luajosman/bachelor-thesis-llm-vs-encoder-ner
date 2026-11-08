@@ -97,11 +97,12 @@ Der Makro-F$_1$ liegt rund zehn bzw. neun Punkte unter dem Mikro-F$_1$,
 was auf die deutlich schwächeren Werte bei den seltenen und verrauschten
 Typen zurückgeht (Abschnitt~\ref{sec:erg-typen}).
 
-Die Streuung über die Seeds ist sehr gering; die drei Einzelwerte liegen
-jeweils innerhalb eines Zehntelpunkts.
-Die Validierungs-F$_1$-Werte der ausgewählten Checkpoints
+Bei beiden Encodern ist die Streuung über die Seeds sehr gering; die
+drei Einzelwerte liegen jeweils innerhalb eines Zehntelpunkts.
+Die Validierungs-F$_1$-Werte ihrer ausgewählten Checkpoints
 (Tabelle~\ref{tab:app-seeds}) liegen rund drei Punkte unter den
-Testwerten.
+Testwerten; bei den LLMs, deren Validierung nur 200 Sätze umfasst,
+liegen sie in acht von neun Läufen darüber.
 Eine mögliche, nicht isoliert geprüfte Erklärung ist die
 unterschiedliche Typverteilung der Splits: Der Anteil von LOC, einem der
 am besten erkannten und im Mikro-Wert entsprechend stark gewichteten
@@ -123,9 +124,8 @@ Checkpoints mit diesem Format.
 Nach der Anpassung mit QLoRA beträgt der Abstand zum Zero-Shot-Regime
 87,0 (0.8B), 59,0 (4B) bzw. 25,1 Punkte (27B); er umfasst neben dem
 Training auch Unterschiede in Prompt, Decoding und Präzision. Die Zero-Shot-Sampling-Streuung wurde nicht gemessen.
-Ausgewählt wurde in acht der neun Läufe der Adapter der dritten Epoche
-(Abschnitt~\ref{sec:llm-pipeline}); die Werte der generativen
-Validierung auf 200 Sätzen stehen in Tabelle~\ref{tab:app-seeds}.
+Die Werte der generativen Validierung auf 200 Sätzen und die gewählten
+Epochen stehen in Tabelle~\ref{tab:app-seeds}.
 Der Verlauf über die Epochen flacht ab: Bei Seed~42 steigt der
 Validierungs-F$_1$ des 27B-Modells von 94,6 über 95,8 auf 96,1, der des
 0.8B-Modells von 91,6 über 92,1 auf 92,3. Beim 4B-Modell mit Seed~42 liegt die zweite
@@ -260,9 +260,10 @@ Im QLoRA-Regime ist die Parse-Fehlerrate mit rund 0,4\,\% gering; alle
 nicht parsebaren Antworten enden ohne
 schließende Klammer und gehen auf das Limit von 256 Ausgabetokens
 zurück.
-Da nur 55 der 16\,454 Referenzantworten länger als 256 Tokens sind
-(Abschnitt~\ref{sec:llm-pipeline}), fallen die Modellantworten länger
-aus als die Referenz.
+Je Lauf brechen 62 bis 72 Antworten am Limit ab, obwohl nur 55 der
+16\,454 Referenzantworten länger als 256 Tokens sind
+(Abschnitt~\ref{sec:llm-pipeline}); ein Teil der Modellantworten ist
+also länger als die zugehörige Referenz.
 Die betroffenen Sätze sind mit im Mittel 44 Tokens etwa doppelt so lang
 wie ein durchschnittlicher Testsatz (21 Tokens) und enthalten zusammen
 656 bis 670 Referenzentitäten, rund 2,6\,\% aller Referenzentitäten,
@@ -462,11 +463,9 @@ Das vollständige Fine-Tuning der Encoder dauerte 0,4~h (base)
 bzw. 1,2~h (large) auf einer H100. Das
 QLoRA-Training über drei Epochen benötigte 12,1~h für das 0.8B-Modell
 auf derselben H100 und 62,9~h für das 4B-Modell auf einer A100.
-Die 266~h der 27B-Läufe (je Seed in Anhang~\ref{app:durchfuehrung}) sind die
-Summe von je vier Slurm-Zuteilungen am Drei-Tage-Limit der Partition
-(Abschnitt~\ref{sec:effizienzmetriken}). Die drei Läufe teilten sich
-zudem einen Knoten, sodass die Dauer durch die gegenseitige Auslastung
-erhöht ist (Vergleich mit dem allein laufenden Vorlauf in
+Die 266~h der 27B-Läufe sind die Summe von je vier Slurm-Zuteilungen
+und durch die gemeinsame Belegung eines Knotens erhöht
+(Abschnitt~\ref{sec:effizienzmetriken}, je Seed in
 Anhang~\ref{app:durchfuehrung}).
 Selbst das kleinste Adaptertraining dauert rund das 28-Fache des
 vollständigen Fine-Tunings von DeBERTa-v3-base, obwohl es nur 6,4~Mio.
@@ -492,11 +491,15 @@ Entitäten wächst (Abschnitt~\ref{sec:effizienzmetriken}); bei den
 Encodern beträgt das Verhältnis 1,03 bis 1,04.
 Die Zero-Shot-Läufe sind bei 4B und 27B schneller als die QLoRA-Läufe
 derselben Größe auf derselben GPU (Tabelle~\ref{tab:effizienz}).
-Zwei Faktoren wirken hier zusammen und lassen sich nicht trennen: Die
-Zero-Shot-Modelle erzeugen kürzere Ausgaben, beim 4B-Modell in 51\,\%
-der Fälle unmittelbar ein leeres Array
-(Abschnitt~\ref{sec:erg-formtreue}), und die BF16-Gewichte ersparen die
-Dequantisierung der NF4-Gewichte bei jedem Vorwärtsdurchlauf.
+Als Ursachen kommen kürzere Ausgaben sowie der Wegfall der
+Dequantisierung der NF4-Gewichte und des nicht verschmolzenen Adapters in
+Frage (Abschnitt~\ref{sec:llm-pipeline}); getrennt wurden diese Faktoren
+nicht.
+Kürzere Ausgaben können vor allem beim 4B-Modell beitragen, das in
+8\,389 von 16\,454 Fällen (51\,\%) unmittelbar ein leeres Array
+ausgibt; beim 27B-Modell spricht die höhere Zahl begonnener Elemente
+(33\,621 im Zero-Shot- gegenüber 25\,859 im QLoRA-Regime,
+Tabelle~\ref{tab:formtreue-erg}) dagegen.
 Beim 0.8B-Modell liefen beide Regime auf verschiedenen GPUs, sodass der
 Unterschied nicht einem Faktor zugeordnet werden kann.
 
@@ -670,7 +673,6 @@ Tabelle~\ref{tab:crossner-erg} berichtet den Ergänzungsversuch aus
 Abschnitt~\ref{sec:crossner}: die jeweils größten Modelle beider
 Familien, auf MultiNERD trainiert, ausgewertet auf den Testsplits der
 fünf CrossNER-Domänen und beschränkt auf die Grobtypen PER, ORG und LOC.
-Beide Modelle liefen auf derselben H100 mit 80\,GB.
 
 \begin{table}[htbp]
   \centering
@@ -740,8 +742,12 @@ Der ursprüngliche Recall-Verlust des LLM geht somit wesentlich auf das
 Ausgabelimit zurück; der verbleibende Unterschied zu MultiNERD umfasst
 außerdem Unterschiede in Texten und Annotation und isoliert keinen reinen
 Domäneneffekt.
-Die Latenz je Satz lag auf dem Niveau der Hauptläufe
-(Tabelle~\ref{tab:limit}); der Ausschluss der 21 überschneidenden Sätze
+Die mittlere Latenz je Satz lag mit 12,9~s sogar unter den 14,7~s des
+Laufs mit 256 Tokens, obwohl die Antworten länger sind
+(Tabelle~\ref{tab:limit}); die Ursache wurde nicht geprüft,
+Latenzvergleiche zwischen einzelnen Läufen sind daher nur in der
+Größenordnung belastbar.
+Der Ausschluss der 21 überschneidenden Sätze
 ändert den gepoolten Wert um 0,1 Punkte (87,0).
 
 \begin{table}[htbp]
@@ -810,8 +816,10 @@ Nutzen von Vorwissen bei deutlich weniger Trainingsdaten, den
 für solche Bedingungen untersuchen, wird hier nicht geprüft.
 Schließlich geht der Vorsprung des Encoders fast vollständig auf den
 Recall zurück, und der größte Teil dieses Rückstands entfällt auf die am
-Limit von 256 Ausgabetokens abgeschnittenen Antworten
-(Abschnitt~\ref{sec:erg-fehlertypen}).
+Limit von 256 Ausgabetokens abgeschnittenen Antworten.
+Mit deren Nachinferenz sinkt der Anteil der Auslassungen des 27B-Modells von 5,1
+auf 2,5\,\% gegenüber 2,4\,\% bei DeBERTa-v3-large
+(Tabellen~\ref{tab:limit-multinerd} und~\ref{tab:fehlertypen}).
 Die Nachinferenz dieser Sätze (Tabelle~\ref{tab:limit-multinerd}) macht
 daraus einen Messwert: Mit vollständigen Antworten liegt das 27B-Modell
 knapp hinter DeBERTa-v3-large und 0,14 Punkte vor DeBERTa-v3-base; für

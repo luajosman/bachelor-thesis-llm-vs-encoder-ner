@@ -149,7 +149,8 @@ beträgt höchstens 0,12 Punkte.
   \footnotesize
   \caption[Explorative Vorläufe]{Explorative Vorläufe (Seed~42) und ihr
   Mikro-F$_1$ auf dem MultiNERD-Testsplit (256 Ausgabetokens) gegenüber
-  dem Seed-42-Lauf der Hauptstudie.}
+  dem Seed-42-Lauf der Hauptstudie; die Spalte GPU nennt die GPU der
+  Testinferenz.}
   \label{tab:app-vorlaeufe}
   \setlength{\tabcolsep}{4pt}
   \input{generated/tab-app-vorlaeufe}
@@ -272,13 +273,19 @@ DeBERTa-v3-base und Qwen3.5-27B), wurden alle trainierten
 Konfigurationen für die Hauptstudie aus versionierten Codeständen ohne
 lokale Änderungen neu trainiert; die Vorläufe gehen nicht in die
 Auswertung ein (Abschnitt~\ref{sec:datenaufteilung}).
-% Quelle: summary.json, Schlüssel vorlaeufe[*].gpu, .train_runtime_h,
-% .steps, .seconds_per_step (Reihenfolge base, large, 0.8B, 4B, 27B).
-Mit Ausnahme des 27B-Modells (H100 NVL) liefen die Vorläufe auf einer
-A100; die vom Trainer protokollierte Trainingsdauer betrug 0,41~h
-(DeBERTa-v3-base), 1,12~h (DeBERTa-v3-large), 8,25~h (Qwen3.5-0.8B),
-58,0~h (Qwen3.5-4B) und 70,8~h (Qwen3.5-27B, zwei Epochen,
-16\,410 Schritte).
+% Quelle: summary.json, Schlüssel vorlaeufe[*].gpu (GPU der Testinferenz), .train_runtime_h,
+% .steps, .seconds_per_step (Reihenfolge base, large, 0.8B, 4B, 27B); Trainings-GPU aus
+% results.yaml der Vorläufe (run_metadata.cuda.devices); 0.8B: Slurm-Jobs 3219769 (03:52:07,
+% abgebrochen) und 3220278 (08:15:39, fortgesetzt).
+Trainiert wurden die Vorläufe von DeBERTa-v3-base, DeBERTa-v3-large und
+Qwen3.5-0.8B auf einer H100, der von Qwen3.5-4B auf einer A100 und der
+von Qwen3.5-27B auf einer H100 NVL; die Testinferenz lief außer beim
+27B-Modell auf einer A100 (Tabelle~\ref{tab:app-vorlaeufe}).
+Die vom Trainer protokollierte Trainingsdauer betrug 0,41~h
+(DeBERTa-v3-base), 1,12~h (DeBERTa-v3-large), 8,25~h (Qwen3.5-0.8B; nur
+der nach einem Abbruch fortgesetzte Teil, beide Slurm-Zuteilungen
+zusammen 12,1~h), 58,0~h (Qwen3.5-4B) und 70,8~h (Qwen3.5-27B, zwei
+Epochen, 16\,410 Schritte).
 Beim 27B-Vorlauf entspricht das 15,5~s je Optimierungsschritt gegenüber
 rund 38~s in den drei gleichzeitig auf einem Knoten ausgeführten
 Hauptläufen (Abschnitt~\ref{sec:effizienzmetriken}).

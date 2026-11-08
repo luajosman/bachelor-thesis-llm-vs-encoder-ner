@@ -154,7 +154,7 @@ eingesetzt.
 DeBERTa-Varianten zählen auf mehreren NER-Benchmarks zu den
 leistungsfähigsten Encodern und dienen häufig als starke Baselines
 \cite{keraghel2024recent}.
-Base- und Large-Variante erlauben eine Skalierungsanalyse innerhalb
+Base- und Large-Variante erlauben einen Größenvergleich innerhalb
 derselben Architektur; einschließlich des Klassifikationskopfes umfassen
 sie 183\,855\,391 bzw. 434\,043\,935 Parameter.
 Beide Modelle stehen laut ihren Modellkarten unter der MIT-Lizenz
@@ -234,19 +234,18 @@ und~\ref{sec:research_gap}).
 Viertens ist der englische Teil mit rund 164\,000 Sätzen groß genug für
 vollständiges Fine-Tuning der Encoder ebenso wie für LoRA-Training der
 LLMs.
-Gegenüber CoNLL-2003 und OntoNotes bietet MultiNERD damit einen
-feingranularen NER-Benchmark \cite{sang2003conll,keraghel2024recent}.
 Der Datensatz ist laut Datensatzkarte unter CC~BY-NC-SA~4.0
 veröffentlicht und auf nichtkommerzielle Forschung beschränkt
 \cite{babelscape2023multinerdcard}.
 
 MultiNERD ist automatisch annotiert \cite{tedeschi2022multinerd}; auch
 die Referenz des Testsplits ist somit eine Silberreferenz.
-Die zusätzlich veröffentlichte, manuell geprüfte Stichprobe von 1\,000
-zufällig gezogenen englischen Sätzen wird nicht verwendet, da die
-Pipeline auf den offiziellen Splits aufsetzt und typbezogene Aussagen auf
-der kleinen Stichprobe sehr unsicher wären
-\cite[Tab.~5]{tedeschi2022multinerd}.
+Die von den Autoren manuell geprüfte Stichprobe von 1\,000 zufällig
+gezogenen englischen Sätzen wird nicht verwendet: Sie ist in den
+veröffentlichten Daten nicht enthalten, aus welchem Split ihre Sätze
+stammen, ist nicht angegeben, sodass Überschneidungen mit den
+Trainingsdaten nicht auszuschließen sind, und typbezogene Aussagen wären
+auf ihr sehr unsicher \cite[Tab.~5]{tedeschi2022multinerd}.
 Nach dieser Stichprobe unterscheidet sich die Annotationsqualität stark
 zwischen den Typen (Abschnitt~\ref{sec:datasets_corpora}).
 Die trainierten Konfigurationen nutzen dieselben annotierten
@@ -573,6 +572,14 @@ Testsplits nahezu vollständig abdeckt: Unter dem Qwen3.5-Tokenizer sind
 sie im Median 32 Tokens lang (99.~Perzentil 186, Maximum 553); 55 der
 16\,454 Referenzantworten überschreiten 256 Tokens, eine überschreitet
 512 und keine 1\,024 (Anhang~\ref{app:durchfuehrung}).
+Training und Validierung, an denen sich das Limit vorab hätte prüfen
+lassen, zeigen dasselbe Bild: Dort überschreiten 576 von 131\,280
+bzw. 103 von 16\,410 Referenzantworten 256 Tokens, während 1\,024 Tokens
+alle Validierungsantworten (Maximum 951) und bis auf eine alle
+Trainingsantworten (Maximum 1\,047) abdecken.
+Das Limit der Nachinferenz von 1\,024 Tokens
+(Abschnitt~\ref{sec:nachinferenz}) ist damit ohne Rückgriff auf den
+Testsplit begründbar.
 Die Eingabe wird nicht gekürzt, und jeder Testsatz wird einzeln
 verarbeitet.
 
@@ -632,7 +639,7 @@ Gleichstand der frühere; in acht der neun Läufe war dies die dritte, in
 einem Lauf (4B, Seed~42) die zweite Epoche.
 Die 200 Sätze weichen in den Typanteilen um höchstens 3,1 Prozentpunkte
 vom Split ab, enthalten aber keine BIO- und INST-Entitäten
-(\texttt{thesis/generated/validation\_subset\_stats.md}).
+(Auszählung im Repository, Anhang~\ref{app:reproduzierbarkeit}).
 Die nach F$_1$ gewählte Epoche stimmt nur in einem der neun LLM-Läufe
 (4B, Seed~42) und in keinem der sechs Encoder-Läufe mit dem Minimum des
 Validierungsverlusts überein.
@@ -737,7 +744,11 @@ der 27B-Läufe nach der Wiederaufnahme aus Checkpoints
 In zwei Punkten weicht die Umsetzung vom QLoRA-Standardrezept
 \cite{dettmers2023qlora} ab: Double Quantization war vorgesehen, wurde
 aber wegen eines fehlerhaft benannten Konfigurationsparameters nicht
-aktiviert, was vor allem den Speicherbedarf betrifft; zudem wird statt
+aktiviert.
+Nach \textcite[Abschn.~3]{dettmers2023qlora} spart sie im Mittel rund
+0,37~Bit je Parameter ohne Leistungseinbuße, beim 27B-Modell also
+höchstens rund 1,2~GiB des gemessenen Inferenzspeichers.
+Zudem wird statt
 eines Paged Optimizers der Standardoptimierer des Trainers verwendet
 (AdamW, fusionierte PyTorch-Implementierung).
 Die Konfiguration ist für alle drei Größen identisch, sodass sich
@@ -1092,7 +1103,7 @@ größerer LLMs gegenüber kompakten Encodern
 
 Das Limit von 256 Ausgabetokens ist eine Einstellung der Pipeline, die bei
 langen Sätzen mit vielen Entitäten greift
-(Abschnitt~\ref{sec:robustheit-ausgaben}).
+(Abschnitt~\ref{sec:llm-pipeline}).
 Um seinen Einfluss auf MultiNERD zu messen statt hochzurechnen, wurden für
 alle neun QLoRA-Läufe genau die Testsätze, deren gespeicherte Antwort nicht
 parsebar war, mit demselben Adapter, demselben Prompt und Greedy-Decoding,

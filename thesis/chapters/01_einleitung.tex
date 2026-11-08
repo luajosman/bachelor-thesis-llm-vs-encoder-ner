@@ -83,7 +83,8 @@ In der Vergleichsstudie von \textcite{keraghel2024recent} erreicht GPT-4o
 mit Beispielentitäten im Prompt auf CoNLL-2003 einen Makro-F$_1$ von
 65{,}17, ein vollständig angepasstes DeBERTa-v3-large dagegen
 90{,}98~\cite[Tab.~5]{keraghel2024recent}.
-Mit LoRA angepasste LLMs schließen diesen Abstand.
+Mit LoRA angepasste LLMs verringern diesen Abstand deutlich und liegen in
+einzelnen Vergleichen gleichauf oder vorn.
 \textcite{zhan2026generativeNER} berichten für LLaMA3.1-8B im besten
 Ausgabeformat einen F$_1$ von 93{,}85 auf CoNLL-2003 gegenüber 93{,}04 für
 das Encoder-Verfahren BERT-MRC und zeigen zugleich, dass das Ausgabeformat
@@ -95,19 +96,19 @@ Die LLMs liegen auf vier Datensätzen um 2 bis 8 F$_1$-Punkte vorn,
 benötigen je Testbeispiel aber das 40- bis 220-Fache der Inferenzzeit des
 besten Encoders.
 
-Für die vorliegende Arbeit sind dabei vier Aspekte relevant, die
-Abschnitt~\ref{sec:research_gap} zu zwei Lücken bündelt: Datenbasis und
-Pipeline sowie Ressourcenerfassung und Modellgröße.
-Erstens nutzen die direkten Vergleiche etablierte allgemeine Benchmarks
-oder Fachkorpora, und veröffentlichte MultiNERD-Werte stützen sich auf
-übernommene Baselines oder eigene Aufbereitungen; zweitens fehlt eine
-gemeinsame Auswertung auf den offiziellen englischen Splits mit eigener
-Encoder-Referenz.
-Drittens erfassen die direkten Vergleiche Erkennungsleistung und
-Ressourcenbedarf nur unvollständig gemeinsam (Inferenzzeit ohne
-Speicher oder Trainingskosten ohne Inferenz); viertens betrachten sie LLMs nur einer
-Größenklasse, während Größenstaffelungen nur innerhalb jeweils einer
-Modellfamilie untersucht wurden.
+Abschnitt~\ref{sec:research_gap} bündelt die Grenzen dieser Vergleiche
+zu zwei Lücken.
+Die erste betrifft Datenbasis und Pipeline: Die direkten Vergleiche
+nutzen etablierte allgemeine Benchmarks oder Fachkorpora,
+veröffentlichte MultiNERD-Werte stützen sich auf übernommene Baselines
+oder eigene Aufbereitungen, und eine gemeinsame Auswertung auf den
+offiziellen englischen Splits mit eigener Encoder-Referenz fehlt.
+Die zweite betrifft Ressourcenerfassung und Modellgröße: Die direkten
+Vergleiche erfassen Erkennungsleistung und Ressourcenbedarf nur
+unvollständig gemeinsam (Inferenzzeit ohne Speicher oder
+Trainingskosten ohne Inferenz) und betrachten LLMs nur einer
+Größenklasse; Größenstaffelungen gibt es nur innerhalb einzelner
+Modellfamilien, ohne gemeinsamen Encodervergleich.
 
 Die vorliegende Arbeit setzt an diesen Punkten an.
 Sie vergleicht auf dem englischen Teil von MultiNERD mit seinen
