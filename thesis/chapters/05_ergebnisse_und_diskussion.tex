@@ -114,17 +114,15 @@ Die Profile unterscheiden sich nach Größe: Das 0.8B-Modell erkennt fast
 nichts, das 4B-Modell übersieht die meisten Entitäten, das 27B-Modell
 übersieht weniger, markiert aber viele Nicht-Entitäten
 (Tabelle~\ref{tab:haupt}).
-Die Werte beruhen auf je einem gesampelten Lauf und auf Prompt und
-Decoding-Einstellungen, die nach Beobachtungen auf dem Testsplit gewählt
-wurden (Abschnitt~\ref{sec:datenaufteilung}). Sie sind daher explorative
-Messwerte dieser Konfigurationen und weder eine unabhängige Bestätigung
-noch eine Obergrenze der Leistung unveränderter Checkpoints mit diesem
-Format.
+Die Werte beruhen auf je einem gesampelten Lauf mit nach
+Testbeobachtungen gewählten Prompt- und Decoding-Einstellungen
+(Abschnitt~\ref{sec:datenaufteilung}); sie sind explorative Messwerte
+dieser Konfigurationen, keine Obergrenze der Leistung unveränderter
+Checkpoints mit diesem Format.
 
 Nach der Anpassung mit QLoRA beträgt der Abstand zum Zero-Shot-Regime
-87,0 (0.8B), 59,0 (4B) bzw. 25,1 Punkte (27B). Er beschreibt den Unterschied der vollständigen
-Konfigurationen, da zusätzlich zum Training Prompt, Decoding und
-Präzision variieren. Die Zero-Shot-Sampling-Streuung wurde nicht gemessen.
+87,0 (0.8B), 59,0 (4B) bzw. 25,1 Punkte (27B); er umfasst neben dem
+Training auch Unterschiede in Prompt, Decoding und Präzision. Die Zero-Shot-Sampling-Streuung wurde nicht gemessen.
 Ausgewählt wurde in acht der neun Läufe der Adapter der dritten Epoche
 (Abschnitt~\ref{sec:llm-pipeline}); die Werte der generativen
 Validierung auf 200 Sätzen stehen in Tabelle~\ref{tab:app-seeds}.
@@ -863,11 +861,10 @@ Modellfehler oder Annotationsfehler abbilden.
 Für diese Typen berichten \textcite{tedeschi2022multinerd} auf ihrer
 manuell geprüften Stichprobe F$_1$-Werte der Annotation zwischen 0{,}52
 und 0{,}71.
-Die Fehleranalyse stützt diesen Vorbehalt an Beispielen, nicht
-quantitativ: Unter den häufigsten Zusätzen finden sich in einer
-illustrativen Durchsicht Spans, die nach
-den Richtlinien des Datensatzes Entitäten wären, in der Referenz aber
-fehlen (Abschnitt~\ref{sec:erg-fehlertypen}). Ein Teil der betrachteten
+Die Fehleranalyse stützt diesen Vorbehalt nur an illustrativen
+Beispielen: Unter den häufigsten Zusätzen finden sich Spans, die nach
+den Richtlinien des Datensatzes Entitäten wären
+(Abschnitt~\ref{sec:erg-fehlertypen}). Ein Teil der betrachteten
 Typfehler folgt Referenzentscheidungen wie der Annotation einer Band als
 PER.
 Für die Zero-Shot-Werte kommt die in Abschnitt~\ref{sec:research_gap}
@@ -987,11 +984,8 @@ Parameterzahl haben (Abschnitt~\ref{sec:erg-groesse}).
 Architektur, Vortrainingsziel und Anpassungsverfahren überlagern den
 Größenunterschied, wie \textcite{zaratiana2024gliner} und
 \textcite{bogdanov2024nuner} für Encoder-Generalisten nahelegen.
-Die Skalierungsgesetze aus Abschnitt~\ref{sec:model_size} sind auf
-diese Befunde nicht übertragbar: Sie beschreiben den Vortrainingsverlust
-eigens trainierter Modellreihen, hier wurden veröffentlichte
-Checkpoints mit größenabhängigen Hyperparametern und auf verschiedenen
-GPUs angepasst.
+Die Skalierungsgesetze aus Abschnitt~\ref{sec:model_size} sind aus den
+dort genannten Gründen auf diese Befunde nicht übertragbar.
 
 \subsection{Effizienz und praktische Empfehlungen}
 \label{sec:disk-effizienz}
@@ -1003,8 +997,9 @@ Inferenzlatenz, und DeBERTa-v3-base benötigt zugleich den geringsten
 Inferenzspeicher (Abschnitt~\ref{sec:erg-effizienz},
 Abbildung~\ref{fig:tradeoff}). Der hardwaregleiche Vergleich von
 DeBERTa-v3-base und Qwen3.5-0.8B ergibt einen Latenzfaktor von etwa 210;
-der maximal allokierte Inferenzspeicher reicht von 1,7~GiB für
-DeBERTa-v3-large bis 18,7~GiB für Qwen3.5-27B im QLoRA-Regime. Faktoren
+der maximal allokierte Inferenzspeicher der trainierten Konfigurationen
+reicht von 0,7~GiB für
+DeBERTa-v3-base bis 18,7~GiB für Qwen3.5-27B im QLoRA-Regime. Faktoren
 zwischen anderen Größen enthalten zusätzlich Hardwareeffekte.
 
 Bei 256 Ausgabetokens bilden die beiden Encoder die Pareto-Front
@@ -1015,14 +1010,12 @@ DeBERTa-v3-base liegt (Abschnitt~\ref{sec:disk-leistung}). Da die
 selektive Nachinferenz die Latenz nur für die regenerierten Sätze auf
 anderer Hardware erfasst, werden ihre Qualitätswerte nicht mit den
 Ressourcenwerten des 256er-Laufs zu einer neuen Pareto-Aussage
-kombiniert. DeBERTa-v3-large bleibt auf MultiNERD im Mikro-F$_1$ knapp
-vorn, was eine Empfehlung für Encoder bei vergleichbaren Daten und
-Anforderungen an geringe Latenz stützt, wie sie auch
-\textcite{obeidat2025llm} für kleine Qualitätsunterschiede diskutieren.
+kombiniert. DeBERTa-v3-large bleibt auf MultiNERD im Mikro-F$_1$ knapp vorn.
 
 Für Anwendungen mit einem festen Inventar von 15 Typen, einer Datenbasis
 wie MultiNERD und niedriger Latenztoleranz sind die untersuchten Encoder
-eine gut gestützte Wahl. Eine pauschale Qualitätsempfehlung über
+damit eine gut gestützte Wahl; eine solche Empfehlung bei kleinen
+Qualitätsunterschieden diskutieren auch \textcite{obeidat2025llm}. Eine pauschale Qualitätsempfehlung über
 Datensätze hinweg ergibt sich dagegen nicht. Auf CrossNER liegt
 Qwen3.5-27B mit 1\,024 Ausgabetokens vor DeBERTa-v3-large, und das
 gepaarte Intervall der Differenz schließt null aus
@@ -1081,11 +1074,10 @@ DeBERTa-v3-base enthält null. Die Intervalle der einzelnen
 Konfigurationen sind beim Makro-F$_1$ mit 3,8 bis 5,2 Punkten Breite
 (trainierte Konfigurationen) wesentlich breiter als beim Mikro-F$_1$,
 weil seltene Typen auf wenigen Sätzen beruhen.
-Die nach Domäne geschichteten CrossNER-Intervalle
-(Tabelle~\ref{tab:crossner-ci}) stützen bei 1\,024 Tokens den gepoolten
-Vorsprung des LLM; domänenweise schließen sie in drei von fünf Domänen
-(Musik, Politik, Naturwissenschaften) null aus, in Künstlicher
-Intelligenz und Literatur bleibt die Richtung unsicher.
+Die nach Domäne geschichteten CrossNER-Intervalle stützen bei
+1\,024 Tokens den gepoolten Vorsprung des LLM, domänenweise nur in drei
+von fünf Domänen (Abschnitt~\ref{sec:erg-crossner},
+Tabelle~\ref{tab:crossner-ci}).
 
 \begin{table}[htbp]
   \centering
