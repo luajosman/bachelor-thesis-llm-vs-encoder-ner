@@ -1,0 +1,335 @@
+<title>MultiNERD-Prüfstichprobe</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,600&display=swap">
+<style>
+/* Layout: one working column (case, then guide, then progress grid); the case card is the only framed object. */
+:root {
+  --bg: #f6f7f4; --surface: #ffffff; --fg: #1d2420; --muted: #5d6862; --line: #d8ddd6;
+  --accent: #2f5d50; --accent-fg: #ffffff; --mark: #e4efe9; --mark-line: #2f5d50;
+  --done: #2f5d50; --open: #e3e7e1; --warn: #9a5b12;
+  --font-text: "Literata", Georgia, "Times New Roman", serif;
+  --font-ui: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141917; --surface: #1c2320; --fg: #e4e9e5; --muted: #9aa8a0; --line: #2f3a35;
+  --accent: #8cc7b2; --accent-fg: #0f1513; --mark: #24352e; --mark-line: #8cc7b2;
+  --done: #8cc7b2; --open: #2a332f; --warn: #e3a95c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141917; --surface: #1c2320; --fg: #e4e9e5; --muted: #9aa8a0; --line: #2f3a35;
+  --accent: #8cc7b2; --accent-fg: #0f1513; --mark: #24352e; --mark-line: #8cc7b2;
+  --done: #8cc7b2; --open: #2a332f; --warn: #e3a95c; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px }
+header { display: grid; gap: 8px }
+h1 { font-family: var(--font-text); font-weight: 600; font-size: 1.6rem; margin: 0; text-wrap: balance }
+.sub { color: var(--muted); margin: 0; max-width: 65ch }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-variant-numeric: tabular-nums }
+.progress { flex: 1 1 220px; height: 6px; background: var(--open); border-radius: 3px; overflow: hidden; min-width: 0 }
+.progress > span { display: block; height: 100%; background: var(--done); width: 0 }
+.status { font-size: 0.85rem; color: var(--muted) }
+.status.warn { color: var(--warn) }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 16px; min-width: 0 }
+.case-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: baseline; justify-content: space-between }
+.case-id { font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.02em }
+.chip { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted) }
+.sentence { font-family: var(--font-text); font-size: 1.05rem; line-height: 1.7; overflow-wrap: anywhere }
+.sentence .region { text-decoration: underline; text-decoration-color: var(--mark-line); text-decoration-thickness: 2px; text-underline-offset: 4px }
+.variants { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px }
+.variant { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0 }
+.variant h3 { margin: 0; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600 }
+.snippet { font-family: var(--font-text); line-height: 1.9; overflow-wrap: anywhere }
+.snippet .ctx { color: var(--muted) }
+mark.ent { background: var(--mark); color: var(--fg); border-bottom: 2px solid var(--mark-line); padding: 1px 3px; border-radius: 3px }
+mark.ent .tag { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; margin-left: 4px; color: var(--accent) }
+.none { font-size: 0.85rem; color: var(--muted) }
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px }
+button { font: inherit; cursor: pointer; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 9px 12px; text-align: left }
+button:hover { border-color: var(--accent) }
+button:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+button.chosen { background: var(--accent); color: var(--accent-fg); border-color: var(--accent) }
+button .key { font-family: var(--font-mono); font-size: 0.75rem; opacity: 0.75; margin-right: 6px }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between }
+.nav { display: flex; gap: 8px; flex-wrap: wrap }
+textarea { width: 100%; min-height: 44px; font: inherit; font-size: 0.9rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; resize: vertical }
+label.small { font-size: 0.8rem; color: var(--muted) }
+a { color: var(--accent) }
+details.guide { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 20px }
+details.guide summary { cursor: pointer; font-weight: 600 }
+.guide p, .guide li { max-width: 70ch }
+.types { width: 100%; border-collapse: collapse; font-size: 0.85rem }
+.types-wrap { overflow-x: auto }
+.types th, .types td { text-align: left; vertical-align: top; padding: 6px 8px; border-top: 1px solid var(--line) }
+.types td:first-child { font-family: var(--font-mono); font-weight: 600; white-space: nowrap }
+.grid-title { font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px }
+.cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(22px, 1fr)); gap: 4px }
+.cells button { padding: 0; height: 22px; border-radius: 4px; background: var(--open); border: 1px solid transparent }
+.cells button.done { background: var(--done) }
+.cells button.current { outline: 2px solid var(--fg); outline-offset: 1px }
+.locked { color: var(--muted); font-size: 0.9rem }
+.export textarea { min-height: 90px; font-family: var(--font-mono); font-size: 0.75rem }
+@media (prefers-reduced-motion: no-preference) { .progress > span { transition: width 0.3s ease } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>MultiNERD-Prüfstichprobe</h1>
+    <p class="sub">Blinde Prüfung von Abweichungen zur Silberreferenz: Für jede Textstelle wählst du, welche der beiden Varianten die richtige MultiNERD-Annotation ist. Eine Variante stammt aus der Referenz, die andere von einem Modell; welche, bleibt verborgen.</p>
+    <div class="bar">
+      <span id="count">Runde 1: 0 von 180</span>
+      <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+      <span id="status" class="status">Verbinde mit dem Speicher …</span>
+    </div>
+  </header>
+
+  <section class="card" id="case" aria-live="polite">
+    <div class="case-head"><span class="case-id" id="case-id">F001</span><span class="chip" id="case-meta">Runde 1</span></div>
+    <div class="sentence" id="sentence"></div>
+    <div class="variants">
+      <div class="variant"><h3>Variante A</h3><div class="snippet" id="var-a"></div></div>
+      <div class="variant"><h3>Variante B</h3><div class="snippet" id="var-b"></div></div>
+    </div>
+    <div class="choices">
+      <button id="j-A" data-j="A"><span class="key">1</span>A ist richtig</button>
+      <button id="j-B" data-j="B"><span class="key">2</span>B ist richtig</button>
+      <button id="j-both" data-j="both_wrong"><span class="key">3</span>Beide falsch</button>
+      <button id="j-und" data-j="undecidable"><span class="key">4</span>Unentscheidbar</button>
+    </div>
+    <div>
+      <label class="small" for="note">Notiz (optional, z. B. richtige Grenze oder richtiger Typ)</label>
+      <textarea id="note" placeholder="Wird beim Verlassen des Feldes gespeichert"></textarea>
+    </div>
+    <div class="row">
+      <div class="nav">
+        <button id="prev">← Zurück</button>
+        <button id="next">Weiter →</button>
+        <button id="first-open">Nächster offener Fall</button>
+      </div>
+      <a id="wiki" href="https://en.wikipedia.org" target="_blank" rel="noopener">Textstelle in Wikipedia suchen</a>
+    </div>
+  </section>
+
+  <details class="guide" id="guide">
+    <summary>Anleitung und Typdefinitionen</summary>
+    <p>Beurteile jede Textstelle nach den Typdefinitionen von MultiNERD (unten). Richtig ist die Variante mit den richtigen Spangrenzen und dem richtigen Typ; „keine Entität an dieser Stelle“ kann ebenfalls die richtige Variante sein. MultiNERD zählt auch Tier-, Pflanzen- und Speisebezeichnungen sowie wissenschaftliche Namen als Entitäten, wie die Beispiele der Autoren zeigen (Douglas Fir, Great White Shark, Carbonara).</p>
+    <ul>
+      <li><strong>A ist richtig / B ist richtig:</strong> Diese Variante annotiert die Stelle korrekt.</li>
+      <li><strong>Beide falsch:</strong> Weder A noch B ist korrekt, etwa weil eine andere Grenze oder ein anderer Typ richtig wäre. Die richtige Fassung kannst du in der Notiz festhalten.</li>
+      <li><strong>Unentscheidbar:</strong> Beide Varianten sind vertretbar, oder dir fehlt auch nach kurzer Recherche das nötige Wissen.</li>
+    </ul>
+    <p>Richtwert: etwa eine Minute je Fall. Jedes Urteil wird sofort gespeichert, du kannst jederzeit unterbrechen. Tastatur: 1 bis 4 für das Urteil, Pfeiltasten zum Blättern.</p>
+    <p><strong>Runde 2</strong> wiederholt 30 Fälle in neuer Reihenfolge, teils mit vertauschten Varianten. Sie erscheint, sobald Runde 1 vollständig ist. Bearbeite sie frühestens zwei Tage später und ohne die früheren Urteile nachzusehen; daraus wird die Selbstkonsistenz (Cohens κ) berechnet.</p>
+    <div class="types-wrap">
+      <table class="types">
+        <thead><tr><th>Typ</th><th>Beschreibung</th><th>Beispiele</th></tr></thead>
+        <tbody id="types"></tbody>
+      </table>
+    </div>
+    <p class="small">Quelle der Beschreibungen und Beispiele: Tedeschi und Navigli (2022), MultiNERD, Tabelle 1.</p>
+  </details>
+
+  <section>
+    <p class="grid-title" id="grid-title">Fälle</p>
+    <div class="cells" id="cells"></div>
+    <p class="locked" id="locked"></p>
+  </section>
+
+  <section class="export">
+    <div class="row">
+      <button id="copy">Urteile als JSON kopieren</button>
+      <span class="status" id="copy-status">Sicherung, falls der Speicher nicht erreichbar ist.</span>
+    </div>
+    <textarea id="export-text" hidden readonly aria-label="Urteile als JSON"></textarea>
+  </section>
+</div>
+
+<script type="application/json" id="cases-data">__CASES__</script>
+<script>
+(function () {
+  const TYPES = [
+    ["PER", "People.", "Ray Charles, Jessica Alba, Leonardo DiCaprio, Roger Federer, Anna Massey"],
+    ["ORG", "Associations, companies, agencies, institutions, nationalities and religious or political groups.", "University of Edinburgh, San Francisco Giants, Google, Democratic Party"],
+    ["LOC", "Physical locations (e.g. mountains, bodies of water), geopolitical entities (e.g. cities, states), and facilities (e.g. bridges, buildings, airports).", "Rome, Lake Paiku, Chrysler Building, Mount Rushmore, Mississippi River"],
+    ["ANIM", "Breeds of dogs, cats and other animals, including their scientific names.", "Maine Coon, African Wild Dog, Great White Shark, New Zealand Bellbird"],
+    ["BIO", "Genus of fungus, bacteria and protoctists, families of viruses, and other biological entities.", "Herpes Simplex Virus, Escherichia Coli, Salmonella, Bacillus Anthracis"],
+    ["CEL", "Planets, stars, asteroids, comets, nebulae, galaxies and other astronomical objects.", "Sun, Neptune, Asteroid 187 Lamberta, Proxima Centauri, V838 Monocerotis"],
+    ["DIS", "Physical, mental, infectious, non-infectious, deficiency, inherited, degenerative, social and self-inflicted diseases.", "Alzheimer's Disease, Cystic Fibrosis, Dilated Cardiomyopathy, Arthritis"],
+    ["EVE", "Sport events, battles, wars and other events.", "American Civil War, 2003 Wimbledon Championships, Cannes Film Festival"],
+    ["FOOD", "Foods and drinks.", "Carbonara, Sangiovese, Cheddar Beer Fondue, Pizza Margherita"],
+    ["INST", "Technological instruments, mechanical instruments, musical instruments, and other tools.", "Spitzer Space Telescope, Commodore 64, Skype, Apple Watch, Fender Stratocaster"],
+    ["MEDIA", "Titles of films, books, magazines, songs and albums, fictional characters and languages.", "Forbes, American Psycho, Kiss Me Once, Twin Peaks, Disney Adventures"],
+    ["MYTH", "Mythological and religious entities.", "Apollo, Persephone, Aphrodite, Saint Peter, Pope Gregory I, Hercules"],
+    ["PLANT", "Types of trees, flowers, and other plants, including their scientific names.", "Salix, Quercus Petraea, Douglas Fir, Forsythia, Artemisia Maritima"],
+    ["TIME", "Specific and well-defined time intervals, such as eras, historical periods, centuries, years and important days. No months and days of the week.", "Renaissance, Middle Ages, Christmas, Great Depression, 17th Century, 2012"],
+    ["VEHI", "Cars, motorcycles and other vehicles.", "Ferrari Testarossa, Suzuki Jimny, Honda CR-X, Boeing 747, Fairey Fulmar"],
+  ];
+  const CASES = JSON.parse(document.getElementById("cases-data").textContent);
+  const ROUND1 = CASES.filter(c => c.round === 1);
+  const ROUND2 = CASES.filter(c => c.round === 2);
+  const LOCAL_KEY = "n1-urteile-v1";
+  const $ = id => document.getElementById(id);
+
+  let verdicts = {};
+  try { verdicts = JSON.parse(localStorage.getItem(LOCAL_KEY) || "{}") || {}; } catch (e) { verdicts = {}; }
+  let collection = null;
+  const writing = {};
+  let index = 0;
+
+  const round1Done = () => ROUND1.every(c => verdicts[c.id] && verdicts[c.id].urteil);
+  const visible = () => round1Done() ? ROUND1.concat(ROUND2) : ROUND1;
+
+  function setStatus(text, warn) { const s = $("status"); s.textContent = text; s.classList.toggle("warn", !!warn); }
+  function saveLocal() { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(verdicts)); } catch (e) { /* storage unavailable */ } }
+
+  function fillTypes() {
+    const body = $("types");
+    for (const [tag, desc, ex] of TYPES) {
+      const tr = document.createElement("tr");
+      for (const text of [tag, desc, ex]) { const td = document.createElement("td"); td.textContent = text; tr.appendChild(td); }
+      body.appendChild(tr);
+    }
+  }
+
+  function renderSentence(c) {
+    const el = $("sentence"); el.textContent = "";
+    const [s, e] = c.region;
+    c.tokens.forEach((tok, i) => {
+      if (i > 0) el.appendChild(document.createTextNode(" "));
+      if (i >= s && i < e) { const u = document.createElement("span"); u.className = "region"; u.textContent = tok; el.appendChild(u); }
+      else el.appendChild(document.createTextNode(tok));
+    });
+  }
+
+  function renderVariant(el, c, spans) {
+    el.textContent = "";
+    const lo = Math.max(0, c.region[0] - 6), hi = Math.min(c.tokens.length, c.region[1] + 6);
+    if (lo > 0) el.appendChild(Object.assign(document.createElement("span"), { className: "ctx", textContent: "… " }));
+    let i = lo;
+    while (i < hi) {
+      const span = spans.find(sp => sp.start === i);
+      if (span) {
+        const m = document.createElement("mark"); m.className = "ent";
+        m.appendChild(document.createTextNode(c.tokens.slice(span.start, span.end).join(" ")));
+        const t = document.createElement("span"); t.className = "tag"; t.textContent = span.type; m.appendChild(t);
+        el.appendChild(m); i = span.end;
+      } else {
+        const inRegion = i >= c.region[0] && i < c.region[1];
+        el.appendChild(Object.assign(document.createElement("span"), { className: inRegion ? "" : "ctx", textContent: c.tokens[i] }));
+        i += 1;
+      }
+      if (i < hi) el.appendChild(document.createTextNode(" "));
+    }
+    if (hi < c.tokens.length) el.appendChild(Object.assign(document.createElement("span"), { className: "ctx", textContent: " …" }));
+    if (!spans.length) el.appendChild(Object.assign(document.createElement("div"), { className: "none", textContent: "Keine Entität an dieser Stelle." }));
+  }
+
+  function render() {
+    const list = visible();
+    index = Math.min(Math.max(index, 0), list.length - 1);
+    const c = list[index];
+    $("case-id").textContent = c.id;
+    $("case-meta").textContent = (c.round === 2 ? "Runde 2" : "Runde 1") + " · Fall " + (index + 1) + " von " + list.length;
+    renderSentence(c);
+    renderVariant($("var-a"), c, c.A);
+    renderVariant($("var-b"), c, c.B);
+    const v = verdicts[c.id] || {};
+    document.querySelectorAll(".choices button").forEach(b => b.classList.toggle("chosen", b.dataset.j === v.urteil));
+    if (document.activeElement !== $("note")) $("note").value = v.notiz || "";
+    const q = c.tokens.slice(c.region[0], c.region[1]).join(" ");
+    $("wiki").href = "https://en.wikipedia.org/w/index.php?search=" + encodeURIComponent(q);
+    const done1 = ROUND1.filter(x => verdicts[x.id] && verdicts[x.id].urteil).length;
+    const done2 = ROUND2.filter(x => verdicts[x.id] && verdicts[x.id].urteil).length;
+    $("count").textContent = "Runde 1: " + done1 + " von " + ROUND1.length + (round1Done() ? " · Runde 2: " + done2 + " von " + ROUND2.length : "");
+    $("progress").style.width = (100 * (done1 + done2) / CASES.length) + "%";
+    const cells = $("cells"); cells.textContent = "";
+    list.forEach((x, i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.title = x.id; b.setAttribute("aria-label", x.id + (verdicts[x.id] && verdicts[x.id].urteil ? ", beurteilt" : ", offen"));
+      if (verdicts[x.id] && verdicts[x.id].urteil) b.classList.add("done");
+      if (i === index) b.classList.add("current");
+      b.addEventListener("click", () => { index = i; render(); });
+      cells.appendChild(b);
+    });
+    $("grid-title").textContent = round1Done() ? "Fälle (Runde 1 und 2)" : "Fälle (Runde 1)";
+    $("locked").textContent = round1Done() ? "" : "Runde 2 mit 30 Wiederholungen erscheint, sobald alle 180 Fälle von Runde 1 beurteilt sind.";
+  }
+
+  async function persist(id) {
+    const body = verdicts[id];
+    saveLocal();
+    if (!collection) return;
+    const previous = writing[id] || Promise.resolve();
+    writing[id] = previous.then(() => collection.doc(id).set(body)).then(
+      () => setStatus("Gespeichert"),
+      e => setStatus("Nicht gespeichert (" + (e && e.code || "Fehler") + "). Bitte „Urteile als JSON kopieren“ nutzen.", true));
+    return writing[id];
+  }
+
+  function judge(j) {
+    const c = visible()[index];
+    const note = $("note").value.trim();
+    verdicts[c.id] = { urteil: j, notiz: note, runde: c.round, zeit: new Date().toISOString() };
+    persist(c.id);
+    const list = visible();
+    const nextOpen = list.findIndex((x, i) => i > index && !(verdicts[x.id] && verdicts[x.id].urteil));
+    if (nextOpen >= 0) index = nextOpen; else if (index < list.length - 1) index += 1;
+    render();
+  }
+
+  document.querySelectorAll(".choices button").forEach(b => b.addEventListener("click", () => judge(b.dataset.j)));
+  $("prev").addEventListener("click", () => { index -= 1; render(); });
+  $("next").addEventListener("click", () => { index += 1; render(); });
+  $("first-open").addEventListener("click", () => {
+    const i = visible().findIndex(x => !(verdicts[x.id] && verdicts[x.id].urteil));
+    if (i >= 0) { index = i; render(); }
+  });
+  $("note").addEventListener("blur", () => {
+    const c = visible()[index]; const v = verdicts[c.id];
+    const note = $("note").value.trim();
+    if (v && v.urteil && note !== (v.notiz || "")) { verdicts[c.id] = { ...v, notiz: note }; persist(c.id); }
+  });
+  document.addEventListener("keydown", e => {
+    if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) return;
+    const map = { "1": "A", "2": "B", "3": "both_wrong", "4": "undecidable" };
+    if (map[e.key]) { e.preventDefault(); judge(map[e.key]); }
+    else if (e.key === "ArrowLeft") { index -= 1; render(); }
+    else if (e.key === "ArrowRight") { index += 1; render(); }
+  });
+  $("copy").addEventListener("click", () => {
+    const out = {};
+    for (const [id, v] of Object.entries(verdicts)) if (v && v.urteil) out[id] = v;
+    const text = JSON.stringify(out);
+    const fallback = () => { const t = $("export-text"); t.hidden = false; t.value = text; t.select(); $("copy-status").textContent = "Text markiert: mit Cmd+C kopieren."; };
+    try {
+      navigator.clipboard.writeText(text).then(() => { $("copy-status").textContent = Object.keys(out).length + " Urteile kopiert."; }, fallback);
+    } catch (e) { fallback(); }
+  });
+
+  fillTypes();
+  index = Math.max(0, visible().findIndex(x => !(verdicts[x.id] && verdicts[x.id].urteil)));
+  render();
+
+  const claudeApi = window.claude;
+  if (!claudeApi || !claudeApi.use) { setStatus("Nur im Browser gespeichert. Vor dem Schließen „Urteile als JSON kopieren“ nutzen.", true); return; }
+  claudeApi.use("db").then(db => {
+    if (!db) { setStatus("Speicher nicht verfügbar; Urteile bleiben nur in diesem Browser.", true); return; }
+    collection = db.collection("urteile");
+    let settled = false, synced = false;
+    const timer = setTimeout(() => { if (!settled) setStatus("Speicher noch nicht erreichbar; Urteile werden lokal gehalten.", true); }, 10000);
+    collection.onSnapshot(snap => {
+      for (const d of snap.docs) { const data = d.data(); if (data && data.urteil) verdicts[d.id] = { ...data }; }
+      saveLocal();
+      if (!snap.metadata.fromCache) { settled = true; clearTimeout(timer); setStatus("Gespeichert"); }
+      if (!snap.metadata.fromCache && !synced) {
+        synced = true;  // once: upload judgments made while the store was unreachable
+        Object.keys(verdicts).filter(id => !snap.docs.some(d => d.id === id)).forEach(id => persist(id));
+      }
+      if (document.activeElement && document.activeElement.tagName === "TEXTAREA") return;
+      render();
+    }, e => { settled = true; clearTimeout(timer); setStatus("Verbindung zum Speicher verloren (" + e.code + "). Urteile bleiben lokal; bitte als JSON sichern.", true); });
+  });
+})();
+</script>
