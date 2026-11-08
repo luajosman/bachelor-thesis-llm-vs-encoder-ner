@@ -560,79 +560,102 @@ zusammen und ordnet die vorliegende Arbeit ein.
 \begin{table}[p]
   \centering
   \scriptsize
-  \setlength{\tabcolsep}{3pt}
-  \renewcommand{\arraystretch}{1.15}
-  \caption[Übersicht der behandelten Arbeiten]{Übersicht der behandelten Arbeiten.
-  Vergleich Encoder--LLM: „ja“ = beide Modellklassen in derselben Studie
-  trainiert bzw. ausgewertet; „berichtete Werte“ = Vergleich mit aus
-  anderen Publikationen übernommenen Werten; „--“ = kein Vergleich.
-  Ressourcen gemessen: in der Studie erhobene Trainings- oder
-  Inferenzgrößen; „--“ = keine Messung. Full-FT: vollständiges
-  Fine-Tuning aller Gewichte.}
+  \setlength{\tabcolsep}{2.5pt}
+  \captionsetup{font=scriptsize}
+  \renewcommand{\arraystretch}{1.0}
+  \caption[Übersicht der behandelten Arbeiten]{Übersicht der behandelten Arbeiten,
+  gruppiert nach den Abschnitten dieses Kapitels. Vergleich Encoder--LLM:
+  „ja“ = beide Modellklassen in derselben Studie trainiert bzw. ausgewertet;
+  „berichtete Werte“ = aus anderen Publikationen übernommen. Ressourcen:
+  in der Studie erhobene Trainings- oder Inferenzgrößen. „--“ = kein
+  Vergleich bzw. keine Messung; Full-FT = vollständiges Fine-Tuning.}
   \label{tab:related-overview}
   \begin{tabular}{@{}%
       >{\raggedright\arraybackslash}p{2.4cm}%
-      >{\raggedright\arraybackslash}p{3.0cm}%
-      >{\raggedright\arraybackslash}p{2.9cm}%
+      >{\raggedright\arraybackslash}p{3.1cm}%
+      >{\raggedright\arraybackslash}p{2.7cm}%
+      >{\raggedright\arraybackslash}p{2.2cm}%
       >{\raggedright\arraybackslash}p{2.0cm}%
-      >{\raggedright\arraybackslash}p{2.0cm}%
-      >{\raggedright\arraybackslash}p{2.2cm}@{}}
+      >{\raggedright\arraybackslash}p{2.6cm}@{}}
     \toprule
     \textbf{Arbeit} & \textbf{Modelle} & \textbf{Daten/Domäne} &
     \textbf{Anpassung} & \textbf{Vergleich Encoder--LLM} &
     \textbf{Ressourcen gemessen} \\
     \midrule
+    \multicolumn{6}{@{}l}{\textit{Encoder-basierte Ansätze (Abschnitt~\ref{sec:encoder_ner_related})}} \\
+    \addlinespace[1pt]
     \textcite{tedeschi2022multinerd} & mBERT + BiLSTM-CRF &
       MultiNERD (10 Spr., 15 Typen); Gold-Benchmarks & Fine-Tuning &
       -- & -- \\
+    \addlinespace[1pt]
     \textcite{tan2023damo} & XLM-R-large + Retrieval; ChatGPT &
       MultiCoNER II (12 Spr., 33 Typen) & Fine-Tuning; Prompting &
       ja (Validierung) & -- \\
+    \addlinespace[1pt]
     \textcite{keraghel2024recent} & BERT, XLM-R, DeBERTa-v3, GLiNER;
       GPT-4o & 10 Datensätze, allgemein und Domänen &
       Fine-Tuning; Prompting mit Beispielentitäten & ja & -- \\
+    \addlinespace[1pt]
     \textcite{zaratiana2024gliner} & DeBERTa-v3 (50--300 Mio.) &
       Pile-NER; CrossNER, MIT & Pre-Training; Zero-Shot &
       berichtete Werte & -- \\
+    \addlinespace[1pt]
     \textcite{bogdanov2024nuner} & RoBERTa-base; UniNER-7B; GPT-3.5/4 &
       C4-Annotationen; 4 Datensätze & Pre-Training; Few-Shot-FT &
-      ja & Kosten der Annotation (unter 500~\$); keine Latenz- oder Speichermessung \\
+      ja & Annotationskosten (unter 500~\$); keine Latenz- oder Speichermessung \\
+    \addlinespace[2.5pt]
+    \multicolumn{6}{@{}l}{\textit{LLM-basierte Ansätze (Abschnitt~\ref{sec:llm_ner_related})}} \\
+    \addlinespace[1pt]
     \textcite{semin2026spanLabeling} & Qwen3, Mistral, Llama, Gemma
       (8--70 Mrd.) & UNER-Benchmark u.\,a. & Prompting & -- &
       Ausgabetokens \\
+    \addlinespace[1pt]
+    \textcite{lu2024padellm} & Llama-2-7B, Baichuan2-7B &
+      CoNLL, ACE, GENIA; chin. Datensätze & Fine-Tuning & -- &
+      Inferenzlatenz \\
+    \addlinespace[1pt]
     \textcite{wang2025gptner} & GPT-3 & CoNLL, OntoNotes, ACE, GENIA &
       Few-Shot-Prompting (Retrieval mit feinjustiertem Tagger) &
       berichtete Werte & -- \\
+    \addlinespace[1pt]
     \textcite{xie2023zeroshot} & GPT-3.5 & 7 Benchmarks (EN, ZH) &
       Zero-Shot-Prompting & berichtete Werte & -- \\
+    \addlinespace[1pt]
     \textcite{ashok2023promptner} & GPT-4, GPT-3.5, T5 &
       CoNLL, GENIA, FewNERD, CrossNER & Few-Shot-Prompting &
       berichtete Werte & -- \\
+    \addlinespace[1pt]
     \textcite{li2023codeie} & Codex, GPT-3 & CoNLL, ACE;
       RE-Datensätze & Few-Shot-Prompting & berichtete Werte (UIE) & -- \\
+    \addlinespace[1pt]
     \textcite{zhou2024universalner} & LLaMA 7B/13B &
       43 Datensätze, 9 Domänen (inkl. MultiNERD-Variante) &
       Destillation; Fine-Tuning & berichtete Werte & -- \\
+    \addlinespace[1pt]
     \textcite{sainz2024gollie} & Code-LLaMA 7/13/34B &
       IE-Datensätze; Zero-Shot u.\,a. CrossNER, MultiNERD & QLoRA & -- &
       Trainingszeit, CO$_2$ je Größe (keine Inferenz) \\
+    \addlinespace[1pt]
     \textcite{ding2024gner} & Flan-T5 (bis 11 Mrd.), LLaMA-7B &
       Pile-NER; Zero-Shot CrossNER, MIT & Fine-Tuning (Label je Wort) &
       berichtete Werte (GLiNER) & Durchsatz; GPU-Stunden des Trainings \\
+    \addlinespace[2.5pt]
+    \multicolumn{6}{@{}l}{\textit{PEFT-angepasste LLMs im Vergleich mit Encodern (Abschnitt~\ref{sec:peft_ner_related})}} \\
+    \addlinespace[1pt]
     \textcite{zhan2026generativeNER} & acht LLMs (3--9 Mrd.);
       BERT-MRC u.\,a. & CoNLL, OntoNotes, ACE2005, GENIA & LoRA &
       teilweise (BERT-MRC selbst trainiert) & Trainingskosten (keine Inferenz) \\
+    \addlinespace[1pt]
     \textcite{obeidat2025llm} & BERT-large, BiomedBERT,
       DeBERTa-v3-large; Mistral-7B, Llama-3.1-8B &
       5 biomedizinische Datensätze & Full-FT; QLoRA & ja &
       Inferenzzeit, GPU-Anzahl \\
+    \addlinespace[1pt]
     \textcite{lu2024llmstruggle} & 7B-LLMs; GPT-3.5/4; BioClinicalBERT &
       RareDis-v1 (klinisch) & Prompting; LoRA & ja & -- \\
+    \addlinespace[1pt]
     \textcite{dukic2024lookingright} & Llama-2-7B, Mistral-7B; RoBERTa &
       CoNLL, Rest14, ACE05 & QLoRA mit Maskenentfernung & ja & -- \\
-    \textcite{lu2024padellm} & Llama-2-7B, Baichuan2-7B &
-      CoNLL, ACE, GENIA; chin. Datensätze & Fine-Tuning & -- &
-      Inferenzlatenz \\
     \midrule
     Diese Arbeit & DeBERTa-v3-base/-large; Qwen3.5-0.8B/\allowbreak-4B/\allowbreak-27B &
       MultiNERD (EN, 15 Typen); CrossNER-Transfer &

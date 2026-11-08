@@ -408,8 +408,8 @@ und Testbezug zu.
   \label{tab:datennutzung}
   \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.0cm}%
       >{\raggedright\arraybackslash}X%
-      >{\raggedright\arraybackslash}p{2.2cm}%
-      >{\raggedright\arraybackslash}p{3.0cm}@{}}
+      >{\raggedright\arraybackslash}p{2.9cm}%
+      >{\raggedright\arraybackslash}p{3.3cm}@{}}
     \toprule
     \textbf{Entscheidung} & \textbf{Datengrundlage} & \textbf{Testbezug} &
     \textbf{Folge} \\
@@ -417,23 +417,30 @@ und Testbezug zu.
     Thinking-Modus deaktiviert & generative Validierung eines
       abgebrochenen 4B-Vorlaufs (Parse-Fehlerraten 71 bis 83\,\%) &
       keiner & für alle Läufe übernommen \\
+    \addlinespace
     Hyperparameter der trainierten Konfigurationen & im Vorlauf
       verwendet; nach dessen Testauswertung unverändert beibehalten &
       indirekt & keine Anpassung an Testwerte \\
+    \addlinespace
     Epochenzahl 27B (2 auf 3) & Angleichung an die übrigen
       QLoRA-Konfigurationen; Testwert des Vorlaufs bekannt & indirekt &
       Hauptläufe mit drei Epochen \\
+    \addlinespace
     Zero-Shot-Prompt (Glossar) und Sampling & Vorlauf von Qwen3.5-0.8B
       auf dem Testsplit (Greedy: fast nur leere Arrays) & direkt,
       leistungsbezogen & als explorative Ergebnisse berichtet;
       optimistische Verzerrung möglich \\
+    \addlinespace
     Inferenzpräzision BF16 (Zero-Shot) & Durchsatzmessung auf einer
       Teilmenge des Testsplits (standardmäßig 96 Sätze) & direkt, nicht
       leistungsbezogen & BF16 statt NF4 des QLoRA-Regimes \\
+    \addlinespace
     Ausgabelimit 256 Tokens & vor den Läufen ohne Längenanalyse
       festgelegt & keiner & Hauptauswertung bei 256 Tokens \\
+    \addlinespace
     Nachinferenz und CrossNER-Neulauf mit 1\,024 Tokens & nach Kenntnis
       der Testbefunde & post hoc & als Sensitivitätsanalysen berichtet \\
+    \addlinespace
     Checkpoint-Auswahl & Validierungssplit (LLM: erste 200 Sätze) &
       keiner & -- \\
     \bottomrule
@@ -470,14 +477,21 @@ Softwareversionen (Anhang~\ref{app:durchfuehrung}).
         \textbf{Modell} & \textbf{Regime} & \textbf{GPU} \\
         \midrule
         DeBERTa-v3-base, -large & Fine-Tuning & NVIDIA H100 (80\,GB HBM3) \\
+    \addlinespace
         Qwen3.5-0.8B            & QLoRA       & NVIDIA H100 (80\,GB HBM3) \\
+    \addlinespace
         Qwen3.5-4B              & QLoRA       & NVIDIA A100-SXM4 (80\,GB) \\
+    \addlinespace
         Qwen3.5-27B             & QLoRA       & NVIDIA H100 NVL (94\,GB) \\
+    \addlinespace
         Qwen3.5-0.8B, -4B       & Zero-Shot   & NVIDIA A100-SXM4 (80\,GB) \\
+    \addlinespace
         Qwen3.5-27B             & Zero-Shot   & NVIDIA H100 NVL (94\,GB) \\
         \midrule
         DeBERTa-v3-large, Qwen3.5-27B & CrossNER-Inferenz & NVIDIA H100 (80\,GB HBM3) \\
+    \addlinespace
         Qwen3.5-27B             & CrossNER (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
+    \addlinespace
         Qwen3.5, alle Größen    & Nachinferenz (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
         \bottomrule
     \end{tabular}
@@ -1022,20 +1036,28 @@ Fine-Tuning erlernen müssen \cite{dagdelen2024structuredIE,wei2023chatie}.
     \midrule
     Parse-Fehlerrate & Anteil der Antworten, aus denen keine Strategie ein
       JSON-Array gewinnt & JSON-Validität \\
+    \addlinespace
     Parse-Strategien & Antworten, die direkt, nach Entfernen eines
       Markdown-Codeblocks bzw.\ per Extraktion aus umgebendem Text geparst
       wurden & JSON-Validität \\
+    \addlinespace
     Falsche Struktur & gültiges JSON, das kein Array ist (je
       Parse-Versuch) & Schema-Treue \\
+    \addlinespace
     Nicht-Objekte & Array-Elemente, die kein JSON-Objekt sind &
       Schema-Treue \\
+    \addlinespace
     Fehlende Felder & fehlendes oder leeres Pflichtfeld & Schema-Treue \\
+    \addlinespace
     Unzulässige Indizes & nicht ganzzahlig oder Verletzung von
       $0 \leq s < e \leq n$ & Span-Alignment \\
+    \addlinespace
     Unbekannte Typen & Typ außerhalb des 15-Typen-Inventars &
       Schema-Treue \\
+    \addlinespace
     Text-Abweichungen & \texttt{text} passt nicht zu den indizierten
       Tokens & Span-Alignment \\
+    \addlinespace
     Überlappungen & wegen Überlappung mit einem übernommenen Span
       verworfen & Konsistenz \\
     \bottomrule
@@ -1148,8 +1170,10 @@ abgebildeten Typ wie \texttt{misc} angehören, zählen als falsch positiv.
     \midrule
     PER & \texttt{person}, \texttt{politician}, \texttt{scientist},
       \texttt{writer}, \texttt{musicalartist}, \texttt{researcher} \\
+    \addlinespace
     ORG & \texttt{organisation}, \texttt{politicalparty},
       \texttt{university}, \texttt{band} \\
+    \addlinespace
     LOC & \texttt{location}, \texttt{country} \\
     \bottomrule
   \end{tabularx}
@@ -1240,36 +1264,48 @@ Limitationsdiskussion im Fazit berücksichtigt.
     \midrule
     Referenz & Alle MultiNERD-Splits automatisch annotiert
       (Silberreferenz) & \ref{sec:datenauswahl} \\
+    \addlinespace
     Hardware & Drei GPU-Typen; CrossNER-Inferenz von Qwen3.5-27B auf
       anderem GPU-Typ als MultiNERD & \ref{sec:rechenumgebung},
       \ref{sec:crossner} \\
+    \addlinespace
     Zero-Shot-Setup & Glossar-Prompt, Sampling und BF16 statt
       Standardprofil, Greedy-Decoding und NF4; ein nicht
       deterministischer Lauf je Größe & \ref{sec:llm-pipeline} \\
+    \addlinespace
     Testnutzung & Testsplit bereits in Vorläufen ausgewertet;
       Zero-Shot-Prompt und Decoding nach Testbeobachtungen gewählt;
       Präzision anhand von Durchsatzmessungen & \ref{sec:datenaufteilung},
       Tab.~\ref{tab:datennutzung} \\
+    \addlinespace
     Provenienz & Zero-Shot-Läufe ohne Revisions-Pins und mit reduzierten
       Metadaten; keine bitgenaue Reproduzierbarkeit &
       \ref{sec:rechenumgebung} \\
+    \addlinespace
     LoRA-Platzierung & Keine Adapter in den Gated-DeltaNet-Schichten &
       \ref{sec:lora-konfiguration} \\
+    \addlinespace
     QLoRA-Umsetzung & Ohne Double Quantization und Paged Optimizer &
       \ref{sec:lora-konfiguration} \\
+    \addlinespace
     SFT-Verlust & Verlust über die gesamte Sequenz einschließlich Prompt
       & \ref{sec:llm-pipeline} \\
+    \addlinespace
     Adapter-Präzision & Gespeicherte 27B-Adapter nach der Wiederaufnahme in
       FP32 statt BF16 & \ref{sec:lora-konfiguration} \\
+    \addlinespace
     Hyperparameter & Größenabhängig gewählt, kein Suchlauf (Encoder und
       LLM) & \ref{sec:encoder-pipeline}, \ref{sec:lora-konfiguration} \\
+    \addlinespace
     Checkpoint-Auswahl & LLM-Adapter nach den ersten 200
       Validierungssätzen, Encoder nach dem vollständigen Split &
       \ref{sec:llm-pipeline}, \ref{sec:encoder-pipeline} \\
+    \addlinespace
     Längengrenzen & 256 Subwort-Tokens (Encoder), 1\,024 Tokens (SFT),
       256 Ausgabetokens (LLM-Inferenz, a priori ohne Längenanalyse
       gesetzt; Sensitivitätsanalysen mit 1\,024 Tokens) & \ref{sec:datenvorverarbeitung},
       \ref{sec:llm-pipeline}, \ref{sec:crossner} \\
+    \addlinespace
     Effizienzmessung & 27B-Training in vier Slurm-Zuteilungen, Dauer aus
       der Slurm-Abrechnung; drei 27B-Seeds gleichzeitig auf einem Knoten;
       kein Trainingsspeicher protokolliert &

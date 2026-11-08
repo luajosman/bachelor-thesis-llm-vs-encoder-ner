@@ -215,6 +215,10 @@ Die Spalten stammen von verschiedenen Gutachtern und sind nur eingeschränkt ver
 - **Restpunkte alter Plan (Commit db29228):** Intervallspalten der generierten Tabellen einheitlich „95-%-Intervall" (vorher undefiniertes „KI"); Fußnote der Effizienztabelle verweist für die Zuteilungsdaten auf A.2; Caption: GPU-Speicher als Herstellerangabe. Abb. 5.3 war bereits schwarz-weiß lesbar (Markerformen). Sichtprüfung aller Seiten von Kapitel 4 und 5 als Miniaturen (Ghostscript im TeX-Live-Image): Floats korrekt, Lücken nur vor verschobenen Überschriften.
 - **Ergebnis:** 116 Seiten, Haupttext S. 1–82 (Kapitel 1: 5, 2: 15, 3: 13, 4: 23, 5: 21, 6: 5), Literatur S. 83–91, Anhang S. 92–106; Overfull/Underfull/undefined 0; Tests 10/10, Skript byte-identisch; Overlap 0. Die Umbruchregel kostet etwa so viel Platz, wie Tabellenverschiebung und Textrunde gewonnen haben.
 
+### Nachtrag So 8.11. – Tabellenstruktur
+- **Anlass:** Nutzer: Tabellen 3.1 und 4.3 „uneindeutig strukturiert" (mehrzeilige Zellen ohne erkennbare Zeilengrenzen).
+- **Umsetzung:** In allen acht Tabellen mit Zeilenumbrüchen in Zellen (`tab:related-overview`, `tab:datennutzung`, `tab:hardware`, `tab:formtreue`, `tab:crossner-mapping`, `tab:abweichungen`, `tab:app-laeufe`, `tab:app-beispiele`) `\addlinespace` zwischen den Zeilen. Tabelle 3.1 zusätzlich nach den Abschnitten 3.1–3.3 gruppiert (kursive Gruppenzeilen mit Verweis; PaDeLLM in die LLM-Gruppe verschoben), Caption gestrafft, Spalte „Ressourcen gemessen" verbreitert, damit die Tabelle auf ihrer Seite bleibt. Tabelle 4.3: Spalten „Testbezug" und „Folge" verbreitert (keine Trennung von „leistungsbezogen"). Sichtprüfung der gerenderten Seiten; Seitenzahlen unverändert (116, Haupttext 1–82), Build 0/0/0.
+
 ---
 
 # Arbeitsliste (Stand 7.11., Zeilen gegen HEAD 3c49499; verbindlich sind die Anker)
