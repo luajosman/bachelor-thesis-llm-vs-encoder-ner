@@ -117,12 +117,12 @@ Abhängige Variablen sind
 (3)~die Zahl gesamter und trainierbarer Parameter sowie
 (4)~Kennzahlen zur Formtreue der LLM-Ausgaben.
 
-Konstant sind die Datenbasis -- der englische Teil von MultiNERD mit
-seinen offiziellen Splits, wobei alle Konfigurationen den vollständigen
-Testsplit auswerten \cite{tedeschi2022multinerd} --, das
+Konstant sind die Datenbasis (der englische Teil von MultiNERD mit
+seinen offiziellen Splits \cite{tedeschi2022multinerd}), das
 Evaluationsprotokoll mit derselben Metrikimplementierung für beide
 Pipelines (Abschnitt~\ref{sec:performanzmetriken}) und die Versionen der
 zentralen Bibliotheken (Abschnitt~\ref{sec:rechenumgebung}).
+Alle Konfigurationen werten den vollständigen Testsplit aus.
 Nicht konstant sind dagegen der GPU-Typ, die je Modellgröße gewählten
 Hyperparameter sowie Prompt, Decoding und numerische Präzision der
 Zero-Shot- gegenüber den QLoRA-Läufen.
@@ -295,9 +295,9 @@ nicht protokolliert.
 
 \paragraph{LLM-Pipeline.}
 Jedes Beispiel wird in eine Chat-Struktur aus Systemnachricht (Aufgabe
-und Typinventar), Nutzernachricht (nullbasiert nummerierte Tokenliste)
-und -- nur im Training -- Assistentennachricht mit der Zielantwort
-überführt (Abschnitt~\ref{sec:prompt-design}); die Nummerierung der
+und Typinventar) und Nutzernachricht (nullbasiert nummerierte Tokenliste)
+überführt, im Training ergänzt um eine Assistentennachricht mit der
+Zielantwort (Abschnitt~\ref{sec:prompt-design}); die Nummerierung der
 Eingabetokens nach \textcite[Tab.~9]{ramponi2025fallacy} erlaubt die
 Rückabbildung generierter Spans auf die Tokenfolge
 \cite{semin2026spanLabeling}.
