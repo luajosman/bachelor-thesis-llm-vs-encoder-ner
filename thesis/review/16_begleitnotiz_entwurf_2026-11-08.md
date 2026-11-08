@@ -28,7 +28,7 @@ Halten Sie dieses Vorgehen für ausreichend? Falls Sie den vollständigen Neulau
 **Weitere Fragen, gern bis 15. November:**
 
 1. Wo sehen Sie die größten Schwächen der Arbeit, und was würde sie aus Ihrer Sicht am meisten stärken?
-2. Reicht die Offenlegung der früheren Testnutzung (Tabelle 4.3 und Abschnitt 6.2)? Die manuell geprüfte MultiNERD-Stichprobe von Tedeschi und Navigli ist in den veröffentlichten Daten nicht enthalten. Stattdessen prüfe ich selbst blind rund 180 Abweichungen zwischen den besten Modellen und der Silberreferenz, um Modell- von Annotationsfehlern zu trennen.
+2. Reicht die Offenlegung der früheren Testnutzung (Tabelle 4.3 und Abschnitt 6.2)? Die manuell geprüfte MultiNERD-Stichprobe von Tedeschi und Navigli ist in den veröffentlichten Daten nicht enthalten. Die Silberreferenz bleibt deshalb als Einschränkung benannt.
 3. Erwarten Sie für FF3 konkrete Budgetszenarien für Latenz und Speicher, oder genügt die Antwort über die Pareto-Front?
 4. Sind 82 Seiten Haupttext für das Fachgebiet angemessen?
 5. Gibt es ein Bewertungsraster des Fachgebiets? Wird neben dem deutschen Abstract eine englische Fassung erwartet? Ist das DFKI-Logo auf dem Deckblatt in Ordnung?
