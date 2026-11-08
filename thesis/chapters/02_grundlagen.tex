@@ -402,7 +402,7 @@ Nachtrainierte Modelle verarbeiten Eingaben in einem Dialogformat aus
 Nachrichten mit Rollen wie System, Nutzer und Assistent, das ein
 \emph{Chat-Template} mit speziellen Steuertokens in eine Tokenfolge
 überführt~\cite{qwen2026card27b}.
-Neuere Modelle der Qwen-Familie können vor der eigentlichen Antwort einen
+Qwen-Modelle ab Qwen3 können vor der eigentlichen Antwort einen
 abgegrenzten Block mit Zwischenüberlegungen erzeugen; dieser
 \emph{Thinking-Modus} lässt sich ein- und
 ausschalten~\cite{qwen2025qwen3}.
@@ -427,16 +427,13 @@ Lizenz veröffentlicht; da die Open-Source-AI-Definition der Open Source
 Initiative zusätzlich ausreichende Angaben zu den Trainingsdaten und den
 vollständigen Trainings- und Inferenzcode verlangt~\cite{osi2024osaid},
 gelten sie als Modelle mit \emph{offenen Gewichten} (\emph{open weights}).
-Zu dieser Gruppe gehört die Qwen-Familie von Alibaba; Qwen3 führte den
-Wechsel zwischen Thinking- und Non-Thinking-Modus ein~\cite{qwen2025qwen3}.
+Zu dieser Gruppe gehört die Qwen-Familie von Alibaba.
 Qwen3.5 erschien im Februar 2026 zunächst als Mixture-of-Experts-Modell
 mit 397~Mrd. Parametern, von denen je Token 17~Mrd. aktiv
 sind~\cite{qwen2026qwen35blog,qwen2026card397b}; es folgten Modelle ohne
 Mixture-of-Experts-Komponenten, darunter Qwen3.5-27B sowie Qwen3.5-4B
 und Qwen3.5-0.8B~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b}.
-Diese drei Modelle werden in der vorliegenden Arbeit verwendet und stehen
-laut ihren Modellkarten unter der
-Apache-2.0-Lizenz~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b};
+Diese drei Modelle werden in der vorliegenden Arbeit verwendet;
 welche Komponenten geladen werden und dass der Thinking-Modus
 deaktiviert ist, beschreiben die Abschnitte~\ref{sec:llm-auswahl}
 und~\ref{sec:llm-pipeline}.
@@ -640,9 +637,6 @@ Der CoNLL-2003-Datensatz umfasst manuell annotierte englische und
 deutsche Nachrichtentexte mit den vier Typen Person, Organisation, Ort
 und Sonstiges~\cite{sang2003conll} und ist bis heute der am häufigsten
 verwendete NER-Benchmark~\cite{li2018survey}.
-Seine Daten liegen im IOB1-Schema vor (Abschnitt~\ref{sec:ner}); die
-Auswertung zählt eine Entität nur bei exakter Übereinstimmung als
-korrekt (Abschnitt~\ref{sec:evaluation}).
 
 OntoNotes 5.0 ist ein manuell annotiertes Korpus mit 18 Entitätstypen
 und Texten mehrerer Genres in Englisch, Chinesisch und
