@@ -1,5 +1,7 @@
 # Stand der Bachelorarbeit (08.11.2026)
 
+Aufgeräumt am 09.11.: Die abgearbeiteten Prüfberichte 01–08a, 10–15, 18, 20 und 21 sind aus `review/` entfernt. Die Verweise unten beziehen sich auf den Stand davor; die Berichte sind über die Git-Historie abrufbar, z. B. `git show 1aa3a1b:thesis/review/15_umsetzungsprotokoll_2026-11-07.md`.
+
 ## Umsetzung der 1,0-Überarbeitung (7./8.11., Claude Code)
 
 - **Stand:** 116 physische Seiten, Haupttext S. 1–82 (Ausgangsstand 7.11.: 112/90; nach den Korrekturen der Phase A 119/95). Überschriften im unteren Seitenviertel rücken per titlesec-Regel auf die nächste Seite (`main.tex`). Build ohne Fehler, Overfull/Underfull 0, keine offenen Verweise oder Zitate; Aggregationsskript mit 10 Tests, zwei Läufe byte-identisch. Tag `betreuerentwurf-2026-11-08` markiert den Stand nach Phase A (Korrekturen), der aktuelle `main` enthält zusätzlich die Verdichtung.
