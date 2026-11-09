@@ -1,15 +1,9 @@
-# Zweitgutachten vom 28.10.2026
+# Prüfberichte zur Bachelorarbeit
 
-Vier unabhängige, KI-gestützte Prüfläufe (Claude Fable 5.1) über die Thesis im Stand von Commit 99d9a56.
-Die Zeilenangaben beziehen sich auf diesen Stand; spätere Korrekturen verschieben Zeilen.
-Zweck: Fehlerliste für die Überarbeitung und Stilstellen für das Umschreiben in eigener Sprache (Kapitel 5 und 6).
+| Datei | Inhalt |
+|---|---|
+| [16_begleitnotiz_entwurf_2026-11-08.md](16_begleitnotiz_entwurf_2026-11-08.md) | Entwurf der Mail an den Betreuer mit dem aktuellen PDF-Anhang |
+| [22_sprachpruefung_2026-11-08.md](22_sprachpruefung_2026-11-08.md) | Sprachprüfung vom 8.11. mit Umsetzungsprotokoll (Abschnitt 7) |
+| `08b_quellenmatrix_2026-11-06.csv` | Prüfstatus der verwendeten Quellen (Stand 6.11.) |
 
-| Datei | Umfang | Note (1–10) |
-|---|---|---|
-| `01_frontmatter_kap1_kap2.md` | Deckblatt, Abstract, Erklärung, Verzeichnisse, Kap. 1, Kap. 2 | 7 / 8 / 8 |
-| `02_kap3_kap4.md` | Kap. 3, Kap. 4 (inkl. Code-Abgleich) | 8 / 8 |
-| `03_kap5.md` | Kap. 5 | 7 (Darstellung 8, Diskussion 6) |
-| `04_kap6_anhang_gesamt.md` | Kap. 6, Anhang, Literatur, Gesamtkonsistenz | 7 / 8 |
-
-Bestätigte Sachfehler (gegen summary.json bzw. Originalquellen nachgerechnet) wurden am 28./29.10. korrigiert; Stil- und Strukturpunkte
-sind Aufgabe der Überarbeitung in eigener Sprache.
+Die älteren Berichte (01–08a, 10–15, 18–21) sind abgearbeitet und am 9.11. aus dem Ordner entfernt worden. Sie sind über die Git-Historie abrufbar, z. B. mit `git show 1aa3a1b:thesis/review/15_umsetzungsprotokoll_2026-11-07.md`.

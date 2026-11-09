@@ -1,6 +1,6 @@
 # Stand der Bachelorarbeit (08.11.2026)
 
-Aufgeräumt am 09.11.: Die abgearbeiteten Prüfberichte 01–08a, 10–15, 18, 20 und 21 sind aus `review/` entfernt. Die Verweise unten beziehen sich auf den Stand davor; die Berichte sind über die Git-Historie abrufbar, z. B. `git show 1aa3a1b:thesis/review/15_umsetzungsprotokoll_2026-11-07.md`.
+Aufgeräumt am 09.11.: Die abgearbeiteten Prüfberichte 01–08a, 10–15 und 18–21 sind aus `review/` entfernt; die nie committeten Codex-Berichte 09 und 17 ebenfalls. Die Verweise unten beziehen sich auf den Stand davor; die Berichte sind über die Git-Historie abrufbar, z. B. `git show 1aa3a1b:thesis/review/15_umsetzungsprotokoll_2026-11-07.md`.
 
 ## Umsetzung der 1,0-Überarbeitung (7./8.11., Claude Code)
 
