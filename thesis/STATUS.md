@@ -10,6 +10,8 @@
 - **Offen beim Verfasser:** Folgenachricht an den Betreuer (`review/23_…`) mit der neuen PDF-Kopie versenden; Rückmeldung zum Kontrolllauf und zur Länge abwarten; die offenen Punkte des Abschnitts vom 8.11. unten (KI-Angabe, englisches Abstract, Repository) gelten weiter.
 - **Lektorat (Branch `lektorat-2026-11-25`, nicht gepusht):** sprachliche und formale Durchsicht der gesamten Arbeit. 64 typografische Korrekturen direkt angewendet (geschützte Leerzeichen vor Klammerzitaten und Einheiten), kein Rechtschreibfehler gefunden, 205 Vorschläge zur Entscheidung (hoch 6, mittel 73, niedrig 126). Seitenstand unverändert (111, Haupttext 77). Bericht: `LEKTORAT_2026-11-25.md`.
 
+Aufgeräumt am 12.11.: Auf Wunsch des Verfassers sind `KUERZUNG_CHANGELOG.md`, `LEKTORAT_2026-11-25.md` und die Notizen 16, 22 und 23 aus `review/` entfernt, ebenso die lokale PDF-Kopie `main_betreuerentwurf_f233071.pdf`. Verweise darauf in diesem Dokument beziehen sich auf den Stand davor; die Dateien sind über die Git-Historie abrufbar, z. B. `git show 9ebc572:thesis/LEKTORAT_2026-11-25.md`.
+
 Aufgeräumt am 09.11.: Die abgearbeiteten Prüfberichte 01–08a, 10–15 und 18–21 sind aus `review/` entfernt; die nie committeten Codex-Berichte 09 und 17 ebenfalls. Die Verweise unten beziehen sich auf den Stand davor; die Berichte sind über die Git-Historie abrufbar, z. B. `git show 1aa3a1b:thesis/review/15_umsetzungsprotokoll_2026-11-07.md`.
 
 ## Umsetzung der 1,0-Überarbeitung (7./8.11., Claude Code)
