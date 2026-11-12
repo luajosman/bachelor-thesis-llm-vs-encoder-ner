@@ -23,9 +23,8 @@ Bei 256 Ausgabetokens liegt DeBERTa-v3-large mit einem Mikro-F$_1$ von
 95,8 Punkten 1,34 Punkte [0,99; 1,68] vor Qwen3.5-27B im QLoRA-Regime
 (94,5).
 Ersetzt eine Nachinferenz mit 1\,024 Tokens die am Limit abgeschnittenen
-Antworten, erreicht das LLM 95,6 Punkte;
-der Rückstand schrumpft auf 0,18 Punkte [0,02; 0,33].
-Auf CrossNER kehrt sich die Reihenfolge mit dem höheren Limit um
+Antworten, schrumpft der Rückstand auf 0,18 Punkte [0,02; 0,33];
+auf CrossNER kehrt sich die Reihenfolge mit dem höheren Limit um
 (Tabelle~\ref{tab:synthese}).
 Erwartung E1 ist auf MultiNERD nur bei ausreichendem Ausgabelimit und
 nur teilweise bestätigt: Das mit QLoRA angepasste LLM liegt im Punktwert
@@ -35,12 +34,8 @@ Das Intervall des explorativen Vergleichs mit DeBERTa-v3-large liegt nur
 knapp über null.
 Der verbleibende Abstand ist kein isolierter Architektureffekt
 (Abschnitt~\ref{sec:disk-leistung}).
-
-Je Entitätstyp gibt es nur beobachtete Punktwertunterschiede ohne eigene
-Intervalle, etwa zugunsten der Encoder bei ANIM, FOOD und PLANT und
-zugunsten des 27B-Modells bei INST, MYTH und TIME.
-Die Makro-F$_1$-Differenzintervalle zwischen Qwen3.5-27B und
-DeBERTa-v3-large enthalten bei beiden Limits null; Gleichwertigkeit folgt
+Im Makro-F$_1$ enthalten die Differenzintervalle zwischen Qwen3.5-27B und
+DeBERTa-v3-large bei beiden Limits null; Gleichwertigkeit folgt
 daraus nicht.
 
 Die Formtreue ist im QLoRA-Regime hoch: Rund 0,4\,\% der Antworten sind
@@ -49,9 +44,6 @@ nicht parsebar; sie enden ohne schließende Klammer, was auf das Limit von
 Im Zero-Shot-Regime erreichen die drei Modelle unter den gewählten
 Prompt- und Decoding-Bedingungen nur 6,2 bis 69,4 F$_1$-Punkte; das
 stützt Erwartung E3.
-Dort scheitert das 0.8B-Modell an Syntax und Typinventar, das 4B- und
-das 27B-Modell verlieren 3\,930 bzw. 3\,397 Elemente durch inkonsistente
-Text- und Indexfelder (Abschnitt~\ref{sec:disk-format}).
 Ein isolierter Effekt der Anpassung wurde nicht bestimmt
 (Abschnitt~\ref{sec:disk-leistung}).
 
@@ -65,16 +57,17 @@ mit der Größe variieren.
 Im Zero-Shot-Regime ist der Größeneffekt mit 28,8 und 34,5 Punkten je
 Schritt dagegen groß und geht mit großen Unterschieden in der Formtreue
 einher; ein isolierter Anteil wurde nicht bestimmt.
-Der Ressourcenbedarf wächst erheblich steiler als die Leistung.
-Innerhalb der Encoder-Familie steigt die Inferenzlatenz je Satz von 8,9
-auf 16,5~ms, der Speicher von 0,7 auf 1,7~GiB und die Trainingsdauer von
-0,4 auf 1,2~h.
-Innerhalb der QLoRA-Konfigurationen steigt die Latenz von 1\,876 auf 5\,505~ms,
-der Speicher von 0,9 auf 18,7~GiB und die Trainingsdauer von 12 auf
-266~h; das 4B-Modell fällt mit 62,9~h auf der A100 aus der Reihe.
+Der Ressourcenbedarf wächst erheblich steiler als die Leistung
+(Tabelle~\ref{tab:effizienz}).
+Die Encoder benötigen je Satz 8,9 bis 16,5~ms bei 0,7 bis 1,7~GiB
+Inferenzspeicher und 0,4 bis 1,2~h Training.
+Bei den QLoRA-Konfigurationen sind es 1\,876 bis 5\,505~ms, 0,9 bis
+18,7~GiB und 12 bis 266~h.
 Hardwaregleich liegt die Latenz von Qwen3.5-0.8B um etwa das 210-Fache
-über der von DeBERTa-v3-base; der Zero-Shot-27B-Lauf in BF16 belegt
-50,7~GiB.
+über der von DeBERTa-v3-base.
+Erwartung E2 ist damit bestätigt: Der Faktor liegt
+am oberen Rand der Literaturspanne von 40 bis 220, die Faktoren über
+GPU-Typen hinweg darüber.
 Die Trainingsdauern beschreiben den Aufwand dieser Studie einschließlich
 Neustarts und Clusterlast, keinen allgemeinen Bedarf.
 
@@ -85,17 +78,15 @@ aus den gemessenen Latenz- und Speicherwerten
 Für MultiNERD und vergleichbar annotierte Wikipedia-Texte mit festem
 Typinventar ist danach unter jedem Latenz- und Speicherbudget, das
 überhaupt eine Konfiguration zulässt, ein Encoder die beste gemessene
-Wahl: DeBERTa-v3-base ab 8,9~ms und 0,7~GiB, DeBERTa-v3-large mit
-0,3 Punkten mehr ab 16,5~ms und 1,7~GiB.
-Bei 256 Ausgabetokens bilden beide allein die Pareto-Front; ein LLM wird
-erst ab 1,9~s je Satz zulässig und liegt auch mit 1\,024 Tokens nicht
-vor DeBERTa-v3-large.
+Wahl: DeBERTa-v3-base unter den engsten Grenzen, sonst DeBERTa-v3-large.
+Bei 256 Ausgabetokens bilden beide Encoder allein die Pareto-Front; ein
+LLM wird erst ab 1,9~s je Satz zulässig und liegt auch mit 1\,024 Tokens
+nicht vor DeBERTa-v3-large.
 Die Ressourcenwerte bei 256 Tokens gelten dabei nicht für eine Pipeline
 mit 1\,024 Tokens, für die kein vollständiger Neulauf vorliegt.
 Auf CrossNER liegt Qwen3.5-27B bei 1\,024 Tokens mit 87,1 Punkten vor
 DeBERTa-v3-large mit 85,0 und ist ab rund 12,9~s je Satz und 18,6~GiB
-die beste gemessene Wahl; DeBERTa-v3-large benötigt 25,7~ms auf demselben
-GPU-Typ.
+die beste gemessene Wahl.
 Rund drei Viertel dieses Vorsprungs entfallen allerdings auf falsch
 positive Spans, die auf Entitäten nicht abgebildeter CrossNER-Typen liegen
 und die der Encoder häufiger erzeugt als das LLM
@@ -104,12 +95,7 @@ Teilspans solcher Entitäten nicht als Fehler wertet.
 Das LLM rechtfertigt seinen Mehraufwand damit nur unter ähnlichen
 Transferbedingungen und bei einer Latenztoleranz von mehreren Sekunden
 je Satz.
-Eine allgemeine Überlegenheit einer Modellklasse folgt daraus nicht; eine
-Erweiterung des Typinventars über den Prompt blieb ungeprüft
-(unveränderter Prompt, tabellarische Abbildung der CrossNER-Typen).
-Erwartung E2 ist bestätigt: Der hardwaregleiche Faktor von etwa 210 liegt
-am oberen Rand der Literaturspanne von 40 bis 220, die Faktoren über
-GPU-Typen hinweg darüber.
+Eine allgemeine Überlegenheit einer Modellklasse folgt daraus nicht.
 
 \paragraph{Beitrag.}
 Der Beitrag der Arbeit liegt erstens in einem Vergleich beider

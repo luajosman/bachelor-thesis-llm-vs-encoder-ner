@@ -150,68 +150,33 @@ mit IOB2-Tags (Abschnitt~\ref{sec:encoder-pipeline}).
 \section{Transformer-Architektur}
 \label{sec:transformer}
 
-Rekurrente Netze verarbeiten eine Sequenz Token für Token, sodass sich
-Information über viele Schritte fortpflanzen muss und die Berechnung nur
-begrenzt parallelisierbar ist.
-\textcite{vaswani2017attention} ersetzen die Rekurrenz vollständig durch
-Attention: Jedes Token kann in einem Schritt auf jede andere Position der
-Sequenz zugreifen, und alle Positionen werden gleichzeitig berechnet.
+Der Transformer von \textcite{vaswani2017attention} beruht
+vollständig auf Attention: Jedes Token kann in einem Schritt auf jede
+andere Position der Sequenz zugreifen.
 
 Grundbaustein ist die \emph{Self-Attention}.
 Aus der Repräsentation jedes Tokens werden durch gelernte lineare
-Abbildungen drei Vektoren erzeugt: eine Query $q$, ein Key $k$ und ein
-Value $v$.
-Für alle Tokens einer Sequenz, zusammengefasst in den Matrizen $Q$, $K$
-und $V$, ergibt sich
-\begin{equation}
-  \text{Attention}(Q, K, V)
-    = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V ,
-  \label{eq:attention}
-\end{equation}
-wobei $d_k$ die Dimension der Key-Vektoren
-ist~\cite{vaswani2017attention}.
+Abbildungen drei Vektoren erzeugt: eine Query, ein Key und ein Value.
 Das Skalarprodukt zwischen der Query eines Tokens und den Keys aller
-Tokens misst deren Relevanz; die Division durch $\sqrt{d_k}$ verhindert,
-dass große Skalarprodukte die Softmax-Funktion in einen Bereich mit
-verschwindenden Gradienten treiben.
-Die Softmax-Funktion normiert die Relevanzwerte zu Gewichten, und die
-Ausgabe für jedes Token ist die gewichtete Summe der Value-Vektoren.
-Jedes Token sammelt so Information aus allen Positionen, gewichtet nach
-ihrer Relevanz.
-Statt einer einzigen Attention verwenden Transformer $h$ parallele
-\emph{Köpfe} mit jeweils eigenen Projektionen und reduzierter Dimension
-$d_k = d_{\text{model}}/h$; ihre Ausgaben werden verkettet und mit einer
-weiteren Matrix $W^O$ auf die Modelldimension zurückprojiziert.
-Verschiedene Köpfe können so unterschiedliche Beziehungen zwischen
-Tokens erfassen, etwa syntaktische Abhängigkeiten oder Koreferenzen, ohne
-dass dies vorgegeben wird~\cite{vaswani2017attention}.
-
+Tokens misst deren Relevanz; die Softmax-Funktion normiert die
+Relevanzwerte zu Gewichten, und die Ausgabe für jedes Token ist die
+gewichtete Summe der
+Value-Vektoren~\cite{vaswani2017attention}.
+Transformer verwenden mehrere parallele \emph{Köpfe} mit jeweils
+eigenen Projektionen.
 Da Attention die Reihenfolge der Tokens nicht berücksichtigt, wird die
-Position jedes Tokens eigens kodiert.
-\textcite{vaswani2017attention} addieren zu den Eingabe-Embeddings feste
-Positionsvektoren aus Sinus- und Kosinusfunktionen unterschiedlicher
-Frequenz.
-Spätere Modelle kodieren Positionen relativ, etwa als Abstand zweier
-Tokens in der Attention (Abschnitt~\ref{sec:encoder_ner}) oder durch
-Rotation der Query- und Key-Vektoren~\cite{su2024roformer}, wie sie auch
-Qwen3.5 verwendet~\cite{qwen2026card27b}.
+Position jedes Tokens eigens kodiert
+(Abschnitt~\ref{sec:encoder_ner}).
 
+Das Originalmodell besteht aus einem Encoder und einem Decoder.
 Eine Transformer-Schicht des Encoders besteht aus zwei Teilschichten: der
 Multi-Head-Self-Attention und einem positionsweisen Feed-Forward-Netz,
 das jeden Tokenvektor unabhängig transformiert.
-Um jede Teilschicht führt eine Residualverbindung, und das Ergebnis wird
-normiert, sodass die Ausgabe $\text{LayerNorm}(x + \text{Sublayer}(x))$
-lautet~\cite{vaswani2017attention}.
-Die Residualverbindung erlaubt es, die Eingabe unverändert
-weiterzureichen, und stabilisiert zusammen mit der Normierung das
-Training tiefer Schichtstapel; das Originalmodell verwendet sechs Schichten.
 Der Decoder ergänzt jede Schicht um eine dritte Teilschicht, die auf die
 Encoder-Ausgabe zugreift, und maskiert seine Self-Attention so, dass
 Position $i$ nur auf Positionen bis $i$ zugreifen kann.
 Diese \emph{kausale Maske} stellt sicher, dass die Vorhersage eines
 Tokens nur von den bereits bekannten Tokens abhängt.
-Technisch werden dazu die Relevanzwerte aller Positionen $j > i$ vor der
-Softmax-Funktion auf $-\infty$ gesetzt, sodass ihr Gewicht null wird.
 Abbildung~\ref{fig:transformer-architektur} zeigt den Aufbau.
 
 \begin{figure}[htbp]
@@ -229,45 +194,31 @@ Abbildung~\ref{fig:transformer-architektur} zeigt den Aufbau.
 
 Aus diesem Bauplan sind drei Modellfamilien hervorgegangen.
 \emph{Encoder-only}-Modelle wie BERT verwenden nur den Encoder; jedes
-Token sieht den Kontext in beide Richtungen, und die Ausgabe ist eine
-Repräsentation je Token~\cite{devlin2019bert}.
+Token sieht den Kontext in beide Richtungen~\cite{devlin2019bert}.
 \emph{Decoder-only}-Modelle wie GPT-3 verwenden nur den Decoder ohne
 Encoder-Attention; durch die kausale Maske eignen sie sich zur
-Texterzeugung Token für Token~\cite{brown2020language}.
-Encoder-Decoder-Modelle entsprechen dem Original und bilden eine Eingabe-
-auf eine Ausgabesequenz ab.
+Texterzeugung Token für Token~\cite{brown2020language};
+Encoder-Decoder-Modelle entsprechen dem Original.
 Für NER folgt daraus der zentrale Unterschied der beiden verglichenen
 Modellklassen: Ein Encoder liefert für jedes Token eine
 beidseitig kontextualisierte Repräsentation, aus der ein Label
 klassifiziert werden kann.
-Der rechte Kontext ist für NER unmittelbar relevant, weil der Typ eines
-Tokens oft erst aus ihm hervorgeht, etwa ob \enquote{Washington} eine
-Person oder einen Ort bezeichnet.
 Ein Decoder verarbeitet die Sequenz kausal und gibt in der hier
 verwendeten Pipeline die Entitäten als Text aus; da der ganze
 Eingabesatz im Prompt liegt, kann er den rechten Satzkontext nutzen.
-Mit Klassifikationskopf und entfernter kausaler Maske eignen sich
-Decoder auch für Sequenzlabeling~\cite{dukic2024lookingright}.
 
 Die Kosten der Self-Attention wachsen quadratisch mit der
-Sequenzlänge~$n$, da für jedes Tokenpaar ein Relevanzwert berechnet und
-gespeichert wird~\cite{vaswani2017attention}.
-Bei der Texterzeugung kommt hinzu, dass die Keys und Values aller
-bisherigen Tokens zwischengespeichert werden.
-Attention-Varianten setzen hier an und reduzieren den Aufwand des
-Mechanismus selbst.
+Sequenzlänge~\cite{vaswani2017attention}; bei der Texterzeugung werden
+zudem die Keys und Values aller bisherigen Tokens zwischengespeichert.
 Grouped-Query-Attention lässt mehrere Query-Köpfe denselben Key- und
-Value-Kopf nutzen und verkleinert so den Zwischenspeicher bei nahezu
-unveränderter Qualität~\cite{ainslie2023gqa}.
+Value-Kopf nutzen und verkleinert so den
+Zwischenspeicher~\cite{ainslie2023gqa}.
 Lineare Attention-Verfahren wie Gated DeltaNet ersetzen die
-Relevanzmatrix durch einen Zustand fester Größe, der je Token mit einer
-Delta-Regel aktualisiert wird und über ein Gate vergessen kann, sodass
-der Aufwand nur linear mit $n$ wächst~\cite{yang2025gated}.
-Hybride Architekturen kombinieren beides, indem sie lineare Schichten
-mit einzelnen Schichten voller Attention
-abwechseln~\cite{qwen2026card27b}.
-Die in dieser Arbeit verwendeten LLMs besitzen eine solche hybride
-Attention, was für die Platzierung der Adapter relevant ist
+Relevanzmatrix durch einen Zustand fester Größe, sodass der Aufwand nur
+linear mit der Sequenzlänge wächst~\cite{yang2025gated}.
+Die in dieser Arbeit verwendeten LLMs wechseln lineare Schichten mit
+einzelnen Schichten voller Attention ab~\cite{qwen2026card27b}; diese
+hybride Attention ist für die Platzierung der Adapter relevant
 (Abschnitt~\ref{sec:lora-konfiguration}).
 
 \section{Encoder-basierte Modelle für NER}
@@ -579,34 +530,6 @@ Wie sich die Größe auf die Qualität auswirkt, beschreiben
 \emph{Skalierungsgesetze} in Form von Potenzgesetzen: Der Verlust fällt
 als Potenzfunktion der Parameterzahl, der Datenmenge und des
 Rechenaufwands~\cite{kaplan2020scaling}.
-Für Transformer-Sprachmodelle finden \textcite{kaplan2020scaling}
-Exponenten von $\alpha_N \approx 0{,}076$ für die Zahl der Parameter
-ohne Embeddings $N$, $\alpha_D \approx 0{,}095$ für den Datensatzumfang
-$D$ in Tokens und $\alpha_C \approx 0{,}050$ für den optimal eingesetzten
-Rechenaufwand $C_{\min}$, jeweils wenn nur dieser Faktor begrenzend wirkt.
-Diese Beziehungen gelten über mehrere Größenordnungen, nach
-\textcite{kaplan2020scaling} einzelne Trends über mehr als sieben;
-Abbildung~\ref{fig:skalierungsgesetz} zeigt sie schematisch.
-
-\begin{figure}[htbp]
-  \centering
-  \input{figures/kaplan_scaling}
-  \caption[Skalierungsgesetze: Testverlust in Abhängigkeit von Rechenaufwand, Datensatzumfang und Parameteranzahl]{Testverlust (Test-Loss) in Abhängigkeit von Rechenaufwand, Datensatzumfang
-  und Parameteranzahl (ohne Embeddings) in doppelt logarithmischer
-  Darstellung; Kurvenverläufe schematisch.
-  Die eingetragenen Potenzgesetze und Konstanten entsprechen Abbildung~1
-  bei \textcite{kaplan2020scaling}; für den Rechenaufwand nennt deren
-  Gleichung~1.3 abweichend die Konstante $3{,}1 \cdot 10^{8}$.
-  Eigene Darstellung in Anlehnung an \textcite{kaplan2020scaling}.}
-  \label{fig:skalierungsgesetz}
-\end{figure}
-
-Für die Aufteilung eines Rechenbudgets $C$ auf die optimale Modellgröße
-$N_{\text{opt}} \propto C^{a}$ und Datenmenge
-$D_{\text{opt}} \propto C^{b}$ finden \textcite{hoffmann2022training}
-mit über 400 Modellen $a \approx b \approx 0{,}5$, sodass beide mit
-wachsendem Budget im gleichen Verhältnis wachsen sollten.
-
 Für die vorliegende Arbeit sind zwei Grenzen dieser Befunde wesentlich.
 Erstens beschreiben die Gesetze den Verlust des Vortrainings von
 Modellen, die eigens für die Untersuchung trainiert wurden; über

@@ -1,42 +1,52 @@
 \chapter*{Abstract}
 \thispagestyle{plain}
 
-Named Entity Recognition (NER) lässt sich durch Token-Klassifikation mit
-Encodern oder durch strukturierte Textgenerierung mit Large Language
-Models (LLMs) lösen. Diese Arbeit vergleicht DeBERTa-v3-base und -large
-mit vollständigem Fine-Tuning sowie Qwen3.5-0.8B, -4B und -27B im
-Zero-Shot- und QLoRA-Regime auf dem englischen Teil von MultiNERD mit
-15 Entitätstypen und automatisch erzeugter Referenzannotation. Die fünf
-trainierten Konfigurationen werden mit jeweils drei Seeds ausgewertet.
+Named Entity Recognition (NER) findet benannte Entitäten wie Personen,
+Orte oder Organisationen in Texten.
+Encoder ordnen dazu jedem Token ein Label zu, Large Language Models
+(LLMs) erzeugen die Entitäten als strukturierten Text.
+Diese Arbeit vergleicht beide Wege: DeBERTa-v3-base und -large mit
+vollständigem Fine-Tuning sowie Qwen3.5-0.8B, -4B und -27B im Zero-Shot-
+und QLoRA-Regime auf dem englischen Teil von MultiNERD mit
+15 Entitätstypen und automatisch erzeugter Referenzannotation.
+Die fünf trainierten Konfigurationen werden mit je drei Seeds
+ausgewertet.
 Erfasst werden strikte Metriken auf Entitätsebene, die Formtreue der
 JSON-Ausgaben, Trainingsdauer, Inferenzlatenz und maximal allokierter
-GPU-Inferenzspeicher. Ein Transfertest auf CrossNER ergänzt den Vergleich.
+GPU-Inferenzspeicher; hinzu kommt ein Transfertest auf CrossNER.
 
 DeBERTa-v3-large erreicht einen Mikro-F$_1$ von 95,8 Punkten,
-Qwen3.5-27B im QLoRA-Regime zunächst 94,5. Das Limit von 256 Ausgabetokens
-schneidet jedoch lange Antworten ab, die als leere Vorhersagen gewertet
-werden. Die selektive Nachinferenz mit 1\,024 Tokens erhöht den Mikro-F$_1$ des LLM auf 95,6 und verringert den Abstand von 1,34 auf 0,18 Punkte
-(gepaartes 95-\%-Bootstrap-Intervall: 0,02 bis 0,33). Im Makro-F$_1$
-wird gegenüber dem großen Encoder kein eindeutiger Unterschied
-nachgewiesen. Auf CrossNER mit den gemeinsamen Typen PER, ORG und LOC
-kehrt sich die Rangfolge bei höherem Limit um: Das LLM erreicht
-87,1 Punkte gegenüber 85,0 für den Encoder; das Intervall der gepoolten
-Differenz beträgt 1,47 bis 2,80 Punkte.
+Qwen3.5-27B im QLoRA-Regime zunächst 94,5.
+Doch das Limit von 256 Ausgabetokens schneidet lange Antworten ab, die
+als leere Vorhersagen zählen.
+Die selektive Nachinferenz mit 1\,024 Tokens hebt das LLM auf 95,6 und
+verringert den Abstand von 1,34 auf 0,18 Punkte (gepaartes
+95-\%-Bootstrap-Intervall: 0,02 bis 0,33).
+Im Makro-F$_1$ wird gegenüber dem großen Encoder kein eindeutiger
+Unterschied nachgewiesen.
+Auf CrossNER mit den gemeinsamen Typen PER, ORG und LOC kehrt sich die
+Rangfolge bei höherem Limit um: Das LLM erreicht 87,1 Punkte, der Encoder
+85,0 (Intervall der gepoolten Differenz: 1,47 bis 2,80 Punkte).
 
-Die Inferenzlatenz der Encoder beträgt auf MultiNERD 9 bis 17~ms je Satz
-bei 0,7 bis 1,7~GiB Inferenzspeicher. Die QLoRA-Läufe mit 256 Ausgabetokens
-benötigen 1,9 bis 5,5~s und bis zu 18,7~GiB; ein Vergleich auf gleicher
-Hardware ergibt für Qwen3.5-0.8B gegenüber DeBERTa-v3-base einen
-Latenzfaktor von etwa 210. Die
-Zero-Shot-Konfigurationen erreichen 6,2 bis 69,4 F$_1$-Punkte. Ihre
-Prompt- und Decoding-Wahl wurde durch Testbeobachtungen beeinflusst; da sich die Regime über das Training hinaus
-in Prompt, Decoding und numerischer Präzision unterscheiden, ist kein
-isolierter Fine-Tuning-Effekt bestimmbar.
+Die Encoder benötigen auf MultiNERD 9 bis 17~ms je Satz und 0,7 bis
+1,7~GiB Inferenzspeicher, die QLoRA-Läufe mit 256 Ausgabetokens 1,9 bis
+5,5~s und bis zu 18,7~GiB.
+Auf gleicher Hardware ergibt sich für Qwen3.5-0.8B gegenüber
+DeBERTa-v3-base ein Latenzfaktor von etwa 210.
+Die Zero-Shot-Konfigurationen erreichen 6,2 bis 69,4 F$_1$-Punkte.
+Ihre Prompt- und Decoding-Wahl wurde durch Testbeobachtungen beeinflusst;
+da sich die Regime über das Training hinaus in Prompt, Decoding und
+numerischer Präzision unterscheiden, ist kein isolierter
+Fine-Tuning-Effekt bestimmbar.
 
-Auf MultiNERD ist damit unter jeder Latenz- und Speichergrenze ein Encoder
-die beste gemessene Wahl; das LLM ist nur im Transfer auf
-CrossNER und erst ab rund 13~s je Satz vorzuziehen. Der Qualitätsvergleich
-hängt jedoch wesentlich von Ausgabelimit, Datensatz und der Typabbildung auf PER, ORG und LOC ab. Die Arbeit zeigt so sowohl den Ressourcenunterschied der konkreten Pipelines
-als auch die Bedeutung ausreichender Ausgabelimits für die Bewertung
-generativer NER. Eine allgemeine Überlegenheit einer Modellklasse wird
-aus den untersuchten Konfigurationen nicht abgeleitet.
+Für die Praxis heißt das: Auf MultiNERD ist unter jeder Latenz- und
+Speichergrenze ein Encoder die beste gemessene Wahl.
+Das LLM ist nur im Transfer auf CrossNER und erst ab rund 13~s je Satz
+vorzuziehen.
+Der Qualitätsvergleich hängt jedoch wesentlich von Ausgabelimit,
+Datensatz und der Typabbildung auf PER, ORG und LOC ab.
+Die Arbeit zeigt damit zweierlei: den Ressourcenunterschied der konkreten
+Pipelines und die Bedeutung ausreichender Ausgabelimits für die Bewertung
+generativer NER.
+Eine allgemeine Überlegenheit einer Modellklasse wird aus den
+untersuchten Konfigurationen nicht abgeleitet.

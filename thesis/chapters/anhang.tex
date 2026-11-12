@@ -362,6 +362,13 @@ Implementierung \texttt{sdpa} (Scaled Dot-Product Attention) anstelle von
 FlashAttention-2.
 Die Längen der Referenzantworten (Abschnitt~\ref{sec:llm-pipeline})
 wurden mit dem Skript \texttt{scripts/answer\_lengths.py} bestimmt.
+Unter dem Qwen3.5-Tokenizer sind die Referenzantworten des Testsplits
+im Median 32 Tokens lang (99.~Perzentil 186, Maximum 553); 55 der
+16\,454 Referenzantworten überschreiten 256 Tokens, eine überschreitet
+512 und keine 1\,024.
+Im Trainings- und im Validierungssplit überschreiten 576 von 131\,280
+bzw. 103 von 16\,410 Referenzantworten 256 Tokens; das Maximum beträgt
+1\,047 bzw. 951 Tokens.
 
 \subsection{Prompt des QLoRA-Regimes}
 

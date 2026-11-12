@@ -66,10 +66,6 @@ Der Hauptstudie gingen explorative Vorläufe der fünf trainierten
 Konfigurationen mit Seed~42 voraus, die der Stabilisierung der Pipeline
 dienten und nicht in die Auswertung eingehen
 (Tabelle~\ref{tab:datennutzung}, Tabelle~\ref{tab:app-vorlaeufe}).
-Nach der generativen Validierung eines abgebrochenen 4B-Vorlaufs wurde
-der Thinking-Modus für alle Läufe deaktiviert; die Entscheidung beruht
-damit nur auf Validierungsdaten (Tabelle~\ref{tab:datennutzung}, Abschnitt~\ref{sec:llm-pipeline},
-Anhang~\ref{app:durchfuehrung}).
 Die Zero-Shot-Läufe stammen aus einem eindeutig identifizierbaren Commit
 ohne lokale Änderungen (Anhang~\ref{app:reproduzierbarkeit}) und sind Teil
 der Hauptauswertung.
@@ -369,26 +365,23 @@ vollständig inferiert; ein separater Evaluationsschritt berechnet die
 Metriken aus den gespeicherten Vorhersagen.
 
 Einschränkend wurde der Testsplit bereits in den explorativen Vorläufen
-ausgewertet.
+ausgewertet; Tabelle~\ref{tab:datennutzung} ordnet jeder Entscheidung
+Datengrundlage und Testbezug zu, einschließlich der nachträglichen
+Sensitivitätsanalysen zum Ausgabelimit.
 Für die trainierten Konfigurationen blieben die Hyperparameter zwischen
-Vorlauf und Hauptstudie bis auf die Epochenzahl des 27B-Modells (im
-Vorlauf zwei, in der Hauptstudie drei) unverändert. Die Läufe der Hauptstudie
+Vorlauf und Hauptstudie bis auf die Epochenzahl des 27B-Modells
+unverändert. Die Läufe der Hauptstudie
 wurden anschließend mit drei Seeds neu trainiert. Diese Wiederholungen
 erfassen Trainingsvariabilität, stellen aber die Unabhängigkeit eines
 bereits ausgewerteten Testsplits nicht wieder her.
 Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
-(Abschnitt~\ref{sec:llm-pipeline}), die Inferenzpräzision auf
-Durchsatzmessungen an einer Teilmenge des Testsplits, nicht auf der
-Erkennungsleistung.
+(Abschnitt~\ref{sec:llm-pipeline}).
 Die Zero-Shot-Ergebnisse werden deshalb als explorative Ergebnisse der
 nach Testbeobachtungen gewählten Konfigurationen berichtet. Solche
 Auswahlentscheidungen können zu einer optimistischen Verzerrung führen
 \cite{cawley2010selectionbias}; deren Umfang lässt sich mit den vorhandenen Daten
 nicht beziffern.
-Tabelle~\ref{tab:datennutzung} ordnet jeder Entscheidung Datengrundlage
-und Testbezug zu, einschließlich der nachträglichen
-Sensitivitätsanalysen zum Ausgabelimit.
 
 \begin{table}[ht]
   \centering
@@ -563,20 +556,21 @@ per argmax bestimmt.
 Die Prompts werden mit dem Chat-Template des Tokenizers gerendert und um
 den Beginn der Assistentenantwort ergänzt.
 Der Thinking-Modus von Qwen3.5 ist in allen generativen Schritten
-deaktiviert; das Template setzt dazu einen leeren Denkblock vor die
+deaktiviert (Datengrundlage der Entscheidung in
+Tabelle~\ref{tab:datennutzung} und Anhang~\ref{app:durchfuehrung}); das
+Template setzt dazu einen leeren Denkblock vor die
 Antwort, sodass das Modell unmittelbar mit der JSON-Ausgabe beginnt.
 Die Antwort ist auf 256 neue Tokens begrenzt.
 Dieser Wert wurde vor den Läufen ohne vorherige Längenanalyse
 festgelegt; nachträglich zeigt sich, dass er die Referenzantworten des
-Testsplits nahezu vollständig abdeckt: Unter dem Qwen3.5-Tokenizer sind
-sie im Median 32 Tokens lang (99.~Perzentil 186, Maximum 553); 55 der
-16\,454 Referenzantworten überschreiten 256 Tokens, eine überschreitet
-512 und keine 1\,024 (Anhang~\ref{app:durchfuehrung}).
+Testsplits nahezu vollständig abdeckt: 55 der
+16\,454 Referenzantworten überschreiten unter dem Qwen3.5-Tokenizer
+256 Tokens und keine 1\,024.
 Training und Validierung, an denen sich das Limit vorab hätte prüfen
-lassen, zeigen dasselbe Bild: Dort überschreiten 576 von 131\,280
-bzw. 103 von 16\,410 Referenzantworten 256 Tokens, während 1\,024 Tokens
-alle Validierungsantworten (Maximum 951) und bis auf eine alle
-Trainingsantworten (Maximum 1\,047) abdecken.
+lassen, zeigen dasselbe Bild: 1\,024 Tokens decken
+alle Validierungsantworten und bis auf eine alle
+Trainingsantworten ab (Längenverteilungen in
+Anhang~\ref{app:durchfuehrung}).
 Das Limit der Nachinferenz von 1\,024 Tokens
 (Abschnitt~\ref{sec:nachinferenz}) ist damit ohne Rückgriff auf den
 Testsplit begründbar.
@@ -1023,14 +1017,12 @@ Inventar liefern, können LLMs syntaktisch oder inhaltlich unzulässige
 Ausgaben erzeugen.
 Diese erfasst Tabelle~\ref{tab:formtreue} über Kennzahlen der
 Validierungskette (Abschnitt~\ref{sec:postprocessing}) in vier
-Fehlerklassen.
-\emph{JSON-Validität} fragt, ob sich überhaupt ein Array gewinnen lässt
-\cite{dagdelen2024structuredIE}, \emph{Span-Alignment}, ob Indizes und
-Text zur Tokenliste passen \cite{semin2026spanLabeling}.
-\emph{Schema-Treue} prüft Struktur und Typinventar, wobei Typen außerhalb
-des Inventars~\cite{tedeschi2022multinerd} als halluzinierte Kategorien
-gelten; \emph{Konsistenz} erfasst Überlappungen
-gültiger Spans, von denen nur der zuerst übernommene bleibt.
+Fehlerklassen: \emph{JSON-Validität}
+\cite{dagdelen2024structuredIE}, \emph{Schema-Treue},
+\emph{Span-Alignment} \cite{semin2026spanLabeling} und
+\emph{Konsistenz}.
+Typen außerhalb des Inventars~\cite{tedeschi2022multinerd} gelten dabei
+als halluzinierte Kategorien.
 Für Encoder entfallen diese Kennzahlen; der Unterschied ist Teil des
 Vergleichs, da LLMs Ausgabeformat und Typinventar erst über Prompt und
 Fine-Tuning erlernen müssen \cite{dagdelen2024structuredIE,wei2023chatie}.
@@ -1252,19 +1244,18 @@ einen vollständigen Neulauf mit 1\,024 Ausgabetokens
 Der Neulauf des 27B-Modells umfasst alle drei Seeds und alle 2\,506
 Sätze der fünf Domänen; Prompt, Parser, Typabbildung und Greedy-Decoding
 blieben unverändert, nur das Limit wurde angehoben.
-Die Auswertung stellt den Werten bei 256 Tokens die Werte bei 1\,024
-Tokens auf denselben Sätzen gegenüber (gepaart je Seed), berichtet den
-Anteil der Antworten, die auch das höhere Limit erreichen, und wiederholt
-die Sensitivitätsanalyse ohne die 21 überschneidenden Sätze
-(Abschnitt~\ref{sec:erg-crossner}).
+Die Auswertung stellt beide Limits auf denselben Sätzen je Seed gepaart
+gegenüber und wiederholt die Sensitivitätsanalyse ohne die
+21 überschneidenden Sätze (Abschnitt~\ref{sec:erg-crossner},
+Tabelle~\ref{tab:limit}).
 
 \section{Validität und bekannte Abweichungen}
 \label{sec:validitaet}
 
 Tabelle~\ref{tab:abweichungen} fasst die beschriebenen Abweichungen vom
 idealisierten Versuchsdesign mit Verweis auf die jeweiligen Abschnitte
-zusammen; sie werden bei der Interpretation der Ergebnisse und in der
-Limitationsdiskussion im Fazit berücksichtigt.
+zusammen; ihre Folgen für die Aussagekraft der Ergebnisse diskutiert
+Abschnitt~\ref{sec:limitationen}.
 
 \begin{table}[ht]
   \centering
