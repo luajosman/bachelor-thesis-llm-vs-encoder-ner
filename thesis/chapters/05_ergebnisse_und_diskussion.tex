@@ -42,25 +42,19 @@ in die verwandten Arbeiten ein, leitet daraus die Empfehlungen zu FF3 ab
 und benennt, welche Unterschiede angesichts der Streuung belastbar sind.
 
 Für alle Kennzahlen gelten die Festlegungen aus
-Abschnitt~\ref{sec:evaluationskonzept}: Precision, Recall und F$_1$ sind
-strikte Werte auf Entitätsebene nach dem IOB2-Schema, berechnet mit
-\texttt{seqeval} auf dem vollständigen englischen MultiNERD-Testsplit
+Abschnitt~\ref{sec:evaluationskonzept}; ausgewertet wird der
+vollständige englische MultiNERD-Testsplit
 (Tabelle~\ref{tab:datensplits}).
-Sie werden in Punkten auf einer Skala von 0 bis 100 angegeben, in
+Die Werte werden in Punkten auf einer Skala von 0 bis 100 angegeben, in
 Tabellen mit Streuungsangabe auf zwei, im Text auf eine Nachkommastelle
 gerundet; Differenzen mit Intervallangabe erhalten auch im Text zwei
 Nachkommastellen.
-Für die fünf trainierten Konfigurationen werden Mittelwert und
-Stichprobenstandardabweichung über die Seeds 42, 123 und 456 berichtet
-(Mittelwert~$\pm$~Standardabweichung); die drei Zero-Shot-Konfigurationen
-beruhen auf je einem Lauf mit Sampling (Abschnitt~\ref{sec:llm-pipeline})
-und sind Einzelwerte ohne Streuungsangabe.
-Ausgewählte Differenzen werden mit den gepaarten
-Bootstrap-Konfidenzintervallen aus Abschnitt~\ref{sec:performanzmetriken}
-eingeordnet, die die Unsicherheit durch die Auswahl der Testsätze bei
-festen Modellen und Vorhersagen quantifizieren; enthält ein
-Differenzintervall null, ist kein eindeutiger Unterschied nachgewiesen,
-daraus folgt aber keine Gleichwertigkeit.
+Trainierte Konfigurationen erscheinen als
+Mittelwert~$\pm$~Standardabweichung über die drei Seeds, die
+Zero-Shot-Konfigurationen als Einzelwerte ohne Streuungsangabe.
+Enthält das gepaarte Bootstrap-Intervall einer Differenz
+(Abschnitt~\ref{sec:performanzmetriken}) null, ist kein eindeutiger
+Unterschied nachgewiesen; daraus folgt aber keine Gleichwertigkeit.
 Typbezogene Unterschiede ohne eigene Intervalle werden nur als
 beobachtete Punktwertdifferenzen beschrieben.
 
@@ -968,14 +962,14 @@ ihr jeweiliger Anteil wurde nicht getrennt gemessen.
 \subsection{Modellgröße}
 \label{sec:disk-groesse}
 
-Zu FF2 zeigen die Ergebnisse kleine Leistungszuwächse innerhalb der
-trainierten Familien, deren gepaarte Mikro-F$_1$-Intervalle null ausschließen.
+Zu FF2 zeigen die Ergebnisse kleine, bei den LLMs mit der Größe
+abnehmende Leistungszuwächse innerhalb der trainierten Familien, deren
+gepaarte Mikro-F$_1$-Intervalle null ausschließen
+(Abschnitt~\ref{sec:erg-groesse}).
 Bei den Encodern liegt die große Variante bei allen drei Seeds vor der
 kleinen; bei \textcite{keraghel2024recent} wechselt die Rangfolge von
 DeBERTa-v3-base und -large dagegen zwischen den Datensätzen
 \cite[Tab.~5]{keraghel2024recent}.
-Bei den LLMs im QLoRA-Regime nehmen die Zugewinne mit der Größe ab
-(Tabelle~\ref{tab:groesse}).
 Die Ressourcen wachsen steiler als die Qualität: innerhalb der
 Encoder-Familie moderat, innerhalb der LLM-Familie bei Inferenzspeicher
 und Trainingsdauer um mehr als eine Größenordnung, bei der Latenz je
@@ -1002,10 +996,8 @@ Eine mögliche Verbindung besteht zur Beobachtung, dass Fähigkeiten wie
 das Befolgen komplexer Formatvorgaben erst ab einer gewissen Größe
 zuverlässig auftreten \cite{wei2022emergent}; bei Einzelläufen ohne
 Replikation bleibt das eine Vermutung.
-Der Vergleich über die Familien hinweg zeigt, dass die Parameterzahl
-allein die Leistung nicht erklärt: DeBERTa-v3-base liegt bei 256
-Ausgabetokens im Mikro-F$_1$ vor allen drei QLoRA-Modellen, die das Vierfache bis 146-Fache seiner
-Parameterzahl haben (Abschnitt~\ref{sec:erg-groesse}).
+Über die Familien hinweg erklärt die Parameterzahl allein die Leistung
+nicht (Abschnitt~\ref{sec:erg-groesse}):
 Architektur, Vortrainingsziel und Anpassungsverfahren überlagern den
 Größenunterschied, wie \textcite{zaratiana2024gliner} und
 \textcite{bogdanov2024nuner} für Encoder-Generalisten nahelegen.

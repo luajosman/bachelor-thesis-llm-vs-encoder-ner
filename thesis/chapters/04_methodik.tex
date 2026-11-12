@@ -9,10 +9,8 @@
 \chapter{Methodik}
 \label{chap:methodik}
 
-Anhang~\ref{app:reproduzierbarkeit} ordnet jedem hier beschriebenen Lauf
-Konfiguration, Codestand,
-Revisionen und Ausgabeverzeichnis zu;
-Anhang~\ref{app:durchfuehrung} ergänzt Durchführungsdetails.
+Die Anhänge~\ref{app:reproduzierbarkeit} und~\ref{app:durchfuehrung}
+dokumentieren die Läufe und ergänzen Durchführungsdetails.
 
 \section{Methodischer Ansatz}
 \label{sec:methodischer-ansatz}
@@ -586,10 +584,9 @@ erhalten denselben Prompt (Glossar-Profil,
 Abschnitt~\ref{sec:prompt-design}) und dieselben Decoding-Parameter.
 Abweichend vom QLoRA-Regime wird mit Sampling decodiert (Temperatur 1,0,
 top-$k = 20$, top-$p = 1{,}0$, min-$p = 0$, Seed~42).
-Die Einstellung übernimmt top-$k$ und min-$p$ der Qwen-Modellkarte
-\cite{qwen2026card27b}; top-$p$ und Presence-Penalty weichen von deren
-Empfehlungen für den Non-Thinking-Modus ab, die Temperatur entspricht
-nur dem Profil für Reasoning-Aufgaben (Anhang~\ref{app:durchfuehrung}).
+Die Einstellung folgt den Empfehlungen der Qwen-Modellkarte
+\cite{qwen2026card27b} für den Non-Thinking-Modus nur teilweise; die
+Abweichungen nennt Anhang~\ref{app:durchfuehrung}.
 Diese Einstellungen wurden nach einem explorativen Vorlauf mit
 Qwen3.5-0.8B festgelegt, in dem Greedy-Decoding für nahezu jeden Satz ein
 leeres Array erzeugte (strikter F$_1$-Wert 0,5 Punkte; 16\,052 von 16\,454
@@ -940,16 +937,13 @@ von Modell und Daten, Training, Validierung nach jeder Epoche (bei den
 LLMs inklusive generativer Validierung), Speichern von Checkpoints und
 Export.
 Die vom Trainer zusätzlich protokollierte Dauer ohne Laden und Export
-liegt bei den ununterbrochenen Läufen darunter: bei den Encodern um 30
-bis 49~s, bei den 0.8B- und 4B-Läufen um 32 bis 141~s (Maximum beim
-4B-Modell mit Seed~42).
+liegt bei den ununterbrochenen Läufen um Sekunden bis höchstens gut zwei
+Minuten darunter (Anhang~\ref{app:reproduzierbarkeit}).
 Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
 Tagen und wurden vom Scheduler dreimal neu eingereiht
 (Anhang~\ref{app:durchfuehrung}); ihre Trainingsdauer ist die Summe der
 vier Zuteilungen einschließlich des erneuten Ladens und mit den übrigen
 Läufen nur näherungsweise vergleichbar.
-Als Plausibilitätsprüfung dient die Hochrechnung der Schrittrate der
-letzten Zuteilung auf alle Schritte.
 Die Trainingsdauer hängt zudem von der Auslastung des Knotens ab: Die
 drei 27B-Läufe liefen gleichzeitig auf demselben Knoten und benötigten
 rund 38~s je Optimierungsschritt, der explorative Vorlauf mit zwei
@@ -1130,15 +1124,15 @@ Zwei Kontrollen prüfen die Annahme.
 Für jeden nachgenerierten Satz wird festgehalten, ob die ersten
 256 erzeugten Tokens mit der gespeicherten Antwort übereinstimmen.
 Zusätzlich wurden nachträglich je Lauf 1\,000 zufällig gezogene
-Testsätze mit parsebarer gespeicherter Antwort mit demselben Adapter,
-demselben Prompt und Greedy-Decoding bei einem Limit von 1\,024 Tokens
-neu generiert und zeichenweise mit der gespeicherten Antwort verglichen
+Testsätze mit parsebarer gespeicherter Antwort wie in der Nachinferenz
+mit 1\,024 Tokens neu generiert und zeichenweise mit der gespeicherten
+Antwort verglichen
 (\emph{Kontrollstichprobe}, Anhang~\ref{app:durchfuehrung}).
-Nachinferenz und Kontrollstichprobe liefen für alle drei Größen auf der
-H100, für das 4B- und das 27B-Modell also auf einem anderen GPU-Typ als
-die ursprüngliche Testinferenz (Tabelle~\ref{tab:hardware}); da auch die
-Encoder auf der H100 liefen, liefert die Kontrollstichprobe zugleich
-Latenzen auf einheitlicher Hardware.
+Nachinferenz und Kontrollstichprobe liefen auf der H100, dem GPU-Typ der
+Encoder, für das 4B- und das 27B-Modell also auf einem anderen GPU-Typ
+als die ursprüngliche Testinferenz (Tabelle~\ref{tab:hardware}); die
+Kontrollstichprobe liefert so zugleich Latenzen auf einheitlicher
+Hardware.
 Die zusammengeführten Vorhersagen werden mit derselben strikten Metrik über
 alle 16\,454 Sätze ausgewertet und je Seed den Werten bei 256 Tokens
 gegenübergestellt.
@@ -1163,9 +1157,9 @@ Der Versuch ist ein reiner Transfertest: Auf CrossNER findet weder
 Training noch Checkpoint-Auswahl statt.
 
 \paragraph{Daten und Typabbildung.}
-Verwendet werden ausschließlich die Testsplits in einer festgelegten, über SHA-256-Prüfsummen verifizierten Revision: 431 (KI), 416
-(Literatur), 465 (Musik), 651 (Politik) und 543 Sätze
-(Naturwissenschaften), insgesamt 2\,506.
+Verwendet werden ausschließlich die Testsplits in einer festgelegten,
+über SHA-256-Prüfsummen verifizierten Revision mit insgesamt
+2\,506 Sätzen (je Domäne in Tabelle~\ref{tab:crossner-erg}).
 Ausgewertet werden nur die gemeinsamen Grobtypen PER, ORG und LOC, denen
 die CrossNER-Typen gemäß Tabelle~\ref{tab:crossner-mapping} zugeordnet
 werden; alle übrigen Referenztypen gelten als \texttt{O}.
@@ -1206,10 +1200,9 @@ verarbeitet jeden Satz ungekürzt (Sätze über 256 Subwort-Tokens würden
 zum Abbruch führen), das LLM erhält unverändert das Standardprofil mit
 allen 15 Typen und erzeugt seine Ausgaben per Greedy-Decoding, ohne Thinking, mit
 4-Bit-Basismodell und höchstens 256 Ausgabetokens.
-Alle CrossNER-Evaluationen liefen auf NVIDIA H100 (80\,GB HBM3), für
-Qwen3.5-27B also auf einem anderen GPU-Typ als die MultiNERD-Testinferenz
-(Tabelle~\ref{tab:hardware}); Latenzwerte sind daher nur eingeschränkt
-zwischen beiden Datensätzen vergleichbar.
+Alle CrossNER-Evaluationen liefen auf der H100
+(Tabelle~\ref{tab:hardware}); die Latenzwerte von Qwen3.5-27B sind
+daher nur eingeschränkt mit denen auf MultiNERD vergleichbar.
 
 \paragraph{Auswertung.}
 Je Domäne werden strikte Precision, Recall und F$_1$ berechnet und je Seed
@@ -1245,11 +1238,10 @@ Die Hauptauswertung umfasst alle 2\,506 Sätze; eine Sensitivitätsanalyse
 wiederholt die Aggregation ohne die 21 Sätze.
 
 \paragraph{Ausgabelimit.}
-Die Wirkung des Limits von 256 Ausgabetokens (Abschnitt~\ref{sec:nachinferenz})
-auf Recall und F$_1$ des LLM prüft Abschnitt~\ref{sec:erg-crossner}.
-Eine Vorstudie auf den jeweils ersten 25 Sätzen der Domänen Musik und
-Politik, einer nicht repräsentativen Stichprobe, gab den Anlass für
-einen vollständigen Neulauf mit 1\,024 Ausgabetokens
+Eine Vorstudie zur Wirkung des Limits von 256 Ausgabetokens
+(Abschnitt~\ref{sec:nachinferenz}) auf den jeweils ersten 25 Sätzen der
+Domänen Musik und Politik, einer nicht repräsentativen Stichprobe, gab
+den Anlass für einen vollständigen Neulauf mit 1\,024 Ausgabetokens
 (Anhang~\ref{app:durchfuehrung}).
 Der Neulauf des 27B-Modells umfasst alle drei Seeds und alle 2\,506
 Sätze der fünf Domänen; Prompt, Parser, Typabbildung und Greedy-Decoding

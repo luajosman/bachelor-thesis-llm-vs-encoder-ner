@@ -127,6 +127,10 @@ Tabelle~\ref{tab:app-einstellungen}); ihre Slurm-Abrechnung liegt als
 \texttt{results/slurm\_accounting\_2026-08.csv} vor, die 27B-Läufe
 umfassen die Jobs 3254977, 3254980 und 3254983 (wiederholt eingereiht)
 sowie 3267440, 3267443 und 3267446.
+Die vom Trainer protokollierte Trainingsdauer ohne Laden und Export
+liegt bei den ununterbrochenen Läufen unter der Slurm-Abrechnung: bei
+den Encodern um 30 bis 49~s, bei den 0.8B- und 4B-Läufen um 32 bis
+141~s (Maximum beim 4B-Modell mit Seed~42).
 Die drei Zero-Shot-Läufe und der Greedy-Kontrolllauf entstanden am
 1.~August bzw. 29.~Juli 2026 (27B auf einer H100~NVL, 0.8B und 4B auf
 einer A100); ihre Job-IDs sind in den Laufartefakten nicht
