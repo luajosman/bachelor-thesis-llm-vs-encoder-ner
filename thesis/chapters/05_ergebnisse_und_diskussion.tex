@@ -814,8 +814,7 @@ Auf CrossNER kehrt sich die Rangfolge mit 1\,024 Tokens um.
 
 Das Ergebnis weicht von \textcite{obeidat2025llm} ab, die auf vier von
 fünf biomedizinischen Datensätzen einen Vorsprung des LLM von 2 bis 8
-Punkten berichten, der dort vor allem aus der Precision stammt
-\cite[Tab.~III]{obeidat2025llm}, während hier die Precision-Punktwerte
+Punkten berichten, der dort vor allem aus der Precision stammt~\cite[Tab.~III]{obeidat2025llm}, während hier die Precision-Punktwerte
 nahe beieinanderliegen.
 Es liegt nahe am Befund von \textcite{zhan2026generativeNER}, dass
 LoRA-angepasste LLMs und spezialisierte Modelle auf flachen Datensätzen
@@ -865,7 +864,7 @@ Der hier gemessene Zero-Shot-Wert von 69,4 Punkten für das 27B-Modell
 liegt unter dem Zero-Shot-Wert von 76,0, den \textcite{sainz2024gollie}
 für GoLLIE-7B auf einer MultiNERD-Fassung berichten. GoLLIE ist jedoch
 auf Annotationsrichtlinien vieler Datensätze trainiert und hatte acht
-der 15 Typen bereits gesehen \cite[Tab.~6]{sainz2024gollie}, sodass der
+der 15 Typen bereits gesehen~\cite[Tab.~6]{sainz2024gollie}, sodass der
 Vergleich nur die Größenordnung einordnet.
 Die trainierten Konfigurationen erreichen Werte in der Größenordnung
 der 93{,}73 (UniNER-7B) und 91{,}25 (BERT-base), die
@@ -898,7 +897,7 @@ Ob das Annotations- oder gemeinsame Modellfehler sind, wurde nicht
 manuell geprüft.
 Für die Zero-Shot-Werte kommt die in Abschnitt~\ref{sec:research_gap}
 offen gelassene Frage der Datenkontamination hinzu: Die Modellkarten von
-Qwen3.5 nennen keine Vortrainingsdaten \cite{qwen2026card27b}, und die
+Qwen3.5 nennen keine Vortrainingsdaten~\cite{qwen2026card27b}, und die
 niedrigen Werte mit ihren dominierenden Format- und
 Typdefinitionsfehlern erlauben keinen Rückschluss auf das Ausmaß.
 Diese Unsicherheit betrifft auch die vortrainierten Encoder und
@@ -916,7 +915,7 @@ gesondert geprüft; die Erwartung aus
 Abschnitt~\ref{sec:llm_ner_related}, dass Indizes in der Eingabe den von
 \textcite{zhan2026generativeNER} für Zeichenoffsets beobachteten
 Einbruch vermeiden, bleibt eine Vermutung.
-Die dort berichteten rund 54 Punkte \cite[Tab.~3]{zhan2026generativeNER}
+Die dort berichteten rund 54 Punkte~\cite[Tab.~3]{zhan2026generativeNER}
 liegen weit unter den hier erreichten Werten (Tabelle~\ref{tab:haupt}),
 dienen bei anderen Modellen und Datensätzen aber nur der Einordnung.
 Eine Variante mit nummerierten Eingabetokens setzen
@@ -951,8 +950,7 @@ Größenordnungen langsamer ist als die der Encoder
 (Abschnitt~\ref{sec:erg-effizienz}). Die Ausgabelänge wird von der Zahl
 der Entitäten, vom Spantext im Feld \texttt{text} und von der
 Serialisierung bestimmt.
-Die Faktoren von 40 bis 220 für IOB2-Ausgaben
-\cite[Tab.~IV]{obeidat2025llm} dienen bei anderen Modellen, Hardware und
+Die Faktoren von 40 bis 220 für IOB2-Ausgaben~\cite[Tab.~IV]{obeidat2025llm} dienen bei anderen Modellen, Hardware und
 Datensätzen nur der Einordnung.
 Bei Batchgröße~1 hängt die Latenz vermutlich von der Zahl sequenzieller
 Decoding-Schritte und von der Dequantisierung der NF4-Gewichte ab, die
@@ -969,8 +967,7 @@ gepaarte Mikro-F$_1$-Intervalle null ausschließen
 (Abschnitt~\ref{sec:erg-groesse}).
 Bei den Encodern liegt die große Variante bei allen drei Seeds vor der
 kleinen; bei \textcite{keraghel2024recent} wechselt die Rangfolge von
-DeBERTa-v3-base und -large dagegen zwischen den Datensätzen
-\cite[Tab.~5]{keraghel2024recent}.
+DeBERTa-v3-base und -large dagegen zwischen den Datensätzen~\cite[Tab.~5]{keraghel2024recent}.
 Die Ressourcen wachsen steiler als die Qualität: innerhalb der
 Encoder-Familie moderat, innerhalb der LLM-Familie bei Inferenzspeicher
 und Trainingsdauer um mehr als eine Größenordnung, bei der Latenz je
@@ -980,9 +977,7 @@ auf der A100 aus der Reihe, und Latenz wie Trainingsdauer sind durch
 GPU-Typ und Clusterlast überlagert; auf einheitlicher Hardware wächst
 die geschätzte Latenz vom 0.8B- zum 27B-Modell auf das 2,7-Fache
 (Abschnitt~\ref{sec:erg-effizienz}).
-Das Muster ähnelt den Beobachtungen bei GoLLIE
-\cite[Abschn.~5.2]{sainz2024gollie} und UniversalNER
-\cite[Abschn.~5.2]{zhou2024universalner}, wo größere Backbones nur wenig
+Das Muster ähnelt den Beobachtungen bei GoLLIE~\cite[Abschn.~5.2]{sainz2024gollie} und UniversalNER~\cite[Abschn.~5.2]{zhou2024universalner}, wo größere Backbones nur wenig
 hinzugewinnen und der Gewinn durch die Anpassung den Gewinn durch die
 Größe übersteigt. Hier ist der Abstand
 zwischen den Zero-Shot- und QLoRA-Konfigurationen
@@ -995,7 +990,7 @@ dass ein großer Teil der Sprünge auf die Formtreue zurückgeht; getrennt
 bestimmt wurde dieser Anteil nicht.
 Eine mögliche Verbindung besteht zur Beobachtung, dass Fähigkeiten wie
 das Befolgen komplexer Formatvorgaben erst ab einer gewissen Größe
-zuverlässig auftreten \cite{wei2022emergent}; bei Einzelläufen ohne
+zuverlässig auftreten~\cite{wei2022emergent}; bei Einzelläufen ohne
 Replikation bleibt das eine Vermutung.
 Über die Familien hinweg erklärt die Parameterzahl allein die Leistung
 nicht (Abschnitt~\ref{sec:erg-groesse}):

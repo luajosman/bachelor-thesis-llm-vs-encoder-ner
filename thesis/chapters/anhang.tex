@@ -290,7 +290,7 @@ Auswertung ein (Abschnitt~\ref{sec:datenaufteilung}).
 % abgebrochen) und 3220278 (08:15:39, fortgesetzt).
 Trainiert wurden die Vorläufe von DeBERTa-v3-base, DeBERTa-v3-large und
 Qwen3.5-0.8B auf einer H100, der von Qwen3.5-4B auf einer A100 und der
-von Qwen3.5-27B auf einer H100 NVL; die Testinferenz lief außer beim
+von Qwen3.5-27B auf einer H100~NVL; die Testinferenz lief außer beim
 27B-Modell auf einer A100 (Tabelle~\ref{tab:app-vorlaeufe}).
 Die vom Trainer protokollierte Trainingsdauer betrug 0,41~h
 (DeBERTa-v3-base), 1,12~h (DeBERTa-v3-large), 8,25~h (Qwen3.5-0.8B; nur
@@ -432,8 +432,7 @@ Assistentennachricht bildet, lautet:
 Für den Non-Thinking-Modus empfiehlt die Qwen-Modellkarte bei
 allgemeinen Aufgaben Temperatur 0,7 und top-$p$ 0,8, bei
 Reasoning-Aufgaben Temperatur 1,0 und top-$p$ 0,95, jeweils mit
-top-$k = 20$, min-$p = 0$ und einer Presence-Penalty von 1,5
-\cite{qwen2026card27b}.
+top-$k = 20$, min-$p = 0$ und einer Presence-Penalty von 1,5~\cite{qwen2026card27b}.
 Die im Zero-Shot-Regime gewählte Einstellung
 (Abschnitt~\ref{sec:llm-pipeline}) übernimmt top-$k$, min-$p$ und die
 Temperatur des Reasoning-Profils, verwendet aber unbeschränktes top-$p$
@@ -525,8 +524,8 @@ Wie groß der Einfluss des GPU-Typs auf die Laufzeit
 (Abschnitt~\ref{sec:effizienzmetriken}) sein kann, zeigt die
 Encoder-Inferenz.
 Im explorativen Vorlauf erreichte DeBERTa-v3-base auf einer A100 eine
-mittlere Latenz von 17,6\,ms je Satz, in der Hauptstudie auf einer H100
-dagegen 8,9\,ms (Mittel der drei Läufe).
+mittlere Latenz von 17,6~ms je Satz, in der Hauptstudie auf einer H100
+dagegen 8,9~ms (Mittel der drei Läufe).
 
 \subsection{Rückfallstrategien des Parsers}
 
@@ -724,8 +723,7 @@ Fehlerklasse aus Abschnitt~\ref{sec:erg-fehlertypen}.
   \enquote{Unbekannter Typ} (Abschnitt~\ref{sec:erg-formtreue}) aus den
   Testvorhersagen mit 256 Ausgabetokens. Illustrative, nicht zufällig
   gezogene Auswahl; Nr.\ ist der nullbasierte Listenindex des Satzes in
-  \texttt{test\_predictions.json}; Sätze aus dem MultiNERD-Testsplit
-  \cite{tedeschi2022multinerd}. Referenz und Vorhersage als Span mit
+  \texttt{test\_predictions.json}; Sätze aus dem MultiNERD-Testsplit~\cite{tedeschi2022multinerd}. Referenz und Vorhersage als Span mit
   Typ; ein Strich bedeutet, dass die Referenz bzw. die Vorhersage keinen
   Span an dieser Stelle enthält. Seed~42, sofern nicht anders angegeben.}
   \label{tab:app-beispiele}

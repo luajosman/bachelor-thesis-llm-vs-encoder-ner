@@ -26,22 +26,20 @@ Evaluationsprotokoll über alle Konfigurationen konstant bleiben.
 \begin{enumerate}
     \item \textbf{Encoder-Fine-Tuning:} Vortrainierte Transformer-Encoder
     werden zusammen mit einem linearen Klassifikationskopf vollständig
-    feinjustiert und liefern direkt IOB2-Tag-Sequenzen
-    \cite{devlin2019bert,keraghel2024recent}.
+    feinjustiert und liefern direkt IOB2-Tag-Sequenzen~\cite{devlin2019bert,keraghel2024recent}.
 
     \item \textbf{LLM-Zero-Shot:} Veröffentlichte, bereits vor- und
     nachtrainierte Decoder-LLMs werden ohne aufgabenspezifisches Training
     und ohne Demonstrationsbeispiele im Prompt eingesetzt und geben die
     Entitäten als JSON aus.
     Das Regime beschreibt die Leistung dieser Checkpoints unter den
-    gewählten Prompt- und Decoding-Bedingungen
-    \cite{brown2020language,zhao2023survey}.
+    gewählten Prompt- und Decoding-Bedingungen~\cite{brown2020language,zhao2023survey}.
 
     \item \textbf{LLM-Fine-Tuning mit LoRA (QLoRA-Regime):} Dieselben LLMs werden über
     trainierbare Low-Rank-Adapter angepasst, während die ursprünglichen
-    Gewichte eingefroren bleiben \cite{hu2021lora}.
+    Gewichte eingefroren bleiben~\cite{hu2021lora}.
     Wegen der Modellgröße wird das Regime als QLoRA mit
-    4-Bit-quantisiertem Basismodell umgesetzt \cite{dettmers2023qlora}
+    4-Bit-quantisiertem Basismodell umgesetzt~\cite{dettmers2023qlora}
     (Abschnitt~\ref{sec:lora-konfiguration}) und im Folgenden
     QLoRA-Regime genannt.
 \end{enumerate}
@@ -112,7 +110,7 @@ Abhängige Variablen sind
 (4)~Kennzahlen zur Formtreue der LLM-Ausgaben.
 
 Konstant sind die Datenbasis (der englische Teil von MultiNERD mit
-seinen offiziellen Splits \cite{tedeschi2022multinerd}), das
+seinen offiziellen Splits~\cite{tedeschi2022multinerd}), das
 Evaluationsprotokoll mit derselben Metrikimplementierung für beide
 Pipelines (Abschnitt~\ref{sec:performanzmetriken}) und die Versionen der
 zentralen Bibliotheken (Abschnitt~\ref{sec:rechenumgebung}).
@@ -125,13 +123,11 @@ Abschnitt~\ref{sec:validitaet} fasst diese Abweichungen zusammen.
 \paragraph{Aufbau der Pipelines.}
 Die Encoder-Pipeline behandelt NER als Token-Klassifikation: Ein
 DeBERTa-v3-Encoder mit linearem Klassifikationskopf sagt für jedes Wort
-ein IOB2-Tag vorher
-\cite{he2021debertav3,wolf2020transformers,devlin2019bert}.
+ein IOB2-Tag vorher~\cite{he2021debertav3,wolf2020transformers,devlin2019bert}.
 Die LLM-Pipeline behandelt NER als strukturierte Generierung: Das Modell
 erhält einen Prompt mit nummerierter Tokenliste und erzeugt ein
 JSON-Array von Entitäten, das eine regelbasierte, deterministische
-Nachverarbeitung in eine IOB2-Sequenz überführt
-\cite{dagdelen2024structuredIE,semin2026spanLabeling}.
+Nachverarbeitung in eine IOB2-Sequenz überführt~\cite{dagdelen2024structuredIE,semin2026spanLabeling}.
 Erst diese Rückkonvertierung erlaubt die Evaluation beider Pipelines auf
 derselben Repräsentation.
 Der Gesamt-F$_1$ bewertet damit die vollständige Vorhersagepipeline
@@ -146,14 +142,12 @@ einschließlich Ausgabeformat und Validierung.
 Auf der Encoder-Seite werden DeBERTa-v3-base und DeBERTa-v3-large
 eingesetzt.
 DeBERTa-Varianten zählen auf mehreren NER-Benchmarks zu den
-leistungsfähigsten Encodern und dienen häufig als starke Baselines
-\cite{keraghel2024recent}.
+leistungsfähigsten Encodern und dienen häufig als starke Baselines~\cite{keraghel2024recent}.
 Base- und Large-Variante erlauben einen Größenvergleich innerhalb
 derselben Architektur; einschließlich des Klassifikationskopfes umfassen
 sie 183\,855\,391 bzw. 434\,043\,935 Parameter.
-Beide Modelle stehen laut ihren Modellkarten unter der MIT-Lizenz
-\cite{he2021debertav3card,he2021debertav3cardlarge} und sind über die
-\emph{Transformers}-Bibliothek verfügbar \cite{wolf2020transformers}.
+Beide Modelle stehen laut ihren Modellkarten unter der MIT-Lizenz~\cite{he2021debertav3card,he2021debertav3cardlarge} und sind über die
+\emph{Transformers}-Bibliothek verfügbar~\cite{wolf2020transformers}.
 
 \subsection{LLM-Modelle (Qwen3.5)}
 \label{sec:llm-auswahl}
@@ -161,10 +155,9 @@ Beide Modelle stehen laut ihren Modellkarten unter der MIT-Lizenz
 Auf der LLM-Seite werden drei Größen der Qwen3.5-Familie verwendet:
 Qwen3.5-0.8B, Qwen3.5-4B und Qwen3.5-27B.
 Qwen3.5 baut auf der Architektur- und Trainingstradition von Qwen2.5 und
-Qwen3 auf \cite{qwen2024qwen25,qwen2025qwen3,qwen2026qwen35blog}; die
+Qwen3 auf~\cite{qwen2024qwen25,qwen2025qwen3,qwen2026qwen35blog}; die
 Modelle sind laut ihren Modellkarten als offene Gewichte unter der
-Apache-2.0-Lizenz verfügbar
-\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
+Apache-2.0-Lizenz verfügbar~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
 Für die Familie sprachen neben der Lizenz die fein abgestufte Größenleiter mit
 gemeinsamem Tokenizer und Chat-Template, sodass Größeneffekte nicht mit
 Architekturwechseln vermischt werden.
@@ -173,8 +166,7 @@ untersuchten Bereich von 3 bis 9~Mrd. Parametern
 (Abschnitt~\ref{sec:research_gap}) nach unten und oben verlassen und das
 Training mit einer einzelnen GPU je Lauf möglich bleibt.
 Verwendet werden die veröffentlichten, laut Modellkarten vor- und
-nachtrainierten Checkpoints
-\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}; der Begriff
+nachtrainierten Checkpoints~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}; der Begriff
 \emph{Basismodell} bezeichnet im Folgenden lediglich die eingefrorenen
 Ausgangsgewichte, auf die beim LoRA-Training Adapter aufgesetzt werden.
 
@@ -183,7 +175,7 @@ Größen dichte Decoder mit hybrider Attention
 (Tabelle~\ref{tab:app-qwen-architektur}): In jedem Block aus vier Schichten
 nutzen drei Schichten lineare Attention in Form von Gated DeltaNet, die
 vierte vollständige Softmax-Attention mit Grouped-Query-Attention und
-Ausgabe-Gating \cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
+Ausgabe-Gating~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
 
 Von den multimodal angelegten Checkpoints laden beide LLM-Regime (Zero-Shot
 und QLoRA) mit der Klasse \texttt{AutoModelForCausalLM} nur das Textmodell; Vision-Encoder
@@ -503,7 +495,7 @@ stehen im Anhang.
 Die DeBERTa-v3-Checkpoints werden mit einem neu initialisierten
 Klassifikationskopf aus Dropout (Rate 0,1) und linearer Schicht über 31
 Klassen geladen und end-to-end auf dem vollständigen Trainingssplit
-feinjustiert \cite{devlin2019bert,wolf2020transformers}.
+feinjustiert~\cite{devlin2019bert,wolf2020transformers}.
 Der Verlust ist die mittlere Token-Kreuzentropie über alle Positionen mit
 Label (Abschnitt~\ref{sec:datenvorverarbeitung}), ohne Klassengewichte
 oder Label Smoothing.
@@ -584,8 +576,7 @@ erhalten denselben Prompt (Glossar-Profil,
 Abschnitt~\ref{sec:prompt-design}) und dieselben Decoding-Parameter.
 Abweichend vom QLoRA-Regime wird mit Sampling decodiert (Temperatur 1,0,
 top-$k = 20$, top-$p = 1{,}0$, min-$p = 0$, Seed~42).
-Die Einstellung folgt den Empfehlungen der Qwen-Modellkarte
-\cite{qwen2026card27b} für den Non-Thinking-Modus nur teilweise; die
+Die Einstellung folgt den Empfehlungen der Qwen-Modellkarte~\cite{qwen2026card27b} für den Non-Thinking-Modus nur teilweise; die
 Abweichungen nennt Anhang~\ref{app:durchfuehrung}.
 Diese Einstellungen wurden nach einem explorativen Vorlauf mit
 Qwen3.5-0.8B festgelegt, in dem Greedy-Decoding für nahezu jeden Satz ein
@@ -606,17 +597,17 @@ Decoding-Bedingungen; ein isolierter Effekt der Anpassung ist wegen der
 weiteren Änderungen gegenüber dem QLoRA-Regime nicht bestimmbar.
 
 \paragraph{QLoRA-Regime.}
-Die Anpassung erfolgt mit \texttt{peft} \cite{mangrulkar2022peft} und dem
-\emph{SFTTrainer} aus \texttt{trl} \cite{vonwerra2026trldocs} als
+Die Anpassung erfolgt mit \texttt{peft}~\cite{mangrulkar2022peft} und dem
+\emph{SFTTrainer} aus \texttt{trl}~\cite{vonwerra2026trldocs} als
 Single-Turn-SFT: Jedes Trainingsbeispiel besteht aus Systemnachricht,
 Nutzernachricht und Zielantwort im Standardprofil
 (Abschnitt~\ref{sec:prompt-design}).
 Multi-Turn-Ansätze wie ChatIE werden zugunsten eines einfachen, klar
-evaluierbaren Setups nicht verwendet \cite{wei2023chatie}.
+evaluierbaren Setups nicht verwendet~\cite{wei2023chatie}.
 Entsprechend dem Standardverhalten von TRL~1.8.0 für Konversationsdaten
 wird der Verlust über die gesamte Tokenfolge berechnet und nicht auf die
 Assistentenantwort beschränkt (Option \texttt{assistant\_only\_loss},
-Standardwert \texttt{False} \cite{vonwerra2026trldocs}); ein Teil des
+Standardwert \texttt{False}~\cite{vonwerra2026trldocs}); ein Teil des
 Lernsignals entfällt damit auf die Reproduktion des konstanten Prompts.
 Trainingssequenzen werden auf 1\,024 Tokens begrenzt und bei Überlänge
 am Ende gekürzt, was auch die Zielantwort abschneiden kann; dies betrifft
@@ -683,22 +674,18 @@ Keines der Profile enthält Demonstrationsbeispiele.
 
 Auf \emph{Constrained Decoding} wird bewusst verzichtet.
 Verfahren der geführten Generierung begrenzen die Ausgabe auf die von
-einer formalen Grammatik zugelassenen Formen
-\cite{geng2023grammar}, können aber die Modellleistung beeinträchtigen
-\cite{tam2024speakfreely}.
+einer formalen Grammatik zugelassenen Formen~\cite{geng2023grammar}, können aber die Modellleistung beeinträchtigen~\cite{tam2024speakfreely}.
 Freie Generierung mit nachgelagerter Validierung lässt dem Modell
 dagegen das volle Ausdrucksspektrum, macht die Formtreue messbar und
 entspricht Einsatzszenarien, in denen nur die Textausgabe einer API
-zugänglich ist \cite{dagdelen2024structuredIE}.
+zugänglich ist~\cite{dagdelen2024structuredIE}.
 
 \subsection{LoRA-Konfiguration und Hyperparameter}
 \label{sec:lora-konfiguration}
 
 LoRA wird gewählt, weil LLMs ohne aufgabenspezifisches Fine-Tuning bei
-NER auf Tokenebene nur eingeschränkt konkurrenzfähig sind
-\cite{lu2024llmstruggle}, Adapter den Speicher- und Rechenbedarf
-gegenüber vollständigem Fine-Tuning erheblich senken
-\cite{hu2021lora,han2024parameter,obeidat2025llm} und in den Vergleichen
+NER auf Tokenebene nur eingeschränkt konkurrenzfähig sind~\cite{lu2024llmstruggle}, Adapter den Speicher- und Rechenbedarf
+gegenüber vollständigem Fine-Tuning erheblich senken~\cite{hu2021lora,han2024parameter,obeidat2025llm} und in den Vergleichen
 von \textcite[Anh.~D, Tab.~11]{zhan2026generativeNER} zudem 0,14 bis 0,48
 F$_1$-Punkte vor vollständigem Fine-Tuning liegen
 (Abschnitte~\ref{sec:lora} und~\ref{sec:peft_ner_related}).
@@ -717,7 +704,7 @@ Die Adapter werden über die Namen von sieben Projektionstypen platziert:
 \texttt{up\_proj} und \texttt{down\_proj} im Feed-Forward-Netz.
 Die Einbeziehung der Feed-Forward-Schichten folgt Befunden, nach denen
 Adapter in unterschiedlichen Linearschichten komplementäre Kapazität
-bereitstellen \cite{dettmers2023qlora,han2024parameter,wang2024parameter}.
+bereitstellen~\cite{dettmers2023qlora,han2024parameter,wang2024parameter}.
 Wegen der hybriden Architektur erfasst diese namensbasierte Auswahl
 jedoch nicht alle Linearschichten: Die Attention-Projektionen existieren
 nur in den Schichten mit voller Attention, während die anders benannten
@@ -726,8 +713,7 @@ Adaptiert werden somit die Feed-Forward-Netze aller Schichten und die
 Attention jeder vierten Schicht (Modulzahlen in
 Tabelle~\ref{tab:lora-hyperparams}).
 
-Die Basismodelle werden mit \texttt{bitsandbytes}
-\cite{dettmers2022llmint8} im 4-Bit-Format NormalFloat (NF4) geladen;
+Die Basismodelle werden mit \texttt{bitsandbytes}~\cite{dettmers2022llmint8} im 4-Bit-Format NormalFloat (NF4) geladen;
 gerechnet wird in BF16, trainiert mit BF16-Mixed-Precision und Gradient
 Checkpointing.
 Nicht quantisierte Komponenten wie Embeddings und
@@ -736,8 +722,7 @@ Die gespeicherten Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor, die
 der 27B-Läufe nach der Wiederaufnahme aus Checkpoints
 (Abschnitt~\ref{sec:effizienzmetriken}) in FP32
 (Anhang~\ref{app:durchfuehrung}).
-In zwei Punkten weicht die Umsetzung vom QLoRA-Standardrezept
-\cite{dettmers2023qlora} ab: Double Quantization war vorgesehen, wurde
+In zwei Punkten weicht die Umsetzung vom QLoRA-Standardrezept~\cite{dettmers2023qlora} ab: Double Quantization war vorgesehen, wurde
 aber wegen eines fehlerhaft benannten Konfigurationsparameters nicht
 aktiviert.
 Nach \textcite[Abschn.~3]{dettmers2023qlora} spart sie im Mittel rund
@@ -848,16 +833,14 @@ insbesondere wird syntaktisch fehlerhaftes JSON nicht instand gesetzt.
 \label{sec:performanzmetriken}
 
 Zentrale Metriken sind strikte Precision, Recall und F$_1$ auf
-Entitätsebene nach IOB2-Schema \cite{manning2008introduction,sang2003conll,ramshaw1995text}.
+Entitätsebene nach IOB2-Schema~\cite{manning2008introduction,sang2003conll,ramshaw1995text}.
 Eine Entität gilt nur als korrekt erkannt, wenn Spangrenzen und Typ exakt
 mit der Referenz übereinstimmen, was dem \emph{strict}-Modus der
-SemEval-2013-Auswertung entspricht \cite{segura2013semeval}.
-Berechnet werden die Werte mit \texttt{seqeval}
-\cite{nakayama2018seqeval} bei explizit gesetztem striktem Modus und
+SemEval-2013-Auswertung entspricht~\cite{segura2013semeval}.
+Berechnet werden die Werte mit \texttt{seqeval}~\cite{nakayama2018seqeval} bei explizit gesetztem striktem Modus und
 IOB2-Schema, sodass formal unzulässige Tag-Folgen keine Entität bilden
 (Abschnitt~\ref{sec:evaluation}).
-Primäre Kennzahl ist der mikrogemittelte F$_1$-Wert
-\cite{manning2008introduction,keraghel2024recent}; fehlen Vorhersagen
+Primäre Kennzahl ist der mikrogemittelte F$_1$-Wert~\cite{manning2008introduction,keraghel2024recent}; fehlen Vorhersagen
 oder Referenzentitäten, wird der betreffende Quotient als 0 definiert.
 Beide Pipelines werden auf Wortebene gegen identische Referenzsequenzen
 ausgewertet
@@ -884,7 +867,7 @@ drei Seeds der Vergleichskonfiguration gepaart.
 Ein Differenzintervall, das null ausschließt, spricht unter diesen
 Annahmen für eine gerichtete Differenz. Enthält es null, wird kein
 eindeutiger Unterschied festgestellt; Gleichwertigkeit ist damit nicht
-nachgewiesen \cite{lakens2017equivalence}. Typbezogene Vergleiche ohne eigene Intervalle werden
+nachgewiesen~\cite{lakens2017equivalence}. Typbezogene Vergleiche ohne eigene Intervalle werden
 deskriptiv behandelt.
 
 Das Bootstrap ist auf die vorhandenen trainierten Modelle und
@@ -928,7 +911,7 @@ wird in allen Fällen strikt.
 \label{sec:effizienzmetriken}
 
 Für praxisnahe NER-Systeme ist neben der Erkennungsleistung die Effizienz
-von Training und Inferenz zentral \cite{han2024parameter,obeidat2025llm}.
+von Training und Inferenz zentral~\cite{han2024parameter,obeidat2025llm}.
 
 \paragraph{Trainingsdauer.}
 Berichtet wird für alle Konfigurationen die Wall-Clock-Dauer der
@@ -982,7 +965,7 @@ Der GPU-Speicherbedarf während des Trainings wurde nicht protokolliert.
 \paragraph{Parameterzahlen.}
 Berichtet werden Gesamtzahl und Zahl der trainierbaren Parameter
 (Tabelle~\ref{tab:experiment-matrix}); ihr Verhältnis quantifiziert die Reduktion der aktualisierten Parameter durch
-das Adaptertraining \cite{hu2021lora,dettmers2023qlora}.
+das Adaptertraining~\cite{hu2021lora,dettmers2023qlora}.
 Für die QLoRA-Modelle nennt Tabelle~\ref{tab:lora-hyperparams} Basismodell und Adapter getrennt,
 da eine einfache Summierung der Tensorelemente die in 4~Bit gepackten
 Gewichte nur zur Hälfte erfasst.
@@ -1014,15 +997,14 @@ Inventar liefern, können LLMs syntaktisch oder inhaltlich unzulässige
 Ausgaben erzeugen.
 Diese erfasst Tabelle~\ref{tab:formtreue} über Kennzahlen der
 Validierungskette (Abschnitt~\ref{sec:postprocessing}) in vier
-Fehlerklassen: \emph{JSON-Validität}
-\cite{dagdelen2024structuredIE}, \emph{Schema-Treue},
-\emph{Span-Alignment} \cite{semin2026spanLabeling} und
+Fehlerklassen: \emph{JSON-Validität}~\cite{dagdelen2024structuredIE}, \emph{Schema-Treue},
+\emph{Span-Alignment}~\cite{semin2026spanLabeling} und
 \emph{Konsistenz}.
 Typen außerhalb des Inventars~\cite{tedeschi2022multinerd} gelten dabei
 als halluzinierte Kategorien.
 Für Encoder entfallen diese Kennzahlen; der Unterschied ist Teil des
 Vergleichs, da LLMs Ausgabeformat und Typinventar erst über Prompt und
-Fine-Tuning erlernen müssen \cite{dagdelen2024structuredIE,wei2023chatie}.
+Fine-Tuning erlernen müssen~\cite{dagdelen2024structuredIE,wei2023chatie}.
 
 \begin{table}[ht]
   \centering
@@ -1093,11 +1075,10 @@ wird getrennt nach Regime über die Größenklassen
 Mit zwei Encoder- und drei LLM-Größen, bei denen Hyperparameter und
 Hardware mitvariieren, lassen sich Größenunterschiede zwar gegen die
 Variabilität zwischen den Seeds abgrenzen, Skalierungsgesetze im Sinne
-angepasster Potenzgesetze \cite{kaplan2020scaling,hoffmann2022training} aber
+angepasster Potenzgesetze~\cite{kaplan2020scaling,hoffmann2022training} aber
 nicht bestimmen.
 Leitfrage ist das Verhältnis von Leistungsgewinn und Ressourcenbedarf
-größerer LLMs gegenüber kompakten Encodern
-\cite{keraghel2024recent,obeidat2025llm}.
+größerer LLMs gegenüber kompakten Encodern~\cite{keraghel2024recent,obeidat2025llm}.
 
 \subsection{Nachinferenz am Ausgabelimit}
 \label{sec:nachinferenz}
@@ -1150,7 +1131,7 @@ Ergänzend wird untersucht, wie sich die auf MultiNERD angepassten Modelle
 auf domänenspezifische Texte übertragen lassen.
 Grundlage ist CrossNER mit den Domänen Künstliche Intelligenz, Literatur,
 Musik, Politik und Naturwissenschaften und jeweils domänenspezifischen
-Entitätstypen \cite{liu2021crossner}.
+Entitätstypen~\cite{liu2021crossner}.
 Die Daten stehen laut der Lizenzdatei des Repositorys
 \texttt{zliucr/CrossNER} (Commit in Tabelle~\ref{tab:app-revisionen})
 unter der MIT-Lizenz.

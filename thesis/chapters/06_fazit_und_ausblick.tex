@@ -248,14 +248,13 @@ Die dritte Anschlussfrage ist ein kontrollierter Vergleich von
 Anpassungsverfahren, Ausgabeformat, Prompt und Decoding unter sonst
 gleichen Bedingungen.
 Dazu zählen ein vollständiges Fine-Tuning des 0.8B-Modells, LoRA für die
-Encoder \cite{hu2021lora}, Inline-Formate \cite{zhan2026generativeNER}
+Encoder~\cite{hu2021lora}, Inline-Formate~\cite{zhan2026generativeNER}
 neben dem Wortindex-Format, Few-Shot-Prompting sowie Greedy- und
 Wiederholungsläufe im Zero-Shot-Regime.
 Beim Decoding könnte LogitMatch, das die erzeugten Spans auf gültige
-Abschnitte der Eingabe beschränkt \cite[Abschn.~4]{semin2026spanLabeling},
+Abschnitte der Eingabe beschränkt~\cite[Abschn.~4]{semin2026spanLabeling},
 die freie Erzeugung numerischer Wortindizes ersetzen, bei der Text- und
 Indexfeld der Zero-Shot-Ausgaben hier häufig auseinanderfallen
 (Abschnitt~\ref{sec:disk-format}).
 Darüber hinaus ließe sich die Pipeline auf die übrigen MultiNERD-Sprachen
-und andere Datensätze übertragen und um Encoder-Generalisten wie GLiNER
-\cite{zaratiana2024gliner} oder NuNER \cite{bogdanov2024nuner} erweitern.
+und andere Datensätze übertragen und um Encoder-Generalisten wie GLiNER~\cite{zaratiana2024gliner} oder NuNER~\cite{bogdanov2024nuner} erweitern.
