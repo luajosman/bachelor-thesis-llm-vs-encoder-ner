@@ -6,7 +6,8 @@ Aufruf aus dem Repo-Stamm:
     python3 thesis/scripts/aggregate_results.py
 Benoetigt PyYAML und numpy (pip3 install --user pyyaml numpy).
 
-Eingaben:  ba-ner/results/{multinerd,crossner,crossner_output_limit_1024,multinerd_output_limit_1024}
+Eingaben:  ba-ner/results/{multinerd,crossner,crossner_output_limit_1024,multinerd_output_limit_1024,
+                           multinerd_control_1024}
            ba-ner/results/slurm_accounting_2026-08.csv  (sacct-Export; fehlt er, Hochrechnung)
            ba-ner/configs/crossner_overlap_exclusions.yaml
 Ausgaben:  thesis/generated/summary.json  (alle Kennzahlen)
@@ -95,6 +96,8 @@ BOOT_B, BOOT_SEED, BOOT_CHUNK = 2000, 42, 500   # Satz-Bootstrap: Replikate, Zuf
 LIMIT_ROOT = RES / "multinerd_output_limit_1024"
 LIMIT_GROUPS = {"qwen08-qlora-1024": "qwen08-qlora", "qwen4-qlora-1024": "qwen4-qlora",
                 "qwen27-qlora-1024": "qwen27-qlora"}    # Schluessel -> Basisgruppe (Laufnamen identisch)
+CONTROL_ROOT = RES / "multinerd_control_1024"   # Kontrollstichprobe: unveraenderte Antworten mit Limit 1024 neu erzeugt
+CONTROL_GROUPS = ["qwen08-qlora", "qwen4-qlora", "qwen27-qlora"]
 SACCT = RES / "slurm_accounting_2026-08.csv"
 SACCT_MODEL = {"deberta-base": "deb-base", "deberta-large": "deb-large", "qwen08-qlora": "qwen08b",
                "qwen4-qlora": "qwen4b", "qwen27-qlora": "qwen27b-3ep"}   # Gruppe -> Modell-Token im Slurm-Jobnamen
@@ -885,6 +888,143 @@ def analyse_crossner_limit(C):
     return status
 
 
+# --------------------------------------------------------------------------- Kontrollstichprobe (Limit 1024)
+def bio_from_spans(n, spans):
+    """IOB2-Folge der Laenge n aus validierten Spans (start_token inklusiv, end_token exklusiv)."""
+    seq = ["O"] * n
+    for e in spans or []:
+        start, end = int(e["start_token"]), int(e["end_token"])
+        seq[start] = f"B-{e['type']}"
+        for k in range(start + 1, end):
+            seq[k] = f"I-{e['type']}"
+    return seq
+
+
+def check_control_run(row, metrics, records, main_preds, source_latency):
+    """Prueft eine Zeile der Kontrollzusammenfassung gegen die Dateien des Laufs und rechnet die F1-Werte
+    der Stichprobe mit score() nach (256: gespeicherte Vorhersagen des Hauptlaufs; 1024: neu erzeugte Spans).
+    Bricht bei jeder Abweichung ab; Rueckgabe: nachgerechnete F1-Werte."""
+    name = row["experiment_name"]
+    ctrl = metrics["control"]
+
+    def stop(msg):
+        sys.exit(f"ABBRUCH: Kontrollstichprobe {name}: {msg}")
+
+    def close(a, b, rel=1e-6):
+        return abs(a - b) <= rel * max(1.0, abs(b))
+
+    n = row["sample_count"]
+    idx = [r["index"] for r in records]
+    if len(records) != n or ctrl["sample_count"] != n or idx != sorted(set(idx)):
+        stop(f"Stichprobenumfang oder Indizes inkonsistent ({len(records)} Datensaetze, erwartet {n})")
+    counts = (("identische Antworten", sum(bool(r["raw_output_equal_to_stored"]) for r in records),
+               row["raw_output_equal"], ctrl["raw_output_equal_count"]),
+              ("identische Entitaeten", sum(bool(r["pred_entities_equal_to_stored"]) for r in records),
+               row["pred_entities_equal"], ctrl["pred_entities_equal_count"]),
+              ("Limit-Treffer", sum(bool(r["token_limit_reached"]) for r in records),
+               row["limit_hit_count"], ctrl["limit_hit_count"]))
+    for label, own, summary_value, run_value in counts:
+        if not own == summary_value == run_value:
+            stop(f"{label}: Datensaetze {own}, Zusammenfassung {summary_value}, Laufdatei {run_value}")
+    floats = (("mittlere Latenz", statistics.fmean(r["latency_ms"] for r in records), row["latency_ms_mean"]),
+              ("mittlere Latenz (Laufdatei)", ctrl["latency_ms"]["mean"], row["latency_ms_mean"]),
+              ("Median der Latenz", ctrl["latency_ms"]["p50"], row["latency_ms_p50"]),
+              ("95. Perzentil der Latenz", ctrl["latency_ms"]["p95"], row["latency_ms_p95"]),
+              ("Speicher", ctrl["vram_peak_mb"], row["vram_peak_mb"]))
+    for label, a, b in floats:
+        if not close(a, b):
+            stop(f"{label}: {a:.6f} != {b:.6f}")
+    if source_latency is not None and not close(row["source_latency_ms_mean_256"], source_latency):
+        stop(f"Latenz des Hauptlaufs {row['source_latency_ms_mean_256']:.3f} != {source_latency:.3f}")
+    stored = [main_preds[i] for i in idx]
+    f1_256 = score(stored, "gold_bio", "pred_bio")[0][2]
+    regenerated = [dict(gold_bio=main_preds[r["index"]]["gold_bio"],
+                        pred_bio=bio_from_spans(len(main_preds[r["index"]]["tokens"]), r["pred_entities"]))
+                   for r in records]
+    f1_1024 = score(regenerated, "gold_bio", "pred_bio")[0][2]
+    for label, own, summary_value, run_value in (
+            ("F1 bei 256", f1_256, row["subset_f1_stored_256"], ctrl["subset_metrics"]["stored_256"]["f1"]),
+            ("F1 bei 1024", f1_1024, row["subset_f1_control"], ctrl["subset_metrics"]["control_1024"]["f1"])):
+        if abs(own - summary_value) > 1e-9 or abs(summary_value - run_value) > 1e-9:
+            stop(f"{label}: eigen {own:.8f}, Zusammenfassung {summary_value:.8f}, Laufdatei {run_value:.8f}")
+    return dict(f1_256=f1_256, f1_1024=f1_1024)
+
+
+def summarise_control(per_runs, encoder_latency):
+    """Fasst die Laufzeilen der Kontrollstichprobe je Groesse und gesamt zusammen.
+    per_runs: {Gruppe: [Laufzeilen]}; encoder_latency: {Gruppe: mittlere Latenz in ms auf demselben GPU-Typ}."""
+    sizes = {}
+    for key, runs in per_runs.items():
+        sample = mean_std([r["latency_mean"] for r in runs])
+        estimate = mean_std([r["latency_full_test_estimate"] for r in runs])
+        sizes[key] = dict(
+            runs=runs, n=sum(r["n"] for r in runs), equal=sum(r["equal"] for r in runs),
+            pred_equal=sum(r["pred_equal"] for r in runs),
+            mismatches=sum(r["n"] - r["equal"] for r in runs), limit_hits=sum(r["limit_hits"] for r in runs),
+            max_abs_f1_diff=max(abs(r["f1_1024"] - r["f1_256"]) for r in runs),
+            latency_mean=dict(mean=sample[0], std=sample[1]),
+            latency_p50=statistics.fmean(r["latency_p50"] for r in runs),
+            latency_p95=statistics.fmean(r["latency_p95"] for r in runs),
+            latency_full_test_estimate=dict(mean=estimate[0], std=estimate[1]),
+            source_latency_256=statistics.fmean(r["source_latency_256"] for r in runs),
+            vram_gib=max(r["vram_mb"] for r in runs) / 1024,
+            same_gpu_as_source=all(r["gpu"] == r["source_gpu"] for r in runs),
+            factor_sample={enc: sample[0] / lat for enc, lat in encoder_latency.items()},
+            factor_estimate={enc: estimate[0] / lat for enc, lat in encoder_latency.items()})
+    n = sum(v["n"] for v in sizes.values())
+    equal = sum(v["equal"] for v in sizes.values())
+    gpus = sorted({r["gpu"] for runs in per_runs.values() for r in runs})
+    return dict(per_size=sizes, gpu=gpus[0] if len(gpus) == 1 else gpus,
+                total=dict(n=n, equal=equal, mismatches=n - equal, share_equal=equal / n,
+                           pred_equal=sum(v["pred_equal"] for v in sizes.values()),
+                           limit_hits=sum(v["limit_hits"] for v in sizes.values()),
+                           max_abs_f1_diff=max(v["max_abs_f1_diff"] for v in sizes.values())))
+
+
+def analyse_control_sample(G):
+    """Kontrollstichprobe des Moduls src/evaluate/multinerd_control_sample.py: je QLoRA-Lauf eine feste
+    Zufallsstichprobe nicht abgeschnittener Antworten, mit Limit 1024 auf einheitlicher Hardware neu erzeugt.
+    Fehlt aggregate/control_summary.yaml oder ist sie unvollstaendig, nur Hinweis."""
+    path = CONTROL_ROOT / "aggregate" / "control_summary.yaml"
+    if not path.exists():
+        print(f"  Hinweis: {CONTROL_ROOT.name}/aggregate/control_summary.yaml fehlt; "
+              "tab-app-kontrolle.tex wird nicht erzeugt")
+        return dict(available=False, complete=False)
+    rep = load_yaml(path)
+    status = dict(available=True, complete=bool(rep.get("complete")), max_new_tokens=rep.get("max_new_tokens"),
+                  selection_rule=rep.get("selection_rule"))
+    if not status["complete"]:
+        print("  Hinweis: Kontrollstichprobe unvollstaendig; tab-app-kontrolle.tex wird nicht erzeugt")
+        return status
+    rows = {r["experiment_name"]: r for r in rep["rows"]}
+    expected = [name for key in CONTROL_GROUPS for name in TRAINED[key]["runs"]]
+    if sorted(rows) != sorted(expected):
+        sys.exit(f"ABBRUCH: Kontrollstichprobe: Laeufe {sorted(rows)} statt {sorted(expected)}")
+    per_runs = {}
+    for key in CONTROL_GROUPS:
+        per_runs[key] = []
+        for name, seed, main_run in zip(TRAINED[key]["runs"], SEEDS, G[key]["runs"]):
+            row = rows[name]
+            if int(row["seed"]) != seed:
+                sys.exit(f"ABBRUCH: Kontrollstichprobe {name}: Seed {row['seed']} statt {seed}")
+            f1 = check_control_run(row, load_yaml(CONTROL_ROOT / name / "control_metrics.yaml"),
+                                   load_json(CONTROL_ROOT / name / "control_predictions.json"),
+                                   load_json(RES / "multinerd" / name / "test_predictions.json"),
+                                   main_run["latency_mean"])
+            per_runs[key].append(dict(
+                name=name, seed=seed, n=row["sample_count"], equal=row["raw_output_equal"],
+                pred_equal=row["pred_entities_equal"], limit_hits=row["limit_hit_count"],
+                f1_256=f1["f1_256"], f1_1024=f1["f1_1024"], latency_mean=row["latency_ms_mean"],
+                latency_p50=row["latency_ms_p50"], latency_p95=row["latency_ms_p95"],
+                latency_full_test_estimate=row["full_test_latency_ms_estimate"],
+                source_latency_256=row["source_latency_ms_mean_256"], vram_mb=row["vram_peak_mb"],
+                generated_tokens_mean=row["generated_tokens_mean"], gpu=row["gpu"], source_gpu=row["source_gpu"]))
+    encoder_latency = {enc: G[enc]["agg"]["latency_mean"]["mean"] for enc in ("deberta-base", "deberta-large")}
+    status.update(summarise_control(per_runs, encoder_latency))
+    status["encoder_gpu"] = sorted({r["gpu"] for enc in encoder_latency for r in G[enc]["runs"]})
+    return status
+
+
 # --------------------------------------------------------------------------- Satz-Bootstrap
 def f1_of(S):
     """F1 aus (tp, fp, fn) in der letzten Achse; Nullfaelle wie prf()."""
@@ -1657,6 +1797,35 @@ def tab_app_limit_seeds(G, L):
     return "\n".join(lines)
 
 
+def tab_app_kontrolle(G, CS):
+    """Anhang: Kontrollstichprobe mit Limit 1024 je Lauf (identische Antworten, Limit-Treffer, F1 der
+    Stichprobe bei 256/1024, Latenz, geschaetzte Latenz ueber den ganzen Testsplit, Speicher)."""
+    lines = ["\\begin{tabular}{llrrrrrrrrr}", "    \\toprule",
+             "    \\textbf{Modell} & \\textbf{Seed} & \\textbf{\\shortstack[c]{iden-\\\\tisch}} &",
+             "      \\textbf{\\shortstack[c]{Limit\\\\erreicht}} & \\textbf{F$_1$ (256)} & \\textbf{F$_1$ (1\\,024)} &",
+             "      \\multicolumn{3}{c}{\\textbf{Latenz [ms]}} & \\textbf{\\shortstack[c]{Testsplit\\\\gesch\\\"atzt}} &",
+             "      \\textbf{Speicher} \\\\", "    \\cmidrule(lr){7-9}",
+             "    & & & & & & \\textbf{Mittel} & \\textbf{Median} & \\textbf{P95} & \\textbf{[ms]} & \\textbf{[GiB]} \\\\",
+             "    \\midrule"]
+    for i, key in enumerate(CONTROL_GROUPS):
+        if i:
+            lines.append("    \\midrule")
+        for j, r in enumerate(CS["per_size"][key]["runs"]):
+            label = G[key]["label"] if j == 0 else ""
+            lines.append(f"    {label} & {r['seed']} & {fmt_int(r['equal'])} & {fmt_int(r['limit_hits'])} & "
+                         f"{de(r['f1_256'] * 100, 2)} & {de(r['f1_1024'] * 100, 2)} & {fmt_int(r['latency_mean'])} & "
+                         f"{fmt_int(r['latency_p50'])} & {fmt_int(r['latency_p95'])} & "
+                         f"{fmt_int(r['latency_full_test_estimate'])} & {de(r['vram_mb'] / 1024, 1)} \\\\")
+    n = fmt_int(CS["per_size"][CONTROL_GROUPS[0]]["runs"][0]["n"])
+    lines.append("    \\bottomrule")
+    lines += note_rows(f"Identisch: von je {n} neu erzeugten Antworten zeichengleich mit der gespeicherten Antwort. "
+                       "Testsplit gesch\\\"atzt: mittlere Latenz \\\"uber alle Tests\\\"atze bei 1\\,024 Tokens, "
+                       "hochgerechnet aus der Stichprobe und der gemessenen Nachinferenz der abgeschnittenen "
+                       "Antworten.", 11, width=104)
+    lines += ["\\end{tabular}", ""]
+    return "\n".join(lines)
+
+
 CI_PAIRS = ["qwen27-qlora->deberta-large", "deberta-base->qwen27-qlora", "deberta-base->deberta-large",
             "qwen4-qlora->qwen27-qlora", "qwen08-qlora->qwen4-qlora", "qwen08-qlora->deberta-base",
             "deberta-base->qwen4-qlora"]
@@ -1756,6 +1925,11 @@ def main():
                   f"(Delta zu 256: {L[key]['delta_f1']['mean'] * 100:+.2f})")
     print("CrossNER auswerten ...")
     C = analyse_crossner()
+    print("Kontrollstichprobe auswerten ...")
+    CS = analyse_control_sample(G)
+    if CS.get("complete"):
+        t = CS["total"]
+        print(f"  {t['equal']} von {t['n']} Antworten identisch, {t['limit_hits']} Limit-Treffer")
 
     # Satzstatistik MultiNERD-Test
     preds = load_json(RES / "multinerd" / "deberta-v3-large-canonical" / "test_predictions.json")
@@ -1830,6 +2004,8 @@ def main():
     if L:
         write(OUT / "tab-limit-multinerd.tex", tab_limit_multinerd(G, L))
         write(OUT / "tab-app-limit-seeds.tex", tab_app_limit_seeds(G, L))
+    if CS.get("complete"):
+        write(OUT / "tab-app-kontrolle.tex", tab_app_kontrolle(G, CS))
     write(OUT / "tab-synthese.tex", tab_synthese(G, C, boot))
     V = analyse_vorlaeufe(G)
     if V:
@@ -1890,6 +2066,7 @@ def main():
         bootstrap=boot,
         output_limit_multinerd=dict(available=list(L), missing=[k for k in LIMIT_GROUPS if k not in L], per_size=L,
                                     encoder_subset=encoder_subset),
+        control_sample_multinerd=CS,
         vorlaeufe=V,
         vorlauf_thinking_4b=analyse_vorlauf_thinking(),
     )

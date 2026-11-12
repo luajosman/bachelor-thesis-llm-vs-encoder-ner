@@ -18518,6 +18518,291 @@
    }
   }
  },
+ "control_sample_multinerd": {
+  "available": true,
+  "complete": true,
+  "max_new_tokens": 1024,
+  "selection_rule": "seeded random permutation of all test indices; the first N whose stored parse_status is not failed; sorted",
+  "per_size": {
+   "qwen08-qlora": {
+    "runs": [
+     {
+      "name": "qwen35-08b-qlora-canonical",
+      "seed": 42,
+      "n": 1000,
+      "equal": 999,
+      "pred_equal": 999,
+      "limit_hits": 0,
+      "f1_256": 0.9362972793629728,
+      "f1_1024": 0.9372301560943207,
+      "latency_mean": 1659.5660175154917,
+      "latency_p50": 1170.4731185454875,
+      "latency_p95": 3946.2983893929036,
+      "latency_full_test_estimate": 1700.7051809146617,
+      "source_latency_256": 1794.3919244576402,
+      "vram_mb": 905.50146484375,
+      "generated_tokens_mean": 47.859,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA H100 80GB HBM3"
+     },
+     {
+      "name": "qwen35-08b-qlora-canonical-seed123",
+      "seed": 123,
+      "n": 1000,
+      "equal": 1000,
+      "pred_equal": 1000,
+      "limit_hits": 0,
+      "f1_256": 0.9387075283144569,
+      "f1_1024": 0.9387075283144569,
+      "latency_mean": 1666.0508588061202,
+      "latency_p50": 1189.1808920772746,
+      "latency_p95": 3950.3428768482977,
+      "latency_full_test_estimate": 1706.8417650499612,
+      "source_latency_256": 1832.8574610230796,
+      "vram_mb": 905.50146484375,
+      "generated_tokens_mean": 47.625,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA H100 80GB HBM3"
+     },
+     {
+      "name": "qwen35-08b-qlora-canonical-seed456",
+      "seed": 456,
+      "n": 1000,
+      "equal": 1000,
+      "pred_equal": 1000,
+      "limit_hits": 0,
+      "f1_256": 0.9324009324009324,
+      "f1_1024": 0.9324009324009324,
+      "latency_mean": 1719.9305016098078,
+      "latency_p50": 1227.3197050672024,
+      "latency_p95": 4042.8819069522415,
+      "latency_full_test_estimate": 1759.3937989860208,
+      "source_latency_256": 2000.0190200982008,
+      "vram_mb": 905.50146484375,
+      "generated_tokens_mean": 47.625,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA H100 80GB HBM3"
+     }
+    ],
+    "n": 3000,
+    "equal": 2999,
+    "pred_equal": 2999,
+    "mismatches": 1,
+    "limit_hits": 0,
+    "max_abs_f1_diff": 0.0009328767313478981,
+    "latency_mean": {
+     "mean": 1681.84912597714,
+     "std": 33.138446994366305
+    },
+    "latency_p50": 1195.6579052299883,
+    "latency_p95": 3979.841057731148,
+    "latency_full_test_estimate": {
+     "mean": 1722.3135816502145,
+     "std": 32.25866247173573
+    },
+    "source_latency_256": 1875.7561351929735,
+    "vram_gib": 0.8842787742614746,
+    "same_gpu_as_source": true,
+    "factor_sample": {
+     "deberta-base": 188.48725986994188,
+     "deberta-large": 102.23160905282325
+    },
+    "factor_estimate": {
+     "deberta-base": 193.02216984143848,
+     "deberta-large": 104.69125085363082
+    }
+   },
+   "qwen4-qlora": {
+    "runs": [
+     {
+      "name": "qwen35-4b-qlora-canonical",
+      "seed": 42,
+      "n": 1000,
+      "equal": 999,
+      "pred_equal": 999,
+      "limit_hits": 0,
+      "f1_256": 0.9477537437603993,
+      "f1_1024": 0.9474034620505992,
+      "latency_mean": 2247.2737354491837,
+      "latency_p50": 1603.1823484227061,
+      "latency_p95": 5318.640745966694,
+      "latency_full_test_estimate": 2305.554590026831,
+      "source_latency_256": 4548.864020734415,
+      "vram_mb": 3492.14208984375,
+      "generated_tokens_mean": 47.673,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA A100-SXM4-80GB"
+     },
+     {
+      "name": "qwen35-4b-qlora-canonical-seed123",
+      "seed": 123,
+      "n": 1000,
+      "equal": 997,
+      "pred_equal": 997,
+      "limit_hits": 0,
+      "f1_256": 0.9479653102068045,
+      "f1_1024": 0.9476492164054685,
+      "latency_mean": 2362.4320561925415,
+      "latency_p50": 1685.824513551779,
+      "latency_p95": 5670.6303451908725,
+      "latency_full_test_estimate": 2415.756693151896,
+      "source_latency_256": 4671.800535811822,
+      "vram_mb": 3492.14208984375,
+      "generated_tokens_mean": 47.451,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA A100-SXM4-80GB"
+     },
+     {
+      "name": "qwen35-4b-qlora-canonical-seed456",
+      "seed": 456,
+      "n": 1000,
+      "equal": 997,
+      "pred_equal": 997,
+      "limit_hits": 0,
+      "f1_256": 0.9475091942494149,
+      "f1_1024": 0.9485294117647058,
+      "latency_mean": 2251.888325406937,
+      "latency_p50": 1609.814779018052,
+      "latency_p95": 5453.35694818059,
+      "latency_full_test_estimate": 2304.7059830467,
+      "source_latency_256": 4833.409177647719,
+      "vram_mb": 3492.14208984375,
+      "generated_tokens_mean": 47.415,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA A100-SXM4-80GB"
+     }
+    ],
+    "n": 3000,
+    "equal": 2993,
+    "pred_equal": 2993,
+    "mismatches": 7,
+    "limit_hits": 0,
+    "max_abs_f1_diff": 0.001020217515290911,
+    "latency_mean": {
+     "mean": 2287.1980390162207,
+     "std": 65.19541100019806
+    },
+    "latency_p50": 1632.9405469975125,
+    "latency_p95": 5480.876013112719,
+    "latency_full_test_estimate": {
+     "mean": 2342.0057554084756,
+     "std": 63.87159499321321
+    },
+    "source_latency_256": 4684.691244731319,
+    "vram_gib": 3.410295009613037,
+    "same_gpu_as_source": false,
+    "factor_sample": {
+     "deberta-base": 256.3295865814373,
+     "deberta-large": 139.02789027835095
+    },
+    "factor_estimate": {
+     "deberta-base": 262.4719664911114,
+     "deberta-large": 142.35939067796951
+    }
+   },
+   "qwen27-qlora": {
+    "runs": [
+     {
+      "name": "qwen35-27b-qlora-3ep",
+      "seed": 42,
+      "n": 1000,
+      "equal": 997,
+      "pred_equal": 997,
+      "limit_hits": 0,
+      "f1_256": 0.9512358049432198,
+      "f1_1024": 0.9515859766277128,
+      "latency_mean": 4441.363046854967,
+      "latency_p50": 3179.32783998549,
+      "latency_p95": 10683.93576252274,
+      "latency_full_test_estimate": 4546.219238931633,
+      "source_latency_256": 5517.972762391744,
+      "vram_mb": 19043.537109375,
+      "generated_tokens_mean": 47.299,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA H100 NVL"
+     },
+     {
+      "name": "qwen35-27b-qlora-3ep-seed123",
+      "seed": 123,
+      "n": 1000,
+      "equal": 999,
+      "pred_equal": 999,
+      "limit_hits": 0,
+      "f1_256": 0.9539078156312625,
+      "f1_1024": 0.9538770053475936,
+      "latency_mean": 4463.426468535559,
+      "latency_p50": 3196.564630023204,
+      "latency_p95": 10711.13008238608,
+      "latency_full_test_estimate": 4576.047975235721,
+      "source_latency_256": 5499.682637455684,
+      "vram_mb": 19043.537109375,
+      "generated_tokens_mean": 47.307,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA H100 NVL"
+     },
+     {
+      "name": "qwen35-27b-qlora-3ep-seed456",
+      "seed": 456,
+      "n": 1000,
+      "equal": 1000,
+      "pred_equal": 1000,
+      "limit_hits": 0,
+      "f1_256": 0.9536202869536202,
+      "f1_1024": 0.9536202869536202,
+      "latency_mean": 4490.977813480655,
+      "latency_p50": 3207.723507541232,
+      "latency_p95": 10857.257034489883,
+      "latency_full_test_estimate": 4595.019860453436,
+      "source_latency_256": 5497.019345249544,
+      "vram_mb": 19043.537109375,
+      "generated_tokens_mean": 47.417,
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "source_gpu": "NVIDIA H100 NVL"
+     }
+    ],
+    "n": 3000,
+    "equal": 2996,
+    "pred_equal": 2996,
+    "mismatches": 4,
+    "limit_hits": 0,
+    "max_abs_f1_diff": 0.00035017168449302805,
+    "latency_mean": {
+     "mean": 4465.255776290393,
+     "std": 24.857917088460596
+    },
+    "latency_p50": 3194.5386591833085,
+    "latency_p95": 10750.774293132901,
+    "latency_full_test_estimate": {
+     "mean": 4572.429024873597,
+     "std": 24.600767600243767
+    },
+    "source_latency_256": 5504.89158169899,
+    "vram_gib": 18.597204208374023,
+    "same_gpu_as_source": false,
+    "factor_sample": {
+     "deberta-base": 500.4276619654683,
+     "deberta-large": 271.4216607136882
+    },
+    "factor_estimate": {
+     "deberta-base": 512.438722675252,
+     "deberta-large": 277.9362127509962
+    }
+   }
+  },
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "total": {
+   "n": 9000,
+   "equal": 8988,
+   "mismatches": 12,
+   "share_equal": 0.9986666666666667,
+   "pred_equal": 8988,
+   "limit_hits": 0,
+   "max_abs_f1_diff": 0.001020217515290911
+  },
+  "encoder_gpu": [
+   "NVIDIA H100 80GB HBM3"
+  ]
+ },
  "vorlaeufe": [
   {
    "run": "deberta-v3-base",

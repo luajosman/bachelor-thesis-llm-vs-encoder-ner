@@ -1,0 +1,25 @@
+\begin{tabular}{llrrrrrrrrr}
+    \toprule
+    \textbf{Modell} & \textbf{Seed} & \textbf{\shortstack[c]{iden-\\tisch}} &
+      \textbf{\shortstack[c]{Limit\\erreicht}} & \textbf{F$_1$ (256)} & \textbf{F$_1$ (1\,024)} &
+      \multicolumn{3}{c}{\textbf{Latenz [ms]}} & \textbf{\shortstack[c]{Testsplit\\gesch\"atzt}} &
+      \textbf{Speicher} \\
+    \cmidrule(lr){7-9}
+    & & & & & & \textbf{Mittel} & \textbf{Median} & \textbf{P95} & \textbf{[ms]} & \textbf{[GiB]} \\
+    \midrule
+    Qwen3.5-0.8B & 42 & 999 & 0 & 93,63 & 93,72 & 1\,660 & 1\,170 & 3\,946 & 1\,701 & 0,9 \\
+     & 123 & 1\,000 & 0 & 93,87 & 93,87 & 1\,666 & 1\,189 & 3\,950 & 1\,707 & 0,9 \\
+     & 456 & 1\,000 & 0 & 93,24 & 93,24 & 1\,720 & 1\,227 & 4\,043 & 1\,759 & 0,9 \\
+    \midrule
+    Qwen3.5-4B & 42 & 999 & 0 & 94,78 & 94,74 & 2\,247 & 1\,603 & 5\,319 & 2\,306 & 3,4 \\
+     & 123 & 997 & 0 & 94,80 & 94,76 & 2\,362 & 1\,686 & 5\,671 & 2\,416 & 3,4 \\
+     & 456 & 997 & 0 & 94,75 & 94,85 & 2\,252 & 1\,610 & 5\,453 & 2\,305 & 3,4 \\
+    \midrule
+    Qwen3.5-27B & 42 & 997 & 0 & 95,12 & 95,16 & 4\,441 & 3\,179 & 10\,684 & 4\,546 & 18,6 \\
+     & 123 & 999 & 0 & 95,39 & 95,39 & 4\,463 & 3\,197 & 10\,711 & 4\,576 & 18,6 \\
+     & 456 & 1\,000 & 0 & 95,36 & 95,36 & 4\,491 & 3\,208 & 10\,857 & 4\,595 & 18,6 \\
+    \bottomrule
+    \multicolumn{11}{@{}l}{\scriptsize Identisch: von je 1\,000 neu erzeugten Antworten zeichengleich mit der gespeicherten Antwort. Testsplit} \\
+    \multicolumn{11}{@{}l}{\scriptsize gesch\"atzt: mittlere Latenz \"uber alle Tests\"atze bei 1\,024 Tokens, hochgerechnet aus der Stichprobe} \\
+    \multicolumn{11}{@{}l}{\scriptsize und der gemessenen Nachinferenz der abgeschnittenen Antworten.} \\
+\end{tabular}

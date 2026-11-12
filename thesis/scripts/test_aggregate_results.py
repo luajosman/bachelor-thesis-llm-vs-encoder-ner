@@ -170,10 +170,6 @@ class TransferAndSubsetTests(unittest.TestCase):
         self.assertAlmostEqual(out["qwen27-qlora-1024"]["deberta-large"]["min"], 0.25)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class ErrorProfileAdditionsTests(unittest.TestCase):
     """Zusaetze (Vorhersagen ohne ueberlappende Referenz) und ihr Anteil mit Ziffer im Spantext."""
 
@@ -203,3 +199,110 @@ class ErrorProfileAdditionsTests(unittest.TestCase):
                 (root / name).mkdir()
             self.assertEqual(agg.vorlauf_steps(root), 16410)
             self.assertIsNone(agg.vorlauf_steps(root / "best_lora_adapter"))
+
+
+class ControlSampleTests(unittest.TestCase):
+    """Kontrollstichprobe mit Limit 1024: Einlesen, Gegenpruefung gegen die Laufdateien, Tabellenkoerper."""
+
+    RUNS = ["run-42", "run-123", "run-456"]
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.control = self.root / "multinerd_control_1024"
+        # Hauptlauf: vier Saetze; die Stichprobe umfasst die Saetze 0, 1 und 3.
+        main = [dict(tokens=["A", "B"], gold_bio=["B-PER", "O"], pred_bio=["B-PER", "O"]),
+                dict(tokens=["C"], gold_bio=["B-LOC"], pred_bio=["O"]),
+                dict(tokens=["D", "E"], gold_bio=["O", "O"], pred_bio=["O", "O"]),
+                dict(tokens=["F", "G"], gold_bio=["B-ORG", "I-ORG"], pred_bio=["B-ORG", "I-ORG"])]
+        # Neu erzeugt: Satz 1 findet jetzt die LOC-Entitaet, weicht also von der gespeicherten Antwort ab.
+        spans = {0: [dict(start_token=0, end_token=1, text="A", type="PER")],
+                 1: [dict(start_token=0, end_token=1, text="C", type="LOC")],
+                 3: [dict(start_token=0, end_token=2, text="F G", type="ORG")]}
+        records = [dict(index=i, pred_entities=spans[i], raw_output_equal_to_stored=i != 1,
+                        pred_entities_equal_to_stored=i != 1, token_limit_reached=False, latency_ms=lat)
+                   for i, lat in ((0, 100.0), (1, 200.0), (3, 300.0))]
+        # Handrechnung: 256 -> tp 2, fn 1 (F1 0,8); 1024 -> tp 3 (F1 1,0).
+        self.rows = []
+        for name, seed in zip(self.RUNS, agg.SEEDS):
+            row = dict(experiment_name=name, seed=seed, sample_count=3, gpu="X", source_gpu="X",
+                       raw_output_equal=2, pred_entities_equal=2, subset_f1_stored_256=0.8,
+                       subset_f1_control=1.0, limit_hit_count=0, generated_tokens_mean=5.0,
+                       latency_ms_mean=200.0, latency_ms_p50=200.0, latency_ms_p95=290.0,
+                       source_latency_ms_mean_256=150.0, full_test_latency_ms_estimate=210.0,
+                       vram_peak_mb=1024.0)
+            self.rows.append(row)
+            metrics = dict(control=dict(
+                sample_count=3, raw_output_equal_count=2, pred_entities_equal_count=2, limit_hit_count=0,
+                latency_ms=dict(mean=200.0, p50=200.0, p95=290.0), vram_peak_mb=1024.0,
+                subset_metrics=dict(stored_256=dict(f1=0.8), control_1024=dict(f1=1.0))))
+            run_dir = self.control / name
+            run_dir.mkdir(parents=True)
+            (run_dir / "control_metrics.yaml").write_text(agg.yaml.safe_dump(metrics))
+            (run_dir / "control_predictions.json").write_text(json.dumps(records))
+            main_dir = self.root / "multinerd" / name
+            main_dir.mkdir(parents=True)
+            (main_dir / "test_predictions.json").write_text(json.dumps(main))
+        self.G = {"g": dict(label="Modell G", runs=[dict(latency_mean=150.0)] * 3),
+                  "deberta-base": dict(agg=dict(latency_mean=dict(mean=10.0)), runs=[dict(gpu="X")]),
+                  "deberta-large": dict(agg=dict(latency_mean=dict(mean=20.0)), runs=[dict(gpu="X")])}
+        patches = patch.multiple(agg, RES=self.root, CONTROL_ROOT=self.control, CONTROL_GROUPS=["g"],
+                                 TRAINED={"g": dict(runs=self.RUNS)})
+        patches.start()
+        self.addCleanup(patches.stop)
+
+    def write_summary(self, complete=True):
+        path = self.control / "aggregate" / "control_summary.yaml"
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(agg.yaml.safe_dump(dict(complete=complete, max_new_tokens=1024, rows=self.rows)))
+
+    def test_missing_or_incomplete_summary_is_not_fatal(self):
+        self.assertEqual(agg.analyse_control_sample(self.G), dict(available=False, complete=False))
+        self.write_summary(complete=False)
+        status = agg.analyse_control_sample(self.G)
+        self.assertTrue(status["available"])
+        self.assertFalse(status["complete"])
+        self.assertNotIn("per_size", status)
+
+    def test_complete_summary_is_recomputed_and_summarised(self):
+        self.write_summary()
+        cs = agg.analyse_control_sample(self.G)
+        self.assertEqual({k: cs["total"][k] for k in ("n", "equal", "mismatches", "limit_hits")},
+                         dict(n=9, equal=6, mismatches=3, limit_hits=0))
+        size = cs["per_size"]["g"]
+        self.assertAlmostEqual(size["runs"][0]["f1_256"], 0.8)
+        self.assertAlmostEqual(size["runs"][0]["f1_1024"], 1.0)
+        self.assertAlmostEqual(size["max_abs_f1_diff"], 0.2)
+        self.assertAlmostEqual(size["factor_estimate"]["deberta-base"], 21.0)
+        self.assertAlmostEqual(size["factor_sample"]["deberta-large"], 10.0)
+        self.assertTrue(size["same_gpu_as_source"])
+        self.assertEqual(cs["gpu"], "X")
+
+    def test_tampered_summary_aborts(self):
+        self.rows[1]["raw_output_equal"] = 3
+        self.write_summary()
+        with self.assertRaises(SystemExit):
+            agg.analyse_control_sample(self.G)
+        self.rows[1]["raw_output_equal"] = 2
+        self.rows[2]["subset_f1_control"] = 0.9
+        self.write_summary()
+        with self.assertRaises(SystemExit):
+            agg.analyse_control_sample(self.G)
+
+    def test_table_body(self):
+        self.write_summary()
+        lines = agg.tab_app_kontrolle(self.G, agg.analyse_control_sample(self.G)).split("\n")
+        self.assertIn("    Modell G & 42 & 2 & 0 & 80,00 & 100,00 & 200 & 200 & 290 & 210 & 1,0 \\\\", lines)
+        self.assertIn("     & 123 & 2 & 0 & 80,00 & 100,00 & 200 & 200 & 290 & 210 & 1,0 \\\\", lines)
+        self.assertEqual(lines[0], "\\begin{tabular}{llrrrrrrrrr}")
+        self.assertEqual(lines[-2:], ["\\end{tabular}", ""])
+
+    def test_bio_from_spans(self):
+        spans = [dict(start_token=1, end_token=3, type="ORG"), dict(start_token=4, end_token=5, type="PER")]
+        self.assertEqual(agg.bio_from_spans(5, spans), ["O", "B-ORG", "I-ORG", "O", "B-PER"])
+        self.assertEqual(agg.bio_from_spans(2, None), ["O", "O"])
+
+
+if __name__ == "__main__":
+    unittest.main()
