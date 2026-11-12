@@ -566,9 +566,9 @@ unterscheiden, sind die Stichproben nicht in jedem Lauf dieselben.
 Gemessen wurde je Satz bei Batchgröße~1 nach einem nicht gewerteten
 Aufwärmdurchlauf.
 Die mittlere Latenz über den gesamten Testsplit bei 1\,024 Tokens wird
-geschätzt, indem die mittlere Latenz der Stichprobe auf alle nicht
-abgeschnittenen Sätze übertragen und die gemessene Dauer der
-Nachinferenz der abgeschnittenen Sätze hinzugerechnet wird.
+geschätzt, indem die mittlere Latenz der Stichprobe auf alle Sätze mit
+parsebarer gespeicherter Antwort übertragen und die gemessene Dauer der
+Nachinferenz der übrigen Sätze hinzugerechnet wird.
 Die Ergebnisse je Lauf nennt Tabelle~\ref{tab:app-kontrolle}.
 
 \FloatBarrier
@@ -626,7 +626,7 @@ Fehlerklasse aus Abschnitt~\ref{sec:erg-fehlertypen}.
   \centering
   \scriptsize
   \caption[Kontrollstichprobe mit 1\,024 Tokens je Lauf]{Kontrollstichprobe
-  der nicht abgeschnittenen Antworten mit 1\,024 Ausgabetokens je Lauf
+  der parsebaren gespeicherten Antworten mit 1\,024 Ausgabetokens je Lauf
   (Abschnitt~\ref{sec:nachinferenz}): identische Antworten, Antworten am
   Limit, Mikro-F$_1$ auf der Stichprobe mit den gespeicherten (256) und
   den neu erzeugten Antworten (1\,024) in Punkten, Latenz je Satz und

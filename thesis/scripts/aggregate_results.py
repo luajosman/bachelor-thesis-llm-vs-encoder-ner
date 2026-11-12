@@ -1827,7 +1827,7 @@ def tab_app_kontrolle(G, CS):
     lines.append("    \\bottomrule")
     lines += note_rows(f"Identisch: von je {n} neu erzeugten Antworten zeichengleich mit der gespeicherten Antwort. "
                        "Testsplit gesch\\\"atzt: mittlere Latenz \\\"uber alle Tests\\\"atze bei 1\\,024 Tokens, "
-                       "hochgerechnet aus der Stichprobe und der gemessenen Nachinferenz der abgeschnittenen "
+                       "hochgerechnet aus der Stichprobe und der gemessenen Nachinferenz der nicht parsebaren "
                        "Antworten.", 11, width=104)
     lines += ["\\end{tabular}", ""]
     return "\n".join(lines)

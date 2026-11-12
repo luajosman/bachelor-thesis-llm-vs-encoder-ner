@@ -62,10 +62,8 @@ Korrektur über alle Klassen einen F$_1$ von 0{,}85
 aus~\cite[Tab.~5]{tedeschi2022multinerd}.
 Für die offiziellen Splits, die diese Arbeit verwendet
 (Abschnitt~\ref{sec:datenauswahl}), berichtet die Originalarbeit somit
-keine Referenzwerte.
-Veröffentlichte MultiNERD-Werte anderer Arbeiten beruhen auf eigenen
-Datenaufbereitungen oder lassen sich nicht auf die offiziellen Splits
-abbilden (Abschnitte~\ref{sec:llm_ner_related} und~\ref{sec:research_gap}).
+keine Referenzwerte; die MultiNERD-Werte anderer Arbeiten ordnet
+Abschnitt~\ref{sec:research_gap} ein.
 
 \subsection{Encoder in Vergleichsstudien}
 \label{sec:k3-encoder-vergleich}
@@ -362,9 +360,7 @@ reduzierten Typinventar erwartbare Niveau.
 Dieser Abschnitt behandelt Arbeiten, die generative LLMs mit LoRA oder
 QLoRA (Abschnitt~\ref{sec:lora}) an NER anpassen und in derselben Studie
 mit Encodern vergleichen.
-Diese Kombination ist in der gesichteten Literatur noch selten; die
-vier folgenden Arbeiten decken allgemeine und domänenspezifische
-Datensätze ab und erfassen unterschiedliche Ressourcen.
+Diese Kombination ist in der gesichteten Literatur noch selten.
 
 Den breitesten Vergleich auf allgemeinen Benchmarks legen
 \textcite{zhan2026generativeNER} vor.
@@ -480,7 +476,8 @@ Dabei teilen nur GLiNER und UniNER die Pile-NER-Trainingsdaten, NuNER
 nutzt GPT-3.5-Annotationen des C4-Korpus, sodass der Größenunterschied
 von Architektur, Trainingsziel und Daten überlagert wird.
 Bei \textcite{obeidat2025llm} ist die Zahl trainierbarer Parameter über
-den LoRA-Rang an die Encoder angeglichen, und dennoch liegen die
+den LoRA-Rang an die Encoder angeglichen (rund 341 bzw. 353~Mio.
+Adapterparameter gegenüber 336 bis 435~Mio.), und dennoch liegen die
 LLMs vorn.
 Dieser Vorsprung dürfte eher auf die Kapazität des eingefrorenen
 Basismodells als auf die Zahl angepasster Parameter zurückgehen.
@@ -611,8 +608,9 @@ eigener Aufbereitung: \textcite{zhou2024universalner} übernehmen die
 BERT-Werte aus InstructUIE auf dessen Datensatzvariante,
 \textcite{zaratiana2024gliner} werten GLiNER auf der
 InstructUIE-Aufbereitung mit 10\,000 Testbeispielen aus.
-Bei \textcite[Tab.~9]{sainz2024gollie} umfasst der Test 32\,908
-Beispiele, etwa das Doppelte des englischen Testsplits; ihr Verhältnis
+Bei \textcite[Anh.~D.2, Tab.~9]{sainz2024gollie} steht der Angabe,
+Standardsplits zu verwenden, ein Testumfang von 32\,908 Beispielen
+gegenüber, etwa das Doppelte des englischen Testsplits; ihr Verhältnis
 zu den offiziellen Splits bleibt offen.
 Eine gemeinsame Auswertung beider Modellfamilien auf den offiziellen
 englischen MultiNERD-Splits mit einer in derselben Pipeline trainierten

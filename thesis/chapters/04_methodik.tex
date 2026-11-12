@@ -1120,7 +1120,8 @@ Bei identischen Logits und Greedy-Decoding bliebe eine Antwort, die vor
 dem Limit mit dem Ende-Token abschließt, unverändert; da die
 ursprünglichen Läufe den Stoppgrund nicht protokollierten, ist diese
 Bedingung für die übernommenen Antworten nicht vollständig prüfbar.
-Zwei Kontrollen prüfen die Annahme.
+Zwei Kontrollen prüfen, wie weit sich die gespeicherten Antworten
+reproduzieren lassen.
 Für jeden nachgenerierten Satz wird festgehalten, ob die ersten
 256 erzeugten Tokens mit der gespeicherten Antwort übereinstimmen.
 Zusätzlich wurden nachträglich je Lauf 1\,000 zufällig gezogene

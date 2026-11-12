@@ -318,17 +318,18 @@ Makro-F$_1$ steigt um 0,5 bis 0,6 Punkte.
 In 594 von 604 nachgenerierten Sätzen stimmen die ersten
 256 erzeugten Tokens mit der gespeicherten Antwort überein; zehn
 weichen ab (1,7\,\%).
-In der Kontrollstichprobe der nicht abgeschnittenen Antworten
+In der Kontrollstichprobe der parsebaren Antworten
 (Tabelle~\ref{tab:app-kontrolle}) sind 8\,988 von 9\,000 mit
 1\,024 Tokens neu erzeugten Antworten zeichengleich mit der
 gespeicherten; keine erreicht das Limit, und der F$_1$ auf der
 Stichprobe ändert sich je Lauf um höchstens 0,1 Punkte.
-Von den zwölf Abweichungen entfallen sieben auf das 4B- und vier auf das
-27B-Modell, eine auf das 0.8B-Modell, das auf demselben GPU-Typ lief wie
-im Hauptlauf.
-Numerische Effekte des anderen GPU-Typs sind eine mögliche Ursache der
-Abweichungen; isoliert geprüft wurde sie nicht.
-Die Kontrollen stützen, dass ein höheres Limit die nicht abgeschnittenen
+Von den zwölf Abweichungen der Stichprobe entfallen sieben auf das 4B-,
+vier auf das 27B- und eine auf das 0.8B-Modell.
+Da das 0.8B-Modell auf demselben GPU-Typ lief wie im Hauptlauf und
+dort ebenfalls in beiden Kontrollen Abweichungen auftreten, erklärt der
+GPU-Wechsel sie nicht allein; als Ursache kommen numerische Effekte in
+Frage (Abschnitt~\ref{sec:llms}), isoliert geprüft wurde sie nicht.
+Die Kontrollen stützen, dass ein höheres Limit die parsebaren
 Antworten nahezu unverändert lässt; einen Neulauf aller 16\,454 Sätze
 ersetzen sie nicht.
 Die Nachinferenz der langen Sätze dauerte je Satz 11,5 (0.8B), 15,4 (4B)
@@ -500,8 +501,8 @@ Der Wert des 4B-Modells liegt bei der Hälfte des auf der A100 gemessenen
 Werts der Hauptläufe, was für einen deutlichen Hardwareanteil an den
 Unterschieden in Tabelle~\ref{tab:effizienz} spricht; getrennt gemessen
 wurde er nicht.
-Die Schätzung beruht auf je 1\,000 Sätzen ohne abgeschnittene Antworten
-und der gemessenen Nachinferenz der abgeschnittenen.
+Die Schätzung beruht auf je 1\,000 Sätzen mit parsebarer gespeicherter
+Antwort und der gemessenen Nachinferenz der nicht parsebaren.
 Das 95.~Perzentil liegt bei allen drei QLoRA-Modellen beim 3,4-Fachen
 des Medians, weil die Generierungsdauer mit der Zahl der ausgegebenen
 Entitäten wächst (Abschnitt~\ref{sec:effizienzmetriken}); bei den
@@ -962,8 +963,8 @@ ihr jeweiliger Anteil wurde nicht getrennt gemessen.
 \subsection{Modellgröße}
 \label{sec:disk-groesse}
 
-Zu FF2 zeigen die Ergebnisse kleine, bei den LLMs mit der Größe
-abnehmende Leistungszuwächse innerhalb der trainierten Familien, deren
+Zu FF2 zeigen die Ergebnisse innerhalb der trainierten Familien kleine,
+bei den LLMs mit der Größe abnehmende Leistungszuwächse, deren
 gepaarte Mikro-F$_1$-Intervalle null ausschließen
 (Abschnitt~\ref{sec:erg-groesse}).
 Bei den Encodern liegt die große Variante bei allen drei Seeds vor der
@@ -1014,7 +1015,8 @@ Inferenzlatenz, und DeBERTa-v3-base benötigt zugleich den geringsten
 Inferenzspeicher (Abschnitt~\ref{sec:erg-effizienz},
 Abbildung~\ref{fig:tradeoff}). Der hardwaregleiche Vergleich von
 DeBERTa-v3-base und Qwen3.5-0.8B ergibt einen Latenzfaktor von etwa 210;
-Faktoren zwischen anderen Größen enthalten zusätzlich Hardwareeffekte.
+Faktoren zwischen anderen Größen enthalten in den Hauptläufen zusätzlich
+Hardwareeffekte.
 
 Bei 256 Ausgabetokens bilden die beiden Encoder die Pareto-Front
 (Abschnitt~\ref{sec:erg-effizienz}); die Nachinferenz am Ausgabelimit

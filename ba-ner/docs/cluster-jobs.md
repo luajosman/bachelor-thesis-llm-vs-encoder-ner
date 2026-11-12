@@ -210,6 +210,33 @@ python -m src.evaluate.multinerd_output_limit --aggregate \
 Logs are written to `logs/mnol-<size>-s<seed>[-smoke]-<job>.{out,err}`; the
 `.out` file ends with an `MNOL_RESULT` or `SKIP_COMPLETED` line.
 
+### MultiNERD control sample
+
+The control sample tests the assumption behind the merged output-limit result:
+an answer that ended before 256 tokens stays the same at a higher limit. For
+each of the nine canonical Qwen QLoRA runs it re-generates 1,000 seeded random
+test sentences whose stored answer parsed, at 1,024 tokens, and compares them
+with the stored answers. All sizes run on one GPU type, so it also yields
+latencies on uniform hardware. The module only adds files below the output
+root.
+
+```bash
+export BA_NER_RESULTS_ROOT=/netscratch/losman/ba-ner/results
+scripts/cluster/submit_multinerd_control_sample.sh --smoke 20 configs/qwen35_08b_canonical.yaml
+scripts/cluster/submit_multinerd_control_sample.sh configs/qwen35_27b_3ep.yaml configs/qwen35_27b_3ep_seed123.yaml
+python -m src.evaluate.multinerd_control_sample --aggregate \
+  --source-results-root "$BA_NER_RESULTS_ROOT" \
+  --output-root "$BA_NER_RESULTS_ROOT/multinerd_control_1024"
+```
+
+The aggregation needs no GPU but must run on the cluster from a checkout whose
+hashed code matches the runs: it re-hashes the adapters and compares the stored
+contract, which contains absolute paths. It prints `CTRL_AGGREGATE n/9
+complete=...`, exits with code 1 while runs are missing, and writes
+`aggregate/control_summary.{yaml,csv,md}`. `thesis/scripts/aggregate_results.py`
+reads the YAML summary and the per-run files after they are synced to
+`ba-ner/results/multinerd_control_1024/`.
+
 ## 4. Monitor jobs
 
 List all of your queued and running jobs:

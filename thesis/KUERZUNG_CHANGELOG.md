@@ -1,8 +1,8 @@
 # Änderungsliste zur gekürzten Fassung (12.11.2026)
 
-Ausgangsstand: Commit `4281263`, gesichert als Branch `fassung-lang-2026-11-12` und als PDF `thesis/main_long12112026.pdf` (118 Seiten). Die gekürzte Fassung ist `thesis/main.pdf` (114 Seiten).
+Ausgangsstand: Commit `4281263`, gesichert als Branch `fassung-lang-2026-11-12` und als PDF `thesis/main_long12112026.pdf` (118 Seiten). Die gekürzte Fassung ist `thesis/main.pdf` (114 Seiten nach der ersten Runde, 111 nach der zweiten; die zweite Runde steht in Abschnitt 7).
 
-Geändert wurden nur die im Auftrag genannten Passagen. Unverändert sind `generated/`, `scripts/`, `references.bib`, `main.tex`, Deckblatt, Eigenständigkeitserklärung, Kapitel 1 und alle Tabellen und Abbildungen außer Tabelle 3.1 und der entfernten Abbildung 2.4. Im Anhang ist ein Absatz hinzugekommen (aus 4.4.3 verschobene Längenangaben), gestrichen wurde dort nichts.
+In der ersten Runde (Abschnitte 1 bis 6) wurden nur die im Auftrag genannten Passagen geändert. Unverändert sind `generated/`, `scripts/`, `references.bib`, `main.tex`, Deckblatt, Eigenständigkeitserklärung, Kapitel 1 und alle Tabellen und Abbildungen außer Tabelle 3.1 und der entfernten Abbildung 2.4. Im Anhang ist ein Absatz hinzugekommen (aus 4.4.3 verschobene Längenangaben), gestrichen wurde dort nichts.
 
 ## 1. Umfang alt und neu
 
@@ -147,10 +147,81 @@ Länge und alle Zahlen sind gleich geblieben; der Abstract steht weiter auf eine
 | Literaturverzeichnis | 86 | 82 |
 | Anhang | 95 | 91 |
 
-## 7. Offene Punkte
+## 7. Zweite Runde (12.11., nach Freigabe des Plans)
 
-1. **Umfang.** Die genannten Passagen ergeben vier Seiten. Kapitel 4 bleibt bei 23 Seiten, weil dort nur Wiederholungen gegenüber den Tabellen gestrichen werden durften. Mehr Kürzung braucht eine Freigabe für weitere Abschnitte, zum Beispiel 4.5.2 (Messdetails zur Trainingsdauer), 4.5.5 (Nachinferenz) oder 5.7.3 und 5.7.4.
-2. **Abschnitt 2.3.** Der Text ist auf knapp eine Seite gekürzt. Mit Abbildung 2.2 sind es rund anderthalb Seiten; genau eine Seite ginge nur ohne die Abbildung.
-3. **Abschnitt 2.7.** Zwei Einleitungssätze sind über den letzten Absatz hinaus stehen geblieben (siehe oben).
-4. **Seitenumbrüche.** Die Regel in `main.tex`, die Überschriften aus dem unteren Seitendrittel auf die nächste Seite schiebt (`\bottomtitlespace` = 0,30), gilt auch für die Absatzüberschriften in Kapitel 4 bis 6 und lässt dort Lücken. In einer Testkopie ergab der Wert 0,20 eine Seite weniger (113), der Wert 0,15 zwei Seiten weniger (112). `main.tex` wurde nicht geändert.
-5. **Kontrolllauf.** Die neun Kontrollläufe mit 1 024 Tokens sind seit dem 10.11. abgeschlossen, aber noch nicht aggregiert und nicht in die Arbeit eingebaut. Die gekürzte Fassung enthält dieselben Messwerte wie die lange.
+Vorgaben des Verfassers: rund 77 Seiten Haupttext; aus Kapitel 4 und 5 darf keine wichtige Angabe verschwinden; Absatzüberschriften von der Umbruchregel ausnehmen; Kontrolllauf als Sensitivitätsanalyse einbauen. Die Abschnitte 1 bis 6 oben beschreiben die erste Runde und sind unverändert.
+
+### 7.1 Umfang nach der zweiten Runde
+
+| Teil | lang | Runde 1 | Runde 2 | Wörter Runde 2 |
+|---|---:|---:|---:|---:|
+| 1 Einleitung | 5 | 5 | 5 | 1 550 |
+| 2 Grundlagen | 15 | 14 | 13 | 3 545 |
+| 3 Verwandte Arbeiten | 14 | 13 | 12 | 3 672 |
+| 4 Methodik | 23 | 23 | 22 | 5 527 |
+| 5 Ergebnisse und Diskussion | 22 | 20 | 20 | 5 403 |
+| 6 Fazit und Ausblick | 6 | 6 | 5 | 1 641 |
+| **Haupttext** | **85** | **81** | **77** | **21 338** |
+| Literaturverzeichnis | 9 | 9 | 9 | |
+| Anhang | 15 | 15 | 16 | 2 027 |
+| **PDF gesamt** | **118** | **114** | **111** | |
+
+### 7.2 Umbruchregel (`main.tex`)
+
+Nummerierte Überschriften rücken weiter auf die nächste Seite, wenn sie im unteren Seitendrittel beginnen würden. Absatzüberschriften (`\paragraph`) laufen jetzt frei: Die titlesec-Haken `\sectionbreak` bis `\paragraphbreak` setzen `\bottomtitlespace` je Ebene, ein negativer Wert schaltet die Prüfung ab. Wirkung: Kapitel 6 eine Seite weniger.
+
+### 7.3 Kontrollstichprobe (neu, Sensitivitätsanalyse)
+
+| Stelle | Änderung |
+|---|---|
+| 4.5.5 | Die fünf Kontrollsätze des Vorlaufs sind durch die Kontrollstichprobe ersetzt (je Lauf 1 000 zufällig gezogene Testsätze mit parsebarer Antwort, 1 024 Tokens, H100). |
+| Tabelle 4.3 | Zeile zu den Analysen mit 1 024 Tokens nennt jetzt auch die Kontrollstichprobe. |
+| Tabelle 4.4 | Neue Zeile für die Kontrollstichprobe. Legende berichtigt: Die Nachinferenz lief auch für das 4B-Modell auf einem anderen GPU-Typ als der Hauptlauf (vorher war nur das 27B-Modell genannt). |
+| 5.2 | Ergebnis: 8 988 von 9 000 Antworten zeichengleich, keine am Limit, F1 der Stichprobe je Lauf um höchstens 0,1 Punkte verändert; Abweichungen je Größe genannt. Weil auch das 0.8B-Modell ohne GPU-Wechsel Abweichungen zeigt, nennt der Text den GPU-Typ nicht mehr als alleinige mögliche Ursache (der alte Satz zu den zehn Präfix-Abweichungen tat das). |
+| 5.4, 5.7.3, 5.7.4 | Geschätzte Latenzen bei 1 024 Tokens auf dem GPU-Typ der Encoder (1,7, 2,3 und 4,6 s; das 193-, 262- und 512-Fache von DeBERTa-v3-base; 2,7-fach vom 0.8B- zum 27B-Modell). Die Empfehlung zu FF3 ändert sich nicht. |
+| 6.1, 6.2 | Je ein Satz: Für eine Pipeline mit 1 024 Tokens liegt nur diese Schätzung vor; die Stichprobe ersetzt keinen vollständigen Neulauf. |
+| Anhang | A.1 (Tabellenzeile, Jobs, Datum), A.3 (Commit), neuer Abschnitt A.2.12 (Ziehung und Schätzverfahren), neue Tabelle A.8 aus `generated/tab-app-kontrolle.tex`. |
+| `scripts/aggregate_results.py` | `analyse_control_sample` prüft die Zusammenfassung des Clusters gegen die Laufdateien und rechnet die F1-Werte nach; fünf neue Tests. |
+
+Abstract und alle Hauptzahlen bei 256 Tokens sind unverändert.
+
+### 7.4 Kapitel 4 und 5: gestrichene Doppelungen
+
+| Abschnitt | Entfallen | Wo es weiter steht |
+|---|---|---|
+| Einleitung Kapitel 5 | Wiederholung von strikter Metrik, Seeds und Bootstrap-Beschreibung | 4.5.1; die Lesart der Intervalle und die Rundungsregel bleiben in der Einleitung |
+| Einleitung Kapitel 4 | Aufzählung dessen, was der Anhang enthält | 4.4.1 nennt die Tabellen A.1, A.3 und A.4 |
+| 4.5.2 | Hochrechnung der Schrittrate als Plausibilitätsprüfung | Fußnote a von Tabelle 5.4 |
+| 4.6 | Satzzahlen je Domäne; ausgeschriebener GPU-Typ | Tabelle 5.6; Tabelle 4.4 |
+| 4.5.5, 4.6 | Doppelte Verweise zusammengezogen | |
+| 5.7.3 | Abnehmende Zugewinne, Vergleich über die Familien mit Parameterfaktoren | 5.3 |
+
+In den Anhang verschoben (zwei Stellen, wie abgesprochen): die Sekundenabweichung zwischen Trainer-Protokoll und Slurm-Abrechnung (4.5.2 nach A.1; im Kapitel steht weiter, dass beide Messungen nur um Sekunden bis gut zwei Minuten auseinanderliegen) und die Einzelheiten, in denen die Zero-Shot-Sampling-Einstellung von der Modellkarte abweicht (standen schon in A.2.5; im Kapitel bleiben die Parameterwerte und die Tatsache der Abweichung).
+
+### 7.5 Kapitel 2 und 3
+
+| Abschnitt | Entfallen oder gekürzt | Begründung |
+|---|---|---|
+| 2.5 | Verstärkungslernen im Nachtraining, 397-Mrd.-Modell, Begriff Prefill, Einschränkung zum Constrained Decoding in Kurzform, Anforderungen der Open-Source-AI-Definition gestrafft, vier Vorwärtsverweise zusammengezogen | Begriffe kommen später nicht vor; das 397-Mrd.-Modell steht in 1.1, Constrained Decoding ausführlich in 4.4.4 |
+| 2.6 | GPT-3-Speicherzahlen, Taxonomie der PEFT-Verfahren, Rechenbeispiel zum Rang, Nebensätze zu Lernrate und Rundungsfehler | Beispiele ohne spätere Verwendung; alle Quellen bleiben zitiert |
+| 3 Einleitung | Kapitelübersicht in einen Satz gezogen | |
+| 3.1.2, 3.1.3 | U-RaNER: Makro-F1 des englischen Tracks und Retrieval-Einzelheiten; Keraghel et al.: Einzelwerte auf WNUT2017; GLiNER: Bewertungsverfahren, Einordnung von GoLLIE-7B, Hinweis auf CPUs; NuNER: Vergleichsaufbau gestrafft | Einzelbeschreibungen; zentrale Befunde und Fundstellen bleiben |
+| 3.1.1, 3.1 Schluss | Satz zu den MultiNERD-Werten anderer Arbeiten (jetzt Verweis auf 3.5); Satz zu fehlenden Referenzwerten und Silberreferenz | steht in 3.5 und 4.3.1 |
+| 3.2.3, 3.2.4 | GoLLIE: Testumfang (jetzt Verweis auf 3.5; dort stehen weiter 32 908 Beispiele und die Angabe zu Standardsplits), Trainingsstunden je Größe; UniversalNER: „Ressourcen nicht gemessen“ | steht in 3.5 bzw. 3.2.4 |
+| 3.3 | Vorschau im Einleitungssatz; Zhan et al.: Annahmevermerk (steht im Literatureintrag); Obeidat et al.: Social-Media-Korpus, Angleichung des LoRA-Rangs (steht mit Zahlen in 3.4), Entitätslänge, Ursache der Latenz (steht in 3.5); Lu et al.: Satz zur Modellgröße; Schlusssatz gekürzt | Doppelungen innerhalb des Kapitels |
+| 3.5 | Vergleich mit Einschränkungen anderer Arbeiten; Schlusssatz zur Kontamination | Doppelungen |
+| Tabelle 3.1 | Drei Zeilen niedriger (Typenzahl bei Tedeschi und Navigli steht in der letzten Zeile, Retrieval bei GPT-NER in die Modellspalte); steht jetzt mit Text auf einer Seite | |
+
+### 7.6 Prüfungen der zweiten Runde
+
+- Build ohne Fehler, Overfull-, Underfull- oder sonstige Warnungen; 111 Seiten; Abstract weiter auf Seite ii; Inhaltsverzeichnis weiter drei Seiten.
+- `numbers.py --diff`: Alle neuen Zahlen der Kapitel sind in `summary.json` belegt; im Anhang bleiben nur Jobnummern und ein Commit als Kennungen.
+- Keine weitere Quelle ist aus dem Literaturverzeichnis gefallen; alle Verweise zeigen auf vorhandene Labels.
+- `terms.sh` ohne Treffer, kein Satz über 50 Wörter, 15 von 15 Skripttests, Aggregation zweimal byte-identisch.
+- Gegenlesung: Ein unabhängiger Prüfdurchlauf über den Diff der zweiten Runde bestätigte alle Zahlen der Kontrollstichprobe gegen `summary.json` und fand keinen Informationsverlust in Kapitel 4 und 5. Neun kleinere Hinweise sind eingearbeitet (Ursachenangabe in 5.2, Bezeichnung „parsebare Antworten“, Zusatz „in den Hauptläufen“ in 5.7.4, zwei Bezüge, drei wiederhergestellte Angaben in 2.5, 3.4 und 3.5).
+
+## 8. Offene Punkte
+
+1. **Abschnitt 2.3:** Mit Abbildung 2.2 bleibt der Abschnitt bei rund anderthalb Seiten.
+2. **Vollständiger Neulauf:** Die Kontrollstichprobe ersetzt ihn nicht. Ob er noch nötig ist, hängt von der Rückmeldung des Betreuers ab.
+3. **Ungenutzte Dateien:** `figures/kaplan_scaling.tex` und `.pdf` liegen weiter im Repo, werden aber nicht mehr eingebunden.
