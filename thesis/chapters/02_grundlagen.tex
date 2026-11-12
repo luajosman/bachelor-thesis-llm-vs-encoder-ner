@@ -318,11 +318,10 @@ vorherzusagen~\cite{brown2020language}.
 Text wird erzeugt, indem das Modell wiederholt eine Verteilung über das
 nächste Token berechnet, ein Token auswählt und es an die Eingabe
 anhängt.
-Jedes erzeugte Token erfordert einen eigenen Vorwärtsdurchlauf, wobei
-die Keys und Values der bisherigen Tokens zwischengespeichert werden
+Jedes erzeugte Token erfordert einen eigenen Vorwärtsdurchlauf, der mit
+wachsendem Kontext teurer wird; die Keys und Values der bisherigen
+Tokens werden dabei zwischengespeichert
 (Abschnitt~\ref{sec:transformer}).
-Die Eingabe wird in einem Durchlauf verarbeitet (\emph{Prefill});
-jeder Decoding-Schritt wird mit wachsendem Kontext teurer.
 Die Ausgabelänge ist neben der Eingabelänge ein wesentlicher Faktor der
 Inferenzzeit, was bei generativer NER die Wahl des Ausgabeformats zu
 einer Effizienzfrage macht (Abschnitt~\ref{sec:llm_ner_related}).
@@ -334,8 +333,7 @@ Beim Sampling wird ein Token zufällig aus der Verteilung gezogen; eine
 Temperatur skaliert die Verteilung, Top-$k$ beschränkt die Auswahl auf
 die $k$ wahrscheinlichsten Tokens, und Top-$p$ (\emph{Nucleus Sampling})
 auf die kleinste Menge von Tokens, deren Wahrscheinlichkeiten sich zu
-mindestens $p$ summieren, wodurch die unzuverlässigen Ausläufer der Verteilung
-abgeschnitten werden~\cite{holtzman2020curious}.
+mindestens $p$ summieren~\cite{holtzman2020curious}.
 Gesampelte Ausgaben variieren zwischen Durchläufen, was bei der
 Interpretation von Ergebnissen zu berücksichtigen ist
 (Abschnitt~\ref{sec:llm-pipeline}).
@@ -343,10 +341,9 @@ Interpretation von Ergebnissen zu berücksichtigen ist
 Das Vortraining liefert ein Basismodell, das Text fortsetzt, aber
 Anweisungen nicht zuverlässig befolgt.
 \textcite{ouyang2022instructgpt} zeigen, wie ein \emph{Nachtraining}
-(\emph{Post-Training}) dies ändert: Das Modell wird zunächst überwacht
-auf von Menschen geschriebenen Antworten feinjustiert
-(\emph{Supervised Fine-Tuning}, SFT) und anschließend mit
-Verstärkungslernen aus menschlichen Präferenzurteilen weiter angepasst.
+(\emph{Post-Training}) dies ändert, unter anderem durch überwachtes
+Fine-Tuning auf von Menschen geschriebenen Antworten
+(\emph{Supervised Fine-Tuning}, SFT).
 Nachtrainierte Modelle verarbeiten Eingaben in einem Dialogformat aus
 Nachrichten mit Rollen wie System, Nutzer und Assistent, das ein
 \emph{Chat-Template} mit speziellen Steuertokens in eine Tokenfolge
@@ -355,37 +352,28 @@ Qwen-Modelle ab Qwen3 können vor der eigentlichen Antwort einen
 abgegrenzten Block mit Zwischenüberlegungen erzeugen; dieser
 \emph{Thinking-Modus} lässt sich ein- und
 ausschalten~\cite{qwen2025qwen3}.
-Die in dieser Arbeit eingesetzten Checkpoints sind solche
-nachtrainierten Modelle (Abschnitt~\ref{sec:llm-auswahl}).
 
 Nachtrainierte LLMs lösen Aufgaben, die im Eingabetext beschrieben
-werden.
-\textcite{brown2020language} bezeichnen dies als \emph{In-Context
-Learning}: Das Modell erhält eine Anweisung und optional einige
+werden: Beim \emph{In-Context Learning}~\cite{brown2020language} erhält
+das Modell eine Anweisung und optional einige
 Demonstrationsbeispiele im Prompt und löst die Aufgabe ohne Änderung
 seiner Parameter.
 Enthält der Prompt keine Beispiele, spricht man von Zero-Shot, sonst von
 Few-Shot.
 Einige Fähigkeiten treten dabei erst ab einer gewissen Modellgröße auf;
 \textcite{wei2022emergent} bezeichnen sie als emergent.
-Das Zero-Shot-Regime dieser Arbeit verwendet ausschließlich Anweisungen
-ohne Demonstrationsbeispiele (Abschnitt~\ref{sec:methodischer-ansatz}).
 
 Viele LLMs werden nur mit frei herunterladbaren Gewichten und einer
-Lizenz veröffentlicht; da die Open-Source-AI-Definition der Open Source
-Initiative zusätzlich ausreichende Angaben zu den Trainingsdaten und den
-vollständigen Trainings- und Inferenzcode verlangt~\cite{osi2024osaid},
+Lizenz veröffentlicht; weil die Open-Source-AI-Definition mehr
+verlangt~\cite{osi2024osaid},
 gelten sie als Modelle mit \emph{offenen Gewichten} (\emph{open weights}).
-Zu dieser Gruppe gehört die Qwen-Familie von Alibaba.
-Qwen3.5 erschien im Februar 2026 zunächst als Mixture-of-Experts-Modell
-mit 397~Mrd. Parametern, von denen je Token 17~Mrd. aktiv
-sind~\cite{qwen2026qwen35blog,qwen2026card397b}; es folgten Modelle ohne
-Mixture-of-Experts-Komponenten, darunter Qwen3.5-27B sowie Qwen3.5-4B
-und Qwen3.5-0.8B~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b}.
-Diese drei Modelle werden in der vorliegenden Arbeit verwendet.
-Welche Komponenten geladen werden, beschreibt
-Abschnitt~\ref{sec:llm-auswahl}, die Deaktivierung des Thinking-Modus
-Abschnitt~\ref{sec:llm-pipeline}.
+Zu dieser Gruppe gehört die Qwen-Familie von Alibaba; auf das im
+Februar 2026 erschienene erste
+Qwen3.5-Modell~\cite{qwen2026qwen35blog} folgten Modelle ohne
+Mixture-of-Experts-Komponenten, darunter die hier verwendeten
+Qwen3.5-27B, Qwen3.5-4B und
+Qwen3.5-0.8B~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b}
+(Abschnitt~\ref{sec:llm-auswahl}).
 
 Für NER ergibt sich aus der generativen Arbeitsweise eine andere
 Formulierung als beim Sequenzlabeling.
@@ -399,15 +387,10 @@ Ausgabeformat und Nachverarbeitung werden damit Teil des Systems, und
 die Ausgabe kann formal fehlerhaft sein, etwa durch ungültige Indizes
 oder Typen außerhalb des Inventars~\cite{semin2026spanLabeling}.
 Verfahren des \emph{Constrained Decoding} binden die Erzeugung an eine
-formale Grammatik.
-Syntax- und Schemafehler lassen sich dadurch nur
-ausschließen, soweit die betreffenden Regeln in der Grammatik kodiert
-sind~\cite{geng2023grammar}; ob die Entitäten inhaltlich stimmen und im
-Eingabetext vorkommen, bleibt ungesichert.
-Alternativ wird frei generiert und die Ausgabe nachträglich geprüft.
-Welche Ausgabestrategien untersucht wurden und wie sie abschneiden,
-behandelt Abschnitt~\ref{sec:llm_ner_related}; das Format dieser Arbeit
-beschreibt Abschnitt~\ref{sec:prompt-design}.
+formale Grammatik~\cite{geng2023grammar}; ob die Entitäten inhaltlich
+stimmen und im Eingabetext vorkommen, bleibt dabei ungesichert.
+Alternativ wird frei generiert und die Ausgabe nachträglich geprüft
+(Abschnitte~\ref{sec:llm_ner_related} und~\ref{sec:prompt-design}).
 
 \section{Parameter-Efficient Fine-Tuning (LoRA und QLoRA)}
 \label{sec:lora}
@@ -417,19 +400,13 @@ Modells an.
 Bei LLMs stößt das an Speichergrenzen, weil während des Trainings zu
 jedem Parameter auch sein Gradient und die Zustände des Optimierers
 gehalten werden müssen; Adam speichert je Parameter zwei zusätzliche Größen.
-Für das vollständige Fine-Tuning von GPT-3 mit 175~Mrd. Parametern
-beziffern \textcite{hu2021lora} den GPU-Speicherbedarf mit Adam auf
-1{,}2~TB.
 \emph{Parameter-Efficient Fine-Tuning} (PEFT) hält die vortrainierten
 Gewichte eingefroren und trainiert nur eine kleine Zahl zusätzlicher
-oder ausgewählter Parameter.
-Nach \textcite{han2024parameter} lassen sich additive, selektive,
-reparametrisierende und hybride Verfahren unterscheiden; reparametrisierende
-Verfahren trainieren eine niedrigdimensionale Darstellung der
-Gewichtsänderung.
+oder ausgewählter Parameter~\cite{han2024parameter}.
 
-LoRA (\emph{Low-Rank Adaptation}) gehört zu den reparametrisierenden
-Verfahren~\cite{hu2021lora}.
+LoRA (\emph{Low-Rank Adaptation}) trainiert dazu eine
+niedrigdimensionale Darstellung der
+Gewichtsänderung~\cite{hu2021lora}.
 Für eine vortrainierte Gewichtsmatrix $W_0 \in \mathbb{R}^{d \times k}$
 wird die Änderung $\Delta W$ durch das Produkt zweier kleiner Matrizen
 dargestellt, sodass sich für eine Eingabe $x$ die Ausgabe
@@ -444,12 +421,8 @@ ergibt.
 $W_0$ bleibt eingefroren; trainiert werden nur $A$ und $B$.
 Der Rang $r$ bestimmt die Kapazität des Adapters und die Zahl der
 trainierbaren Parameter $r\,(d + k)$ anstelle von $d \cdot k$; die
-Konstante $\alpha$ skaliert den Beitrag des Adapters; dadurch muss die
-Lernrate bei einer Änderung von $r$ seltener neu abgestimmt
-werden~\cite[Abschn.~4.1]{hu2021lora}.
-Für eine quadratische Matrix mit $d = k = 4\,096$ und $r = 16$ ersetzt
-der Adapter rund 16{,}8~Mio. Gewichte durch rund 131\,000 trainierbare
-Parameter, also weniger als ein Prozent.
+Konstante $\alpha$ skaliert den Beitrag des
+Adapters~\cite[Abschn.~4.1]{hu2021lora}.
 Ein Dropout auf dem Adapterpfad dient als Regularisierung.
 $A$ wird zufällig initialisiert und $B$ mit null, sodass $\Delta W$ zu
 Beginn des Trainings null ist und das Modell unverändert
@@ -462,13 +435,9 @@ mitberechnet.
 \textcite{hu2021lora} adaptieren in ihren Experimenten die Query- und
 Value-Projektionen der Attention; spätere Arbeiten beziehen auch die
 Feed-Forward-Schichten ein (Abschnitt~\ref{sec:lora-konfiguration}).
-Auf GPT-3 reduziert LoRA die Zahl der trainierbaren Parameter gegenüber
-dem vollständigen Fine-Tuning auf ein Zehntausendstel und den
-GPU-Speicherbedarf auf ein Drittel; der Adapter-Checkpoint schrumpft von 350~GB auf
-35~MB~\cite{hu2021lora}.
-Auf RoBERTa, DeBERTa, GPT-2 und GPT-3 erreicht LoRA dabei eine
-Qualität, die der des vollständigen Fine-Tunings entspricht oder sie
-übertrifft.
+Auf RoBERTa, DeBERTa, GPT-2 und GPT-3 erreicht LoRA bei einem Bruchteil
+der trainierbaren Parameter eine Qualität, die der des vollständigen
+Fine-Tunings entspricht oder sie übertrifft~\cite{hu2021lora}.
 
 \begin{figure}[htbp]
   \centering
@@ -491,8 +460,7 @@ Dazu wird ein Block von Gewichten durch eine Skalierungskonstante auf
 den Wertebereich des Zieltyps normiert; zur Berechnung wird der Block
 mit dieser Konstante wieder in höhere Präzision
 zurückgerechnet~\cite{dettmers2022llmint8}.
-Der Speicherbedarf sinkt entsprechend der Bitbreite, der Rundungsfehler
-hängt von der Verteilung der Gewichte und der Blockgröße ab.
+Der Speicherbedarf sinkt entsprechend der Bitbreite.
 
 QLoRA verbindet beides: Das Basismodell wird eingefroren und mit 4~Bit
 gespeichert, gerechnet wird in 16~Bit, und die LoRA-Adapter werden in

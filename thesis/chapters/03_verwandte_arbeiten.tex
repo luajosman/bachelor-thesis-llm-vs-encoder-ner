@@ -31,14 +31,13 @@ Ergänzend wurden die Zitationen der Schlüsselarbeiten per
 Schneeballsuche verfolgt.
 Trefferzahlen wurden nicht protokolliert; die Auswahl beansprucht keine
 systematische Vollständigkeit.
-Grundlagen (Kapitel~\ref{chap:grundlagen}) werden nicht wiederholt.
 
-Abschnitt~\ref{sec:encoder_ner_related} behandelt Encoder-basierte
-Ansätze, Abschnitt~\ref{sec:llm_ner_related} LLM-basierte Ansätze nach
-Ausgabeformat und Anpassungsart, Abschnitt~\ref{sec:peft_ner_related}
-direkte Vergleiche PEFT-angepasster LLMs mit Encodern und
-Abschnitt~\ref{sec:model_size_related} Befunde zur Modellgröße.
-Abschnitt~\ref{sec:research_gap} leitet daraus die Forschungslücke ab und
+Die Abschnitte~\ref{sec:encoder_ner_related}
+bis~\ref{sec:model_size_related} behandeln Encoder-basierte Ansätze,
+LLM-basierte Ansätze nach Ausgabeformat und Anpassungsart, direkte
+Vergleiche PEFT-angepasster LLMs mit Encodern und Befunde zur
+Modellgröße; Abschnitt~\ref{sec:research_gap} leitet daraus die
+Forschungslücke ab und
 ordnet sie den Forschungsfragen aus Abschnitt~\ref{sec:problem_ziel} zu.
 
 \section{Encoder-basierte Ansätze für NER}
@@ -75,9 +74,7 @@ Wie leistungsfähig Encoder bei feingranularer NER sind, zeigt der
 MultiCoNER-II-Wettbewerb mit 33 feingranularen Typen in zwölf Sprachen.
 \textcite{tan2023damo} gewinnen dort mit U-RaNER neun der 13 Tracks.
 Das System kombiniert XLM-RoBERTa-large mit einer CRF-Schicht und einem
-Retrieval-Modul, das Wikipedia-Passagen sowie Wikidata-Entitäten und
--Typen als zusätzlichen Kontext liefert.
-Auf dem englischen Track erreicht es einen Makro-F$_1$ von 85{,}53.
+Retrieval-Modul für zusätzlichen Kontext aus Wikipedia und Wikidata.
 Ergänzend testen die Autoren ChatGPT (\texttt{gpt-3.5-turbo}) mit drei
 Prompt-Varianten auf dem Validierungssplit.
 Selbst die beste Variante mit Demonstrationsbeispielen erreicht im Mittel
@@ -102,9 +99,8 @@ GPT-4o bleibt auf neun der zehn Datensätze deutlich hinter den
 feinjustierten Encodern zurück, auf CoNLL-2003 etwa mit einem
 Makro-F$_1$ von 65{,}17 gegenüber 90{,}98 für
 DeBERTa-v3-large~\cite[Tab.~5]{keraghel2024recent}.
-Auf WNUT2017 liegt GPT-4o mit 44{,}73 nahezu gleichauf mit
-DeBERTa-v3-large (44{,}81), bleibt aber auch dort hinter dem
-feinjustierten GLiNER-Modell zurück.
+Nur auf WNUT2017 liegt GPT-4o nahezu gleichauf mit DeBERTa-v3-large,
+bleibt aber auch dort hinter dem feinjustierten GLiNER-Modell zurück.
 Die Studie stützt die Wahl von DeBERTa-v3 als Encoder-Referenz in dieser
 Arbeit (Abschnitt~\ref{sec:encoder-auswahl}); sie liegt bislang nur als
 Preprint vor.
@@ -118,8 +114,6 @@ ableiten.
 Mit GLiNER stellen \textcite{zaratiana2024gliner} ein Modell auf Basis
 von DeBERTa-v3 vor, das Typbezeichnungen und Eingabetext in einer
 gemeinsamen Sequenz verarbeitet.
-Kandidatenspans werden über ein Skalarprodukt mit den
-Typrepräsentationen bewertet.
 Trainiert wird auf Pile-NER, den von ChatGPT erzeugten Annotationen, die
 auch UniversalNER verwendet (Abschnitt~\ref{sec:llm_ner_related}).
 Im Zero-Shot-Vergleich auf sieben Datensätzen außerhalb der
@@ -127,11 +121,8 @@ Trainingsverteilung, darunter die fünf CrossNER-Domänen, erreicht die
 mittelgroße Variante mit rund 90~Mio. Parametern durchschnittlich einen F$_1$ von
 55{,}4 und damit das Niveau des etwa 140-mal größeren UniNER-13B.
 Die größte Variante liegt im Mittel rund fünf Punkte darüber, und selbst
-die kleinste Variante mit 50~Mio. Parametern übertrifft ChatGPT; das
-ebenfalls verglichene GoLLIE-7B ordnet sich zwischen der mittleren und
-der größten Variante ein.
-Inferenzzeiten messen die Autoren nicht; sie verweisen auf die parallele
-Span-Klassifikation und die Lauffähigkeit auf CPUs.
+die kleinste Variante mit 50~Mio. Parametern übertrifft ChatGPT.
+Inferenzzeiten messen die Autoren nicht.
 
 \textcite{bogdanov2024nuner} verfolgen mit NuNER einen verwandten Weg,
 setzen aber auf ein Vortraining für die anschließende Feinjustierung
@@ -143,12 +134,10 @@ Gegenüber UniNER-7B mit 56-mal mehr Parametern zeigt NuNER im
 Few-Shot-Fine-Tuning auf den vollständigen Testsets von vier Datensätzen
 (Mikro-F$_1$ auf Entitätsebene) ähnliche
 Transferfähigkeiten~\cite[Tab.~2]{bogdanov2024nuner}.
-GPT-3.5 und GPT-4 per In-Context-Learning werden dagegen nur auf zwei
-Datensätzen mit auf 1\,000 Beispiele verkleinerten Testsets und
-Makro-F$_1$ auf Tokenebene verglichen.
-Dort übertrifft NuNER GPT-3.5 bei größeren Trainingsmengen, während die
-Autoren das Verhältnis zu GPT-4 selbst als unklar
-bezeichnen~\cite[Abschn.~6]{bogdanov2024nuner}.
+Der Vergleich mit GPT-3.5 und GPT-4 per In-Context-Learning beschränkt
+sich auf zwei verkleinerte Testsets; dort übertrifft NuNER GPT-3.5 bei
+größeren Trainingsmengen, das Verhältnis zu GPT-4 bezeichnen die Autoren
+selbst als unklar~\cite[Abschn.~6]{bogdanov2024nuner}.
 
 Aus den Arbeiten dieses Abschnitts folgt: Vollständig feinjustierte
 Encoder bleiben im überwachten Setting die Referenz, auch bei
@@ -165,11 +154,6 @@ CrossNER.
 Keine der Arbeiten stellt beide Modellfamilien feinjustiert in
 derselben Pipeline auf den offiziellen MultiNERD-Splits mit gemeinsamer
 Ressourcenmessung gegenüber.
-Mangels Referenzwerten für die offiziellen Splits
-(Abschnitt~\ref{sec:k3-multinerd}) müssen Vergleiche auf MultiNERD
-innerhalb einer gemeinsamen Pipeline erfolgen; absolute Werte messen die
-Übereinstimmung mit einer Silberreferenz
-(Abschnitt~\ref{sec:datenauswahl}).
 
 \section{LLM-basierte Ansätze für NER}
 \label{sec:llm_ner_related}
@@ -296,8 +280,7 @@ trainieren damit LLaMA-Modelle mit 7 und 13~Mrd. Parametern.
 Auf einem Benchmark aus 43 Datensätzen in neun Domänen übertreffen die
 Schülermodelle im Zero-Shot-Regime ihr Lehrermodell deutlich, mit
 mittleren F$_1$-Werten von 41{,}7 bzw. 43{,}4 gegenüber 34{,}9 für
-ChatGPT; Adapterverfahren werden nicht erwähnt, Ressourcen nicht
-gemessen.
+ChatGPT; Adapterverfahren werden nicht erwähnt.
 Im überwachten Setting erreicht das auf 20 Datensätzen weiter
 feinjustierte UniNER-7B im Mittel 84{,}78 gegenüber 80{,}09 für
 BERT-base, dessen Werte aus der
@@ -326,11 +309,8 @@ Auf MultiNERD erreicht das 7B-Modell einen F$_1$ von
 76{,}0~\cite[Tab.~3]{sainz2024gollie},
 wobei acht der 15 Typen in anderer Benennung bereits im Training
 vorkamen~\cite[Anh.~B, Tab.~6]{sainz2024gollie}.
-Die Arbeit gibt an, Standardsplits zu verwenden, nennt für MultiNERD
-aber 32\,908 Testbeispiele, genau das Doppelte der 16\,454 Sätze des
-englischen Testsplits dieser Arbeit (Abschnitt~\ref{sec:datenaufteilung}).
-Wie beide Angaben zusammenhängen, bleibt ungeklärt, sodass der Wert nur
-eingeschränkt vergleichbar ist~\cite[Anh.~D.2, Tab.~9]{sainz2024gollie}.
+Wegen eines abweichenden Testumfangs ist der Wert nur eingeschränkt
+vergleichbar (Abschnitt~\ref{sec:research_gap}).
 
 GNER von \textcite{ding2024gner} trainiert Flan-T5-Modelle bis 11~Mrd.
 Parameter und LLaMA-7B auf Pile-NER darauf,
@@ -362,8 +342,7 @@ Drittens verringern Destillation und Fine-Tuning diesen Abstand, doch die
 Vergleiche mit Encodern stützen sich auf übernommene Werte oder auf
 Zero-Shot-Benchmarks~\cite{zhou2024universalner,sainz2024gollie}.
 UniversalNER misst keinen Trainings- oder Inferenzaufwand; GoLLIE
-dokumentiert Trainingszeit und CO$_2$ je Größe (7B: eine A100,
-44{,}5~h; 13B: 79{,}5~h; 34B: zwei A100, 94{,}6~h), aber keine
+dokumentiert Trainingszeit und CO$_2$ je Größe, aber keine
 Inferenzlatenz und keinen
 Encoder-Vergleich~\cite[Anh.~D.3, Tab.~10]{sainz2024gollie}.
 Für den CrossNER-Transfertest dieser Arbeit
@@ -407,34 +386,24 @@ Inferenzlatenz und Decoding-Einstellungen werden nicht berichtet.
 Eine Fehleranalyse für LLaMA3.1-8B und BERT-MRC zeigt unterschiedliche
 Profile: Der Encoder übersieht vor allem Entitäten, das LLM weist ihnen
 vor allem falsche Typen zu.
-Die Arbeit ist zur Veröffentlichung in den Findings der EMNLP 2026
-angenommen.
 
 Den Ressourcenaspekt stellen \textcite{obeidat2025llm} in den
 Mittelpunkt.
-Für fünf biomedizinische Datensätze, darunter ein Social-Media-Korpus zu
-Substanzkonsum, vergleichen sie vollständig feinjustierte Encoder mit
+Für fünf biomedizinische Datensätze vergleichen sie vollständig feinjustierte Encoder mit
 336 bis 435~Mio. Parametern (BERT-large, BiomedBERT-large und
 DeBERTa-v3-large; \cite[Abschn.~II-B]{obeidat2025llm}) mit
 Mistral-7B-Instruct und Llama-3.1-8B-Instruct, die mit QLoRA und
 4-Bit-Quantisierung angepasst werden.
-Der LoRA-Rang ist so gewählt, dass die trainierbaren Parameter der LLMs
-etwa der Größe der Encoder entsprechen.
 Beide Modellklassen geben IOB2-Tags aus und werden strikt auf
 Entitätsebene bewertet.
 Die LLMs liegen auf vier Datensätzen um 2 bis 8 F$_1$-Punkte vorn, auf
 dem fünften knapp (0{,}5 Punkte) hinter dem besten
 Encoder~\cite[Tab.~III]{obeidat2025llm}.
-Der Vorsprung ist bei Entitäten ab drei Tokens am größten und geht vor
-allem auf eine höhere Precision zurück.
+Der Vorsprung geht vor allem auf eine höhere Precision zurück.
 Dem stehen Inferenzzeiten gegenüber, die je Testbeispiel das 40- bis
 220-Fache derjenigen des besten Encoders
 betragen~\cite[Tab.~IV]{obeidat2025llm}; die LLMs benötigten zudem zwei
 statt einer H100-GPU.
-Die Autoren führen die Latenz unter anderem darauf zurück, dass das
-IOB2-Format je Eingabetoken ein Tag erzeugen lässt und lange
-Typbezeichnungen in mehrere Tokens
-zerfallen~\cite[Abschn.~IV]{obeidat2025llm}.
 
 Dass LLMs für tokenbasierte NER ohne Anpassung kaum geeignet sind, zeigen
 \textcite{lu2024llmstruggle} am klinischen Korpus RareDis-v1 mit fünf
@@ -452,7 +421,6 @@ Als Gründe für die Schwierigkeiten nennen sie die Abhängigkeit
 tokenbasierter NER von Einzeltoken-Repräsentationen, das darauf nicht
 ausgerichtete Vortrainingsziel der Decoder und die für die Modelle
 ungesehenen IOB2-Symbole.
-Die Modellgröße variiert die Arbeit nicht.
 Die Vermutung zum vollständigen Fine-Tuning relativieren
 \textcite[Anh.~D, Tab.~11]{zhan2026generativeNER}:
 In ihren Vergleichen auf CoNLL-2003 und GENIA liegt LoRA um 0{,}14 bis
@@ -485,10 +453,8 @@ Generativ arbeiten dabei \textcite{zhan2026generativeNER},
 einsetzen; den Mehraufwand bei der Inferenz beziffern allein
 \textcite{obeidat2025llm}, und dort fällt der Leistungsgewinn im
 Verhältnis dazu klein aus.
-Die Grenzen dieser Vergleiche (Datenbasis, Ausgabeformate,
-Ressourcenerfassung, Größenbereich und Herkunft der
-Encoder-Referenzwerte) bündelt Abschnitt~\ref{sec:research_gap} zur
-Forschungslücke.
+Die Grenzen dieser Vergleiche bündelt
+Abschnitt~\ref{sec:research_gap}.
 
 \section{Einfluss der Modellgröße in verwandten Arbeiten}
 \label{sec:model_size_related}
@@ -514,8 +480,7 @@ Dabei teilen nur GLiNER und UniNER die Pile-NER-Trainingsdaten, NuNER
 nutzt GPT-3.5-Annotationen des C4-Korpus, sodass der Größenunterschied
 von Architektur, Trainingsziel und Daten überlagert wird.
 Bei \textcite{obeidat2025llm} ist die Zahl trainierbarer Parameter über
-den LoRA-Rang an die Encoder angeglichen (rund 341 bzw. 353~Mio.
-Adapterparameter gegenüber 336 bis 435~Mio.), und dennoch liegen die
+den LoRA-Rang an die Encoder angeglichen, und dennoch liegen die
 LLMs vorn.
 Dieser Vorsprung dürfte eher auf die Kapazität des eingefrorenen
 Basismodells als auf die Zahl angepasster Parameter zurückgehen.
@@ -541,7 +506,7 @@ ihrer Reichweite.
 Tabelle~\ref{tab:related-overview} fasst die behandelten Arbeiten
 zusammen und ordnet die vorliegende Arbeit ein.
 
-\begin{table}[p]
+\begin{table}[t]
   \centering
   \scriptsize
   \setlength{\tabcolsep}{2.5pt}
@@ -556,8 +521,8 @@ zusammen und ordnet die vorliegende Arbeit ein.
   Vergleich bzw. keine Messung; Full-FT = vollständiges Fine-Tuning.}
   \label{tab:related-overview}
   \begin{tabular}{@{}%
-      >{\raggedright\arraybackslash}p{2.0cm}%
-      >{\raggedright\arraybackslash}p{3.4cm}%
+      >{\raggedright\arraybackslash}p{1.9cm}%
+      >{\raggedright\arraybackslash}p{3.5cm}%
       >{\raggedright\arraybackslash}p{3.2cm}%
       >{\raggedright\arraybackslash}p{2.6cm}%
       >{\raggedright\arraybackslash}p{1.5cm}%
@@ -569,7 +534,7 @@ zusammen und ordnet die vorliegende Arbeit ein.
     \midrule
     \multicolumn{6}{@{}l}{\textit{Encoder-basierte Ansätze (Abschnitt~\ref{sec:encoder_ner_related})}} \\
     \textcite{tedeschi2022multinerd} & mBERT + BiLSTM-CRF &
-      MultiNERD (10 Spr., 15 Typen); Gold-Benchmarks & Fine-Tuning &
+      MultiNERD (10 Spr.); Gold-Benchmarks & Fine-Tuning &
       -- & -- \\
     \textcite{tan2023damo} & XLM-R-large + Retrieval; ChatGPT &
       MultiCoNER II (12 Spr., 33 Typen) & Fine-Tuning; Prompting &
@@ -591,8 +556,8 @@ zusammen und ordnet die vorliegende Arbeit ein.
     \textcite{lu2024padellm} & Llama-2-7B, Baichuan2-7B &
       CoNLL, ACE, GENIA; chin. Datensätze & Fine-Tuning & -- &
       Inferenzlatenz \\
-    \textcite{wang2025gptner} & GPT-3 & CoNLL, OntoNotes, ACE, GENIA &
-      Few-Shot-Prompting (Tagger-Retrieval) &
+    \textcite{wang2025gptner} & GPT-3 (Retrieval mit Tagger) & CoNLL, OntoNotes, ACE, GENIA &
+      Few-Shot-Prompting &
       berichtete Werte & -- \\
     \textcite{xie2023zeroshot} & GPT-3.5 & 7 Benchmarks (EN, ZH) &
       Zero-Shot-Prompting & berichtete Werte & -- \\
@@ -712,16 +677,11 @@ Labels, auch wenn der Datensatz seit 2022 öffentlich ist.
 Im QLoRA-Regime lernen alle Modelle das Typinventar ohnehin aus den
 Trainingsdaten; im Zero-Shot-Regime könnte Vorwissen über die Artikel die
 Ergebnisse dagegen begünstigen.
-Diese Frage kann die Arbeit nicht klären.
 
 Die zweite Einschränkung betrifft die Vergleichsbedingungen: Die Arbeit
 hält nicht alle Bedingungen konstant und vergleicht deshalb konkrete
 Konfigurationen, keine isolierten Effekte einzelner Faktoren; die Abweichungen vom idealisierten Versuchsdesign weist
 Tabelle~\ref{tab:abweichungen} aus.
-Ähnliche Einschränkungen finden sich in den direkten Vergleichen der
-Literatur: \textcite{obeidat2025llm} betreiben die LLMs auf zwei und
-die Encoder auf einer GPU, \textcite{zhan2026generativeNER} berichten
-Trainingskosten, aber keine Inferenzbedingungen.
 
 Aus der Literatur folgen drei Erwartungen als Lesehilfe ohne
 Hypothesentest, die Kapitel~\ref{chap:fazit} je Forschungsfrage mit den
