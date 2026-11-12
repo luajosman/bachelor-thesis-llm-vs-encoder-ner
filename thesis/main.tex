@@ -97,7 +97,18 @@
 % im Anschluss auf derselben Seite. titlesec misst den freien Platz vor
 % Abstand und Überschrift; .30 entspricht daher etwa dem unteren Viertel
 % für die Überschrift selbst.
-\renewcommand{\bottomtitlespace}{.30\textheight}
+\newcommand{\ueberschriftenrand}{.30\textheight}
+\renewcommand{\bottomtitlespace}{\ueberschriftenrand}
+% Absatzüberschriften (\paragraph) sind von der Regel ausgenommen und laufen frei:
+% titlesec ruft vor der Platzprüfung den Haken \<ebene>break auf, und ein negativer
+% Wert von \bottomtitlespace schaltet die Prüfung ab. Die nummerierten Ebenen setzen
+% den Wert jeweils zurück.
+\makeatletter
+\newcommand{\sectionbreak}{\gdef\bottomtitlespace{\ueberschriftenrand}\addpenalty{\@secpenalty}}
+\newcommand{\subsectionbreak}{\gdef\bottomtitlespace{\ueberschriftenrand}\addpenalty{\@secpenalty}}
+\newcommand{\subsubsectionbreak}{\gdef\bottomtitlespace{\ueberschriftenrand}\addpenalty{\@secpenalty}}
+\newcommand{\paragraphbreak}{\gdef\bottomtitlespace{-1pt}\addpenalty{\@secpenalty}}
+\makeatother
 \usepackage{placeins}  % \FloatBarrier: Floats im Anhang im eigenen Abschnitt halten
 \usepackage{graphicx}
 \usepackage{tikz}
