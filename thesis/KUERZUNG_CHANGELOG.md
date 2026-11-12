@@ -225,3 +225,13 @@ In den Anhang verschoben (zwei Stellen, wie abgesprochen): die Sekundenabweichun
 1. **Abschnitt 2.3:** Mit Abbildung 2.2 bleibt der Abschnitt bei rund anderthalb Seiten.
 2. **Vollständiger Neulauf:** Die Kontrollstichprobe ersetzt ihn nicht. Ob er noch nötig ist, hängt von der Rückmeldung des Betreuers ab.
 3. **Ungenutzte Dateien:** `figures/kaplan_scaling.tex` und `.pdf` liegen weiter im Repo, werden aber nicht mehr eingebunden.
+
+## Lektorat vom 25.11.2026
+
+Sprachliche und formale Durchsicht der gesamten Arbeit auf dem Branch `lektorat-2026-11-25` (ausgehend von `main`; Bezeichnung und Branchname laut Auftrag, durchgeführt am 12.11.2026). Der vollständige Prüfbericht steht in `LEKTORAT_2026-11-25.md`.
+
+- **Direkt angewendet (Commit `518f7b3`):** 64 typografische Korrekturen, Wortlaut unverändert. Im Einzelnen 59 geschützte Leerzeichen vor Klammerzitaten (Kapitel 1, 2, 4 ohne Abschnitt 4.3, 5, 6 und Anhang), 3 geschützte Leerzeichen vor Einheiten (zweimal „ms“ im Anhang, „32 Bit“ in 2.6), 1 im GPU-Namen „H100 NVL“ (Anhang) und 1 doppelter Bindestrich in der Beschriftung von Tabelle 2.1. Die Einzelliste steht in Abschnitt 2 des Berichts.
+- **Zur Entscheidung:** 205 Vorschläge (hoch 6, mittel 73, niedrig 126); keiner davon ist umgesetzt.
+- **Rechtschreibung:** kein eindeutiger Rechtschreib- oder Tippfehler gefunden.
+- **Build:** 111 Seiten vorher und nachher, Haupttext weiter S. 1 bis 77; keine Warnungen; Inhaltsverzeichnis und Verweisziele identisch.
+- **Nicht geändert:** `generated/`, `scripts/`, Zahlen, Tabelleninhalte, Abschnitte 4.3 und 4.7, Tabellen 4.3, 4.7 und 4.9, `references.bib`, `main.tex`, Vorspann und Kapitel 3.

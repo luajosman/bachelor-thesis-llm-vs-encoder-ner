@@ -8,6 +8,7 @@
 - **Umbruchregel:** Nummerierte Überschriften rücken weiter aus dem unteren Seitendrittel auf die nächste Seite; Absatzüberschriften (`\paragraph`) sind über die titlesec-Haken in `main.tex` ausgenommen.
 - **Berichtigt:** Legende von Tabelle 4.4 (die Nachinferenz lief auch für das 4B-Modell auf einem anderen GPU-Typ als der Hauptlauf).
 - **Offen beim Verfasser:** Folgenachricht an den Betreuer (`review/23_…`) mit der neuen PDF-Kopie versenden; Rückmeldung zum Kontrolllauf und zur Länge abwarten; die offenen Punkte des Abschnitts vom 8.11. unten (KI-Angabe, englisches Abstract, Repository) gelten weiter.
+- **Lektorat (Branch `lektorat-2026-11-25`, nicht gepusht):** sprachliche und formale Durchsicht der gesamten Arbeit. 64 typografische Korrekturen direkt angewendet (geschützte Leerzeichen vor Klammerzitaten und Einheiten), kein Rechtschreibfehler gefunden, 205 Vorschläge zur Entscheidung (hoch 6, mittel 73, niedrig 126). Seitenstand unverändert (111, Haupttext 77). Bericht: `LEKTORAT_2026-11-25.md`.
 
 Aufgeräumt am 09.11.: Die abgearbeiteten Prüfberichte 01–08a, 10–15 und 18–21 sind aus `review/` entfernt; die nie committeten Codex-Berichte 09 und 17 ebenfalls. Die Verweise unten beziehen sich auf den Stand davor; die Berichte sind über die Git-Historie abrufbar, z. B. `git show 1aa3a1b:thesis/review/15_umsetzungsprotokoll_2026-11-07.md`.
 
