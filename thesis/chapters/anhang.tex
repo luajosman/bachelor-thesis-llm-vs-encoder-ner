@@ -102,6 +102,8 @@ jeweiligen Laufs mit einem Unterordner je Domäne ab.
     \addlinespace
     Nachinferenz MultiNERD, 1\,024 Tokens (neun QLoRA-Läufe) & wie Hauptstudie & \texttt{results/\allowbreak multinerd\_output\_limit\_1024/}\dots & \texttt{ff91342} \\
     \addlinespace
+    Kontrollstichprobe MultiNERD, 1\,024 Tokens (neun QLoRA-Läufe) & wie Hauptstudie & \texttt{results/\allowbreak multinerd\_control\_1024/}\dots & \texttt{1638272} \\
+    \addlinespace
     Greedy-Kontrolle Qwen3.5-0.8B & \texttt{qwen35\_08b\_zeroshot} & \texttt{qwen35-08b-zeroshot-greedy-v1} & \texttt{4679bf1}$^{c}$ \\
     \addlinespace
     Vorlauf DeBERTa-v3-base (Latenz auf A100) & \texttt{deberta\_base} & \texttt{deberta-v3-base} & \texttt{cdf10db}$^{c}$ \\
@@ -136,6 +138,9 @@ vollständige CrossNER-Neulauf mit 1\,024 Tokens vom 28.\ bis
 29.~Oktober 2026 (Jobs 3673475 bis 3673477, Aggregation 3673478); ein
 erster Versuch (Jobs 3672273 bis 3672276) brach wegen eines
 abweichenden Codestands vor der Inferenz ab.
+Die Kontrollstichprobe mit 1\,024 Tokens lief am 9.\ und
+10.~November 2026 (Jobs 3724608 bis 3724616, H100~HBM3, Commit
+\texttt{1638272}).
 
 \paragraph{Explorative Vorläufe.}
 Tabelle~\ref{tab:app-vorlaeufe} dokumentiert die explorativen Vorläufe
@@ -175,6 +180,7 @@ beträgt höchstens 0,12 Punkte.
     Code: CrossNER-Evaluationen              & \texttt{b620041ce75878603b37763831204f26fac7ab91} \\
     Code: CrossNER mit 1\,024 Tokens (Vorstudie) & \texttt{ec492799551cbfc9c47550e25006f11386f99ceb} \\
     Code: Sensitivitätsanalysen mit 1\,024 Tokens & \texttt{ff91342f1f206572c5e930e0be7d1929362ccb9c} \\
+    Code: Kontrollstichprobe mit 1\,024 Tokens & \texttt{1638272a2bf95760ce95578514bacc98fdf05eb7} \\
     Datensatz \texttt{Babelscape/multinerd}  & \texttt{2814b78e7af4b5a1f1886fe7ad49632de4d9dd25} \\
     CrossNER-Daten (Commit in \texttt{zliucr/CrossNER}) & \texttt{2e7ba2a7798c961e3f29fbc51252c5a8d40224bf} \\
     \texttt{Qwen/Qwen3.5-0.8B}               & \texttt{2fc06364715b967f1860aea9cf38778875588b17} \\
@@ -260,7 +266,8 @@ Pipeline-Module und Softwareversionen, den Prompt des QLoRA-Regimes, die
 Sampling-Einstellung des Zero-Shot-Regimes, die
 je Lauf protokollierten Felder, die Adapterdateien, den Trainingsverlauf
 der 27B-Läufe, einen Hardwareeffekt bei der Encoder-Inferenz, die
-Rückfallstrategien des Parsers und die Vorstudie zum Ausgabelimit.
+Rückfallstrategien des Parsers, die Vorstudie zum Ausgabelimit und die
+Kontrollstichprobe.
 
 \subsection{Vorläufe und Thinking-Abbruch}
 
@@ -544,6 +551,22 @@ Ausgabetokens für alle drei Seeds auf allen 2\,506 Sätzen der fünf
 Domänen wiederholt (Abschnitt~\ref{sec:crossner}); die Ergebnisse
 berichtet Abschnitt~\ref{sec:erg-crossner}.
 
+\subsection{Kontrollstichprobe zum Ausgabelimit}
+
+Für die Kontrollstichprobe (Abschnitt~\ref{sec:nachinferenz}) wurden die
+Indizes aller 16\,454 Testsätze mit fester Zufallssaat (20261108)
+gemischt; je Lauf bilden die ersten 1\,000 Sätze dieser Reihenfolge,
+deren gespeicherte Antwort parsebar war, die Stichprobe.
+Da sich die nicht parsebaren Antworten zwischen den Läufen
+unterscheiden, sind die Stichproben nicht in jedem Lauf dieselben.
+Gemessen wurde je Satz bei Batchgröße~1 nach einem nicht gewerteten
+Aufwärmdurchlauf.
+Die mittlere Latenz über den gesamten Testsplit bei 1\,024 Tokens wird
+geschätzt, indem die mittlere Latenz der Stichprobe auf alle nicht
+abgeschnittenen Sätze übertragen und die gemessene Dauer der
+Nachinferenz der abgeschnittenen Sätze hinzugerechnet wird.
+Die Ergebnisse je Lauf nennt Tabelle~\ref{tab:app-kontrolle}.
+
 \FloatBarrier
 \section{Ergänzende Ergebnistabellen}
 \label{app:ergebnistabellen}
@@ -556,7 +579,9 @@ Tabelle~\ref{tab:app-seeds} nennt die Testwerte der einzelnen Seeds, aus
 denen die Mittelwerte in Tabelle~\ref{tab:haupt} gebildet wurden, sowie
 den Validierungs-F$_1$ und die Epoche des jeweils gewählten Checkpoints.
 Tabelle~\ref{tab:app-limit-seeds} ergänzt die Nachinferenz mit
-1\,024 Tokens (Tabelle~\ref{tab:limit-multinerd}) um die Werte je Seed.
+1\,024 Tokens (Tabelle~\ref{tab:limit-multinerd}) um die Werte je Seed;
+Tabelle~\ref{tab:app-kontrolle} nennt die Ergebnisse der
+Kontrollstichprobe je Lauf.
 Die Tabellen~\ref{tab:typen} und~\ref{tab:groesse} enthalten die Werte
 zu den Abbildungen~\ref{fig:typen} und~\ref{fig:groesse};
 Tabelle~\ref{tab:app-typen-prf} ergänzt die Typwerte um Precision und
@@ -591,6 +616,20 @@ Fehlerklasse aus Abschnitt~\ref{sec:erg-fehlertypen}.
   \label{tab:app-limit-seeds}
   \setlength{\tabcolsep}{4pt}
   \input{generated/tab-app-limit-seeds}
+\end{table}
+
+\begin{table}[ht]
+  \centering
+  \scriptsize
+  \caption[Kontrollstichprobe mit 1\,024 Tokens je Lauf]{Kontrollstichprobe
+  der nicht abgeschnittenen Antworten mit 1\,024 Ausgabetokens je Lauf
+  (Abschnitt~\ref{sec:nachinferenz}): identische Antworten, Antworten am
+  Limit, Mikro-F$_1$ auf der Stichprobe mit den gespeicherten (256) und
+  den neu erzeugten Antworten (1\,024) in Punkten, Latenz je Satz und
+  maximal allokierter GPU-Speicher auf NVIDIA H100 (80\,GB HBM3).}
+  \label{tab:app-kontrolle}
+  \setlength{\tabcolsep}{3pt}
+  \input{generated/tab-app-kontrolle}
 \end{table}
 
 \begin{table}[ht]

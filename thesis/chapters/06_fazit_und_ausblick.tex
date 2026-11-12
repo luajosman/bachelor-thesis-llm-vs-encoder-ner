@@ -83,7 +83,9 @@ Bei 256 Ausgabetokens bilden beide Encoder allein die Pareto-Front; ein
 LLM wird erst ab 1,9~s je Satz zulässig und liegt auch mit 1\,024 Tokens
 nicht vor DeBERTa-v3-large.
 Die Ressourcenwerte bei 256 Tokens gelten dabei nicht für eine Pipeline
-mit 1\,024 Tokens, für die kein vollständiger Neulauf vorliegt.
+mit 1\,024 Tokens, für die kein vollständiger Neulauf, sondern nur die
+Schätzung aus einer Kontrollstichprobe vorliegt
+(Abschnitt~\ref{sec:disk-effizienz}).
 Auf CrossNER liegt Qwen3.5-27B bei 1\,024 Tokens mit 87,1 Punkten vor
 DeBERTa-v3-large mit 85,0 und ist ab rund 12,9~s je Satz und 18,6~GiB
 die beste gemessene Wahl.
@@ -146,8 +148,10 @@ bis 1,2 Punkte und den CrossNER-F$_1$ des 27B-Modells um 15,4 Punkte.
 Auf CrossNER wurde der gesamte Testsplit neu inferiert, auf MultiNERD nur
 die nicht parsebaren Antworten; 594 von 604 Präfixen wurden reproduziert,
 zehn wichen ab.
+In einer Kontrollstichprobe nicht abgeschnittener Antworten blieben
+8\,988 von 9\,000 mit dem höheren Limit zeichengleich.
 Mit dem Wechsel des GPU-Typs und dem nicht protokollierten Stoppgrund der
-ursprünglichen Läufe ersetzt dies keinen vollständigen Neulauf;
+ursprünglichen Läufe ersetzt auch das keinen vollständigen Neulauf;
 Hauptauswertung und Sensitivitätsanalysen sind gemeinsam zu lesen.
 Betroffen ist FF1 im Betrag und teilweise in der Richtung der Vergleiche,
 über die Ressourcenwerte auch FF3.
@@ -187,7 +191,9 @@ Betroffen sind FF1 und FF2.
 
 \paragraph{Effizienzmessung.}
 Latenz und Speicher gelten für einzelne Sätze bei Batchgröße~1 auf drei
-GPU-Typen; die Trainingsdauer der 27B-Läufe ist durch Neustarts und
+GPU-Typen; für die LLMs liegt auf einheitlicher Hardware nur die
+Schätzung aus der Kontrollstichprobe vor.
+Die Trainingsdauer der 27B-Läufe ist durch Neustarts und
 gemeinsame Knotennutzung überlagert.
 Die Faktoren gelten für die eingesetzte Hardware und Inferenzsoftware
 und sind nicht exakt auf andere Systeme übertragbar.

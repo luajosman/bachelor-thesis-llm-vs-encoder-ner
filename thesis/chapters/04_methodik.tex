@@ -424,7 +424,8 @@ nicht beziffern.
     Ausgabelimit 256 Tokens & vor den Läufen ohne Längenanalyse
       festgelegt & keiner & Hauptauswertung bei 256 Tokens \\
     \addlinespace
-    Nachinferenz und CrossNER-Neulauf mit 1\,024 Tokens & nach Kenntnis
+    Analysen mit 1\,024 Tokens & Nachinferenz, Kontrollstichprobe und
+      CrossNER-Neulauf nach Kenntnis
       der Testbefunde & post hoc & als Sensitivitätsanalysen berichtet \\
     \addlinespace
     Checkpoint-Auswahl & Validierungssplit (LLM: erste 200 Sätze) &
@@ -454,8 +455,8 @@ Softwareversionen (Anhang~\ref{app:durchfuehrung}).
     Training und Inferenz einer MultiNERD-Konfiguration liefen jeweils
     auf demselben GPU-Typ; die Sensitivitätsanalysen mit 1\,024 Tokens
     (Abschnitte~\ref{sec:nachinferenz} und~\ref{sec:crossner}) liefen
-    auf der H100, für das 27B-Modell also auf einem anderen GPU-Typ als
-    seine Hauptläufe.}
+    auf der H100, für das 4B- und das 27B-Modell also auf einem anderen
+    GPU-Typ als ihre Hauptläufe.}
     \label{tab:hardware}
     \setlength{\tabcolsep}{4pt}
     \begin{tabular}{lll}
@@ -479,6 +480,8 @@ Softwareversionen (Anhang~\ref{app:durchfuehrung}).
         Qwen3.5-27B             & CrossNER (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
     \addlinespace
         Qwen3.5, alle Größen    & Nachinferenz (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
+    \addlinespace
+        Qwen3.5, alle Größen    & Kontrollstichprobe (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -1123,12 +1126,19 @@ Bei identischen Logits und Greedy-Decoding bliebe eine Antwort, die vor
 dem Limit mit dem Ende-Token abschließt, unverändert; da die
 ursprünglichen Läufe den Stoppgrund nicht protokollierten, ist diese
 Bedingung für die übernommenen Antworten nicht vollständig prüfbar.
-Weil die Nachinferenz auf einem anderen GPU-Typ lief als die
-ursprüngliche Testinferenz (Tabelle~\ref{tab:hardware}), wird die Annahme
-geprüft: Für jeden nachgenerierten Satz wird festgehalten, ob die ersten
+Zwei Kontrollen prüfen die Annahme.
+Für jeden nachgenerierten Satz wird festgehalten, ob die ersten
 256 erzeugten Tokens mit der gespeicherten Antwort übereinstimmen.
-In einem Vorlauf wurden zusätzlich fünf nicht abgeschnittene Sätze neu
-generiert und mit den gespeicherten Antworten verglichen.
+Zusätzlich wurden nachträglich je Lauf 1\,000 zufällig gezogene
+Testsätze mit parsebarer gespeicherter Antwort mit demselben Adapter,
+demselben Prompt und Greedy-Decoding bei einem Limit von 1\,024 Tokens
+neu generiert und zeichenweise mit der gespeicherten Antwort verglichen
+(\emph{Kontrollstichprobe}, Anhang~\ref{app:durchfuehrung}).
+Nachinferenz und Kontrollstichprobe liefen für alle drei Größen auf der
+H100, für das 4B- und das 27B-Modell also auf einem anderen GPU-Typ als
+die ursprüngliche Testinferenz (Tabelle~\ref{tab:hardware}); da auch die
+Encoder auf der H100 liefen, liefert die Kontrollstichprobe zugleich
+Latenzen auf einheitlicher Hardware.
 Die zusammengeführten Vorhersagen werden mit derselben strikten Metrik über
 alle 16\,454 Sätze ausgewertet und je Seed den Werten bei 256 Tokens
 gegenübergestellt.

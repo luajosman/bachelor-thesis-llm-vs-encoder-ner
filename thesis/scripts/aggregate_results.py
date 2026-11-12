@@ -966,6 +966,7 @@ def summarise_control(per_runs, encoder_latency):
             latency_p50=statistics.fmean(r["latency_p50"] for r in runs),
             latency_p95=statistics.fmean(r["latency_p95"] for r in runs),
             latency_full_test_estimate=dict(mean=estimate[0], std=estimate[1]),
+            latency_mean_s=sample[0] / 1000, latency_full_test_estimate_s=estimate[0] / 1000,
             source_latency_256=statistics.fmean(r["source_latency_256"] for r in runs),
             vram_gib=max(r["vram_mb"] for r in runs) / 1024,
             same_gpu_as_source=all(r["gpu"] == r["source_gpu"] for r in runs),
@@ -973,12 +974,14 @@ def summarise_control(per_runs, encoder_latency):
             factor_estimate={enc: estimate[0] / lat for enc, lat in encoder_latency.items()})
     n = sum(v["n"] for v in sizes.values())
     equal = sum(v["equal"] for v in sizes.values())
+    estimates = [v["latency_full_test_estimate"]["mean"] for v in sizes.values()]
     gpus = sorted({r["gpu"] for runs in per_runs.values() for r in runs})
     return dict(per_size=sizes, gpu=gpus[0] if len(gpus) == 1 else gpus,
                 total=dict(n=n, equal=equal, mismatches=n - equal, share_equal=equal / n,
                            pred_equal=sum(v["pred_equal"] for v in sizes.values()),
                            limit_hits=sum(v["limit_hits"] for v in sizes.values()),
-                           max_abs_f1_diff=max(v["max_abs_f1_diff"] for v in sizes.values())))
+                           max_abs_f1_diff=max(v["max_abs_f1_diff"] for v in sizes.values()),
+                           latency_estimate_ratio_max_to_min=max(estimates) / min(estimates)))
 
 
 def analyse_control_sample(G):
@@ -1021,6 +1024,10 @@ def analyse_control_sample(G):
                 generated_tokens_mean=row["generated_tokens_mean"], gpu=row["gpu"], source_gpu=row["source_gpu"]))
     encoder_latency = {enc: G[enc]["agg"]["latency_mean"]["mean"] for enc in ("deberta-base", "deberta-large")}
     status.update(summarise_control(per_runs, encoder_latency))
+    seeds = sorted({load_json(CONTROL_ROOT / name / "status.json").get("sample_seed") for name in expected})
+    if len(seeds) != 1:
+        sys.exit(f"ABBRUCH: Kontrollstichprobe: unterschiedliche Zufallssaaten {seeds}")
+    status["sample_seed"] = seeds[0]
     status["encoder_gpu"] = sorted({r["gpu"] for enc in encoder_latency for r in G[enc]["runs"]})
     return status
 

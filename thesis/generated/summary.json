@@ -18600,6 +18600,8 @@
      "mean": 1722.3135816502145,
      "std": 32.25866247173573
     },
+    "latency_mean_s": 1.68184912597714,
+    "latency_full_test_estimate_s": 1.7223135816502144,
     "source_latency_256": 1875.7561351929735,
     "vram_gib": 0.8842787742614746,
     "same_gpu_as_source": true,
@@ -18688,6 +18690,8 @@
      "mean": 2342.0057554084756,
      "std": 63.87159499321321
     },
+    "latency_mean_s": 2.2871980390162205,
+    "latency_full_test_estimate_s": 2.3420057554084757,
     "source_latency_256": 4684.691244731319,
     "vram_gib": 3.410295009613037,
     "same_gpu_as_source": false,
@@ -18776,6 +18780,8 @@
      "mean": 4572.429024873597,
      "std": 24.600767600243767
     },
+    "latency_mean_s": 4.465255776290394,
+    "latency_full_test_estimate_s": 4.572429024873597,
     "source_latency_256": 5504.89158169899,
     "vram_gib": 18.597204208374023,
     "same_gpu_as_source": false,
@@ -18797,8 +18803,10 @@
    "share_equal": 0.9986666666666667,
    "pred_equal": 8988,
    "limit_hits": 0,
-   "max_abs_f1_diff": 0.001020217515290911
+   "max_abs_f1_diff": 0.001020217515290911,
+   "latency_estimate_ratio_max_to_min": 2.6548179574201454
   },
+  "sample_seed": 20261108,
   "encoder_gpu": [
    "NVIDIA H100 80GB HBM3"
   ]

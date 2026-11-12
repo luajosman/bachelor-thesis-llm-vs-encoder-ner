@@ -322,12 +322,21 @@ Precision von 85 bis 88 Punkten.
 1,16 Punkte, getragen vom Recall bei leicht sinkender Precision; der
 Makro-F$_1$ steigt um 0,5 bis 0,6 Punkte.
 In 594 von 604 nachgenerierten Sätzen stimmen die ersten
-256 erzeugten Tokens mit der gespeicherten Antwort überein, und die fünf
-Kontrollsätze des Vorlaufs wurden byte-gleich reproduziert. Die zehn
-Abweichungen (1,7\,\%) könnten durch numerische Effekte des anderen
-GPU-Typs entstanden sein; ihre Ursache wurde nicht isoliert geprüft.
-Die Kontrollen stützen die überwiegende Reproduzierbarkeit der Präfixe,
-belegen aber keine vollständige Äquivalenz zu einem Neulauf aller Sätze.
+256 erzeugten Tokens mit der gespeicherten Antwort überein; zehn
+weichen ab (1,7\,\%).
+In der Kontrollstichprobe der nicht abgeschnittenen Antworten
+(Tabelle~\ref{tab:app-kontrolle}) sind 8\,988 von 9\,000 mit
+1\,024 Tokens neu erzeugten Antworten zeichengleich mit der
+gespeicherten; keine erreicht das Limit, und der F$_1$ auf der
+Stichprobe ändert sich je Lauf um höchstens 0,1 Punkte.
+Von den zwölf Abweichungen entfallen sieben auf das 4B- und vier auf das
+27B-Modell, eine auf das 0.8B-Modell, das auf demselben GPU-Typ lief wie
+im Hauptlauf.
+Numerische Effekte des anderen GPU-Typs sind eine mögliche Ursache der
+Abweichungen; isoliert geprüft wurde sie nicht.
+Die Kontrollen stützen, dass ein höheres Limit die nicht abgeschnittenen
+Antworten nahezu unverändert lässt; einen Neulauf aller 16\,454 Sätze
+ersetzen sie nicht.
 Die Nachinferenz der langen Sätze dauerte je Satz 11,5 (0.8B), 15,4 (4B)
 und 31,6~s (27B), das Drei- bis Sechsfache der mittleren Latenz der
 Hauptläufe. Dieser Anstieg ist erwartbar, da die Generierungsdauer mit
@@ -488,6 +497,17 @@ Der hardwaregleiche Vergleich auf der H100 ergibt für das 0.8B-Modell
 das 210-Fache der Latenz von DeBERTa-v3-base; das 27B-Modell auf der
 H100~NVL benötigt das 335-Fache von DeBERTa-v3-large und das 617-Fache
 von DeBERTa-v3-base.
+Auf dem GPU-Typ der Encoder schätzt die Kontrollstichprobe
+(Abschnitt~\ref{sec:nachinferenz}, Tabelle~\ref{tab:app-kontrolle}) die
+mittlere Latenz bei 1\,024 Tokens auf 1,7~s (0.8B), 2,3~s (4B) und
+4,6~s (27B), das 193-, 262- und 512-Fache der Latenz von
+DeBERTa-v3-base.
+Der Wert des 4B-Modells liegt bei der Hälfte des auf der A100 gemessenen
+Werts der Hauptläufe, was für einen deutlichen Hardwareanteil an den
+Unterschieden in Tabelle~\ref{tab:effizienz} spricht; getrennt gemessen
+wurde er nicht.
+Die Schätzung beruht auf je 1\,000 Sätzen ohne abgeschnittene Antworten
+und der gemessenen Nachinferenz der abgeschnittenen.
 Das 95.~Perzentil liegt bei allen drei QLoRA-Modellen beim 3,4-Fachen
 des Medians, weil die Generierungsdauer mit der Zahl der ausgegebenen
 Entitäten wächst (Abschnitt~\ref{sec:effizienzmetriken}); bei den
@@ -962,7 +982,9 @@ und Trainingsdauer um mehr als eine Größenordnung, bei der Latenz je
 Satz auf das Dreifache bei 36-facher Parameterzahl
 (Tabelle~\ref{tab:effizienz}). Das 4B-Modell fällt in der Trainingsdauer
 auf der A100 aus der Reihe, und Latenz wie Trainingsdauer sind durch
-GPU-Typ und Clusterlast überlagert.
+GPU-Typ und Clusterlast überlagert; auf einheitlicher Hardware wächst
+die geschätzte Latenz vom 0.8B- zum 27B-Modell auf das 2,7-Fache
+(Abschnitt~\ref{sec:erg-effizienz}).
 Das Muster ähnelt den Beobachtungen bei GoLLIE
 \cite[Abschn.~5.2]{sainz2024gollie} und UniversalNER
 \cite[Abschn.~5.2]{zhou2024universalner}, wo größere Backbones nur wenig
@@ -1006,11 +1028,15 @@ Bei 256 Ausgabetokens bilden die beiden Encoder die Pareto-Front
 (Abschnitt~\ref{sec:erg-effizienz}); die Nachinferenz am Ausgabelimit
 verändert den Qualitätsvergleich, weil das
 27B-Modell mit vollständigen Antworten im Punktwert knapp vor
-DeBERTa-v3-base liegt (Abschnitt~\ref{sec:disk-leistung}). Da die
-selektive Nachinferenz die Latenz nur für die regenerierten Sätze auf
-anderer Hardware erfasst, werden ihre Qualitätswerte nicht mit den
+DeBERTa-v3-base liegt (Abschnitt~\ref{sec:disk-leistung}). Die
+Qualitätswerte der Nachinferenz werden nicht mit den
 Ressourcenwerten des Laufs mit 256 Ausgabetokens zu einer neuen Pareto-Aussage
-kombiniert. DeBERTa-v3-large bleibt auf MultiNERD im Mikro-F$_1$ knapp vorn.
+kombiniert.
+Für eine Pipeline mit 1\,024 Tokens liegt nur die Schätzung aus der
+Kontrollstichprobe vor (1,7 bis 4,6~s je Satz auf der H100,
+Abschnitt~\ref{sec:erg-effizienz}); auch danach wird ein LLM erst bei
+mehr als dem Hundertfachen der Encoder-Latenz zulässig, und
+DeBERTa-v3-large bleibt auf MultiNERD im Mikro-F$_1$ knapp vorn.
 
 Nach den Ressourcenschwellen (Abschnitt~\ref{sec:effizienzmetriken},
 Tabelle~\ref{tab:effizienz}) lässt eine Latenzgrenze ab 8,9~ms

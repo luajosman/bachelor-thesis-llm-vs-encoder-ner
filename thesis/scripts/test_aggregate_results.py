@@ -241,6 +241,7 @@ class ControlSampleTests(unittest.TestCase):
             run_dir.mkdir(parents=True)
             (run_dir / "control_metrics.yaml").write_text(agg.yaml.safe_dump(metrics))
             (run_dir / "control_predictions.json").write_text(json.dumps(records))
+            (run_dir / "status.json").write_text(json.dumps(dict(sample_seed=7)))
             main_dir = self.root / "multinerd" / name
             main_dir.mkdir(parents=True)
             (main_dir / "test_predictions.json").write_text(json.dumps(main))
@@ -278,6 +279,7 @@ class ControlSampleTests(unittest.TestCase):
         self.assertAlmostEqual(size["factor_sample"]["deberta-large"], 10.0)
         self.assertTrue(size["same_gpu_as_source"])
         self.assertEqual(cs["gpu"], "X")
+        self.assertEqual(cs["sample_seed"], 7)
 
     def test_tampered_summary_aborts(self):
         self.rows[1]["raw_output_equal"] = 3
