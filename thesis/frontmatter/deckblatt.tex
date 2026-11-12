@@ -45,12 +45,22 @@
         {\fontsize{17}{20}\selectfont Fachgebiet Quality \& Usability}
     };
 
-    % --- Linker Block unten ---
+    % --- Abgabedatum (TODO-NUTZER: vor der Abgabe prüfen) ---
+    \node[anchor=south, align=center] (datum) at ([yshift=2.0cm]current page.south) {%
+        \fontsize{14}{18}\selectfont
+        Berlin, 25.~November 2026
+    };
+
+    % Vertikale Mitte zwischen Fachgebiet und Datum
+    \coordinate (mitte) at ($(block3.south)!0.5!(datum.north)$);
+
+    % --- Linker Block unten (vertikal mittig zwischen Block 3 und Datum) ---
     \node[
-        anchor=north west,
+        anchor=west,
         align=left,
-        text width=6.2cm
-    ] at ([xshift=3.3cm,yshift=6.2cm]current page.south west) {%
+        text width=6.2cm,
+        xshift=3.3cm
+    ] (verfasser) at (current page.west |- mitte) {%
         \fontsize{14}{18}\selectfont
         Verfasser: \\[0.10cm]
         Luaj Osman \\[0.10cm]
@@ -58,23 +68,18 @@
         Matrikelnummer: 456094
     };
 
-    % --- Rechter Block unten ---
+    % --- Rechter Block unten (Oberkante bündig mit dem linken Block) ---
     \node[
         anchor=north east,
         align=left,
-        text width=7.1cm
-    ] at ([xshift=-2.7cm,yshift=6.2cm]current page.south east) {%
+        text width=7.1cm,
+        xshift=-2.7cm
+    ] at (current page.east |- verfasser.north) {%
         \fontsize{14}{18}\selectfont
         Prüfer: \\[0.10cm]
         Prof.\ Dr.\ Sebastian Möller \\[0.10cm]
         Prof.\ Dr.\ Axel Küpper \\[0.10cm]
         Betreuer: Dr.\ Philippe Thomas
-    };
-
-    % --- Abgabedatum (TODO-NUTZER: vor der Abgabe prüfen) ---
-    \node[anchor=south, align=center] at ([yshift=2.0cm]current page.south) {%
-        \fontsize{14}{18}\selectfont
-        Berlin, 25.~November 2026
     };
 
 \end{tikzpicture}
