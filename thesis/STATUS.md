@@ -1,5 +1,11 @@
 # Stand der Bachelorarbeit (21.11.2026)
 
+## Abbildungsprüfung (21.11., Claude Code)
+
+- **Bericht:** `review/26_abbildungspruefung_2026-11-21.md`. Sechs Abbildungen (2.1 bis 2.3, 5.1 bis 5.3), keine im Anhang. Alle Werte der Diagramme aus den Rohvorhersagen nachgerechnet, keine Abweichung; Neulauf der Aggregation byteidentisch. Kein kritischer Befund.
+- **Umgesetzt (Minimalvarianten):** Abb. 5.1 Marker versetzt, Achse bis 103, Unterschrift mit „Zero-Shot als Einzellauf; LLM-Werte bei 256 Ausgabetokens"; Abb. 5.2 Zero-Shot-Marker durchgezogen, Unterschrift mit „vergrößerter Ausschnitt" und 256 Ausgabetokens; Abb. 5.3 Achse „Mittlere Latenz", 4B-Quadrat unterscheidbar; Abb. 2.3 ΔW = (α/r)·BA wie Gleichung 2.2; Abb. 2.1 Quellenangabe „Abb. 1". Weiterhin 112 Seiten, alle Labels auf denselben Seiten.
+- **Offen beim Verfasser:** GPU-Typ in Abb. 5.3, Hinweis auf seltene Typen und Fehlerbalken in Abb. 5.1, Werte bei 1 024 Tokens in Abb. 5.2 (verlangen Skriptänderung oder kosten eine Zeile); G-03 bis G-09.
+
 ## Betreuerfeedback zu Kapitel 4 und 5 (21.11., Claude Code)
 
 - **Anlass:** handschriftliche Kommentare von Philippe Thomas vom 17.11. zur Fassung vom 12.11. (25 Anmerkungen: 22 in Kapitel 4, eine in 5.1.1, zwei in 6.1) und zwei Hinweise aus der Begleitmail (Trennung Grundlagen / verwandte Arbeiten / Methodik; Methodenkapitel stellenweise zu ausführlich).

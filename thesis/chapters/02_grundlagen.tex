@@ -75,8 +75,8 @@ ausschließenden Endindex.
   \caption[Grundprinzip der Named Entity Recognition]{Grundprinzip der Named Entity Recognition: Aus einer
   Tokenfolge werden Erwähnungen als Tripel aus Startindex, Endindex und
   Typ extrahiert.
-  Eigene Darstellung in Anlehnung an die Formalisierung bei
-  \textcite{li2018survey}; der Endindex gehört zur Erwähnung.}
+  Eigene Darstellung in Anlehnung an
+  \textcite[Abb.~1]{li2018survey}; der Endindex gehört zur Erwähnung.}
   \label{fig:ner-grundprinzip}
 \end{figure}
 
@@ -444,7 +444,7 @@ Fine-Tunings entspricht oder sie übertrifft~\cite{hu2021lora}.
   \input{figures/lora_adapter}
   \caption[Aufbau eines LoRA-Adapters]{Aufbau eines LoRA-Adapters.
   Die eingefrorene Gewichtsmatrix $W_0$ wird um den trainierbaren
-  Low-Rank-Pfad $\Delta W = BA$ mit Rang $r$ ergänzt; beide Pfade
+  Low-Rank-Pfad $\Delta W = \tfrac{\alpha}{r} BA$ mit Rang $r$ ergänzt; beide Pfade
   verarbeiten dieselbe Eingabe $x$, und ihre Ausgaben werden addiert
   (Gleichung~\ref{eq:lora}).
   Eigene Darstellung in Anlehnung an \textcite{hu2021lora}.}

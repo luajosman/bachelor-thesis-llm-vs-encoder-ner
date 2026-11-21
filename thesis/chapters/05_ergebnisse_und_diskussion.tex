@@ -200,7 +200,7 @@ werden.
       symbolic x coords={PER,ORG,LOC,CEL,DIS,EVE,MEDIA,ANIM,BIO,FOOD,PLANT,INST,MYTH,TIME,VEHI},
       xtick=data,
       x tick label style={rotate=45, anchor=east, font=\footnotesize},
-      ymin=0, ymax=100,
+      ymin=0, ymax=103, ytick={0,20,...,100},
       ylabel={F$_1$ [Punkte]},
       ylabel style={font=\footnotesize},
       y tick label style={font=\footnotesize},
@@ -208,11 +208,16 @@ werden.
       enlarge x limits=0.04,
       legend style={at={(0.5,-0.3)}, anchor=north, legend columns=3,
         font=\footnotesize, draw=none, /tikz/every even column/.append style={column sep=0.4cm}},
+      % Encoder und QLoRA je Typ seitlich versetzt, damit sich die Marker
+      % nicht verdecken; in der Legende ohne Versatz.
+      legend image post style={mark options={xshift=0pt}},
     ]
-      \addplot[only marks, mark=*, mark size=2.3pt, color=blue!70!black]
+      \addplot[only marks, mark=*, mark size=2.3pt, color=blue!70!black,
+        mark options={xshift=-2.6pt}]
         table[x=type, y=f1_large] {generated/fig-typen.dat};
       \addlegendentry{DeBERTa-v3-large}
-      \addplot[only marks, mark=square*, mark size=2.2pt, color=orange!85!black]
+      \addplot[only marks, mark=square*, mark size=2.2pt, color=orange!85!black,
+        mark options={xshift=2.6pt}]
         table[x=type, y=f1_q27] {generated/fig-typen.dat};
       \addlegendentry{Qwen3.5-27B (QLoRA)}
       \addplot[only marks, mark=triangle, mark size=3pt, thick, color=orange!85!black]
@@ -222,7 +227,8 @@ werden.
   \end{tikzpicture}
   \caption[Typbezogene F$_1$-Werte der drei Kernkonfigurationen]{Typbezogene F$_1$-Werte der drei Kernkonfigurationen auf dem
   Testsplit (Werte aus Tabelle~\ref{tab:typen}; Typen in der Reihenfolge
-  der Tabelle, trainierte Konfigurationen als Mittel über drei Seeds).}
+  der Tabelle, trainierte Konfigurationen als Mittel über drei Seeds,
+  Zero-Shot als Einzellauf; LLM-Werte bei 256 Ausgabetokens).}
   \label{fig:typen}
 \end{figure}
 
@@ -385,7 +391,8 @@ Tabelle~\ref{tab:groesse} in Anhang~\ref{app:ergebnistabellen}.
       \addplot[discard if not={series}{qlora}, mark=square*, mark size=2.2pt, color=orange!85!black, thick]
         table[x=params, y=f1] {generated/fig-groesse.dat};
       \addlegendentry{Qwen3.5, QLoRA}
-      \addplot[discard if not={series}{zeroshot}, mark=triangle, mark size=3pt, color=orange!85!black, thick, dashed]
+      \addplot[discard if not={series}{zeroshot}, mark=triangle, mark size=3pt, color=orange!85!black, thick, dashed,
+        mark options={solid}]
         table[x=params, y=f1] {generated/fig-groesse.dat};
       \addlegendentry{Qwen3.5, Zero-Shot}
     \end{axis}
@@ -409,9 +416,10 @@ Tabelle~\ref{tab:groesse} in Anhang~\ref{app:ergebnistabellen}.
   \end{tikzpicture}
   \caption[Erkennungsleistung in Abhängigkeit von der Parameterzahl]{Erkennungsleistung in Abhängigkeit von der Parameterzahl,
   getrennt nach Modellfamilie und Regime.
-  Links alle Konfigurationen, rechts nur die trainierten mit
-  Fehlerbalken (Standardabweichung über drei Seeds, meist kleiner als
-  das Symbol).
+  Links alle Konfigurationen, rechts als vergrößerter Ausschnitt nur die
+  trainierten mit Fehlerbalken (Standardabweichung über drei Seeds, meist
+  kleiner als das Symbol).
+  LLM-Werte bei 256 Ausgabetokens.
   Parameterzahlen nach Tabelle~\ref{tab:experiment-matrix}
   (DeBERTa-v3: 184 und 434~Mio.; Qwen3.5: 0{,}75, 4{,}21 und 26{,}90~Mrd.).}
   \label{fig:groesse}
@@ -548,7 +556,7 @@ den GPU-Typ zurückgehen kann.
       width=0.42\linewidth, height=6.2cm,
       xmode=log, xmin=4, xmax=20000,
       ymin=0, ymax=100,
-      xlabel={Latenz je Satz [ms]},
+      xlabel={Mittlere Latenz je Satz [ms]},
       ylabel={Mikro-F$_1$ [Punkte]},
       label style={font=\footnotesize}, tick label style={font=\footnotesize},
       ymajorgrids, grid style={gray!30},
@@ -579,6 +587,11 @@ den GPU-Typ zurückgehen kann.
       \addplot[discard if not={key}{qwen27-zs}, only marks, mark=triangle, mark size=4.2pt, thick, color=orange!85!black]
         table[x=latency_ms, y=f1] {generated/fig-tradeoff.dat};
       \addlegendentry{Qwen3.5-27B (Zero-Shot)}
+      % 4B (QLoRA) liegt fast auf 27B (QLoRA): noch einmal obenauf mit
+      % weißem Rand zeichnen, damit beide Symbole unterscheidbar bleiben.
+      \addplot[discard if not={key}{qwen4-qlora}, only marks, mark=square*, mark size=2.8pt, color=orange!85!black,
+        mark options={draw=white, line width=0.4pt}, forget plot]
+        table[x=latency_ms, y=f1] {generated/fig-tradeoff.dat};
     \end{axis}
     \begin{axis}[
       name=mem, at={(lat.east)}, anchor=west, xshift=1.1cm,
