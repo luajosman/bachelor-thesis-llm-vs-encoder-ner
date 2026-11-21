@@ -37,7 +37,7 @@ Evaluationsprotokoll über alle Konfigurationen konstant bleiben.
 \begin{enumerate}
     \item \textbf{Encoder-Fine-Tuning:} Vortrainierte Transformer-Encoder
     werden zusammen mit einem linearen Klassifikationskopf vollständig
-    feinjustiert und liefern direkt IOB2-Tag-Sequenzen~\cite{devlin2019bert,keraghel2024recent}.
+    feinjustiert und liefern direkt IOB2-Tag-Sequenzen~\cite{devlin2019bert}.
 
     \item \textbf{LLM-Zero-Shot:} Veröffentlichte, bereits vor- und
     nachtrainierte Decoder-LLMs werden ohne aufgabenspezifisches Training
@@ -278,10 +278,10 @@ Die wortweise vorliegenden Sätze werden mit dem Tokenizer von DeBERTa-v3
 in Subwörter zerlegt.
 Sequenzen werden auf 256 Subwort-Tokens einschließlich Sondertokens
 gekürzt.
-Beim Label-Alignment erhält das erste Subwort jedes Wortes dessen Label;
+Beim Label-Alignment erhält das erste Subwort jedes Wortes dessen
+Label~\cite{devlin2019bert};
 Folge-Subwörter und die Sondertokens \texttt{[CLS]} und \texttt{[SEP]}
-erhalten den Wert $-100$ und werden in Verlust und Evaluation ignoriert
-\cite{devlin2019bert,keraghel2024recent}.
+erhalten den Wert $-100$ und werden in Verlust und Evaluation ignoriert.
 Zur Evaluation werden die Vorhersagen der ersten Subwörter auf die
 Wortebene übertragen, sodass Vorhersage und Referenz genau ein Label
 pro Wort umfassen.
@@ -713,9 +713,9 @@ Die Adapter werden über die Namen von sieben Projektionstypen platziert:
 \texttt{q\_proj}, \texttt{k\_proj}, \texttt{v\_proj} und
 \texttt{o\_proj} in der Attention sowie \texttt{gate\_proj},
 \texttt{up\_proj} und \texttt{down\_proj} im Feed-Forward-Netz.
-Die Einbeziehung der Feed-Forward-Schichten folgt Befunden, nach denen
-Adapter in unterschiedlichen Linearschichten komplementäre Kapazität
-bereitstellen~\cite{dettmers2023qlora,han2024parameter,wang2024parameter}.
+Die Einbeziehung der Feed-Forward-Schichten folgt dem Befund von
+\textcite{dettmers2023qlora}, dass erst Adapter auf allen Schichten die
+Leistung des 16-Bit-Fine-Tunings erreichen.
 Wegen der hybriden Architektur erfasst diese namensbasierte Auswahl
 jedoch nicht alle Linearschichten: Die Attention-Projektionen existieren
 nur in den Schichten mit voller Attention, während die anders benannten
@@ -844,14 +844,14 @@ insbesondere wird syntaktisch fehlerhaftes JSON nicht instand gesetzt.
 \label{sec:performanzmetriken}
 
 Zentrale Metriken sind strikte Precision, Recall und F$_1$ auf
-Entitätsebene nach IOB2-Schema~\cite{manning2008introduction,sang2003conll,ramshaw1995text}.
+Entitätsebene nach IOB2-Schema~\cite{manning2008introduction,sang2003conll,tjong1999representing}.
 Eine Entität gilt nur als korrekt erkannt, wenn Spangrenzen und Typ exakt
 mit der Referenz übereinstimmen, was dem \emph{strict}-Modus der
 SemEval-2013-Auswertung entspricht~\cite{segura2013semeval}.
 Berechnet werden die Werte mit \texttt{seqeval}~\cite{nakayama2018seqeval} bei explizit gesetztem striktem Modus und
 IOB2-Schema, sodass formal unzulässige Tag-Folgen keine Entität bilden
 (Abschnitt~\ref{sec:evaluation}).
-Primäre Kennzahl ist der mikrogemittelte F$_1$-Wert~\cite{manning2008introduction,keraghel2024recent}; fehlen Vorhersagen
+Primäre Kennzahl ist der mikrogemittelte F$_1$-Wert~\cite{manning2008introduction}; fehlen Vorhersagen
 oder Referenzentitäten, wird der betreffende Quotient als 0 definiert.
 Beide Pipelines werden auf Wortebene gegen identische Referenzsequenzen
 ausgewertet
