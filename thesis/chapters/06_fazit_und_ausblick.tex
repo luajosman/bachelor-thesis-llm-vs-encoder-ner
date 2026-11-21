@@ -27,8 +27,8 @@ Antworten, schrumpft der Rückstand auf 0,18 Punkte [0,02; 0,33];
 auf CrossNER kehrt sich die Reihenfolge mit dem höheren Limit um
 (Tabelle~\ref{tab:synthese}).
 Keiner der beiden Vergleiche ist ganz symmetrisch: Das Limit von
-256 Tokens trifft allein das LLM, und die Nachinferenz bessert allein
-dessen abgeschnittene Antworten nachträglich nach
+256 Tokens trifft allein das LLM, und die Nachinferenz ersetzt
+nachträglich allein dessen abgeschnittene Antworten
 (Abschnitt~\ref{sec:disk-leistung}).
 Erwartung E1 ist auf MultiNERD nur bei ausreichendem Ausgabelimit und
 nur teilweise bestätigt: Qwen3.5-27B, das größte der drei mit QLoRA
@@ -61,15 +61,16 @@ Ein Skalierungsgesetz folgt daraus nicht, weil Hyperparameter und GPU-Typ
 mit der Größe variieren.
 Im Zero-Shot-Regime ist der Größeneffekt mit 28,8 und 34,5 Punkten je
 Schritt dagegen groß und geht mit großen Unterschieden in der Formtreue
-einher; ein isolierter Anteil wurde nicht bestimmt.
+einher; welchen Anteil die Formtreue daran hat, wurde nicht
+bestimmt.
 Der Ressourcenbedarf wächst erheblich steiler als die Leistung
 (Tabelle~\ref{tab:effizienz}).
 Die Encoder benötigen je Satz 8,9 bis 16,5~ms bei 0,7 bis 1,7~GiB
 Inferenzspeicher und 0,4 bis 1,2~h Training.
 Bei den QLoRA-Konfigurationen sind es 1\,876 bis 5\,505~ms, 0,9 bis
 18,7~GiB und 12 bis 266~h.
-Hardwaregleich liegt die Latenz von Qwen3.5-0.8B um etwa das 210-Fache
-über der von DeBERTa-v3-base.
+Hardwaregleich beträgt die Latenz von Qwen3.5-0.8B etwa das 210-Fache
+der Latenz von DeBERTa-v3-base.
 Erwartung E2 ist damit bestätigt: Der Faktor liegt
 am oberen Rand der Literaturspanne von 40 bis 220, die Faktoren der
 größeren Modelle darüber.
@@ -80,8 +81,7 @@ Neustarts und Clusterlast, keinen allgemeinen Bedarf.
 Budgets waren nicht vorab festgelegt; die Antwort beruht auf Schwellen
 aus den gemessenen Latenz- und Speicherwerten
 (Abschnitt~\ref{sec:disk-effizienz}).
-Für MultiNERD und vergleichbar annotierte Wikipedia-Texte mit festem
-Typinventar ist danach unter jedem Latenz- und Speicherbudget, das
+Auf MultiNERD ist danach unter jedem Latenz- und Speicherbudget, das
 überhaupt eine Konfiguration zulässt, ein Encoder die beste gemessene
 Wahl: DeBERTa-v3-base unter den engsten Grenzen, sonst DeBERTa-v3-large.
 Bei 256 Ausgabetokens bilden beide Encoder allein die Pareto-Front; ein
@@ -100,7 +100,7 @@ und die der Encoder häufiger erzeugt als das LLM
 (Abschnitt~\ref{sec:disk-effizienz}); das gilt, sofern man auch
 Teilspans solcher Entitäten nicht als Fehler wertet.
 Das LLM rechtfertigt seinen Mehraufwand damit nur unter ähnlichen
-Transferbedingungen und bei einer Latenztoleranz von mehreren Sekunden
+Transferbedingungen und bei einer Latenztoleranz von rund 13~Sekunden
 je Satz.
 Eine allgemeine Überlegenheit einer Modellklasse folgt daraus nicht.
 
@@ -109,8 +109,8 @@ Der Beitrag der Arbeit liegt erstens in einem Vergleich beider
 Modellklassen auf den offiziellen englischen MultiNERD-Splits in einer
 gemeinsamen Pipeline, mit Größenstaffelung auf beiden Seiten und
 gemeinsamer Ressourcenmessung.
-Zweitens zeigt sie, dass das Wortindex-Format im QLoRA-Regime nahezu
-formtreu ist: Mit 1\,024 Ausgabetokens sind alle
+Zweitens zeigt sie, dass die QLoRA-Modelle das Wortindex-Format nahezu
+vollständig einhalten: Mit 1\,024 Ausgabetokens sind alle
 Antworten parsebar.
 Drittens folgt eine methodische Lehre für generative NER: Ausgabelimits
 sind vor der Evaluation an den Antwortlängen von Trainings- und
@@ -122,7 +122,7 @@ Rangfolge um.
 \label{sec:limitationen}
 
 \paragraph{Entwicklungs- und Testtrennung.}
-Der MultiNERD-Testsplit war vor der Hauptstudie nicht unberührt
+Der MultiNERD-Testsplit war vor der Hauptstudie bereits ausgewertet worden
 (Tabelle~\ref{tab:datennutzung}).
 Erstens blieben die Hyperparameter der trainierten Konfigurationen nach
 Vorläufen mit bekannten Testwerten unverändert; die 27B-Epochenzahl wurde
@@ -138,8 +138,9 @@ Die Inferenzpräzision BF16 der Zero-Shot-Läufe wurde nach
 Durchsatzmessungen auf einer Testteilmenge gewählt, nicht nach der
 Erkennungsleistung.
 Die Checkpoint-Auswahl nutzte allein Validierungsdaten, bei den LLMs
-200 Sätze ohne BIO- und INST-Entitäten, deren Typanteile um höchstens
-3,1 Prozentpunkte vom Split abweichen; ob eine größere oder zufällig
+200 Sätze, deren Typanteile um höchstens 3,1 Prozentpunkte vom Split
+abweichen und die keine BIO- und INST-Entitäten enthalten; ob eine
+größere oder zufällig
 gezogene Stichprobe dieselben Epochen gewählt hätte, bleibt offen.
 Die Sensitivitätsanalysen liefen post hoc auf dem bekannten Testsplit;
 neue Seeds stellen keine Unabhängigkeit her.
@@ -155,8 +156,9 @@ die nicht parsebaren Antworten; 594 von 604 Präfixen wurden reproduziert,
 zehn wichen ab.
 In einer Kontrollstichprobe parsebarer Antworten blieben
 8\,988 von 9\,000 mit dem höheren Limit zeichengleich.
-Mit dem Wechsel des GPU-Typs und dem nicht protokollierten Stoppgrund der
-ursprünglichen Läufe ersetzt auch das keinen vollständigen Neulauf;
+Wegen des Wechsels des GPU-Typs und des nicht protokollierten
+Stoppgrunds der ursprünglichen Läufe ersetzt auch das keinen
+vollständigen Neulauf;
 Hauptauswertung und Sensitivitätsanalysen sind gemeinsam zu lesen.
 Betroffen ist FF1 im Betrag und teilweise in der Richtung der Vergleiche,
 über die Ressourcenwerte auch FF3.
@@ -203,14 +205,14 @@ gemeinsame Knotennutzung überlagert.
 Die Faktoren gelten für die eingesetzte Hardware und Inferenzsoftware
 und sind nicht exakt auf andere Systeme übertragbar.
 Der Trainingsspeicher und der reservierte Speicher wurden nicht gemessen,
-und der allokierte Inferenzspeicher begründet ohne Test keine Eignung für
-kleinere GPUs; Energieverbrauch, Kosten und der Durchsatz mit Batching
+und aus dem allokierten Inferenzspeicher folgt ohne Test nicht, dass ein
+Modell auf eine kleinere GPU passt; Energieverbrauch, Kosten und der Durchsatz mit Batching
 bleiben offen.
 Betroffen sind FF2 und FF3.
 
 \paragraph{Statistische Unsicherheit.}
 Drei Seeds erfassen die Trainingsvariabilität nur deskriptiv, das
-gepaarte Bootstrap ist auf die vorhandenen Vorhersagen bedingt, und die
+gepaarte Bootstrap hält die vorhandenen Vorhersagen fest, und die
 Sampling-Streuung der Zero-Shot-Einzelläufe ist unbekannt.
 Abhängigkeiten zwischen Sätzen desselben Dokuments bleiben
 unberücksichtigt.
@@ -233,23 +235,24 @@ Die erste betrifft eine unabhängige Bestätigung: Prompt, Decoding,
 Trainingsumfang und Ausgabelimit sollten allein anhand von Trainings- und
 Validierungsdaten festgelegt und auf einem unberührten oder manuell
 geprüften Testsplit evaluiert werden.
-Eine manuell geprüfte Stichprobe wie die 1\,000 Sätze mit mindestens
-20 Instanzen je Typ, die \textcite{tedeschi2022multinerd} für ihre
-Qualitätsmessung nutzen, würde, sofern sie zugänglich ist und nicht mit
-dem Trainingssplit überlappt, für die häufigen, verrauschten Typen ANIM,
-FOOD und PLANT zwischen Modell- und Annotationsfehlern trennen.
-Für seltene Typen wie BIO und INST bliebe sie mit wenigen Dutzend
-Instanzen wenig belastbar.
+Eine manuell geprüfte Stichprobe könnte für die häufigen, verrauschten
+Typen ANIM, FOOD und PLANT zwischen Modell- und Annotationsfehlern
+trennen.
+In Frage kommen die 1\,000 Sätze mit mindestens 20 Instanzen je Typ, die
+\textcite{tedeschi2022multinerd} für ihre Qualitätsmessung nutzen, sofern
+sie zugänglich sind und nicht mit dem Trainingssplit überlappen.
+Für seltene Typen wie BIO und INST bliebe eine solche Stichprobe mit
+wenigen Dutzend Instanzen wenig belastbar.
 
-Die zweite Anschlussfrage ist ein vollständiger Neulauf mit ausreichendem
-Ausgabelimit, der Qualität und Ressourcen gemeinsam erfasst.
+Die zweite Anschlussfrage betrifft einen vollständigen Neulauf mit
+ausreichendem Ausgabelimit, der Qualität und Ressourcen gemeinsam erfasst.
 Er sollte das Zero-Shot-Regime einschließen, dessen nicht parsebare
 Antworten 3,8 bis 16,2\,\% der Referenzentitäten enthalten
 (Abschnitt~\ref{sec:erg-formtreue}).
 Zudem sollte er Batching und einheitliche Hardware verwenden; das würde
 die Empfehlungen zu FF3 auf die Offline-Verarbeitung ausweiten.
 
-Die dritte Anschlussfrage ist ein kontrollierter Vergleich von
+Die dritte Anschlussfrage betrifft einen kontrollierten Vergleich von
 Anpassungsverfahren, Ausgabeformat, Prompt und Decoding unter sonst
 gleichen Bedingungen.
 Dazu zählen ein vollständiges Fine-Tuning des 0.8B-Modells, LoRA für die

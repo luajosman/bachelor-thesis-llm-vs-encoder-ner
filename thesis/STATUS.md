@@ -1,5 +1,12 @@
 # Stand der Bachelorarbeit (21.11.2026)
 
+## Sprachprüfung und Umsetzung (21.11., Claude Code)
+
+- **Bericht:** `review/27_sprachpruefung_2026-11-21.md` (ganze Arbeit Satz für Satz gelesen; 3 Befunde hoch, rund 50 mittel, 18 niedrig; Nachtrag mit dem Stand der Umsetzung).
+- **Umgesetzt:** 94 Ersetzungen in Abstract, Erklärung, Abkürzungsverzeichnis, Kapitel 1 bis 6 und Anhang: unklare Bezüge, überladene Sätze, zwei Grammatikfehler, Lehnübersetzungen, Verweissätze. Inhaltlich berührt: Empfehlung in 6.1 jetzt wie im Abstract nur „auf MultiNERD"; Anhang A.1 zum Greedy-Kontrolllauf nach den Laufmetadaten berichtigt; KI-Angabe nennt Claude Fable 5.2. Weiterhin 112 Seiten, Kapitelanfänge unverändert, keine Quelle und kein Verweis entfallen.
+- **Umbruch:** Eine zusätzliche Zeile in 4.5.1 kostet über die Absatzkontrolle eine Seite; die beiden Absatzumbrüche in 5.7.1 ebenfalls. Beides ist deshalb nicht bzw. kürzer umgesetzt.
+- **Offen beim Verfasser:** die im Nachtrag des Berichts genannten Stellen mit offener Bedeutung (K1-05, K2-05, K2-08, K4-07, K5-08, K5-10, K5-12 und sechs kleine) sowie die Entscheidungen zu M-03 und M-05; die acht Stellen unter „bitte gegenlesen".
+
 ## Abbildungsprüfung (21.11., Claude Code)
 
 - **Bericht:** `review/26_abbildungspruefung_2026-11-21.md`. Sechs Abbildungen (2.1 bis 2.3, 5.1 bis 5.3), keine im Anhang. Alle Werte der Diagramme aus den Rohvorhersagen nachgerechnet, keine Abweichung; Neulauf der Aggregation byteidentisch. Kein kritischer Befund.

@@ -35,8 +35,8 @@ Medien~\cite{tedeschi2022multinerd}.
 Für NER stehen heute zwei Klassen vortrainierter Sprachmodelle zur
 Verfügung.
 Encoder-Modelle wie BERT oder DeBERTa berechnen für jedes Token eine
-kontextabhängige Repräsentation; ein darauf trainierter Klassifikator
-weist jedem Token ein Label zu; aus der Labelfolge ergeben sich die
+kontextabhängige Repräsentation. Ein darauf trainierter Klassifikator
+weist jedem Token ein Label zu, und aus der Labelfolge ergeben sich die
 Entitäten (Sequenzlabeling)~\cite{devlin2019bert,he2021debertav3}.
 Large Language Models (LLMs) sind deutlich größere generative
 Sprachmodelle, die als einzelnes Modell ein breites Spektrum von Aufgaben
@@ -103,11 +103,11 @@ veröffentlichte MultiNERD-Werte stützen sich auf übernommene Baselines
 oder eigene Aufbereitungen, und eine gemeinsame Auswertung auf den
 offiziellen englischen Splits mit eigener Encoder-Referenz fehlt.
 Die zweite betrifft Ressourcenerfassung und Modellgröße: Die direkten
-Vergleiche erfassen neben der Erkennungsleistung nur Teile des
-Ressourcenbedarfs (Inferenzzeit ohne Speicher oder
-Trainingskosten ohne Inferenz) und betrachten LLMs nur einer
-Größenklasse; Größenstaffelungen gibt es nur innerhalb einzelner
-Modellfamilien, ohne gemeinsamen Encoder-Vergleich.
+Vergleiche erfassen neben der Erkennungsleistung lediglich Teile des
+Ressourcenbedarfs, entweder die Inferenzzeit ohne den Speicher oder die
+Trainingskosten ohne die Inferenz, und betrachten LLMs einer einzigen
+Größenklasse. Größenstaffelungen gibt es nur innerhalb einzelner
+Modellfamilien und ohne gemeinsamen Encoder-Vergleich.
 
 Die vorliegende Arbeit setzt an diesen Punkten an.
 Sie vergleicht auf dem englischen Teil von MultiNERD mit seinen
@@ -125,7 +125,7 @@ Neben der Erkennungsleistung werden die Trainingsdauer, die
 Inferenzlatenz und der GPU-Spitzenspeicher während der Inferenz erfasst.
 
 Daraus ergeben sich drei Forschungsfragen.
-Die erste Forschungsfrage (FF1) untersucht, wie sich
+Die erste Forschungsfrage (FF1) lautet, wie sich
 DeBERTa-v3-Encoder mit vollständigem Fine-Tuning und Qwen3.5-LLMs im
 Zero-Shot- und im QLoRA-Regime in ihrer Erkennungsleistung auf dem
 englischen MultiNERD-Testsplit unterscheiden.
@@ -133,9 +133,9 @@ Sie umfasst außerdem die Frage, wie zuverlässig die LLMs das vorgegebene
 Ausgabeformat einhalten (Formtreue).
 
 Die zweite Forschungsfrage (FF2) richtet sich auf die Modellgröße.
-Untersucht wird, wie sich Erkennungsleistung, Trainingsdauer,
-Inferenzlatenz und GPU-Spitzenspeicher während der Inferenz innerhalb der betrachteten Konfigurationen beider Modellfamilien mit der
-Modellgröße verändern.
+Sie fragt, wie sich Erkennungsleistung, Trainingsdauer, Inferenzlatenz
+und GPU-Spitzenspeicher der Inferenz mit der Modellgröße verändern,
+jeweils innerhalb der betrachteten Konfigurationen einer Modellfamilie.
 
 Darauf aufbauend fragt die dritte Forschungsfrage (FF3), welche
 Konfigurationen unter den gemessenen Bedingungen bei gegebenen Speicher-
@@ -146,7 +146,8 @@ den Mehraufwand gegenüber einem Encoder rechtfertigt.
 
 Der Beitrag der Arbeit liegt in der gemeinsamen Untersuchung dieser
 Fragen anhand von acht Konfigurationen mit rund 184~Mio. bis 27~Mrd.
-Parametern und einer in derselben Pipeline trainierten Encoder-Referenz.
+Parametern, darunter eine in derselben Pipeline trainierte
+Encoder-Referenz.
 Die fünf trainierten Konfigurationen werden mit je drei Seeds
 ausgewertet; zusammen mit den drei Zero-Shot-Konfigurationen ergeben sich
 18 Testevaluationen auf MultiNERD.

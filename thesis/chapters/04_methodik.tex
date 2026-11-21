@@ -78,7 +78,7 @@ Aus den Regimen ergeben sich acht Konfigurationen
 (Tabelle~\ref{tab:experiment-matrix}).
 Die fünf trainierten Konfigurationen werden mit den Seeds 42, 123 und 456
 jeweils unabhängig trainiert und evaluiert (15 Trainingsläufe); die drei
-Zero-Shot-Konfigurationen wurden je einmal mit Seed~42 ausgewertet.
+Zero-Shot-Konfigurationen werden je einmal mit Seed~42 ausgewertet.
 Die Hauptauswertung umfasst damit 18 Testevaluationen.
 
 Der Hauptstudie gingen explorative Vorläufe der fünf trainierten
@@ -166,12 +166,12 @@ Qwen3.5 folgt in der Qwen-Familie auf Qwen2.5 und
 Qwen3~\cite{qwen2024qwen25,qwen2025qwen3,qwen2026qwen35blog}; die
 Modelle sind laut ihren Modellkarten als offene Gewichte unter der
 Apache-2.0-Lizenz verfügbar~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
-Für die Familie sprachen neben der Lizenz die fein abgestufte Größenleiter mit
-gemeinsamem Tokenizer und Chat-Template, sodass Größeneffekte nicht mit
-Architekturwechseln vermischt werden.
-Die drei Stufen wurden so gewählt, dass sie den in der Literatur
+Für die Familie sprach neben der Lizenz die fein abgestufte Größenleiter mit
+gemeinsamem Tokenizer und Chat-Template: Größeneffekte werden so nicht mit
+Architekturwechseln vermischt.
+Die drei Stufen wurden so gewählt, dass sie über den in der Literatur
 untersuchten Bereich von 3 bis 9~Mrd. Parametern
-(Abschnitt~\ref{sec:research_gap}) nach unten und oben verlassen und das
+(Abschnitt~\ref{sec:research_gap}) nach unten und oben hinausgehen und das
 Training mit einer einzelnen GPU je Lauf möglich bleibt.
 Verwendet werden die veröffentlichten, laut Modellkarten vor- und
 nachtrainierten Checkpoints~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}; der Begriff
@@ -257,10 +257,11 @@ Die trainierten Konfigurationen nutzen dieselben annotierten
 Trainingssätze, alle Systeme werden gegen dieselbe Referenz bewertet;
 die Zero-Shot-Konfigurationen erhalten kein Training.
 Verlustfunktion, Anpassungsumfang (vollständiges Fine-Tuning gegenüber
-Adaptern) und Checkpoint-Auswahl unterscheiden sich jedoch, und die
-gemeinsame Silberreferenz garantiert nicht, dass ihre Fehler für beide
-Modellfamilien neutral wirken; absolute Werte messen zudem die
-Übereinstimmung mit einer automatisch erzeugten Referenz.
+Adaptern) und Checkpoint-Auswahl unterscheiden sich jedoch.
+Die gemeinsame Silberreferenz garantiert auch nicht, dass sich ihre
+Fehler auf beide Modellfamilien gleich auswirken.
+Absolute Werte messen zudem die Übereinstimmung mit einer automatisch
+erzeugten Referenz.
 
 \subsection{Datenvorverarbeitung}
 \label{sec:datenvorverarbeitung}
@@ -373,8 +374,8 @@ Der \texttt{test}-Split wird in der Hauptstudie je Lauf genau einmal
 vollständig inferiert; ein separater Evaluationsschritt berechnet die
 Metriken aus den gespeicherten Vorhersagen.
 
-Einschränkend wurde der Testsplit bereits in den explorativen Vorläufen
-ausgewertet; Datengrundlage und Testbezug jeder Entscheidung nennt
+Eine Einschränkung: Der Testsplit wurde bereits in den explorativen
+Vorläufen ausgewertet; Datengrundlage und Testbezug jeder Entscheidung nennt
 Tabelle~\ref{tab:datennutzung}, einschließlich der nachträglichen
 Sensitivitätsanalysen zum Ausgabelimit.
 Für die trainierten Konfigurationen blieben die Hyperparameter zwischen
@@ -386,8 +387,8 @@ bereits ausgewerteten Testsplits nicht wieder her.
 Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
 (Abschnitt~\ref{sec:llm-pipeline}).
-Die Zero-Shot-Ergebnisse werden deshalb als explorative Ergebnisse der
-nach Testbeobachtungen gewählten Konfigurationen berichtet. Solche
+Die Zero-Shot-Ergebnisse werden deshalb als explorativ berichtet: Ihre
+Konfiguration wurde nach Testbeobachtungen gewählt. Solche
 Auswahlentscheidungen können zu einer optimistischen Verzerrung führen~\cite{cawley2010selectionbias}; deren Umfang lässt sich mit den vorhandenen Daten
 nicht beziffern.
 
@@ -497,12 +498,12 @@ Die Trainingsläufe der Hauptstudie laden Datensatz und Modelle über feste
 Revisions-Hashes, setzen ihren Seed für Python, NumPy und PyTorch und
 protokollieren je Lauf Git-Commit, Paketversionen, GPU- und
 Slurm-Angaben; die Zero-Shot-Läufe
-luden Modelle und Datensatz dagegen ohne explizite Revisionsangabe und mit
+laden Modelle und Datensatz dagegen ohne explizite Revisionsangabe und mit
 reduzierten Metadaten.
 Eine bitgenaue Reproduzierbarkeit wird für keinen der Läufe beansprucht
 (Anhang~\ref{app:protokoll}).
-Konfigurationsdatei, Commit und Ausgabeverzeichnis jedes Laufs nennt
-Tabelle~\ref{tab:app-laeufe}, die Revisionen von Modellen und Daten
+Für jeden Lauf stehen Konfigurationsdatei, Commit und Ausgabeverzeichnis
+in Tabelle~\ref{tab:app-laeufe}, die Revisionen von Modellen und Daten in
 Tabelle~\ref{tab:app-revisionen}.
 
 \subsection{Encoder-basierte NER-Pipeline}
@@ -586,7 +587,7 @@ begründbar (Längenverteilungen in Anhang~\ref{app:software}).
 Das Ausgabelimit von 256 Tokens wurde vor den Läufen ohne vorherige
 Längenanalyse festgelegt.
 Nachträglich zeigt sich, dass 55 der 16\,454 Referenzantworten des
-Testsplits unter dem Qwen3.5-Tokenizer 256 Tokens überschreiten; weil
+Testsplits mit dem Qwen3.5-Tokenizer 256 Tokens überschreiten; weil
 dies die Sätze mit den meisten Entitäten trifft, wirkt sich das Limit
 dennoch spürbar aus (Abschnitt~\ref{sec:erg-formtreue}).
 
@@ -613,8 +614,8 @@ Decoding-Einstellung und Prompt-Änderung wurden damit gleichzeitig
 eingeführt; ihre Einzelbeiträge sind nicht trennbar, und die Übertragung
 der Sampling-Einstellung auf das 4B- und das 27B-Modell wurde nicht
 eigens geprüft (Abschnitt~\ref{sec:limitationen}).
-Für diese beiden Modelle erfolgte somit keine Konfigurationswahl anhand
-eigener Testergebnisse.
+Die Einstellungen dieser beiden Modelle wurden also nicht anhand ihrer
+eigenen Testergebnisse gewählt.
 Die Ergebnisse sind je eine Stichprobe aus der Ausgabeverteilung der
 unangepassten Checkpoints unter genau diesen Prompt- und
 Decoding-Bedingungen; ein isolierter Effekt der Anpassung ist wegen der
@@ -636,9 +637,9 @@ am Ende gekürzt, was auch die Zielantwort abschneiden kann; dies betrifft
 48 der 131\,280 Trainings- und 11 der 16\,410 Validierungsbeispiele.
 
 Zur Checkpoint-Auswahl erzeugt das Modell nach jeder Epoche per Greedy-Decoding
-Vorhersagen für die ersten 200 Sätze des Validierungssplits, die wie in
-der Testinferenz validiert und mit dem strikten F$_1$-Wert bewertet werden;
-der zusätzlich auf dem vollständigen Validierungssplit protokollierte
+Vorhersagen für die ersten 200 Sätze des Validierungssplits.
+Die Vorhersagen werden wie in der Testinferenz validiert und mit dem
+strikten F$_1$-Wert bewertet; der zusätzlich auf dem vollständigen Validierungssplit protokollierte
 Verlust dient nur der Überwachung.
 Verwendet wird der Adapter der Epoche mit dem höchsten Wert, bei
 Gleichstand der frühere; in acht der neun Läufe war dies die dritte, in
@@ -678,9 +679,9 @@ Ein- und Ausgabe an einem Satz des Testsplits zeigt
 Listing~\ref{lst:beispiel}: Die Entität umfasst dort nur das Token mit
 Index~4 und wird deshalb durch \texttt{start\_token}~=~4 und
 \texttt{end\_token}~=~5 beschrieben.
-Die Einordnung des Formats in die \emph{Indexing}-Familie nach
-\textcite[Abschn.~3.2]{semin2026spanLabeling} gibt
-Abschnitt~\ref{sec:k3-ausgabeformate}.
+Abschnitt~\ref{sec:k3-ausgabeformate} ordnet das Format in die
+\emph{Indexing}-Familie nach
+\textcite[Abschn.~3.2]{semin2026spanLabeling} ein.
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, columns=fullflexible,
   keepspaces=true, frame=single, captionpos=b, float=htbp,
@@ -730,13 +731,14 @@ zugänglich ist~\cite{dagdelen2024structuredIE}.
 \subsection{LoRA-Konfiguration und Hyperparameter}
 \label{sec:lora-konfiguration}
 
-LoRA wird gewählt, weil LLMs ohne aufgabenspezifisches Fine-Tuning bei
-NER auf Tokenebene nur eingeschränkt konkurrenzfähig
-sind~\cite{lu2024llmstruggle} und Adapter den Speicher- und Rechenbedarf
-gegenüber vollständigem Fine-Tuning erheblich
-senken~\cite{hu2021lora,han2024parameter}, in den Vergleichen von
-\textcite[Anh.~D, Tab.~11]{zhan2026generativeNER} aber nicht hinter
-diesem zurückbleiben (Abschnitte~\ref{sec:lora}
+LoRA wird aus zwei Gründen gewählt.
+Ohne aufgabenspezifisches Fine-Tuning sind LLMs bei NER auf Tokenebene
+nur eingeschränkt konkurrenzfähig~\cite{lu2024llmstruggle}.
+Adapter senken zudem den Speicher- und Rechenbedarf gegenüber
+vollständigem Fine-Tuning erheblich~\cite{hu2021lora,han2024parameter},
+ohne in den Vergleichen von
+\textcite[Anh.~D, Tab.~11]{zhan2026generativeNER} dahinter
+zurückzubleiben (Abschnitte~\ref{sec:lora}
 und~\ref{sec:peft_ner_related}).
 Rang, Skalierung und die übrigen Hyperparameter nennt
 Tabelle~\ref{tab:lora-hyperparams}; Bias-Terme werden nicht trainiert.
@@ -921,8 +923,8 @@ eindeutiger Unterschied festgestellt; Gleichwertigkeit ist damit nicht
 nachgewiesen~\cite{lakens2017equivalence}. Typbezogene Vergleiche ohne eigene Intervalle werden
 deskriptiv behandelt.
 
-Das Bootstrap ist auf die vorhandenen trainierten Modelle und
-gespeicherten Vorhersagen bedingt. Es erfasst weder die Unsicherheit
+Das Bootstrap hält die vorhandenen trainierten Modelle und die
+gespeicherten Vorhersagen fest. Es erfasst weder die Unsicherheit
 durch neue Trainingsläufe noch die Sampling-Streuung einer erneuten
 Zero-Shot-Inferenz. Die Sätze werden als unabhängige Einheiten behandelt;
 Abhängigkeiten innerhalb von Quelldokumenten werden nicht modelliert.
@@ -944,7 +946,7 @@ erheblicher Unsicherheit behaftet.
 
 Ergänzend wird der makrogemittelte F$_1$-Wert als ungewichtetes Mittel der
 typbezogenen F$_1$-Werte über alle 15 Typen berichtet
-(Abschnitt~\ref{sec:evaluation}); er reagiert entsprechend stark auf die
+(Abschnitt~\ref{sec:evaluation}); er reagiert deshalb stark auf die
 seltenen Typen.
 Für den Vergleich der Fehlerprofile wird jede Referenzentität genau einer
 Klasse zugeordnet: korrekt erkannt (Grenzen und Typ stimmen überein),
@@ -973,7 +975,7 @@ Minuten darunter (Anhang~\ref{app:reproduzierbarkeit}).
 Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
 Tagen und wurden vom Scheduler dreimal neu eingereiht; ihre
 Trainingsdauer ist die Summe der vier Zuteilungen einschließlich des
-erneuten Ladens und mit den übrigen Läufen nur näherungsweise
+erneuten Ladens und mit der Dauer der übrigen Läufe nur näherungsweise
 vergleichbar.
 Zudem liefen die drei Läufe gleichzeitig auf demselben Knoten und benötigten je
 Optimierungsschritt mehr als doppelt so lange wie der allein ausgeführte
@@ -984,8 +986,9 @@ Trainingsbedarf der Modellkonfiguration wird daraus nicht abgeleitet.
 
 \paragraph{Inferenzlatenz und Durchsatz.}
 Gemessen wird je Testsatz bei Batchgröße~1 die Dauer des Modellaufrufs
-(Vorwärtsdurchlauf bzw. Generierung), mit GPU-Synchronisation vor und
-nach dem Aufruf und nach einem nicht gewerteten Aufwärmdurchlauf.
+(Vorwärtsdurchlauf bzw. Generierung); die GPU wird vor und nach jedem
+Aufruf synchronisiert.
+Der Messung geht ein nicht gewerteter Aufwärmdurchlauf voraus.
 Nicht enthalten sind Laden, Tokenisierung, Datentransfer, Detokenisierung,
 Validierung, Metrikberechnung und Speichern.
 Berichtet werden Mittelwert, Median und 95.~Perzentil in Millisekunden
@@ -1001,8 +1004,8 @@ mittleren Latenz hochgerechnet.
 
 \paragraph{GPU-Speicher.}
 Erfasst wird der maximal von PyTorch allokierte GPU-Speicher während der
-Testinferenz in MiB; die Ergebnistabellen rechnen durch Division durch
-1\,024 in GiB um.
+Testinferenz in MiB; für die Ergebnistabellen wird der Wert durch
+1\,024 geteilt und in GiB angegeben.
 Der Zähler wird nach dem Laden des Modells zurückgesetzt, sodass der Wert
 die Modellgewichte und den zusätzlichen Inferenzbedarf umfasst;
 reservierter Speicher und der über \texttt{nvidia-smi} sichtbare
@@ -1011,8 +1014,9 @@ Der GPU-Speicherbedarf während des Trainings wurde nicht protokolliert.
 
 \paragraph{Parameterzahlen.}
 Berichtet werden Gesamtzahl und Zahl der trainierbaren Parameter
-(Tabelle~\ref{tab:experiment-matrix}); ihr Verhältnis quantifiziert die Reduktion der aktualisierten Parameter durch
-das Adaptertraining~\cite{hu2021lora,dettmers2023qlora}.
+(Tabelle~\ref{tab:experiment-matrix}); ihr Verhältnis zeigt, wie stark das
+Adaptertraining die Zahl der aktualisierten Parameter
+senkt~\cite{hu2021lora,dettmers2023qlora}.
 Für die QLoRA-Modelle nennt Tabelle~\ref{tab:lora-hyperparams} Basismodell und Adapter getrennt,
 da eine einfache Summierung der Tensorelemente die in 4~Bit gepackten
 Gewichte nur zur Hälfte erfasst.
@@ -1042,9 +1046,9 @@ jeweiliger GPU-Typ), keine Anforderungen einer konkreten Anwendung.
 Während Encoder per Konstruktion genau ein Label pro Wort aus dem festen
 Inventar liefern, können LLMs syntaktisch oder inhaltlich unzulässige
 Ausgaben erzeugen.
-Diese erfasst Tabelle~\ref{tab:formtreue} über Kennzahlen der
-Validierungskette (Abschnitt~\ref{sec:postprocessing}) in vier
-Fehlerklassen: \emph{JSON-Validität}~\cite{dagdelen2024structuredIE}, \emph{Schema-Treue},
+Sie werden über Kennzahlen der Validierungskette
+(Abschnitt~\ref{sec:postprocessing}) in vier Fehlerklassen erfasst
+(Tabelle~\ref{tab:formtreue}): \emph{JSON-Validität}~\cite{dagdelen2024structuredIE}, \emph{Schema-Treue},
 \emph{Span-Alignment}~\cite{semin2026spanLabeling} und
 \emph{Konsistenz}.
 Für Encoder entfallen diese Kennzahlen; der Unterschied ist Teil des
@@ -1116,19 +1120,21 @@ Ob eine Antwort am Ausgabelimit abbrach, wird nicht protokolliert
 Das Limit von 256 Ausgabetokens ist eine Einstellung der Pipeline, die bei
 langen Sätzen mit vielen Entitäten greift
 (Abschnitt~\ref{sec:llm-pipeline}).
-Um seinen Einfluss auf MultiNERD zu messen statt hochzurechnen, wurden für
-alle neun QLoRA-Läufe genau die Testsätze, deren gespeicherte Antwort nicht
-parsebar war, mit demselben Adapter, demselben Prompt und Greedy-Decoding,
-aber einem Limit von 1\,024 Tokens erneut generiert; alle übrigen
-Antworten wurden unverändert übernommen.
-Die Auswahlregel \enquote{nicht parsebar} ist ein Stellvertreter für
+Um seinen Einfluss auf MultiNERD zu messen statt hochzurechnen, wurden in
+allen neun QLoRA-Läufen die Antworten für genau die Testsätze neu erzeugt,
+deren gespeicherte Antwort nicht parsebar war.
+Adapter, Prompt und Greedy-Decoding blieben gleich, nur das Limit betrug
+1\,024 Tokens.
+Alle übrigen Antworten wurden unverändert übernommen.
+Die Auswahlregel \enquote{nicht parsebar} steht für
 \enquote{abgeschnitten}: Jede nicht parsebare Antwort der QLoRA-Läufe
-endet ohne schließende Klammer, und eine vollständige, aber aus anderem
-Grund nicht parsebare Antwort würde unter Greedy-Decoding identisch
-reproduziert; abgeschnittene, aber zufällig parsebare Antworten lassen
-sich in den gespeicherten Daten dagegen nicht erkennen.
-Bei identischen Logits und Greedy-Decoding bliebe eine Antwort, die vor
-dem Limit mit dem Ende-Token abschließt, unverändert; da die
+endet ohne schließende Klammer.
+Eine vollständige, aber aus anderem Grund nicht parsebare Antwort würde
+mit Greedy-Decoding identisch reproduziert.
+Nicht erkennen lassen sich in den gespeicherten Daten dagegen
+abgeschnittene, aber zufällig parsebare Antworten.
+Schließt eine Antwort vor dem Limit mit dem Ende-Token ab, bliebe sie
+bei identischen Logits und Greedy-Decoding unverändert; da die
 ursprünglichen Läufe den Stoppgrund nicht protokollierten, ist diese
 Bedingung für die übernommenen Antworten nicht vollständig prüfbar.
 Zwei Kontrollen prüfen, wie weit sich die gespeicherten Antworten
@@ -1205,9 +1211,9 @@ Seeds; sechs eingefrorene Modelle auf fünf Domänen ergeben
 30 Evaluationen.
 Die Inferenz entspricht der MultiNERD-Testinferenz: Der Encoder
 verarbeitet jeden Satz ungekürzt (ein Satz über 256 Subwort-Tokens
-würde hier zum Abbruch führen; keiner ist so lang), das LLM erhält
-unverändert das Standardprofil mit
-allen 15 Typen und erzeugt seine Ausgaben per Greedy-Decoding, ohne Thinking, mit
+würde hier zum Abbruch führen; keiner ist so lang).
+Das LLM erhält unverändert das Standardprofil mit allen 15 Typen und
+erzeugt seine Ausgaben per Greedy-Decoding, ohne Thinking, mit
 4-Bit-Basismodell und höchstens 256 Ausgabetokens.
 Alle CrossNER-Evaluationen liefen auf der H100
 (Tabelle~\ref{tab:hardware}); die Latenzwerte von Qwen3.5-27B sind

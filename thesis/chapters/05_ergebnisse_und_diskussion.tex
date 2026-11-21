@@ -165,9 +165,10 @@ praktisch gleich; bei den seltenen Typen BIO (Encoder vorn) sowie CEL
 und VEHI (LLM vorn) kommt eine ausgeprägte Streuung zwischen den Seeds
 hinzu. Diese Verteilung erklärt, warum Mikro- und Makro-F$_1$ Encoder
 und LLM unterschiedlich ordnen. Der Mikro-Wert wird von LOC, PER und ANIM
-getragen, bei denen der Encoder vorn liegt; der Makro-Wert gewichtet die
-seltenen Typen gleich, bei denen das LLM überwiegend vorn liegt oder
-gleichzieht; im Makro-F$_1$ liegen beide deshalb nahe beieinander. Das
+getragen, bei denen der Encoder vorn liegt; der Makro-Wert gewichtet alle
+Typen gleich, also auch die seltenen, bei denen das LLM überwiegend vorn
+liegt oder gleichzieht. Im Makro-F$_1$ liegen beide deshalb nahe
+beieinander. Das
 Bootstrap-Intervall der Makro-Differenz enthält null
 (Tabelle~\ref{tab:ci}).
 Für BIO, INST, MYTH, VEHI und CEL mit 8 bis 41 Referenzentitäten
@@ -235,8 +236,9 @@ werden.
 \section{Formtreue der LLM-Ausgaben}
 \label{sec:erg-formtreue}
 
-Die Kennzahlen zur Formtreue aus Tabelle~\ref{tab:formtreue} berichtet
-Tabelle~\ref{tab:formtreue-erg} für die sechs LLM-Konfigurationen.
+Für die sechs LLM-Konfigurationen stehen die Kennzahlen zur Formtreue
+(Definition in Tabelle~\ref{tab:formtreue}) in
+Tabelle~\ref{tab:formtreue-erg}.
 
 \begin{table}[htbp]
   \centering
@@ -258,32 +260,33 @@ Tabelle~\ref{tab:formtreue-erg} für die sechs LLM-Konfigurationen.
   \input{generated/tab-formtreue}
 \end{table}
 
-Im QLoRA-Regime ist die Parse-Fehlerrate mit rund 0,4\,\% gering; alle
-nicht parsebaren Antworten enden ohne schließende Klammer, was auf das
-Limit von 256 Ausgabetokens hinweist; die Nachinferenz stützt das
-(siehe unten).
+Im QLoRA-Regime ist die Parse-Fehlerrate mit rund 0,4\,\% gering.
+Alle nicht parsebaren Antworten enden ohne schließende Klammer, was auf
+das Limit von 256 Ausgabetokens hinweist; die Nachinferenz am Ende
+dieses Abschnitts stützt das.
 Je Lauf betrifft das 62 bis 72 Antworten, obwohl nur 55 der
 16\,454 Referenzantworten länger als 256 Tokens sind
 (Abschnitt~\ref{sec:llm-pipeline}); ein Teil der Modellantworten ist
 also länger als die zugehörige Referenz.
 Die betroffenen Sätze sind mit im Mittel 44 Tokens etwa doppelt so lang
 wie ein durchschnittlicher Testsatz (21 Tokens) und enthalten je
-Modellgröße im Seed-Mittel 656 bis 670 Referenzentitäten, rund 2,6\,\%
-aller Referenzentitäten,
-die in der Auswertung als übersehen zählen.
+Modellgröße im Seed-Mittel 656 bis 670 Referenzentitäten.
+Das sind rund 2,6\,\% aller Referenzentitäten; sie zählen in der
+Auswertung als übersehen.
 Alle übrigen Antworten werden direkt als JSON geparst, und die weiteren
-Fehlerzähler zeigen in Tabelle~\ref{tab:formtreue-erg} null; dahinter
-stehen drei Einzelfälle in je einem Lauf (ein Typ \texttt{GENE} beim
+Fehlerzähler zeigen in Tabelle~\ref{tab:formtreue-erg} gerundet null;
+tatsächlich gab es drei Einzelfälle in je einem Lauf (ein Typ \texttt{GENE} beim
 0.8B-Modell, ein unzulässiger Index und eine Überlappung beim 4B-Modell,
 jeweils Seed~42).
 Die verbleibende Fehlerklasse sind Text-Abweichungen, bei denen das Feld
 \texttt{text} nicht zu den indizierten Tokens passt; sie betreffen im
 Seed-Mittel höchstens 45 von rund 25\,000 übernommenen Spans je Lauf.
 Die Zahl der leeren Vorhersagen liegt je Lauf nur wenig über der Zahl
-abgeschnittener Antworten; die wenigen übrigen leeren Sätze enthalten
-Referenzentitäten, zu denen kein Span übernommen wurde; von den acht
-Testsätzen ohne Referenzentität lässt nur das 27B-Modell einige leer
-(3 bis 4 je Seed).
+abgeschnittener Antworten.
+Die wenigen übrigen leeren Sätze enthalten Referenzentitäten, zu denen
+kein Span übernommen wurde.
+Von den acht Testsätzen ohne Referenzentität lässt nur das 27B-Modell
+einige leer (3 bis 4 je Seed).
 
 Im Zero-Shot-Regime hängt die Formtreue stark von der Größe ab.
 Das 0.8B-Modell hält weder Syntax noch Typinventar ein: Die meisten
@@ -335,7 +338,7 @@ liefen, treten in beiden Kontrollen Abweichungen auf; der GPU-Wechsel
 erklärt sie also nicht allein.
 Als Ursache kommen numerische Effekte in Frage
 (Abschnitt~\ref{sec:llms}); isoliert geprüft wurden sie nicht.
-Die Kontrollen stützen, dass ein höheres Limit die parsebaren
+Die Kontrollen stützen die Annahme, dass ein höheres Limit die parsebaren
 Antworten nahezu unverändert lässt; einen Neulauf aller 16\,454 Sätze
 ersetzen sie nicht.
 Die Nachinferenz der langen Sätze dauerte je Satz 11,5 (0.8B), 15,4 (4B)
@@ -364,10 +367,10 @@ lässt sich daraus jedoch kein reiner Effekt der Antwortlänge isolieren.
 \section{Einfluss der Modellgröße auf die Erkennungsleistung}
 \label{sec:erg-groesse}
 
-Die Erkennungsleistung über die Größenklassen aus
-Abschnitt~\ref{sec:groessenklassen} stellt Abbildung~\ref{fig:groesse}
-getrennt nach Familie und Regime dar; die Werte mit Standardabweichungen nennt
-Tabelle~\ref{tab:groesse} in Anhang~\ref{app:ergebnistabellen}.
+In Abbildung~\ref{fig:groesse} ist die Erkennungsleistung über die
+Größenklassen aus Abschnitt~\ref{sec:groessenklassen} getrennt nach
+Familie und Regime dargestellt; die Werte mit Standardabweichungen
+stehen in Tabelle~\ref{tab:groesse} in Anhang~\ref{app:ergebnistabellen}.
 
 \begin{figure}[htbp]
   \centering
@@ -484,12 +487,13 @@ und durch die gemeinsame Belegung eines Knotens erhöht
 Anhang~\ref{app:training-27b}).
 Selbst das kleinste Adaptertraining dauert rund 28-mal so lange wie das
 vollständige Fine-Tuning von DeBERTa-v3-base, obwohl es nur 6,4~Mio.
-Parameter aktualisiert; der Aufwand dürfte vor allem durch die
-Vorwärts- und Rückwärtsdurchläufe durch das vollständige Basismodell und
-die längeren Sequenzen mit Prompt entstehen.
+Parameter aktualisiert; der Aufwand dürfte vor allem daher rühren, dass
+jeder Schritt das vollständige Basismodell vorwärts und rückwärts
+durchläuft und die Sequenzen mit Prompt länger sind.
 Hinzu kommt die generative Validierung auf 200 Sätzen je Epoche, die bei
 den Encodern entfällt.
-Auch die Testinferenz über die 16\,454 Sätze ist aufwendig: Sie dauerte
+Auch bei der Testinferenz über die 16\,454 Sätze ist der Unterschied
+groß: Sie dauerte
 für die Encoder rund 3 bzw. 5,5 Minuten, für die QLoRA-Modelle 8,6 bis
 25,2~h (Tabelle~\ref{tab:effizienz}).
 
@@ -658,10 +662,11 @@ mehr als doppelt so häufig sind wie bei den Encodern. Rund die Hälfte
 davon entfällt auf die am Ausgabelimit abgeschnittenen Antworten
 (Abschnitt~\ref{sec:erg-formtreue}); auf den übrigen Sätzen liegt der
 Recall des 27B-Modells bei 96,3.
-Auf den abgeschnittenen Sätzen erreicht DeBERTa-v3-large je LLM-Seed
-einen Recall von 93,8 bis 96,6 (bei jeweils gleichem Seed beider Modelle,
-Seeds 42, 123 und 456: 96,6, 93,8 und 95,1), das
-LLM dort null bei 256 und 97,8 bis 98,4 bei 1\,024 Tokens.
+Auf den Sätzen, deren LLM-Antwort abgeschnitten wurde, erreicht
+DeBERTa-v3-large einen Recall von 93,8 bis 96,6; die Satzmenge hängt vom
+LLM-Seed ab, verglichen wird jeweils der gleiche Seed beider Modelle
+(Seeds 42, 123 und 456: 96,6, 93,8 und 95,1).
+Das LLM erreicht dort null bei 256 und 97,8 bis 98,4 bei 1\,024 Tokens.
 Mit der Nachinferenz dieser Sätze nähert sich die Auslassungsrate der
 QLoRA-Modelle derjenigen der Encoder an (Tabelle~\ref{tab:limit-multinerd}).
 Die Zahl der Zusätze ist bei bestem Encoder und bestem LLM fast gleich.
@@ -747,11 +752,11 @@ der Grobtypen fast doppelt so lang wie MultiNERD-Testsätze (21 Tokens,
 greift. 250 der 2\,506 Antworten (10,0\,\%) waren nicht parsebar, alle
 davon ohne schließende Klammer, gegenüber 0,4\,\% auf MultiNERD.
 Auf CrossNER betrugen Latenz je Satz und GPU-Spitzenspeicher für
-DeBERTa-v3-large 25,7~ms und 1,7~GiB, das 1,6-Fache seiner
-MultiNERD-Latenz auf demselben GPU-Typ.
-Für Qwen3.5-27B waren es 14\,691~ms (Median 13\,763~ms) und 18,6~GiB, das
-2,7-Fache seiner MultiNERD-Latenz; dieser MultiNERD-Wert stammt von der
-H100~NVL.
+DeBERTa-v3-large 25,7~ms und 1,7~GiB; die Latenz ist das 1,6-Fache
+seiner MultiNERD-Latenz auf demselben GPU-Typ.
+Für Qwen3.5-27B waren es 14\,691~ms (Median 13\,763~ms) und 18,6~GiB; die
+Latenz ist das 2,7-Fache seiner MultiNERD-Latenz, die allerdings auf der
+H100~NVL gemessen wurde.
 
 Die Sensitivitätsanalyse mit 1\,024 Ausgabetokens
 (Abschnitt~\ref{sec:crossner}, Tabelle~\ref{tab:limit}) bestätigt diese
@@ -769,9 +774,10 @@ Gemessen an der MultiNERD-Referenz auf den drei Grobtypen mit demselben
 Ausgabelimit (für das LLM die Nachinferenz mit 1\,024 Tokens, 99,6
 Punkte) verliert das LLM beim Transfer 12,4 Punkte, der Encoder 14,5.
 Der ursprüngliche Recall-Verlust des LLM geht somit wesentlich auf das
-Ausgabelimit zurück; der verbleibende Unterschied zu MultiNERD umfasst
-außerdem Unterschiede in Texten und Annotation; ein reiner Domäneneffekt
-lässt sich daraus nicht isolieren.
+Ausgabelimit zurück.
+Der verbleibende Unterschied zu MultiNERD umfasst außerdem Unterschiede
+in Texten und Annotation; ein reiner Domäneneffekt lässt sich daraus
+nicht isolieren.
 Die mittlere Latenz je Satz lag sogar unter der des
 Laufs mit 256 Tokens, obwohl die Antworten länger sind
 (Tabelle~\ref{tab:limit}); die Ursache wurde nicht geprüft,
@@ -845,10 +851,10 @@ höhere Werte ergeben hätte, wurde nicht untersucht.
 Denkbar, aber ungeprüft ist, dass sich ein vollständig feinjustierter
 Encoder stärker an Eigenheiten der Silberreferenz anpasst als ein
 Adaptertraining.
-Hinzu kommt der Umfang des Trainingssplits von 131\,280 Sätzen: Der
-Nutzen von Vorwissen bei deutlich weniger Trainingsdaten, den
-\textcite{bogdanov2024nuner} und \textcite{zaratiana2024gliner} vor allem
-für solche Bedingungen untersuchen, wird hier nicht geprüft.
+Hinzu kommt der Umfang des Trainingssplits von 131\,280 Sätzen: Welchen
+Nutzen Vorwissen bei deutlich weniger Trainingsdaten hat, was
+\textcite{bogdanov2024nuner} und \textcite{zaratiana2024gliner}
+untersuchen, wird hier nicht geprüft.
 Schließlich entfällt der größte Teil des Recall-Rückstands auf die am
 Limit von 256 Ausgabetokens abgeschnittenen Antworten
 (Abschnitte~\ref{sec:erg-formtreue} und~\ref{sec:erg-fehlertypen}).
@@ -972,10 +978,11 @@ Sampling-Streuung Abschnitt~\ref{sec:limitationen}).
 Ein Constrained Decoding, das nur die JSON-Syntax erzwingt, dürfte hier
 wenig helfen, weil die Syntax bei 4B und 27B bereits weitgehend stimmt,
 Text- und Indexfeld aber nicht zueinander passen.
-Allerdings berichten \textcite{tam2024speakfreely} Leistungseinbußen
-durch Formatzwang, \textcite{semin2026spanLabeling} dagegen Gewinne durch
-LogitMatch, das die Ausgabe auf gültige Spans der Eingabe beschränkt und
-so den Abgleich zwischen Text und Position übernimmt, der bei den
+\textcite{tam2024speakfreely} berichten Leistungseinbußen durch
+Formatzwang, \textcite{semin2026spanLabeling} dagegen Gewinne durch
+LogitMatch.
+Dieses Verfahren beschränkt die Ausgabe auf gültige Spans der Eingabe und
+übernimmt so den Abgleich zwischen Text und Position, der den
 Zero-Shot-Modellen hier misslingt.
 Das Format ändert nichts daran, dass die gemessene LLM-Inferenz um
 Größenordnungen langsamer ist als die der Encoder
@@ -1016,9 +1023,10 @@ zwischen den Zero-Shot- und QLoRA-Konfigurationen
 zwischen der kleinsten und der größten QLoRA-Konfiguration (1,3 Punkte);
 beide Vergleiche variieren mehrere Eigenschaften gleichzeitig.
 Im Zero-Shot-Regime ist der Größeneffekt um Größenordnungen größer
-(Abschnitt~\ref{sec:erg-groesse}); die Formtreue-Kennzahlen legen nahe,
-dass ein großer Teil der Sprünge auf die Formtreue zurückgeht; getrennt
-bestimmt wurde dieser Anteil nicht.
+(Abschnitt~\ref{sec:erg-groesse}).
+Die Formtreue-Kennzahlen legen nahe, dass ein großer Teil der Sprünge
+auf die Formtreue zurückgeht; getrennt bestimmt wurde dieser Anteil
+nicht.
 Eine mögliche Verbindung besteht zur Beobachtung, dass Fähigkeiten wie
 das Befolgen von Instruktionen erst ab einer gewissen Größe
 zuverlässig auftreten~\cite{wei2022emergent}; bei Einzelläufen ohne
@@ -1059,10 +1067,10 @@ mehr als dem Hundertfachen der Encoder-Latenz zulässig, und
 DeBERTa-v3-large bleibt auf MultiNERD im Mikro-F$_1$ knapp vorn.
 
 Nach den Ressourcenschwellen (Abschnitt~\ref{sec:effizienzmetriken},
-Tabelle~\ref{tab:effizienz}) lässt eine Latenzgrenze ab 8,9~ms
-DeBERTa-v3-base zu, ab 16,5~ms DeBERTa-v3-large, ab 1,9~s das erste LLM
-(Qwen3.5-0.8B, QLoRA) und ab 5,5~s alle LLMs; die Speicherschwellen der
-trainierten Konfigurationen liegen bei 0,7 (DeBERTa-v3-base), 0,9 (0.8B),
+Tabelle~\ref{tab:effizienz}) ist DeBERTa-v3-base ab einer Latenzgrenze
+von 8,9~ms zulässig, DeBERTa-v3-large ab 16,5~ms, das erste LLM
+(Qwen3.5-0.8B, QLoRA) ab 1,9~s, und ab 5,5~s sind es alle LLMs.
+Die Speicherschwellen der trainierten Konfigurationen liegen bei 0,7 (DeBERTa-v3-base), 0,9 (0.8B),
 1,7 (DeBERTa-v3-large), 3,5 (4B) und 18,7~GiB (27B).
 Auf MultiNERD ist damit unter jeder Kombination von Grenzen, die
 überhaupt eine Konfiguration zulässt, ein Encoder die beste gemessene
@@ -1094,8 +1102,8 @@ Gepoolt erreichen beide Modelle denselben Recall (85,5); der Vorsprung
 des LLM entsteht allein in der Precision (88,8 gegenüber 84,5).
 Von den falsch positiven Spans liegen beim LLM 53\,\%, beim Encoder
 61\,\% ganz oder teilweise auf Entitäten nicht abgebildeter Typen (je
-Domäne 33 bis 79\,\%); ohne sie schrumpfte der Abstand von 2,1 auf 0,5
-Punkte, sofern man auch Teilspans solcher Entitäten nicht als Fehler
+Domäne 33 bis 79\,\%); ohne sie würde der Abstand von 2,1 auf 0,5
+Punkte schrumpfen, sofern man auch Teilspans solcher Entitäten nicht als Fehler
 wertet.
 Vortrainingswissen und die manuelle Annotation von CrossNER lassen sich
 davon nicht trennen (Abschnitte~\ref{sec:disk-leistung}
@@ -1127,9 +1135,11 @@ der Encoder mit dem 27B-Modell und der Vergleich der beiden Encoder.
 Die Intervalle der einzelnen
 Konfigurationen sind beim Makro-F$_1$ mit 3,9 bis 5,2 Punkten Breite
 (trainierte Konfigurationen bei 256 Tokens) wesentlich breiter als beim
-Mikro-F$_1$, weil seltene Typen auf wenigen Sätzen beruhen.
+Mikro-F$_1$, weil die Werte seltener Typen auf wenigen Sätzen
+beruhen.
 Eine Schwelle praktischer Relevanz wurde nicht vorab festgelegt; zur
-Einordnung dienen die Seed-Streuung und der Abstand base/large
+Einordnung dienen die Seed-Streuung und der Abstand zwischen den beiden
+Encodern
 (Tabelle~\ref{tab:groesse}).
 Was die Intervalle nicht erfassen, fasst
 Abschnitt~\ref{sec:limitationen} zusammen.

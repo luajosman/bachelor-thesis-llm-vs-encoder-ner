@@ -133,10 +133,11 @@ Die vom Trainer protokollierte Trainingsdauer ohne Laden und Export
 liegt bei den ununterbrochenen Läufen unter der Slurm-Abrechnung: bei
 den Encodern um 30 bis 49~s, bei den 0.8B- und 4B-Läufen um 32 bis
 141~s (Maximum beim 4B-Modell mit Seed~42).
-Die drei Zero-Shot-Läufe und der Greedy-Kontrolllauf entstanden am
-1.~August bzw. 29.~Juli 2026 (27B auf einer H100~NVL, 0.8B und 4B auf
-einer A100) aus einem Commit ohne lokale Änderungen; ihre Job-IDs sind
-in den Laufartefakten nicht protokolliert.
+Die drei Zero-Shot-Läufe entstanden am 1.~August 2026 aus einem Commit
+ohne lokale Änderungen (27B auf einer H100~NVL, 0.8B und 4B auf einer
+A100), der Greedy-Kontrolllauf am 29.~Juli 2026 auf einer A100 aus einer
+Arbeitskopie mit lokalen Änderungen (Tabelle~\ref{tab:app-laeufe}); die
+Job-IDs dieser Läufe sind in den Laufartefakten nicht protokolliert.
 Die CrossNER-Evaluationen mit 256 Tokens liefen im Oktober 2026.
 Die Nachinferenz mit 1\,024 Tokens lief am 28.~Oktober 2026 (Jobs
 3673515 bis 3673523, H100~HBM3, Commit \texttt{ff91342}), der
@@ -199,9 +200,9 @@ beträgt höchstens 0,12 Punkte.
 \end{table}
 
 \paragraph{Nachrangige Einstellungen.}
-Die Hyperparameter aus Kapitel~\ref{chap:methodik} ergänzt
-Tabelle~\ref{tab:app-einstellungen} um Einstellungen, die das Ergebnis nur
-mittelbar betreffen oder die Ausführung auf dem Cluster beschreiben.
+Zu den Hyperparametern aus Kapitel~\ref{chap:methodik} kommen in
+Tabelle~\ref{tab:app-einstellungen} Einstellungen hinzu, die das Ergebnis
+nur mittelbar betreffen oder die Ausführung auf dem Cluster beschreiben.
 
 \begin{table}[ht]
   \centering
@@ -333,8 +334,8 @@ Ausgabe-Gating~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
 Die Kennzahlen nennt Tabelle~\ref{tab:app-qwen-architektur}; die Folgen
 der Schichtstruktur für die Adapterplatzierung beschreibt
 Abschnitt~\ref{sec:lora-konfiguration}.
-Die konfigurierte Kontextlänge von 262\,144 Positionen ist bei den hier
-verwendeten Sequenzlängen nicht limitierend.
+Die konfigurierte Kontextlänge von 262\,144 Positionen begrenzt die hier
+verwendeten Sequenzlängen nicht.
 
 \begin{table}[ht]
     \centering
@@ -389,7 +390,7 @@ Implementierung \texttt{sdpa} (Scaled Dot-Product Attention) anstelle von
 FlashAttention-2.
 Die Längen der Referenzantworten (Abschnitt~\ref{sec:llm-pipeline})
 wurden mit dem Skript \texttt{scripts/answer\_lengths.py} bestimmt.
-Unter dem Qwen3.5-Tokenizer sind die Referenzantworten des Testsplits
+Mit dem Qwen3.5-Tokenizer sind die Referenzantworten des Testsplits
 im Median 32 Tokens lang (99.~Perzentil 186, Maximum 553); 55 der
 16\,454 Referenzantworten überschreiten 256 Tokens, eine überschreitet
 512 und keine 1\,024.
@@ -539,8 +540,8 @@ Schritt 20\,000 (Seeds 42 und 123) bzw. 19\,500 (Seed~456) von
 
 Die Trainingsdauer in Kapitel~\ref{chap:ergebnisse} ist die Summe der
 vier Zuteilungen laut \texttt{sacct}; sie schließt das erneute Laden von
-Modell und Daten je Zuteilung ein und ist mit den übrigen Läufen nur
-näherungsweise vergleichbar.
+Modell und Daten je Zuteilung ein und ist mit der Dauer der übrigen
+Läufe nur näherungsweise vergleichbar.
 Die Hochrechnung der Schrittrate der letzten Zuteilung auf alle Schritte
 liegt 2,5 bis 10,9~h unter der Summe laut \texttt{sacct} und bestätigt
 deren Größenordnung.
@@ -621,8 +622,8 @@ ergänzt Tabelle~\ref{tab:app-limit-seeds} um die Werte je Seed; die
 Ergebnisse der Kontrollstichprobe je Lauf nennt
 Tabelle~\ref{tab:app-kontrolle}.
 Die Werte zu den Abbildungen~\ref{fig:typen} und~\ref{fig:groesse}
-enthalten die Tabellen~\ref{tab:typen} und~\ref{tab:groesse}; um
-Precision und Recall ergänzt die Typwerte
+enthalten die Tabellen~\ref{tab:typen} und~\ref{tab:groesse}; Precision
+und Recall zu den Typwerten stehen in
 Tabelle~\ref{tab:app-typen-prf}.
 Um die Werte der einzelnen Seeds und um die Grobtypen je Domäne
 ergänzen die Tabellen~\ref{tab:app-crossner-seeds}

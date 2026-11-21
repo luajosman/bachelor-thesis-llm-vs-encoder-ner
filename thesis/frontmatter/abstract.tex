@@ -12,8 +12,8 @@ und QLoRA-Regime auf dem englischen Teil von MultiNERD mit
 Die fünf trainierten Konfigurationen werden mit je drei Seeds
 ausgewertet.
 Erfasst werden strikte Metriken auf Entitätsebene, die Formtreue der
-JSON-Ausgaben, Trainingsdauer, Inferenzlatenz und maximal allokierter
-GPU-Inferenzspeicher; hinzu kommt ein Transfertest auf CrossNER.
+JSON-Ausgaben, Trainingsdauer, Inferenzlatenz und GPU-Spitzenspeicher
+der Inferenz; hinzu kommt ein Transfertest auf CrossNER.
 
 DeBERTa-v3-large erreicht einen Mikro-F$_1$ von 95,8 Punkten,
 Qwen3.5-27B im QLoRA-Regime zunächst 94,5.
@@ -34,8 +34,8 @@ Die Encoder benötigen auf MultiNERD 9 bis 17~ms je Satz und 0,7 bis
 Auf gleicher Hardware ergibt sich für Qwen3.5-0.8B gegenüber
 DeBERTa-v3-base ein Latenzfaktor von etwa 210.
 Die Zero-Shot-Konfigurationen erreichen 6,2 bis 69,4 F$_1$-Punkte.
-Ihre Prompt- und Decoding-Wahl wurde durch Testbeobachtungen beeinflusst;
-da sich die Regime über das Training hinaus in Prompt, Decoding und
+Prompt und Decoding dieser Läufe wurden nach Testbeobachtungen gewählt.
+Da sich die Regime zudem über das Training hinaus in Prompt, Decoding und
 numerischer Präzision unterscheiden, ist kein isolierter
 Fine-Tuning-Effekt bestimmbar.
 

@@ -196,15 +196,16 @@ Aus diesem Bauplan sind drei Modellfamilien hervorgegangen.
 Token sieht den Kontext in beide Richtungen~\cite{devlin2019bert}.
 \emph{Decoder-only}-Modelle wie GPT-3 verwenden nur den Decoder ohne
 Encoder-Attention; durch die kausale Maske eignen sie sich zur
-Texterzeugung Token für Token~\cite{brown2020language};
-Encoder-Decoder-Modelle entsprechen dem Original.
+Texterzeugung Token für Token~\cite{brown2020language}.
+Encoder-Decoder-Modelle behalten den Aufbau des Originals bei.
 Für NER folgt daraus der zentrale Unterschied der beiden verglichenen
 Modellklassen: Ein Encoder liefert für jedes Token eine
 beidseitig kontextualisierte Repräsentation, aus der ein Label
 klassifiziert werden kann.
 Ein Decoder verarbeitet die Sequenz kausal und gibt in der hier
-verwendeten Pipeline die Entitäten als Text aus; da der ganze
-Eingabesatz im Prompt liegt, kann er den rechten Satzkontext nutzen.
+verwendeten Pipeline die Entitäten als Text aus. Da der ganze
+Eingabesatz im Prompt liegt, kann er dabei dennoch auch den Kontext
+rechts von einer Entität nutzen.
 
 Die Kosten der Self-Attention wachsen quadratisch mit der
 Sequenzlänge~\cite{vaswani2017attention}; bei der Texterzeugung werden
@@ -363,10 +364,11 @@ Einige Fähigkeiten treten dabei erst ab einer gewissen Modellgröße auf;
 \textcite{wei2022emergent} bezeichnen sie als emergent.
 
 Viele LLMs werden nur mit frei herunterladbaren Gewichten und einer
-Lizenz veröffentlicht; weil die Open-Source-AI-Definition zusätzlich
-Angaben zu den Trainingsdaten und den vollständigen Code
-verlangt~\cite{osi2024osaid},
-gelten sie als Modelle mit \emph{offenen Gewichten} (\emph{open weights}).
+Lizenz veröffentlicht. Die Open-Source-AI-Definition verlangt zusätzlich
+Angaben zu den Trainingsdaten und den vollständigen
+Code~\cite{osi2024osaid}; solche Modelle gelten deshalb nicht als Open
+Source, sondern als Modelle mit \emph{offenen Gewichten}
+(\emph{open weights}).
 Zu dieser Gruppe gehört die Qwen-Familie von Alibaba; auf das im
 Februar 2026 erschienene erste
 Qwen3.5-Modell~\cite{qwen2026qwen35blog} folgten Modelle ohne
@@ -550,9 +552,9 @@ Solche Modi machen partielle Treffer sichtbar, erschweren aber den
 Vergleich zwischen Arbeiten; diese Arbeit verwendet ausschließlich den
 strikten Modus (Abschnitt~\ref{sec:performanzmetriken}).
 
-In der Praxis werden Metriken auf Entitätsebene aus Tagfolgen berechnet, und
-die Bibliothek bestimmt dabei, wie Spans aus den Tags gewonnen
-werden.
+In der Praxis werden Metriken auf Entitätsebene aus Tagfolgen berechnet;
+wie dabei Spans aus den Tags gewonnen werden, hängt von der verwendeten
+Bibliothek ab.
 Die in dieser Arbeit verwendete Bibliothek \texttt{seqeval} bietet zwei
 Modi~\cite{nakayama2018seqeval}.
 Der Standardmodus ahmt das CoNLL-Auswertungsskript nach und toleriert formal unzulässige Tagfolgen; ein
@@ -584,13 +586,14 @@ nicht definiert und wird in der Praxis als null gewertet.
 Vergleich zweier Annotationen der positiven spezifischen Übereinstimmung
 entspricht.
 Ein F$_1$-Score misst damit die Übereinstimmung mit der Referenz und
-nur mittelbar die Richtigkeit; bei einer automatisch erzeugten Referenz
+nur mittelbar die Richtigkeit. Bei einer automatisch erzeugten Referenz
 (Silberreferenz) wie der von MultiNERD
-(Abschnitt~\ref{sec:datasets_corpora}) ist diese Lesart zu
-berücksichtigen.
+(Abschnitt~\ref{sec:datasets_corpora}) geben die Werte also an, wie gut
+ein Modell diese Referenz trifft, nicht wie richtig es gegenüber einer
+geprüften Annotation liegt.
 
-Neben der Erkennungsleistung erfasst diese Arbeit den Ressourcenbedarf;
-der Anteil trainierbarer Parameter quantifiziert dabei nur die
-Parameterreduktion durch parametereffiziente Verfahren, während
-Inferenzspeicher, Latenz und Trainingsdauer gesondert gemessen werden
-(Abschnitt~\ref{sec:effizienzmetriken}).
+Neben der Erkennungsleistung erfasst diese Arbeit den Ressourcenbedarf.
+Der Anteil trainierbarer Parameter gibt dabei nur an, wie stark ein
+parametereffizientes Verfahren die Zahl der trainierten Parameter senkt;
+Inferenzspeicher, Latenz und Trainingsdauer werden deshalb gesondert
+gemessen (Abschnitt~\ref{sec:effizienzmetriken}).
