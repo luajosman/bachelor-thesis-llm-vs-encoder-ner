@@ -1,4 +1,14 @@
-# Stand der Bachelorarbeit (12.11.2026)
+# Stand der Bachelorarbeit (21.11.2026)
+
+## Betreuerfeedback zu Kapitel 4 und 5 (21.11., Claude Code)
+
+- **Anlass:** handschriftliche Kommentare von Philippe Thomas vom 17.11. zur Fassung vom 12.11. (25 Anmerkungen: 22 in Kapitel 4, eine in 5.1.1, zwei in 6.1) und zwei Hinweise aus der Begleitmail (Trennung Grundlagen / verwandte Arbeiten / Methodik; Methodenkapitel stellenweise zu ausführlich).
+- **Stand:** 112 physische Seiten, Haupttext S. 1–77 (Kapitel 1: 5, Kapitel 2: 12, Kapitel 3: 13, Kapitel 4: 22, Kapitel 5: 20, Kapitel 6: 5 Seiten), Literatur ab S. 78, Anhang ab S. 87. Build ohne Fehler und Warnungen. Datum auf Deckblatt und Erklärung: 26. November 2026.
+- **Struktur:** „Datensätze und Korpora" steht jetzt als Abschnitt 3.1 in den verwandten Arbeiten (vorher 2.8) und enthält die MultiNERD-Referenzwerte (vorher 3.1.1). Der frühere Unterabschnitt 4.5.4 zur Analyse des Größeneinflusses ist in 4.2.3 aufgegangen; die Nachinferenz ist damit Abschnitt 4.5.4. Die Unterabschnitte von Anhang A.2 haben Labels (`app:vorlaeufe` bis `app:kontrollstichprobe`); Kapitel 4 und 5 verweisen nicht mehr pauschal auf A.2.
+- **Kapitel 4:** Einleitung mit inhaltlichem Überblick; neues Listing 4.1 (Nutzernachricht, leerer Denkblock, Zielantwort); die drei Längengrenzen (256 neue Tokens, 1 024 Tokens Trainingssequenz, 1 024 Ausgabetokens nur in den Sensitivitätsanalysen) getrennt erklärt; Folgen von „nicht parsebar" und „verworfen" direkt bei den Verarbeitungsschritten; Wort-Tokenisierung der Evaluation benannt; Absatz zur hybriden Attention und Detailangaben in den Anhang verlegt; gestrichen sind die vom Betreuer markierten Stellen (rsLoRA/DoRA, SHA-256 im Haupttext, pauschaler Anhangssatz).
+- **Kapitel 5 und 6:** kein Satz beginnt mehr mit „Tabelle", „Abbildung" oder „Listing" (gilt für alle Kapitel und den Anhang); eigener Absatz „Datenkontamination" in 5.7.1, Abschnitt 3.6 verweist nur noch darauf; die Asymmetrie der Vergleiche bei 256 und 1 024 Tokens steht ausdrücklich in 5.7.1 und 6.1; die Korrekturen des Branches `korrekturen-2026-11-25` (Rundungssatz, 126 gegenüber 151 Typfehler) sind übernommen.
+- **Zusätzlich:** eindeutige Berichtigungen aus `review/24_…` (B-09, B-10, B-12 bis B-25, Q-02 bis Q-16) und die formalen Punkte aus `review/25_…` (Jahr und Revision für die vier Online-Quellen ohne Datum, Datum der 27B- und 397B-Karte, DOI bei Efron und Tibshirani entfernt, zwei unzitierte Einträge gelöscht).
+- **Offen beim Verfasser:** B-01 bis B-08, B-11, B-26 aus Bericht 24 (darunter „vier oder sieben Hauptvergleiche" und die BF16-Messung); W6, W7, W9 bis W14, W16 und die G-Punkte aus Bericht 25; KI-Angabe in der Erklärung auf Vollständigkeit prüfen (zuletzt verwendetes Claude-Modell); englisches Abstract; Repository öffentlich schalten; Branch nach `main` zusammenführen und pushen.
 
 ## Kürzung und Kontrolllauf (12.11., Claude Code)
 
