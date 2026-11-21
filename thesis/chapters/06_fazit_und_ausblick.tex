@@ -1,7 +1,7 @@
 % chapters/06_fazit_und_ausblick.tex
 %
 % 6.1 folgt den Forschungsfragen FF1 bis FF3 aus Abschnitt 1.2 und gleicht
-% die Erwartungen E1 bis E3 aus Abschnitt 3.5 ab; es werden keine
+% die Erwartungen E1 bis E3 aus Kapitel 3 ab; es werden keine
 % Ergebnisse eingeführt, die nicht in Kapitel 5 stehen.
 
 \chapter{Fazit und Ausblick}
@@ -26,8 +26,13 @@ Ersetzt eine Nachinferenz mit 1\,024 Tokens die am Limit abgeschnittenen
 Antworten, schrumpft der Rückstand auf 0,18 Punkte [0,02; 0,33];
 auf CrossNER kehrt sich die Reihenfolge mit dem höheren Limit um
 (Tabelle~\ref{tab:synthese}).
+Keiner der beiden Vergleiche ist ganz symmetrisch: Das Limit von
+256 Tokens trifft allein das LLM, und die Nachinferenz bessert allein
+dessen abgeschnittene Antworten nachträglich nach
+(Abschnitt~\ref{sec:disk-leistung}).
 Erwartung E1 ist auf MultiNERD nur bei ausreichendem Ausgabelimit und
-nur teilweise bestätigt: Das mit QLoRA angepasste LLM liegt im Punktwert
+nur teilweise bestätigt: Qwen3.5-27B, das größte der drei mit QLoRA
+angepassten LLMs, liegt dann im Punktwert
 knapp vor DeBERTa-v3-base, ohne dass sich eine Rangfolge nachweisen
 lässt ([$-$0,02; 0,30]), und bleibt knapp hinter DeBERTa-v3-large.
 Das Intervall des explorativen Vergleichs mit DeBERTa-v3-large liegt nur

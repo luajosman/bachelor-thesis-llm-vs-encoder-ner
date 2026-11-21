@@ -32,6 +32,8 @@ Schneeballsuche verfolgt.
 Trefferzahlen wurden nicht protokolliert; die Auswahl beansprucht keine
 systematische Vollständigkeit.
 
+Abschnitt~\ref{sec:datasets_corpora} stellt die Datensätze vor, auf
+denen diese Arbeit und die verwandten Arbeiten evaluieren.
 Die Abschnitte~\ref{sec:encoder_ner_related}
 bis~\ref{sec:model_size_related} behandeln Encoder-basierte Ansätze,
 LLM-basierte Ansätze nach Ausgabeformat und Anpassungsart, direkte
@@ -40,36 +42,126 @@ Modellgröße; Abschnitt~\ref{sec:research_gap} leitet daraus die
 Forschungslücke ab und
 ordnet sie den Forschungsfragen aus Abschnitt~\ref{sec:problem_ziel} zu.
 
+\section{Datensätze und Korpora}
+\label{sec:datasets_corpora}
+
+Annotierte Datensätze legen fest, welche Entitätstypen ein NER-System
+unterscheiden soll, und ermöglichen Training und vergleichbare
+Evaluation.
+Sie unterscheiden sich in Sprache, Textgenre, Zahl und Granularität der
+Typen sowie in der Art der Annotation.
+Vier Datensätze sind für diese Arbeit relevant; sie sind in
+Tabelle~\ref{tab:datasets-vergleich} gegenübergestellt.
+
+Der CoNLL-2003-Datensatz umfasst manuell annotierte englische und
+deutsche Nachrichtentexte mit den vier Typen Person, Organisation, Ort
+und Sonstiges~\cite{sang2003conll} und ist bis heute der am häufigsten
+verwendete NER-Benchmark~\cite{li2018survey}.
+
+OntoNotes 5.0 ist ein manuell annotiertes Korpus mit 18 Entitätstypen
+und Texten mehrerer Genres in Englisch, Chinesisch und
+Arabisch~\cite{weischedel2013ontonotes,li2018survey}.
+
+MultiNERD deckt zehn Sprachen, die Genres Wikipedia und Wikinews und
+15 Entitätstypen ab~\cite{tedeschi2022multinerd}.
+Die Annotation ist automatisch erzeugt: Verlinkte Textstellen werden über
+die Wissensbasis BabelNet einem Typ zugeordnet, auf weitere Vorkommen
+übertragen und durch ein iteratives Verfahren bereinigt, das Sätze
+verwirft, bei denen ein auf den Daten trainiertes Modell der Annotation
+widerspricht.
+Die offiziellen Trainings-, Validierungs- und Testsplits sind damit ein
+\emph{Silver Standard} (im Folgenden Silberreferenz): Ihre Labels stammen nicht von Menschen, und auch
+die Testreferenz kann Fehler enthalten.
+Zusätzlich messen die Autoren die Annotationsqualität je Typ auf
+1\,000 zufällig gezogenen, manuell geprüften englischen Sätzen mit
+mindestens 20 Instanzen pro Typ~\cite[Tab.~5]{tedeschi2022multinerd}.
+Danach gelten PER (Person), ORG (Organisation), LOC (Ort), CEL
+(Himmelskörper), DIS (Krankheit), EVE (Ereignis) und MEDIA (Medien,
+Werke) als zuverlässig annotiert, während ANIM (Tier), BIO (biologische
+Entität), FOOD (Lebensmittel) und PLANT (Pflanze) häufig verwechselt
+oder nicht erkannt werden~\cite{tedeschi2022multinerd}.
+Auch INST (Instrument) liegt mit einem F$_1$ von 0{,}67 niedrig, wird von
+den Autoren aber keiner der beiden Gruppen zugeordnet.
+Über alle Klassen weist die Silberreferenz auf dieser Stichprobe
+gegenüber der manuellen Korrektur einen F$_1$ von 0{,}85
+aus~\cite[Tab.~5]{tedeschi2022multinerd}.
+
+Die einzige in der Originalarbeit trainierte Architektur ist das für die
+iterative Bereinigung auf den Silberdaten trainierte mBERT-Modell mit
+BiLSTM und CRF.
+Evaluiert wird auf Gold-Benchmarks wie CoNLL-2003 nach Abbildung auf die
+vier groben CoNLL-Typen sowie auf der manuell geprüften Stichprobe,
+nicht auf den eigenen Splits.
+Für die offiziellen Splits des englischen Teils mit rund 164\,000
+Sätzen, die Hauptdatenbasis dieser Arbeit
+(Abschnitt~\ref{sec:datenauswahl}), berichtet die Originalarbeit somit
+keine Referenzwerte; die MultiNERD-Werte anderer Arbeiten ordnet
+Abschnitt~\ref{sec:research_gap} ein.
+Die mögliche Datenkontamination durch Wikipedia-Texte in den
+Vortrainingskorpora der LLMs diskutiert
+Abschnitt~\ref{sec:disk-leistung}.
+
+CrossNER wurde entworfen, um NER über Domänengrenzen hinweg zu
+evaluieren~\cite{liu2021crossner}.
+Es umfasst fünf Zieldomänen (Politik, Naturwissenschaften, Musik,
+Literatur und Künstliche Intelligenz) mit manuell annotierten Sätzen aus
+Wikipedia.
+Jede Domäne besitzt ein eigenes Typinventar mit 9 bis 17 Kategorien,
+das neben allgemeinen Typen wie Person, Organisation und Ort
+domänenspezifische Typen wie Politiker, Enzym, Album oder Algorithmus
+enthält.
+Die annotierten Datensätze sind klein: je Domäne 100 bis 200 Sätze zum
+Training und einige hundert zur Validierung und zum Test; als
+Quelldomäne dient CoNLL-2003~\cite{liu2021crossner}.
+Diese Arbeit verwendet ausschließlich die Testsplits als Transfertest
+und wertet nur die gemeinsamen Grobtypen aus
+(Abschnitt~\ref{sec:crossner}).
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.25}
+  \caption[Vergleich der verwendeten NER-Datensätze]{Vergleich der verwendeten NER-Datensätze.
+  Eigene Zusammenstellung nach \textcite{sang2003conll},
+  \textcite{weischedel2013ontonotes}, \textcite{tedeschi2022multinerd}
+  und \textcite{liu2021crossner}.}
+  \label{tab:datasets-vergleich}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lllrl}
+    \toprule
+    \textbf{Datensatz} & \textbf{Sprachen} & \textbf{Genres}
+      & \textbf{Typen} & \textbf{Annotation} \\
+    \midrule
+    CoNLL-2003    & EN, DE          & Nachrichten             &  4
+      & manuell (IOB1) \\
+    OntoNotes 5.0 & EN, ZH, AR      & Nachrichten, Rundfunk,  & 18
+      & manuell \\
+                  &                 & Gespräche, Web          &
+      & \\
+    MultiNERD     & 10 Sprachen     & Wikipedia, Wikinews     & 15
+      & automatisch \\
+                  &                 &                         &
+      & (Silberreferenz) + \\
+                  &                 &                         &
+      & manuelle Teststichprobe \\
+    CrossNER      & EN              & Wikipedia, 5 Domänen    & 9--17
+      & manuell \\
+                  &                 &                         & je Domäne
+      & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 \section{Encoder-basierte Ansätze für NER}
 \label{sec:encoder_ner_related}
 
 Encoder mit Klassifikationskopf bilden seit BERT den Standard für
 überwachte NER (Abschnitt~\ref{sec:encoder_ner}) und dienen in dieser
 Arbeit als Vergleichsmaßstab für die LLMs.
-Der Abschnitt klärt zunächst, welche Referenzwerte für die Datenbasis
-MultiNERD vorliegen, stellt dann Vergleichsstudien vor, in denen
-feinjustierte Encoder geprompteten LLMs gegenüberstehen, und endet mit
-Encodern als Generalisten, die dank LLM-erzeugter Trainingsdaten mit
+Der Abschnitt stellt zunächst Vergleichsstudien vor, in denen
+feinjustierte Encoder geprompteten LLMs gegenüberstehen, und behandelt
+dann Encoder als Generalisten, die dank LLM-erzeugter Trainingsdaten mit
 deutlich größeren LLMs gleichziehen.
-
-\subsection{MultiNERD und seine Referenzwerte}
-\label{sec:k3-multinerd}
-
-Den Aufbau des automatisch annotierten Datensatzes MultiNERD
-\cite{tedeschi2022multinerd} beschreibt Abschnitt~\ref{sec:datasets_corpora};
-einzige in der Originalarbeit trainierte Architektur ist das für die
-iterative Bereinigung auf den Silberdaten trainierte mBERT-Modell mit
-BiLSTM und CRF.
-Evaluiert wird auf Gold-Benchmarks wie CoNLL-2003 nach Abbildung auf die
-vier groben CoNLL-Typen sowie auf 1\,000 englischen Sätzen mit manuell
-geprüfter Annotation, nicht auf den eigenen Splits.
-Auf dieser Stichprobe weist die Silberreferenz gegenüber der manuellen
-Korrektur über alle Klassen einen F$_1$ von 0{,}85
-aus~\cite[Tab.~5]{tedeschi2022multinerd}.
-Für die offiziellen Splits, die diese Arbeit verwendet
-(Abschnitt~\ref{sec:datenauswahl}), berichtet die Originalarbeit somit
-keine Referenzwerte; die MultiNERD-Werte anderer Arbeiten ordnet
-Abschnitt~\ref{sec:research_gap} ein.
 
 \subsection{Encoder in Vergleichsstudien}
 \label{sec:k3-encoder-vergleich}
@@ -506,8 +598,8 @@ Die vorangegangenen Abschnitte zeigen, dass direkte Vergleiche zwischen
 Encodern und generativen LLMs für NER existieren und in ihren
 Ergebnissen weitgehend übereinstimmen; die Forschungslücke liegt in
 ihrer Reichweite.
-Tabelle~\ref{tab:related-overview} fasst die behandelten Arbeiten
-zusammen und ordnet die vorliegende Arbeit ein.
+Die behandelten Arbeiten fasst Tabelle~\ref{tab:related-overview}
+zusammen; sie ordnet auch die vorliegende Arbeit ein.
 
 \begin{table}[t]
   \centering
@@ -662,25 +754,15 @@ Formtreue.
 Sie adressiert damit FF2 und stützt die größenbezogenen Empfehlungen
 in FF3.
 
-Eine erste Einschränkung betrifft eine mögliche Datenkontamination.
+Eine erste Einschränkung betrifft eine mögliche Datenkontamination:
 MultiNERD besteht aus Wikipedia- und Wikinews-Artikeln, die mit hoher
 Wahrscheinlichkeit Teil der Vortrainingskorpora der verwendeten LLMs
 sind.
-Die Zusammensetzung der Qwen3.5-Trainingsdaten ist nicht vollständig
-offengelegt, sodass sich dies weder belegen noch ausschließen lässt.
 \textcite{zhan2026generativeNER} weisen auf bekannte Lecks von
 Benchmark-Daten hin und ziehen deshalb CleanCoNLL heran, dessen
 bereinigte Form kaum im Vortraining enthalten sein dürfte.
-Ihr Befund, dass sich die Ergebnisse beim Ersetzen der Typbezeichnungen
-durch bedeutungslose Symbole kaum ändern,
-spricht gegen eine Memorisierung von Entität-Typ-Paaren, gilt aber für
-CoNLL-2003 und CleanCoNLL; für MultiNERD bleibt die Frage offen.
-Die Referenz ist allerdings eine automatisch erzeugte Silberreferenz:
-Wer den Wikipedia-Text kennt, kennt damit nicht die hier verwendeten
-Labels, auch wenn der Datensatz seit 2022 öffentlich ist.
-Im QLoRA-Regime lernen alle Modelle das Typinventar ohnehin aus den
-Trainingsdaten; im Zero-Shot-Regime könnte Vorwissen über die Artikel die
-Ergebnisse dagegen begünstigen.
+Was daraus für die Ergebnisse dieser Arbeit folgt, diskutiert
+Abschnitt~\ref{sec:disk-leistung}.
 
 Die zweite Einschränkung betrifft die Vergleichsbedingungen: Die Arbeit
 hält nicht alle Bedingungen konstant und vergleicht deshalb konkrete

@@ -8,8 +8,8 @@
 
 Dieses Kapitel führt die Konzepte ein, die das Versuchsdesign in
 Kapitel~\ref{chap:methodik} voraussetzt.
-Es erklärt Begriffe und Mechanismen; die Einordnung einzelner
-Forschungsarbeiten und ihrer Ergebnisse folgt in
+Es erklärt Begriffe und Mechanismen; die Datensätze sowie die
+Einordnung einzelner Forschungsarbeiten und ihrer Ergebnisse folgen in
 Kapitel~\ref{chap:verwandte_arbeiten}.
 
 \section{Natural Language Processing (NLP)}
@@ -62,7 +62,7 @@ bezeichnen (eigene Formalisierung nach \textcite{li2018survey}).
 Eine Erwähnung ist damit ein zusammenhängender Abschnitt der Tokenfolge,
 ein \emph{Span}; korrekt ist eine Vorhersage nur, wenn Grenzen und Typ
 stimmen.
-Abbildung~\ref{fig:ner-grundprinzip} zeigt das Prinzip an einem
+Das Prinzip zeigt Abbildung~\ref{fig:ner-grundprinzip} an einem
 Beispiel.
 Ob der Endindex das letzte Token einschließt oder auf das Token danach
 zeigt, ist Konvention; die Abbildung verwendet einschließende Indizes,
@@ -108,7 +108,7 @@ Annahme~\cite{sang2003conll}, und auch die in dieser Arbeit verwendeten
 Datensätze enthalten nur flache Annotationen.
 Erweiterungen wie BIOES oder BILOU markieren zusätzlich das letzte Token
 eines Spans (E bzw. L) und Spans aus einem einzigen Token (S bzw. U).
-Tabelle~\ref{tab:bio-beispiel} stellt IOB2 und IOB1 an einem Satz
+IOB2 und IOB1 stellt Tabelle~\ref{tab:bio-beispiel} an einem Satz
 gegenüber.
 Die Daten des CoNLL-2003-Benchmarks liegen im IOB1-Schema vor~\cite{sang2003conll}; diese Arbeit verwendet IOB2, das jeden
 Entitätsbeginn explizit markiert und in Abschnitt~\ref{sec:evaluation}
@@ -176,7 +176,7 @@ Encoder-Ausgabe zugreift, und maskiert seine Self-Attention so, dass
 Position $i$ nur auf Positionen bis $i$ zugreifen kann.
 Diese \emph{kausale Maske} stellt sicher, dass die Vorhersage eines
 Tokens nur von den bereits bekannten Tokens abhängt.
-Abbildung~\ref{fig:transformer-architektur} zeigt den Aufbau.
+Den Aufbau zeigt Abbildung~\ref{fig:transformer-architektur}.
 
 \begin{figure}[htbp]
   \centering
@@ -427,7 +427,7 @@ Ein Dropout auf dem Adapterpfad dient als Regularisierung.
 $A$ wird zufällig initialisiert und $B$ mit null, sodass $\Delta W$ zu
 Beginn des Trainings null ist und das Modell unverändert
 startet~\cite{hu2021lora}.
-Abbildung~\ref{fig:lora-adapter} zeigt den Aufbau.
+Den Aufbau zeigt Abbildung~\ref{fig:lora-adapter}.
 Nach dem Training kann $\Delta W$ zu $W_0$ addiert werden, sodass
 gegenüber dem Ausgangsmodell keine zusätzliche Inferenzlatenz entsteht;
 alternativ bleibt der Adapter getrennt und wird bei der Inferenz
@@ -512,102 +512,6 @@ Unterschiede zwischen Konfigurationen zu lesen, nicht als Skalierungsgesetz
 Empirische Befunde zum Größeneinfluss bei NER fasst
 Abschnitt~\ref{sec:model_size_related} zusammen.
 
-\section{Datensätze und Korpora}
-\label{sec:datasets_corpora}
-
-Annotierte Datensätze legen fest, welche Entitätstypen ein NER-System
-unterscheiden soll, und ermöglichen Training und vergleichbare
-Evaluation.
-Sie unterscheiden sich in Sprache, Textgenre, Zahl und Granularität der
-Typen sowie in der Art der Annotation.
-Vier Datensätze sind für diese Arbeit relevant; Tabelle~\ref{tab:datasets-vergleich}
-stellt sie gegenüber.
-
-Der CoNLL-2003-Datensatz umfasst manuell annotierte englische und
-deutsche Nachrichtentexte mit den vier Typen Person, Organisation, Ort
-und Sonstiges~\cite{sang2003conll} und ist bis heute der am häufigsten
-verwendete NER-Benchmark~\cite{li2018survey}.
-
-OntoNotes 5.0 ist ein manuell annotiertes Korpus mit 18 Entitätstypen
-und Texten mehrerer Genres in Englisch, Chinesisch und
-Arabisch~\cite{weischedel2013ontonotes,li2018survey}.
-
-MultiNERD deckt zehn Sprachen, die Genres Wikipedia und Wikinews und
-15 Entitätstypen ab~\cite{tedeschi2022multinerd}.
-Die Annotation ist automatisch erzeugt: Verlinkte Textstellen werden über
-die Wissensbasis BabelNet einem Typ zugeordnet, auf weitere Vorkommen
-übertragen und durch ein iteratives Verfahren bereinigt, das Sätze
-verwirft, bei denen ein auf den Daten trainiertes Modell der Annotation
-widerspricht.
-Die offiziellen Trainings-, Validierungs- und Testsplits sind damit ein
-\emph{Silver Standard} (im Folgenden Silberreferenz): Ihre Labels stammen nicht von Menschen, und auch
-die Testreferenz kann Fehler enthalten.
-Zusätzlich messen die Autoren die Annotationsqualität je Typ auf
-1\,000 zufällig gezogenen, manuell geprüften englischen Sätzen mit
-mindestens 20 Instanzen pro Typ~\cite[Tab.~5]{tedeschi2022multinerd}.
-Danach gelten PER (Person), ORG (Organisation), LOC (Ort), CEL
-(Himmelskörper), DIS (Krankheit), EVE (Ereignis) und MEDIA (Medien,
-Werke) als zuverlässig annotiert, während ANIM (Tier), BIO (biologische
-Entität), FOOD (Lebensmittel) und PLANT (Pflanze) häufig verwechselt
-oder nicht erkannt werden~\cite{tedeschi2022multinerd}.
-Auch INST (Instrument) liegt mit einem F$_1$ von 0{,}67 niedrig, wird von
-den Autoren aber keiner der beiden Gruppen zugeordnet.
-Der englische Teil mit rund 164\,000 Sätzen bildet die Hauptdatenbasis
-dieser Arbeit (Abschnitt~\ref{sec:datenauswahl}).
-Zur möglichen Datenkontamination durch Wikipedia-Texte in den
-Vortrainingskorpora der LLMs siehe Abschnitt~\ref{sec:research_gap}.
-
-CrossNER wurde entworfen, um NER über Domänengrenzen hinweg zu
-evaluieren~\cite{liu2021crossner}.
-Es umfasst fünf Zieldomänen (Politik, Naturwissenschaften, Musik,
-Literatur und Künstliche Intelligenz) mit manuell annotierten Sätzen aus
-Wikipedia.
-Jede Domäne besitzt ein eigenes Typinventar mit 9 bis 17 Kategorien,
-das neben allgemeinen Typen wie Person, Organisation und Ort
-domänenspezifische Typen wie Politiker, Enzym, Album oder Algorithmus
-enthält.
-Die annotierten Datensätze sind klein: je Domäne 100 bis 200 Sätze zum
-Training und einige hundert zur Validierung und zum Test; als
-Quelldomäne dient CoNLL-2003~\cite{liu2021crossner}.
-Diese Arbeit verwendet ausschließlich die Testsplits als Transfertest
-und wertet nur die gemeinsamen Grobtypen aus
-(Abschnitt~\ref{sec:crossner}).
-
-\begin{table}[htbp]
-  \centering
-  \small
-  \renewcommand{\arraystretch}{1.25}
-  \caption[Vergleich der verwendeten NER-Datensätze]{Vergleich der verwendeten NER-Datensätze.
-  Eigene Zusammenstellung nach \textcite{sang2003conll},
-  \textcite{weischedel2013ontonotes}, \textcite{tedeschi2022multinerd}
-  und \textcite{liu2021crossner}.}
-  \label{tab:datasets-vergleich}
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{lllrl}
-    \toprule
-    \textbf{Datensatz} & \textbf{Sprachen} & \textbf{Genres}
-      & \textbf{Typen} & \textbf{Annotation} \\
-    \midrule
-    CoNLL-2003    & EN, DE          & Nachrichten             &  4
-      & manuell (IOB1) \\
-    OntoNotes 5.0 & EN, ZH, AR      & Nachrichten, Rundfunk,  & 18
-      & manuell \\
-                  &                 & Gespräche, Web          &
-      & \\
-    MultiNERD     & 10 Sprachen     & Wikipedia, Wikinews     & 15
-      & automatisch \\
-                  &                 &                         &
-      & (Silberreferenz) + \\
-                  &                 &                         &
-      & manuelle Teststichprobe \\
-    CrossNER      & EN              & Wikipedia, 5 Domänen    & 9--17
-      & manuell \\
-                  &                 &                         & je Domäne
-      & \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
 \section{Evaluationsmetriken}
 \label{sec:evaluation}
 
@@ -680,8 +584,10 @@ nicht definiert und wird in der Praxis als null gewertet.
 Vergleich zweier Annotationen der positiven spezifischen Übereinstimmung
 entspricht.
 Ein F$_1$-Score misst damit die Übereinstimmung mit der Referenz und
-nur mittelbar die Richtigkeit; bei einer Silberreferenz wie MultiNERD ist
-diese Lesart zu berücksichtigen.
+nur mittelbar die Richtigkeit; bei einer automatisch erzeugten Referenz
+(Silberreferenz) wie der von MultiNERD
+(Abschnitt~\ref{sec:datasets_corpora}) ist diese Lesart zu
+berücksichtigen.
 
 Neben der Erkennungsleistung erfasst diese Arbeit den Ressourcenbedarf;
 der Anteil trainierbarer Parameter quantifiziert dabei nur die

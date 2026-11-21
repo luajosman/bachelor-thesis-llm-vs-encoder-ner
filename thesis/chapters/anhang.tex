@@ -31,7 +31,7 @@ Modellgewichte) liegen relativ zum Ergebnisverzeichnis unter
 den Prüfenden auf Anfrage bereitgestellt.
 
 \paragraph{Läufe und Artefakte.}
-Tabelle~\ref{tab:app-laeufe} nennt für jede Konfiguration die
+Für jede Konfiguration nennt Tabelle~\ref{tab:app-laeufe} die
 Konfigurationsdatei und das Ausgabeverzeichnis des Laufs mit Seed~42.
 Für die Seeds 123 und 456 ersetzen die Konfigurationsdateien das Suffix
 \texttt{\_canonical} durch \texttt{\_seed123} bzw. \texttt{\_seed456};
@@ -61,7 +61,9 @@ Die Ausgabeverzeichnisse enthalten folgende Artefakte:
 \end{itemize}\par}
 Die CrossNER-Evaluationen verwenden die Checkpoints der Hauptstudie und
 legen ihre Ergebnisse unter \texttt{results/crossner/} im Verzeichnis des
-jeweiligen Laufs mit einem Unterordner je Domäne ab.
+jeweiligen Laufs mit einem Unterordner je Domäne ab; die Testdateien der
+festgelegten CrossNER-Revision (Tabelle~\ref{tab:app-revisionen}) werden
+vor der Auswertung über SHA-256-Prüfsummen verifiziert.
 
 \begin{table}[ht]
   \centering
@@ -133,8 +135,8 @@ den Encodern um 30 bis 49~s, bei den 0.8B- und 4B-Läufen um 32 bis
 141~s (Maximum beim 4B-Modell mit Seed~42).
 Die drei Zero-Shot-Läufe und der Greedy-Kontrolllauf entstanden am
 1.~August bzw. 29.~Juli 2026 (27B auf einer H100~NVL, 0.8B und 4B auf
-einer A100); ihre Job-IDs sind in den Laufartefakten nicht
-protokolliert.
+einer A100) aus einem Commit ohne lokale Änderungen; ihre Job-IDs sind
+in den Laufartefakten nicht protokolliert.
 Die CrossNER-Evaluationen mit 256 Tokens liefen im Oktober 2026.
 Die Nachinferenz mit 1\,024 Tokens lief am 28.~Oktober 2026 (Jobs
 3673515 bis 3673523, H100~HBM3, Commit \texttt{ff91342}), der
@@ -147,8 +149,8 @@ Die Kontrollstichprobe mit 1\,024 Tokens lief am 9.\ und
 \texttt{1638272}).
 
 \paragraph{Explorative Vorläufe.}
-Tabelle~\ref{tab:app-vorlaeufe} dokumentiert die explorativen Vorläufe
-(Abschnitt~\ref{sec:datenaufteilung}; je ein Lauf mit Seed~42).
+Die explorativen Vorläufe (Abschnitt~\ref{sec:datenaufteilung}; je ein
+Lauf mit Seed~42) dokumentiert Tabelle~\ref{tab:app-vorlaeufe}.
 Sie wurden auf dem Testsplit ausgewertet und gehen nicht in die
 Hauptauswertung ein; ihre Abweichung vom jeweiligen Seed-42-Lauf der Hauptstudie
 beträgt höchstens 0,12 Punkte.
@@ -197,8 +199,8 @@ beträgt höchstens 0,12 Punkte.
 \end{table}
 
 \paragraph{Nachrangige Einstellungen.}
-Tabelle~\ref{tab:app-einstellungen} ergänzt die Hyperparameter aus
-Kapitel~\ref{chap:methodik} um Einstellungen, die das Ergebnis nur
+Die Hyperparameter aus Kapitel~\ref{chap:methodik} ergänzt
+Tabelle~\ref{tab:app-einstellungen} um Einstellungen, die das Ergebnis nur
 mittelbar betreffen oder die Ausführung auf dem Cluster beschreiben.
 
 \begin{table}[ht]
@@ -239,9 +241,9 @@ mittelbar betreffen oder die Ausführung auf dem Cluster beschreiben.
 \end{table}
 
 \paragraph{Zero-Shot-Prompt.}
-Listing~\ref{lst:prompt-glossar} zeigt die Systemnachricht des
-Glossar-Profils; Nutzernachricht und Chat-Template entsprechen
-Listing~\ref{lst:prompt-task}.
+Die Systemnachricht des Glossar-Profils zeigt
+Listing~\ref{lst:prompt-glossar}; Nutzernachricht und Chat-Template
+entsprechen Listing~\ref{lst:prompt-task}.
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true,
   breakatwhitespace=true, columns=fullflexible, keepspaces=true,
@@ -274,6 +276,7 @@ Rückfallstrategien des Parsers, die Vorstudie zum Ausgabelimit und die
 Kontrollstichprobe.
 
 \subsection{Vorläufe und Thinking-Abbruch}
+\label{app:vorlaeufe}
 
 Der Hauptstudie gingen explorative Vorläufe der fünf trainierten
 Konfigurationen mit Seed~42 voraus (Tabelle~\ref{tab:app-vorlaeufe}), die
@@ -312,6 +315,7 @@ Der Thinking-Modus wurde daraufhin für alle Läufe deaktiviert
 ausschließlich auf Validierungsdaten (Tabelle~\ref{tab:datennutzung}).
 
 \subsection{Architekturkennzahlen der Qwen3.5-Modelle}
+\label{app:qwen-architektur}
 
 Die Checkpoints sind multimodal angelegt und enthalten neben dem
 Textmodell einen Vision-Encoder sowie Module für Multi-Token-Prediction
@@ -320,10 +324,15 @@ Beide LLM-Regime laden die Modelle jedoch über
 \texttt{AutoModelForCausalLM}, das für Qwen3.5 ausschließlich das
 Textmodell (\texttt{Qwen3\_5ForCausalLM}) instanziiert;
 Vision-Encoder und MTP-Module werden verworfen.
-Tabelle~\ref{tab:app-qwen-architektur} nennt die Kennzahlen laut
-Modellkonfiguration der verwendeten Revisionen
-(Tabelle~\ref{tab:app-revisionen}); die Schichtstruktur mit Gated DeltaNet
-und voller Attention beschreibt Abschnitt~\ref{sec:llm-auswahl}.
+Laut den Konfigurationsdateien der verwendeten Revisionen
+(Tabelle~\ref{tab:app-revisionen}) sind alle drei Größen dichte Decoder
+mit hybrider Attention: In jedem Block aus vier Schichten nutzen drei
+Schichten lineare Attention in Form von Gated DeltaNet, die vierte
+vollständige Softmax-Attention mit Grouped-Query-Attention und
+Ausgabe-Gating~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
+Die Kennzahlen nennt Tabelle~\ref{tab:app-qwen-architektur}; die Folgen
+der Schichtstruktur für die Adapterplatzierung beschreibt
+Abschnitt~\ref{sec:lora-konfiguration}.
 Die konfigurierte Kontextlänge von 262\,144 Positionen ist bei den hier
 verwendeten Sequenzlängen nicht limitierend.
 
@@ -350,6 +359,7 @@ verwendeten Sequenzlängen nicht limitierend.
 \end{table}
 
 \subsection{Pipeline-Module und Softwareversionen}
+\label{app:software}
 
 Beide Pipelines nutzen gemeinsame Module für das Laden der Datensätze,
 die Metrikberechnung und die Protokollierung der Metadaten.
@@ -361,6 +371,12 @@ Für die Trainingsläufe der Hauptstudie überwacht zusätzlich eine
 Laufverwaltung Status und Phasen, verhindert konkurrierende Ausführungen
 desselben Laufs und stellt über Prüfsummen von Konfiguration und Code
 sicher, dass alle Seeds einer Konfiguration denselben Stand verwenden.
+
+Beim Laden des Datensatzes werden Splits, Spalten und Splitgrößen
+geprüft (Abschnitt~\ref{sec:datenvorverarbeitung}); eine zeilenweise
+Prüfung unterbleibt dabei.
+Die nachträgliche Prüfung der Rohdaten ergab weder leere Sätze noch
+Längeninkonsistenzen oder Label-IDs außerhalb des Inventars.
 
 Die MultiNERD-Läufe verwenden, soweit protokolliert, dieselben
 Softwareversionen: Python~3.12.3, PyTorch~2.13.0 (CUDA~13.0),
@@ -382,9 +398,10 @@ bzw. 103 von 16\,410 Referenzantworten 256 Tokens; das Maximum beträgt
 1\,047 bzw. 951 Tokens.
 
 \subsection{Prompt des QLoRA-Regimes}
+\label{app:prompt}
 
-Listing~\ref{lst:prompt-task} zeigt den gerenderten Prompt des
-Standardprofils für einen Satz des Testsplits: eine Systemnachricht mit
+Den gerenderten Prompt des Standardprofils für einen Satz des
+Testsplits zeigt Listing~\ref{lst:prompt-task}: eine Systemnachricht mit
 Aufgabe, Typinventar und Formatvorgaben sowie eine Nutzernachricht mit
 der nullbasiert nummerierten Tokenliste, ohne Demonstrationsbeispiele
 (Abschnitt~\ref{sec:prompt-design}).
@@ -427,18 +444,29 @@ Assistentennachricht bildet, lautet:
 [{"start_token": 4, "end_token": 5, "text": "Covington", "type": "LOC"}]
 \end{lstlisting}
 
+\noindent Trainiert wird im Single-Turn-Format
+(Abschnitt~\ref{sec:llm-pipeline}); Multi-Turn-Ansätze wie ChatIE werden
+zugunsten eines einfachen, klar evaluierbaren Setups nicht
+verwendet~\cite{wei2023chatie}, ebenso wenig Sequence Packing.
+
 \subsection{Sampling-Einstellung des Zero-Shot-Regimes}
+\label{app:sampling}
 
 Für den Non-Thinking-Modus empfiehlt die Qwen-Modellkarte bei
-allgemeinen Aufgaben Temperatur 0,7 und top-$p$ 0,8, bei
-Reasoning-Aufgaben Temperatur 1,0 und top-$p$ 0,95, jeweils mit
-top-$k = 20$, min-$p = 0$ und einer Presence-Penalty von 1,5~\cite{qwen2026card27b}.
+allgemeinen Aufgaben Temperatur 0,7 und top-$p$ 0,8 mit top-$k = 20$,
+min-$p = 0$ und einer Presence-Penalty von 1,5~\cite{qwen2026card27b}.
+Für Reasoning-Aufgaben nennt sie zwei Wertesätze, jeweils mit
+Temperatur 1,0 und min-$p = 0$: im Abschnitt \enquote{Quickstart}
+top-$p$ 0,95, top-$k = 20$ und eine Presence-Penalty von 1,5, im
+Abschnitt \enquote{Best Practices} top-$p$ 1,0, top-$k = 40$ und eine
+Presence-Penalty von 2,0.
 Die im Zero-Shot-Regime gewählte Einstellung
-(Abschnitt~\ref{sec:llm-pipeline}) übernimmt top-$k$, min-$p$ und die
-Temperatur des Reasoning-Profils, verwendet aber unbeschränktes top-$p$
-und keine Presence-Penalty.
+(Abschnitt~\ref{sec:llm-pipeline}) übernimmt Temperatur und min-$p$
+der Reasoning-Profile sowie top-$k = 20$, verwendet aber unbeschränktes
+top-$p$ und keine Presence-Penalty.
 
 \subsection{Protokollfelder je Lauf}
+\label{app:protokoll}
 
 Der Umfang der Reproduzierbarkeitsangaben unterscheidet sich zwischen
 Trainings- und Zero-Shot-Läufen.
@@ -465,6 +493,7 @@ nicht wiederhergestellt wird, setzt ihre exakte Wiederholung auch eine
 ununterbrochene Ausführung voraus.
 
 \subsection{Adapterdateien}
+\label{app:adapter}
 
 Die Adapter werden mit BF16-Mixed-Precision trainiert; die gespeicherten
 Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor (12,8 bzw. 42,5~MB),
@@ -477,6 +506,7 @@ Adapterparametern aus Tabelle~\ref{tab:lora-hyperparams} bei 2 (BF16)
 bzw. 4 Byte (FP32) je Parameter.
 
 \subsection{Trainingsverlauf der 27B-Läufe}
+\label{app:training-27b}
 
 Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
 Tagen und wurden vom Scheduler dreimal neu eingereiht; jeder Lauf
@@ -519,6 +549,7 @@ Vorlauf mit zwei Epochen lief allein auf dem Knoten und benötigte
 15,5~s je Schritt.
 
 \subsection{Hardwareeffekt bei der Encoder-Inferenz}
+\label{app:hardwareeffekt}
 
 Wie groß der Einfluss des GPU-Typs auf die Laufzeit
 (Abschnitt~\ref{sec:effizienzmetriken}) sein kann, zeigt die
@@ -528,6 +559,7 @@ mittlere Latenz von 17,6~ms je Satz, in der Hauptstudie auf einer H100
 dagegen 8,9~ms (Mittel der drei Läufe).
 
 \subsection{Rückfallstrategien des Parsers}
+\label{app:parser}
 
 Vor dem Parsing werden umgebender Leerraum und eventuelle Denkblöcke
 zwischen \texttt{<think>} und \texttt{</think>} entfernt.
@@ -541,6 +573,7 @@ Die anschließende Validierung der Array-Elemente beschreibt
 Abschnitt~\ref{sec:postprocessing}.
 
 \subsection{Vorstudie zum Ausgabelimit}
+\label{app:vorstudie}
 
 In einer Vorstudie wurde die Inferenz des 27B-Modells (Seed~42) mit
 einem Limit von 1\,024 Ausgabetokens auf den jeweils ersten 25 Sätzen der
@@ -555,6 +588,7 @@ Domänen wiederholt (Abschnitt~\ref{sec:crossner}); die Ergebnisse
 berichtet Abschnitt~\ref{sec:erg-crossner}.
 
 \subsection{Kontrollstichprobe zum Ausgabelimit}
+\label{app:kontrollstichprobe}
 
 Für die Kontrollstichprobe (Abschnitt~\ref{sec:nachinferenz}) wurden die
 Indizes aller 16\,454 Testsätze mit fester Zufallssaat (20261108)
@@ -578,23 +612,25 @@ Die Ergebnisse je Lauf nennt Tabelle~\ref{tab:app-kontrolle}.
 % (thesis/generated/); die Beispiele in tab:app-beispiele stammen aus den
 % Testvorhersagen der genannten Läufe (Listenindex in test_predictions.json).
 
-Tabelle~\ref{tab:app-seeds} nennt die Testwerte der einzelnen Seeds, aus
-denen die Mittelwerte in Tabelle~\ref{tab:haupt} gebildet wurden, sowie
-den Validierungs-F$_1$ und die Epoche des jeweils gewählten Checkpoints.
-Tabelle~\ref{tab:app-limit-seeds} ergänzt die Nachinferenz mit
-1\,024 Tokens (Tabelle~\ref{tab:limit-multinerd}) um die Werte je Seed;
-Tabelle~\ref{tab:app-kontrolle} nennt die Ergebnisse der
-Kontrollstichprobe je Lauf.
-Die Tabellen~\ref{tab:typen} und~\ref{tab:groesse} enthalten die Werte
-zu den Abbildungen~\ref{fig:typen} und~\ref{fig:groesse};
-Tabelle~\ref{tab:app-typen-prf} ergänzt die Typwerte um Precision und
-Recall.
-Die Tabellen~\ref{tab:app-crossner-seeds} und~\ref{tab:app-crossner-typen}
-ergänzen Tabelle~\ref{tab:crossner-erg} um die Werte der einzelnen Seeds
-und um die Grobtypen je Domäne; Tabelle~\ref{tab:crossner-ci} nennt die
-Bootstrap-Intervalle des Modellvergleichs je Domäne und gepoolt.
-Tabelle~\ref{tab:app-beispiele} zeigt Beispiele typischer Fehler je
-Fehlerklasse aus Abschnitt~\ref{sec:erg-fehlertypen}.
+Die Testwerte der einzelnen Seeds, aus denen die Mittelwerte in
+Tabelle~\ref{tab:haupt} gebildet wurden, nennt Tabelle~\ref{tab:app-seeds}
+zusammen mit dem Validierungs-F$_1$ und der Epoche des jeweils gewählten
+Checkpoints.
+Die Nachinferenz mit 1\,024 Tokens (Tabelle~\ref{tab:limit-multinerd})
+ergänzt Tabelle~\ref{tab:app-limit-seeds} um die Werte je Seed; die
+Ergebnisse der Kontrollstichprobe je Lauf nennt
+Tabelle~\ref{tab:app-kontrolle}.
+Die Werte zu den Abbildungen~\ref{fig:typen} und~\ref{fig:groesse}
+enthalten die Tabellen~\ref{tab:typen} und~\ref{tab:groesse}; um
+Precision und Recall ergänzt die Typwerte
+Tabelle~\ref{tab:app-typen-prf}.
+Um die Werte der einzelnen Seeds und um die Grobtypen je Domäne
+ergänzen die Tabellen~\ref{tab:app-crossner-seeds}
+und~\ref{tab:app-crossner-typen} die Tabelle~\ref{tab:crossner-erg};
+die Bootstrap-Intervalle des Modellvergleichs je Domäne und gepoolt
+nennt Tabelle~\ref{tab:crossner-ci}.
+Beispiele typischer Fehler je Fehlerklasse aus
+Abschnitt~\ref{sec:erg-fehlertypen} zeigt Tabelle~\ref{tab:app-beispiele}.
 
 \begin{table}[ht]
   \centering
