@@ -1,4 +1,13 @@
-# Stand der Bachelorarbeit (21.11.2026)
+# Stand der Bachelorarbeit (22.11.2026)
+
+## Verdichtung nach Bericht 28 (22.11., Claude Code)
+
+- **Bericht:** `review/28_verdichtungspruefung_2026-11-21.md` (ganze Arbeit auf Wiederholungen und auf die Abgrenzung von Grundlagen, verwandten Arbeiten und Methodik geprüft; Nachtrag mit Umsetzungstabelle).
+- **Umgesetzt:** alle A- und B-Punkte und VC-01 in Kapitel 1 bis 6. Die Begründung des Ausgabeformats steht jetzt in 4.4.4 (vorher 3.3.1), die eigene Einschränkung zu Skalierungsgesetzen in 4.2.3 (vorher 2.7), die Wahl des strikten `seqeval`-Modus in 4.5.1 und der Satz zur Ressourcenmessung in 4.5.2 (vorher 2.8), die Qwen-Abfolge in 2.5 (vorher 4.2.2). Gestrichen sind Wiederholungen in 3.1, 3.2.2, 3.3.4, 3.5, 3.6, 4.2.3, 4.3.1, 4.3.2, 4.4.5, 4.6, 5.7.2, 5.7.4, 6.2 und 6.3. Anhang, Tabellen und Abbildungen unverändert bis auf einen Verweis in Tab. 4.9.
+- **Stand:** 110 physische Seiten (vorher 112), Haupttext S. 1–76 (Kapitel 1: 5, Kapitel 2: 11, Kapitel 3: 13, Kapitel 4: 22, Kapitel 5: 20, Kapitel 6: 5 Seiten), Literatur ab S. 77, Anhang S. 86–101; Fließtext −563 Wörter (21 893). Build ohne Fehler und Warnungen.
+- **Umbruchregel geändert:** Auf Wunsch des Verfassers laufen Unterkapitel im Seitenfluss weiter, nur Kapitel beginnen auf einer neuen Seite. `\ueberschriftenrand` in `main.tex` steht auf .15 statt .30 der Satzspiegelhöhe; unter jeder Überschrift bleiben mindestens vier Textzeilen. Mit .30 hätte die Textkürzung keine Seite gespart. Kapitel 3 endet mit 11 Zeilen auf S. 29.
+- **Umbruch:** Drei Stellen in 4.5.1 und 4.5.2 sind knapper gefasst als im Bericht, weil sie unter der alten Regel (.30) eine Seite gekostet hätten.
+- **Offen beim Verfasser:** die im Nachtrag genannten bewusst entfallenen Angaben gegenlesen (BIOES/BILOU, Adapter-Präzision, Ressourcensatz zu UniversalNER/GoLLIE); VC-02 bis VC-07 und P-1 bis P-4; die fünf tief stehenden Überschriften ansehen (2.5 auf S. 11, 3.6 auf S. 26, 4.4.4 auf S. 40, 5.3 auf S. 57, A.2.3 auf S. 91); Commit und Push.
 
 ## Sprachprüfung und Umsetzung (21.11., Claude Code)
 

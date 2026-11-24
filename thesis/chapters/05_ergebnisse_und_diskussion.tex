@@ -950,17 +950,17 @@ vollständig ein, und die wenigen Parse-Fehler gehen auf das Ausgabelimit
 zurück (Abschnitt~\ref{sec:erg-formtreue}).
 Ob es anderen Formaten in Qualität oder Latenz überlegen ist, wurde nicht
 gesondert geprüft; die Erwartung aus
-Abschnitt~\ref{sec:llm_ner_related}, dass Indizes in der Eingabe den von
+Abschnitt~\ref{sec:prompt-design}, dass Indizes in der Eingabe den von
 \textcite{zhan2026generativeNER} für Zeichenoffsets beobachteten
 Einbruch vermeiden, bleibt eine Vermutung.
 Die dort berichteten rund 54 Punkte~\cite[Tab.~3]{zhan2026generativeNER}
 liegen weit unter den hier erreichten Werten (Tabelle~\ref{tab:haupt}),
 dienen bei anderen Modellen und Datensätzen aber nur der Einordnung.
-Eine Variante mit nummerierten Eingabetokens setzen
+Nummerierte Eingabetokens setzen
 \textcite[Tab.~3, Tab.~9]{ramponi2025fallacy} für die Spanerkennung ein;
 \textcite{semin2026spanLabeling} beschreiben die Wortindex-Variante,
-evaluieren selbst aber nur Zeichenindizes, auch mit Indexangaben in der
-Eingabe. Hier wird die Wortindex-Variante, soweit bekannt, erstmals mit
+ohne sie zu evaluieren (Abschnitt~\ref{sec:k3-ausgabeformate}). Hier
+wird sie, soweit bekannt, erstmals mit
 QLoRA und strikter Entitätsmetrik auf MultiNERD geprüft.
 Zugleich bestätigt sich der von \textcite{dagdelen2024structuredIE}
 berichtete Befund, dass feinjustierte Modelle JSON fast immer parsebar
@@ -1037,23 +1037,19 @@ Architektur, Vortrainingsdaten und Anpassungsverfahren überlagern den
 Größenunterschied, wie \textcite{zaratiana2024gliner} und
 \textcite{bogdanov2024nuner} für Encoder-Generalisten nahelegen.
 Die Skalierungsgesetze aus Abschnitt~\ref{sec:model_size} sind aus den
-dort genannten Gründen auf diese Befunde nicht übertragbar.
+dort und in Abschnitt~\ref{sec:einfluss-parameteranzahl} genannten
+Gründen auf diese Befunde nicht übertragbar.
 
 \subsection{Effizienz und praktische Empfehlungen}
 \label{sec:disk-effizienz}
 
 FF3 fragt nach dem Verhältnis von Erkennungsleistung und Ressourcenbedarf
-unter Speicher- und Latenzbeschränkungen. Auf MultiNERD erreichen die
-Encoder die höchsten Mikro-F$_1$-Werte bei der geringsten
-Inferenzlatenz, und DeBERTa-v3-base benötigt zugleich den geringsten
-Inferenzspeicher (Abschnitt~\ref{sec:erg-effizienz},
-Abbildung~\ref{fig:tradeoff}). Der hardwaregleiche Vergleich von
-DeBERTa-v3-base und Qwen3.5-0.8B ergibt einen Latenzfaktor von etwa 210;
-Faktoren zwischen anderen Größen enthalten in den Hauptläufen zusätzlich
-Hardwareeffekte.
-
+unter Speicher- und Latenzbeschränkungen.
 Bei 256 Ausgabetokens bilden die beiden Encoder die Pareto-Front
-(Abschnitt~\ref{sec:erg-effizienz}); die Nachinferenz am Ausgabelimit
+(Abschnitt~\ref{sec:erg-effizienz}, Abbildung~\ref{fig:tradeoff});
+hardwaregleich benötigt Qwen3.5-0.8B etwa das 210-Fache der Latenz von
+DeBERTa-v3-base.
+Die Nachinferenz am Ausgabelimit
 verändert den Qualitätsvergleich, weil das
 27B-Modell mit vollständigen Antworten im Punktwert knapp vor
 DeBERTa-v3-base liegt (Abschnitt~\ref{sec:disk-leistung}). Die
@@ -1109,10 +1105,9 @@ Vortrainingswissen und die manuelle Annotation von CrossNER lassen sich
 davon nicht trennen (Abschnitte~\ref{sec:disk-leistung}
 und~\ref{sec:limitationen}).
 
-Die Zero-Shot-Konfigurationen erreichen in der gewählten Pipeline
-wesentlich niedrigere Werte; das 27B-Modell erzielt unter ihnen den
-höchsten F$_1$, doch weder seine Eignung für eine Anwendung ohne
-Trainingsdaten noch die optimale Prompt- und Decoding-Wahl wurde geprüft.
+Ob sich das 27B-Modell, das im Zero-Shot-Regime den höchsten F$_1$
+erzielt, für eine Anwendung ohne Trainingsdaten eignet und welche Prompt-
+und Decoding-Wahl optimal wäre, wurde nicht geprüft.
 Alle Empfehlungen gelten für einzelne Sätze bei Batchgröße~1 und die
 genannten GPU-Typen; der mit Batching oder anderen Inferenzsystemen
 erreichbare Durchsatz und vollständige Anwendungslatenzen bleiben offen.

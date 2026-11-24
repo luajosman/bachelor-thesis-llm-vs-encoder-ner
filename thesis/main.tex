@@ -92,12 +92,12 @@
 
 \usepackage[noforwardlinks]{acronym}
 \usepackage[nobottomtitles*]{titlesec}
-% Überschriften, die im unteren Viertel einer Seite stehen würden, rücken
-% auf die nächste Seite; sonst beginnt das nächste Unterkapitel direkt
-% im Anschluss auf derselben Seite. titlesec misst den freien Platz vor
-% Abstand und Überschrift; .30 entspricht daher etwa dem unteren Viertel
-% für die Überschrift selbst.
-\newcommand{\ueberschriftenrand}{.30\textheight}
+% Unterkapitel laufen im Seitenfluss weiter; nur Kapitel beginnen auf einer
+% neuen Seite. Eine Überschrift rückt erst dann auf die nächste Seite, wenn
+% unter ihr weniger als etwa vier Textzeilen Platz hätten. titlesec misst den
+% freien Platz vor Abstand und Überschrift; .15 lässt daher nach der
+% Überschrift noch mindestens vier Zeilen (bis 21.11.2026: .30).
+\newcommand{\ueberschriftenrand}{.15\textheight}
 \renewcommand{\bottomtitlespace}{\ueberschriftenrand}
 % Absatzüberschriften (\paragraph) sind von der Regel ausgenommen und laufen frei:
 % titlesec ruft vor der Platzprüfung den Haken \<ebene>break auf, und ein negativer

@@ -97,9 +97,6 @@ Sätzen, die Hauptdatenbasis dieser Arbeit
 (Abschnitt~\ref{sec:datenauswahl}), berichtet die Originalarbeit somit
 keine Referenzwerte; die MultiNERD-Werte anderer Arbeiten ordnet
 Abschnitt~\ref{sec:research_gap} ein.
-Die mögliche Datenkontamination durch Wikipedia-Texte in den
-Vortrainingskorpora der LLMs diskutiert
-Abschnitt~\ref{sec:disk-leistung}.
 
 CrossNER wurde entworfen, um NER über Domänengrenzen hinweg zu
 evaluieren~\cite{liu2021crossner}.
@@ -247,9 +244,6 @@ gleichziehen~\cite{zaratiana2024gliner,bogdanov2024nuner}.
 Diese Gleichstände beruhen jedoch auf Zero- und Few-Shot-Benchmarks, bei
 GLiNER unter anderem auf den domänenspezifischen Typinventaren von
 CrossNER.
-Keine der Arbeiten stellt beide Modellfamilien feinjustiert in
-derselben Pipeline auf den offiziellen MultiNERD-Splits mit gemeinsamer
-Ressourcenmessung gegenüber.
 
 \section{LLM-basierte Ansätze für NER}
 \label{sec:llm_ner_related}
@@ -310,27 +304,11 @@ wiederholen. Das von den Autoren vorgeschlagene parallele Decoding
 beschleunigt die Inferenz um den Faktor 1{,}76 bis 10{,}22 bei
 unveränderter Erkennungsleistung.
 
-Vor diesem Hintergrund lässt sich die Ausgabestrategie dieser Arbeit
-einordnen (Abschnitt~\ref{sec:prompt-design}): Das Modell erhält eine
-nummerierte Tokenliste und gibt ein JSON-Array mit Start- und Endindex,
-Oberflächentext und Typ je Entität aus.
-Das Format gehört zur Indexing-Familie in der angereicherten Variante auf
-Wortebene: Die nummerierten Eingabetokens und die Wortindizes in der
-Ausgabe folgen \textcite{ramponi2025fallacy}, die Einordnung
-\textcite{semin2026spanLabeling}; JSON-Schema und Nachverarbeitung sind
-eigene Umsetzungen.
-Für dieses Format sprechen drei Gründe.
-Erstens ist zu erwarten, dass die explizit in der Eingabe stehenden
-Indizes den von \textcite{zhan2026generativeNER} bei Zeichenoffsets
-beobachteten Einbruch vermeiden.
-Zweitens hängt die Ausgabelänge von Zahl und Spanlänge der Entitäten
-sowie der Serialisierung ab; anders als bei Tagging- und Inline-Formaten
-entfällt die Reproduktion der Nicht-Entitätstokens.
-Drittens erlauben die Indizes eine eindeutige Rückabbildung auch bei
-mehrfach vorkommenden Oberflächenformen; das redundante Textfeld
-ermöglicht die Konsistenzprüfung (Abschnitt~\ref{sec:postprocessing}).
-Allerdings haben \textcite{semin2026spanLabeling} die
-Wortindex-Variante nicht evaluiert, und ihre Befunde beruhen auf per
+Die Ausgabestrategie dieser Arbeit ist die Wortindex-Variante der
+Indexing-Familie mit nummerierten Eingabetokens
+(Abschnitt~\ref{sec:prompt-design}), die
+\textcite{semin2026spanLabeling} beschreiben, aber nicht evaluieren.
+Ihre übrigen Befunde beruhen zudem auf per
 Prompting genutzten, nicht feinjustierten Modellen; ob die Vorteile der
 angereicherten Indizierung auch im QLoRA-Regime und bei 15 Typen tragen,
 ist eine empirische Frage dieser Arbeit.
@@ -439,20 +417,14 @@ Python-Code~\cite{wang2025gptner,xie2023zeroshot,ashok2023promptner,li2023codeie
 Drittens verringern Destillation und Fine-Tuning diesen Abstand, doch die
 Vergleiche mit Encodern stützen sich auf übernommene Werte oder auf
 Zero-Shot-Benchmarks~\cite{zhou2024universalner,sainz2024gollie}.
-UniversalNER misst keinen Trainings- oder Inferenzaufwand; GoLLIE
-dokumentiert Trainingszeit und CO$_2$ je Größe, aber keine
-Inferenzlatenz und keinen
-Encoder-Vergleich~\cite[Anh.~D.3, Tab.~10]{sainz2024gollie}.
-Für den CrossNER-Transfertest dieser Arbeit
-(Abschnitt~\ref{sec:crossner}) liefern PromptNER und GoLLIE Orientierung,
-aber keine Vergleichswerte: PromptNER sieht zwei Beispiele aus der
+Für den CrossNER-Versuch dieser Arbeit
+(Abschnitt~\ref{sec:crossner}), einen reinen Transfertest ohne
+Zielbeispiele auf den Grobtypen PER, ORG und LOC, liefern PromptNER und
+GoLLIE keine Vergleichswerte: PromptNER sieht zwei Beispiele aus der
 Zieldomäne, GoLLIE trainiert auf den Richtlinien vieler Datensätze, und
 beide werten die domänenspezifischen Typinventare von CrossNER aus.
-Der Versuch dieser Arbeit ist dagegen ein reiner Transfertest ohne
-Zielbeispiele auf den Grobtypen PER, ORG und LOC.
-Die von beiden Arbeiten berichteten CrossNER-Werte belegen deshalb nur, dass der Domänenwechsel auch
-für generative Modelle eine erhebliche Hürde bleibt; welches Niveau auf
-dem reduzierten Typinventar zu erwarten ist, zeigen sie nicht.
+Ihre Werte belegen nur, dass der Domänenwechsel auch für generative
+Modelle eine erhebliche Hürde bleibt.
 
 \section[PEFT-angepasste LLMs im direkten Vergleich mit Encodern]{PEFT-angepasste LLMs im direkten \mbox{Vergleich} mit Encodern}
 \label{sec:peft_ner_related}
@@ -588,10 +560,8 @@ Datensätzen ist es umgekehrt.
 Zudem beobachten \textcite{dukic2024lookingright}, dass ihre
 Maskenentfernung erst ab einer gewissen Modellgröße wirkt.
 Die vorliegende Arbeit betrachtet die Modellgröße daher innerhalb jeder
-Familie getrennt und deskriptiv, mit zwei Encoder- und drei LLM-Größen
-(Abschnitt~\ref{sec:groessenklassen}), die über den Größenbereich der
-direkten Vergleiche nach unten und oben hinausgehen
-(Tabelle~\ref{tab:experiment-matrix}).
+Familie getrennt und deskriptiv
+(Abschnitt~\ref{sec:groessenklassen}).
 
 \section[Forschungslücke und Einordnung der eigenen Arbeit]{Forschungslücke und Einordnung der \mbox{eigenen} Arbeit}
 \label{sec:research_gap}
@@ -740,9 +710,11 @@ ausschnittsweise erfasst: Inferenzzeiten ohne Speicher, Trainingskosten
 ohne Inferenz oder gar keine Messung.
 Zudem betrachten die direkten Vergleiche LLMs einer einzigen
 Größenklasse zwischen 3 und 9~Mrd. Parametern.
-Größenstaffelungen finden sich nur innerhalb von LLM-Familien, bei
-GoLLIE mit Trainingsressourcen je Größe, aber ohne gemeinsamen Encoder-Vergleich mit
-Inferenzmessung~\cite{zhou2024universalner,sainz2024gollie}, während
+Größenstaffelungen finden sich nur innerhalb von
+LLM-Familien~\cite{zhou2024universalner,sainz2024gollie}, bei
+GoLLIE mit Trainingsressourcen je
+Größe~\cite[Anh.~D.3, Tab.~10]{sainz2024gollie}, aber ohne gemeinsamen
+Encoder-Vergleich mit Inferenzmessung, während
 Encoder-Studien die Größe nur innerhalb ihrer Klasse
 variieren~\cite{keraghel2024recent}.
 Keine der Arbeiten in Tabelle~\ref{tab:related-overview} untersucht eine
@@ -756,7 +728,7 @@ Formtreue.
 Damit bearbeitet sie FF2 und stützt die größenbezogenen Empfehlungen
 in FF3.
 
-Eine erste Einschränkung betrifft eine mögliche Datenkontamination:
+Eine Einschränkung betrifft eine mögliche Datenkontamination:
 MultiNERD besteht aus Wikipedia- und Wikinews-Artikeln, die mit hoher
 Wahrscheinlichkeit Teil der Vortrainingskorpora der verwendeten LLMs
 sind.
@@ -765,11 +737,6 @@ Benchmark-Daten hin und ziehen deshalb CleanCoNLL heran, dessen
 bereinigte Form kaum im Vortraining enthalten sein dürfte.
 Was daraus für die Ergebnisse dieser Arbeit folgt, diskutiert
 Abschnitt~\ref{sec:disk-leistung}.
-
-Die zweite Einschränkung betrifft die Vergleichsbedingungen: Die Arbeit
-hält nicht alle Bedingungen konstant und vergleicht deshalb konkrete
-Konfigurationen, keine isolierten Effekte einzelner Faktoren; die Abweichungen vom idealisierten Versuchsdesign weist
-Tabelle~\ref{tab:abweichungen} aus.
 
 Aus der Literatur folgen drei Erwartungen.
 Sie dienen als Lesehilfe, nicht als Hypothesentest;

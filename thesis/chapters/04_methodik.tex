@@ -160,10 +160,10 @@ Beide Modelle stehen laut ihren Modellkarten unter der MIT-Lizenz~\cite{he2021de
 \subsection{LLM-Modelle (Qwen3.5)}
 \label{sec:llm-auswahl}
 
-Auf der LLM-Seite werden drei Größen der Qwen3.5-Familie verwendet:
+Auf der LLM-Seite werden drei Größen der Qwen3.5-Familie
+(Abschnitt~\ref{sec:llms}) verwendet:
 Qwen3.5-0.8B, Qwen3.5-4B und Qwen3.5-27B.
-Qwen3.5 folgt in der Qwen-Familie auf Qwen2.5 und
-Qwen3~\cite{qwen2024qwen25,qwen2025qwen3,qwen2026qwen35blog}; die
+Die
 Modelle sind laut ihren Modellkarten als offene Gewichte unter der
 Apache-2.0-Lizenz verfügbar~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
 Für die Familie sprach neben der Lizenz die fein abgestufte Größenleiter mit
@@ -200,13 +200,15 @@ besetzt, und die Einteilung ist eine Festlegung dieser Arbeit.
 Der Einfluss der Parameteranzahl auf Erkennungsleistung, Effizienz und
 Formtreue wird getrennt nach Regime über diese Klassen deskriptiv
 betrachtet.
-Mit zwei Encoder- und drei LLM-Größen, bei denen Hyperparameter und
-Hardware mitvariieren, lassen sich Größenunterschiede zwar gegen die
-Variabilität zwischen den Seeds abgrenzen, Skalierungsgesetze im Sinne
-angepasster Potenzgesetze~\cite{kaplan2020scaling,hoffmann2022training} aber
-nicht bestimmen.
-Leitfrage ist das Verhältnis von Leistungsgewinn und Ressourcenbedarf
-größerer LLMs gegenüber kompakten Encodern~\cite{keraghel2024recent,obeidat2025llm}.
+Die Arbeit passt veröffentlichte Checkpoints fester Größe an, deren
+Vortraining nicht variiert werden kann, und mit der Größe ändern sich
+zugleich Hyperparameter und Hardware.
+Mit zwei Encoder- und drei LLM-Größen lassen sich Größenunterschiede
+deshalb zwar gegen die Variabilität zwischen den Seeds abgrenzen,
+Skalierungsgesetze im Sinne angepasster
+Potenzgesetze~\cite{kaplan2020scaling,hoffmann2022training}
+(Abschnitt~\ref{sec:model_size}) aber nicht bestimmen; beobachtete
+Unterschiede sind als Unterschiede zwischen Konfigurationen zu lesen.
 
 \section{Auswahl und Aufbereitung der Datensätze}
 \label{sec:datensaetze}
@@ -237,15 +239,10 @@ LLMs.
 Der Datensatz ist laut Datensatzkarte unter CC~BY-NC-SA~4.0
 veröffentlicht und auf nichtkommerzielle Forschung beschränkt~\cite{babelscape2023multinerdcard}.
 
-MultiNERD ist automatisch annotiert: Verlinkte Textstellen der Artikel
-werden über die Wissensbasis BabelNet einem Typ zugeordnet, und die
-Annotation wird anschließend iterativ
-bereinigt~\cite{tedeschi2022multinerd}
-(Abschnitt~\ref{sec:datasets_corpora}).
-Auch die Referenz des Testsplits ist somit eine Silberreferenz.
-Die von den Autoren manuell geprüfte Stichprobe von 1\,000 zufällig
-gezogenen englischen Sätzen mit mindestens 20 Instanzen je Typ wird
-nicht verwendet.
+Alle Splits von MultiNERD sind automatisch annotiert
+(Abschnitt~\ref{sec:datasets_corpora}); auch die Referenz des Testsplits
+ist somit eine Silberreferenz.
+Die von den Autoren manuell geprüfte Stichprobe wird nicht verwendet.
 Sie ist in den veröffentlichten Daten, soweit ersichtlich, nicht
 enthalten, und aus welchem
 Split ihre Sätze stammen, ist nicht angegeben, sodass Überschneidungen
@@ -297,19 +294,13 @@ Wortebene übertragen, sodass Vorhersage und Referenz genau ein Label
 pro Wort umfassen.
 
 \paragraph{LLM-Pipeline.}
-Jedes Beispiel wird in eine Chat-Struktur aus Systemnachricht (Aufgabe
-und Typinventar) und Nutzernachricht überführt.
-Die Nutzernachricht enthält den Satz als Tokenliste, in der jedem Wort
-sein Index vorangestellt ist (Zählung ab~0); im Training kommt eine
-Assistentennachricht mit der Zielantwort hinzu
-(Listing~\ref{lst:beispiel}).
-Die Nummerierung der
-Eingabetokens nach \textcite[Tab.~9]{ramponi2025fallacy} erlaubt die
-Rückabbildung generierter Spans auf die
-Tokenfolge~\cite{semin2026spanLabeling}.
+Jedes Beispiel wird in das Prompt-Format aus
+Abschnitt~\ref{sec:prompt-design} überführt
+(Listing~\ref{lst:beispiel}); im Training kommt eine
+Assistentennachricht mit der Zielantwort hinzu.
 Die Zielantwort wird deterministisch aus der IOB2-Sequenz abgeleitet: Jede
-Entität wird in Satzreihenfolge mit den vier Feldern aus
-Abschnitt~\ref{sec:prompt-design} in ein JSON-Array geschrieben; Sätze
+Entität wird in Satzreihenfolge mit den dort definierten vier Feldern
+in ein JSON-Array geschrieben; Sätze
 ohne Entitäten erhalten das leere Array.
 Für die Seed-42-Läufe aller trainierten Konfigurationen wurde bestätigt,
 dass die verwendeten Referenzsequenzen für sämtliche Testsätze exakt der
@@ -387,8 +378,7 @@ bereits ausgewerteten Testsplits nicht wieder her.
 Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
 (Abschnitt~\ref{sec:llm-pipeline}).
-Die Zero-Shot-Ergebnisse werden deshalb als explorativ berichtet: Ihre
-Konfiguration wurde nach Testbeobachtungen gewählt. Solche
+Die Zero-Shot-Ergebnisse werden deshalb als explorativ berichtet. Solche
 Auswahlentscheidungen können zu einer optimistischen Verzerrung führen~\cite{cawley2010selectionbias}; deren Umfang lässt sich mit den vorhandenen Daten
 nicht beziffern.
 
@@ -669,7 +659,7 @@ Greedy-Decoding.
 
 Jeder Prompt besteht aus einer Systemnachricht mit Aufgabe, Typinventar
 und Formatvorgaben sowie einer Nutzernachricht mit der nummerierten
-Tokenliste im Format \texttt{Index: Token}.
+Tokenliste im Format \texttt{Index: Token} (Zählung ab~0).
 Erwartet wird ein JSON-Array, dessen Objekte genau vier Felder
 enthalten: \texttt{start\_token} (Index des ersten Tokens, inklusiv),
 \texttt{end\_token} (Index nach dem letzten Token, exklusiv),
@@ -679,9 +669,23 @@ Ein- und Ausgabe an einem Satz des Testsplits zeigt
 Listing~\ref{lst:beispiel}: Die Entität umfasst dort nur das Token mit
 Index~4 und wird deshalb durch \texttt{start\_token}~=~4 und
 \texttt{end\_token}~=~5 beschrieben.
-Abschnitt~\ref{sec:k3-ausgabeformate} ordnet das Format in die
-\emph{Indexing}-Familie nach
-\textcite[Abschn.~3.2]{semin2026spanLabeling} ein.
+
+Das Format gehört zur \emph{Indexing}-Familie nach
+\textcite[Abschn.~3.2]{semin2026spanLabeling} in der angereicherten
+Variante auf Wortebene (Abschnitt~\ref{sec:k3-ausgabeformate}): Die
+nummerierten Eingabetokens und die Wortindizes in der Ausgabe folgen
+\textcite[Tab.~9]{ramponi2025fallacy}; JSON-Schema und Nachverarbeitung
+sind eigene Umsetzungen.
+Für dieses Format sprechen drei Gründe.
+Erstens ist zu erwarten, dass die explizit in der Eingabe stehenden
+Indizes den von \textcite{zhan2026generativeNER} bei Zeichenoffsets
+beobachteten Einbruch vermeiden.
+Zweitens hängt die Ausgabelänge von Zahl und Spanlänge der Entitäten
+sowie der Serialisierung ab; anders als bei Tagging- und Inline-Formaten
+entfällt die Reproduktion der Nicht-Entitätstokens.
+Drittens erlauben die Indizes eine eindeutige Rückabbildung auch bei
+mehrfach vorkommenden Oberflächenformen; das redundante Textfeld
+ermöglicht die Konsistenzprüfung (Abschnitt~\ref{sec:postprocessing}).
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, columns=fullflexible,
   keepspaces=true, frame=single, captionpos=b, float=htbp,
@@ -769,10 +773,6 @@ gerechnet wird in BF16, trainiert mit BF16-Mixed-Precision und Gradient
 Checkpointing.
 Nicht quantisierte Komponenten wie Embeddings und
 Normalisierungsschichten bleiben in höherer Präzision.
-Die gespeicherten Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor, die
-der 27B-Läufe nach der Wiederaufnahme aus Checkpoints
-(Abschnitt~\ref{sec:effizienzmetriken}) in FP32
-(Anhang~\ref{app:adapter}).
 In zwei Punkten weicht die Umsetzung vom QLoRA-Standardrezept~\cite{dettmers2023qlora} ab: Double Quantization war vorgesehen, wurde
 aber wegen eines fehlerhaft benannten Konfigurationsparameters nicht
 aktiviert.
@@ -784,8 +784,6 @@ eines Paged Optimizers der Standardoptimierer des Trainers verwendet
 (AdamW, fusionierte PyTorch-Implementierung).
 Die Konfiguration ist für alle drei Größen identisch, sodass sich
 Größeneffekte nicht mit Unterschieden im Präzisionsregime vermischen.
-Der Einfluss von Double Quantization, anderer Adapterplatzierung oder
-eines auf die Antwort beschränkten Verlusts wurde nicht isoliert gemessen.
 
 \begin{table}[ht]
   \centering
@@ -886,9 +884,9 @@ Eine Entität gilt nur als korrekt erkannt, wenn Spangrenzen und Typ exakt
 mit der Referenz übereinstimmen (strikter Modus,
 Abschnitt~\ref{sec:evaluation}).
 Berechnet werden die Werte mit
-\texttt{seqeval}~\cite{nakayama2018seqeval} bei explizit gesetztem
-striktem Modus und IOB2-Schema, sodass formal unzulässige Tag-Folgen
-keine Entität bilden.
+\texttt{seqeval}~\cite{nakayama2018seqeval} im strikten Modus, der für
+generative Modelle, deren Ausgaben erst in Tagfolgen überführt werden,
+die eindeutigere Wahl ist.
 Primäre Kennzahl ist der mikrogemittelte
 F$_1$-Wert~\cite{manning2008introduction}; fehlen Vorhersagen
 oder Referenzentitäten, wird der betreffende Quotient als 0 definiert.
@@ -921,7 +919,8 @@ Ein Differenzintervall, das null ausschließt, spricht unter diesen
 Annahmen für eine gerichtete Differenz. Enthält es null, wird kein
 eindeutiger Unterschied festgestellt; Gleichwertigkeit ist damit nicht
 nachgewiesen~\cite{lakens2017equivalence}. Typbezogene Vergleiche ohne eigene Intervalle werden
-deskriptiv behandelt.
+deskriptiv behandelt und sind bei seltenen Typen wegen des geringen
+Supports besonders unsicher (Tabelle~\ref{tab:datensplits}).
 
 Das Bootstrap hält die vorhandenen trainierten Modelle und die
 gespeicherten Vorhersagen fest. Es erfasst weder die Unsicherheit
@@ -940,13 +939,9 @@ Für die Fehleranalyse werden Precision, Recall, F$_1$ und Support zusätzlich
 je Entitätstyp berechnet; sie sind für die Trainingsläufe der Hauptstudie
 gespeichert und für alle Konfigurationen aus den Testvorhersagen
 reproduzierbar.
-Wegen der unausgewogenen Typverteilung (Abschnitt~\ref{sec:datenaufteilung},
-Tabelle~\ref{tab:datensplits}) sind typbezogene Werte seltener Klassen mit
-erheblicher Unsicherheit behaftet.
 
-Ergänzend wird der makrogemittelte F$_1$-Wert als ungewichtetes Mittel der
-typbezogenen F$_1$-Werte über alle 15 Typen berichtet
-(Abschnitt~\ref{sec:evaluation}); er reagiert deshalb stark auf die
+Ergänzend wird der makrogemittelte F$_1$-Wert über alle 15 Typen
+berichtet (Abschnitt~\ref{sec:evaluation}); er reagiert stark auf die
 seltenen Typen.
 Für den Vergleich der Fehlerprofile wird jede Referenzentität genau einer
 Klasse zugeordnet: korrekt erkannt (Grenzen und Typ stimmen überein),
@@ -1014,9 +1009,10 @@ Der GPU-Speicherbedarf während des Trainings wurde nicht protokolliert.
 
 \paragraph{Parameterzahlen.}
 Berichtet werden Gesamtzahl und Zahl der trainierbaren Parameter
-(Tabelle~\ref{tab:experiment-matrix}); ihr Verhältnis zeigt, wie stark das
+(Tabelle~\ref{tab:experiment-matrix}); ihr Verhältnis zeigt nur, wie stark das
 Adaptertraining die Zahl der aktualisierten Parameter
-senkt~\cite{hu2021lora,dettmers2023qlora}.
+senkt~\cite{hu2021lora,dettmers2023qlora}; Inferenzspeicher, Latenz und
+Trainingsdauer werden deshalb gesondert gemessen.
 Für die QLoRA-Modelle nennt Tabelle~\ref{tab:lora-hyperparams} Basismodell und Adapter getrennt,
 da eine einfache Summierung der Tensorelemente die in 4~Bit gepackten
 Gewichte nur zur Hälfte erfasst.
@@ -1162,9 +1158,8 @@ Sensitivitätsauswertung gehen beide in die Schlussfolgerungen ein
 
 Ergänzend wird untersucht, wie sich die auf MultiNERD angepassten Modelle
 auf domänenspezifische Texte übertragen lassen.
-Grundlage ist CrossNER mit den Domänen Künstliche Intelligenz, Literatur,
-Musik, Politik und Naturwissenschaften und jeweils domänenspezifischen
-Entitätstypen~\cite{liu2021crossner}.
+Grundlage ist CrossNER~\cite{liu2021crossner}
+(Abschnitt~\ref{sec:datasets_corpora}).
 Die Daten stehen laut der Lizenzdatei des Repositorys
 \texttt{zliucr/CrossNER} (Commit in Tabelle~\ref{tab:app-revisionen})
 unter der MIT-Lizenz.
@@ -1312,7 +1307,7 @@ der Ergebnisse diskutiert Abschnitt~\ref{sec:limitationen}.
       & \ref{sec:llm-pipeline} \\
     \addlinespace
     Adapter-Präzision & Gespeicherte 27B-Adapter nach der Wiederaufnahme in
-      FP32 statt BF16 & \ref{sec:lora-konfiguration} \\
+      FP32 statt BF16 & \ref{app:adapter} \\
     \addlinespace
     Hyperparameter & Größenabhängig gewählt, kein Suchlauf (Encoder und
       LLM) & \ref{sec:encoder-pipeline}, \ref{sec:lora-konfiguration} \\

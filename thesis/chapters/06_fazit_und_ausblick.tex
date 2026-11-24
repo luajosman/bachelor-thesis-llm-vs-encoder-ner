@@ -138,8 +138,7 @@ Die Inferenzpräzision BF16 der Zero-Shot-Läufe wurde nach
 Durchsatzmessungen auf einer Testteilmenge gewählt, nicht nach der
 Erkennungsleistung.
 Die Checkpoint-Auswahl nutzte allein Validierungsdaten, bei den LLMs
-200 Sätze, deren Typanteile um höchstens 3,1 Prozentpunkte vom Split
-abweichen und die keine BIO- und INST-Entitäten enthalten; ob eine
+nur die ersten 200 Sätze (Abschnitt~\ref{sec:llm-pipeline}); ob eine
 größere oder zufällig
 gezogene Stichprobe dieselben Epochen gewählt hätte, bleibt offen.
 Die Sensitivitätsanalysen liefen post hoc auf dem bekannten Testsplit;
@@ -190,9 +189,8 @@ Hyperparametersuche (Tabelle~\ref{tab:abweichungen}).
 Der Einfluss dieser Einstellungen wurde nicht isoliert gemessen; beim
 Zero-Shot-Vergleich kommen abweichende Prompts, Decoding-Verfahren und
 Präzisionsregime hinzu.
-Die nach F$_1$ gewählte Epoche fällt nur in einem von neun LLM- und in
-keinem von sechs Encoder-Läufen mit dem Verlustminimum zusammen; 12 von
-15 Läufen wählten die letzte Epoche, ein Untertraining ist nicht
+Da 12 von 15 Läufen die letzte Epoche wählten
+(Abschnitt~\ref{sec:llm-pipeline}), ist ein Untertraining nicht
 auszuschließen.
 Betroffen sind FF1 und FF2.
 
@@ -238,9 +236,10 @@ geprüften Testsplit evaluiert werden.
 Eine manuell geprüfte Stichprobe könnte für die häufigen, verrauschten
 Typen ANIM, FOOD und PLANT zwischen Modell- und Annotationsfehlern
 trennen.
-In Frage kommen die 1\,000 Sätze mit mindestens 20 Instanzen je Typ, die
-\textcite{tedeschi2022multinerd} für ihre Qualitätsmessung nutzen, sofern
-sie zugänglich sind und nicht mit dem Trainingssplit überlappen.
+In Frage kommt die manuell geprüfte Stichprobe von
+\textcite{tedeschi2022multinerd}
+(Abschnitt~\ref{sec:datasets_corpora}), sofern sie zugänglich ist und
+nicht mit dem Trainingssplit überlappt.
 Für seltene Typen wie BIO und INST bliebe eine solche Stichprobe mit
 wenigen Dutzend Instanzen wenig belastbar.
 
@@ -259,10 +258,8 @@ Dazu zählen ein vollständiges Fine-Tuning des 0.8B-Modells, LoRA für die
 Encoder~\cite{hu2021lora}, Inline-Formate~\cite{zhan2026generativeNER}
 neben dem Wortindex-Format, Few-Shot-Prompting sowie Greedy- und
 Wiederholungsläufe im Zero-Shot-Regime.
-Beim Decoding könnte LogitMatch, das die erzeugten Spans auf gültige
-Abschnitte der Eingabe beschränkt~\cite[Abschn.~4]{semin2026spanLabeling},
-die freie Erzeugung numerischer Wortindizes ersetzen, bei der Text- und
-Indexfeld der Zero-Shot-Ausgaben hier häufig auseinanderfallen
-(Abschnitt~\ref{sec:disk-format}).
+Beim Decoding könnte
+LogitMatch~\cite[Abschn.~4]{semin2026spanLabeling} die freie Erzeugung
+numerischer Wortindizes ersetzen (Abschnitt~\ref{sec:disk-format}).
 Darüber hinaus ließe sich die Pipeline auf die übrigen MultiNERD-Sprachen
 und andere Datensätze übertragen und um Encoder-Generalisten wie GLiNER~\cite{zaratiana2024gliner} oder NuNER~\cite{bogdanov2024nuner} erweitern.

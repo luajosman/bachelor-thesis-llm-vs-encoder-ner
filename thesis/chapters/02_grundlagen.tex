@@ -106,13 +106,12 @@ Die Kodierung setzt voraus, dass sich Entitäten weder überlappen noch
 ineinander verschachtelt sind; CoNLL-2003 trifft genau diese
 Annahme~\cite{sang2003conll}, und auch die in dieser Arbeit verwendeten
 Datensätze enthalten nur flache Annotationen.
-Erweiterungen wie BIOES oder BILOU markieren zusätzlich das letzte Token
-eines Spans (E bzw. L) und Spans aus einem einzigen Token (S bzw. U).
 IOB2 und IOB1 stellt Tabelle~\ref{tab:bio-beispiel} an einem Satz
 gegenüber.
 Die Daten des CoNLL-2003-Benchmarks liegen im IOB1-Schema vor~\cite{sang2003conll}; diese Arbeit verwendet IOB2, das jeden
-Entitätsbeginn explizit markiert und in Abschnitt~\ref{sec:evaluation}
-für die Auswertung vorausgesetzt wird.
+Entitätsbeginn explizit markiert, in der Encoder-Pipeline
+(Abschnitt~\ref{sec:encoder-pipeline}) ebenso wie in der Auswertung
+(Abschnitt~\ref{sec:evaluation}).
 
 \begin{table}[htbp]
   \centering
@@ -143,8 +142,6 @@ Folgen unwahrscheinlich werden~\cite{lafferty2001crf}.
 Neuronale Sequenzmodelle wie das BiLSTM-CRF ersetzten die von Hand
 entworfenen Merkmale durch gelernte
 Repräsentationen~\cite{lample2016neural,ma2016end}.
-Die Encoder-Pipeline dieser Arbeit folgt der Sequenzlabeling-Formulierung
-mit IOB2-Tags (Abschnitt~\ref{sec:encoder-pipeline}).
 
 \section{Transformer-Architektur}
 \label{sec:transformer}
@@ -319,9 +316,7 @@ Text wird erzeugt, indem das Modell wiederholt eine Verteilung über das
 nächste Token berechnet, ein Token auswählt und es an die Eingabe
 anhängt.
 Jedes erzeugte Token erfordert einen eigenen Vorwärtsdurchlauf, der mit
-wachsendem Kontext teurer wird; die Keys und Values der bisherigen
-Tokens werden dabei zwischengespeichert
-(Abschnitt~\ref{sec:transformer}).
+wachsendem Kontext teurer wird (Abschnitt~\ref{sec:transformer}).
 Die Ausgabelänge ist neben der Eingabelänge ein wesentlicher Faktor der
 Inferenzzeit, was bei generativer NER die Wahl des Ausgabeformats zu
 einer Effizienzfrage macht (Abschnitt~\ref{sec:llm_ner_related}).
@@ -369,7 +364,8 @@ Angaben zu den Trainingsdaten und den vollständigen
 Code~\cite{osi2024osaid}; solche Modelle gelten deshalb nicht als Open
 Source, sondern als Modelle mit \emph{offenen Gewichten}
 (\emph{open weights}).
-Zu dieser Gruppe gehört die Qwen-Familie von Alibaba; auf das im
+Zu dieser Gruppe gehört die Qwen-Familie von Alibaba mit den Generationen
+Qwen2.5, Qwen3 und Qwen3.5~\cite{qwen2024qwen25,qwen2025qwen3}; auf das im
 Februar 2026 erschienene erste
 Qwen3.5-Modell~\cite{qwen2026qwen35blog} folgten Modelle ohne
 Mixture-of-Experts-Komponenten, darunter die hier verwendeten
@@ -500,19 +496,14 @@ Wie sich die Größe auf die Qualität auswirkt, beschreiben
 \emph{Skalierungsgesetze} in Form von Potenzgesetzen: Der Verlust fällt
 als Potenzfunktion der Parameterzahl, der Datenmenge und des
 Rechenaufwands~\cite{kaplan2020scaling}.
-Für die vorliegende Arbeit sind zwei Grenzen dieser Befunde wesentlich.
-Erstens beschreiben die Gesetze den Verlust des Vortrainings von
+Die Gesetze beschreiben allerdings den Verlust des Vortrainings von
 Modellen, die eigens für die Untersuchung trainiert wurden; über
 Kennzahlen einer nachgelagerten Aufgabe wie den F$_1$-Score bei NER
 sagen sie nichts unmittelbar aus.
-Zweitens passt diese Arbeit bereits veröffentlichte Checkpoints
-fester Größe an, deren Vortraining nicht variiert werden kann; mit der
-Größe ändern sich zugleich Hyperparameter und Hardware.
-Beobachtete Unterschiede zwischen Größenklassen sind deshalb als
-Unterschiede zwischen Konfigurationen zu lesen, nicht als Skalierungsgesetz
-(Abschnitt~\ref{sec:einfluss-parameteranzahl}).
 Empirische Befunde zum Größeneinfluss bei NER fasst
-Abschnitt~\ref{sec:model_size_related} zusammen.
+Abschnitt~\ref{sec:model_size_related} zusammen; die Folgen für den
+Größenvergleich dieser Arbeit nennt
+Abschnitt~\ref{sec:einfluss-parameteranzahl}.
 
 \section{Evaluationsmetriken}
 \label{sec:evaluation}
@@ -562,11 +553,6 @@ Der Standardmodus ahmt das CoNLL-Auswertungsskript nach und toleriert formal unz
 eine Entität.
 Der strikte Modus wertet die Tagfolgen nach einem explizit angegebenen
 Schema wie IOB2 aus, sodass unzulässige Folgen keine Entität bilden.
-Unterstützt werden IOB1, IOB2, IOE1 und IOE2 sowie im strikten Modus
-IOBES und BILOU~\cite{nakayama2018seqeval}.
-Für den Vergleich generativer Modelle, deren Ausgaben erst in Tagfolgen
-überführt werden, ist der strikte Modus mit festgelegtem Schema die
-eindeutigere Wahl.
 
 Bei mehreren Entitätstypen werden die Kennzahlen aggregiert.
 Der Mikro-F$_1$-Score summiert $TP$, $FP$ und $FN$ über alle Typen und
@@ -586,14 +572,6 @@ nicht definiert und wird in der Praxis als null gewertet.
 Vergleich zweier Annotationen der positiven spezifischen Übereinstimmung
 entspricht.
 Ein F$_1$-Score misst damit die Übereinstimmung mit der Referenz und
-nur mittelbar die Richtigkeit. Bei einer automatisch erzeugten Referenz
-(Silberreferenz) wie der von MultiNERD
-(Abschnitt~\ref{sec:datasets_corpora}) geben die Werte also an, wie gut
-ein Modell diese Referenz trifft, nicht wie richtig es gegenüber einer
-geprüften Annotation liegt.
-
-Neben der Erkennungsleistung erfasst diese Arbeit den Ressourcenbedarf.
-Der Anteil trainierbarer Parameter gibt dabei nur an, wie stark ein
-parametereffizientes Verfahren die Zahl der trainierten Parameter senkt;
-Inferenzspeicher, Latenz und Trainingsdauer werden deshalb gesondert
-gemessen (Abschnitt~\ref{sec:effizienzmetriken}).
+nur mittelbar die Richtigkeit; bei einer automatisch erzeugten Referenz
+wie der von MultiNERD (Abschnitt~\ref{sec:datasets_corpora}) ist diese
+Unterscheidung wesentlich.
