@@ -852,7 +852,8 @@ Denkbar, aber ungeprüft ist, dass sich ein vollständig feinjustierter
 Encoder stärker an Eigenheiten der Silberreferenz anpasst als ein
 Adaptertraining.
 Hinzu kommt der Umfang des Trainingssplits von 131\,280 Sätzen: Welchen
-Nutzen Vorwissen bei deutlich weniger Trainingsdaten hat, was
+Nutzen Vorwissen bei wenigen oder keinen Trainingsdaten der Zieldomäne
+hat, was
 \textcite{bogdanov2024nuner} und \textcite{zaratiana2024gliner}
 untersuchen, wird hier nicht geprüft.
 Schließlich entfällt der größte Teil des Recall-Rückstands auf die am
@@ -957,7 +958,8 @@ Die dort berichteten rund 54 Punkte~\cite[Tab.~3]{zhan2026generativeNER}
 liegen weit unter den hier erreichten Werten (Tabelle~\ref{tab:haupt}),
 dienen bei anderen Modellen und Datensätzen aber nur der Einordnung.
 Nummerierte Eingabetokens setzen
-\textcite[Tab.~3, Tab.~9]{ramponi2025fallacy} für die Spanerkennung ein;
+\textcite[Tab.~9; Ergebnisse in Tab.~3]{ramponi2025fallacy} für die
+Spanerkennung ein;
 \textcite{semin2026spanLabeling} beschreiben die Wortindex-Variante,
 ohne sie zu evaluieren (Abschnitt~\ref{sec:k3-ausgabeformate}). Hier
 wird sie, soweit bekannt, erstmals mit
@@ -972,15 +974,17 @@ entstehen beim 4B- und beim 27B-Modell weniger in der JSON-Syntax als in
 den Konventionen des Formats (Abschnitt~\ref{sec:erg-formtreue}).
 Unter den gewählten Sampling-Bedingungen (Temperatur 1,0) und für einen
 Einzellauf zeigt das, dass Formatvorgabe und Typinventar ohne
-Training die Leistung begrenzen; für die Formatvorgabe beschreiben das
-auch \textcite{lu2024llmstruggle} bei NER auf Tokenebene (zur
+Training die Leistung begrenzen; ungewohnte Tag-Symbole nennen auch
+\textcite{lu2024llmstruggle} als möglichen Grund bei NER auf Tokenebene (zur
 Sampling-Streuung Abschnitt~\ref{sec:limitationen}).
 Ein Constrained Decoding, das nur die JSON-Syntax erzwingt, dürfte hier
 wenig helfen, weil die Syntax bei 4B und 27B bereits weitgehend stimmt,
 Text- und Indexfeld aber nicht zueinander passen.
 \textcite{tam2024speakfreely} berichten Leistungseinbußen durch
-Formatzwang, \textcite{semin2026spanLabeling} dagegen Gewinne durch
-LogitMatch.
+Formatvorgaben bei Schlussfolgerungsaufgaben, bei Klassifikation dagegen
+teils Gewinne; nach \textcite{semin2026spanLabeling} beseitigt LogitMatch
+Zuordnungsfehler und hält dabei die NER-Leistung des freien Matchings
+im Wesentlichen.
 Dieses Verfahren beschränkt die Ausgabe auf gültige Spans der Eingabe und
 übernimmt so den Abgleich zwischen Text und Position, der den
 Zero-Shot-Modellen hier misslingt.
@@ -1016,8 +1020,9 @@ durch GPU-Typ und Clusterlast überlagert; auf einheitlicher Hardware wächst
 die geschätzte Latenz vom 0.8B- zum 27B-Modell auf das 2,7-Fache
 (Abschnitt~\ref{sec:erg-effizienz}).
 Das Muster ähnelt den Beobachtungen bei GoLLIE~\cite[Abschn.~5.2]{sainz2024gollie} und UniversalNER~\cite[Abschn.~5.2]{zhou2024universalner}, wo nach den dort berichteten Werten größere Backbones nur wenig
-hinzugewinnen und der Gewinn durch die Anpassung den Gewinn durch die
-Größe übersteigt. Hier ist der Abstand
+hinzugewinnen; bei GoLLIE ist der Gewinn durch das Richtlinientraining
+nach eigener Rechnung aus den berichteten Werten größer als der durch
+die Größe. Hier ist der Abstand
 zwischen den Zero-Shot- und QLoRA-Konfigurationen
 (Abschnitt~\ref{sec:erg-gesamt}) um ein Vielfaches größer als der
 zwischen der kleinsten und der größten QLoRA-Konfiguration (1,3 Punkte);

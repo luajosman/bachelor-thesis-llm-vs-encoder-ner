@@ -55,12 +55,13 @@ Tabelle~\ref{tab:datasets-vergleich} gegenübergestellt.
 
 Der CoNLL-2003-Datensatz umfasst manuell annotierte englische und
 deutsche Nachrichtentexte mit den vier Typen Person, Organisation, Ort
-und Sonstiges~\cite{sang2003conll} und ist bis heute der am häufigsten
-verwendete NER-Benchmark~\cite{li2018survey}.
+und Sonstiges~\cite{sang2003conll} und gehört zu den am häufigsten
+verwendeten NER-Benchmarks~\cite{li2018survey}.
 
-OntoNotes 5.0 ist ein manuell annotiertes Korpus mit 18 Entitätstypen
-und Texten mehrerer Genres in Englisch, Chinesisch und
-Arabisch~\cite{weischedel2013ontonotes,li2018survey}.
+OntoNotes 5.0 ist ein manuell annotiertes Korpus mit Texten mehrerer
+Genres in Englisch, Chinesisch und
+Arabisch~\cite{weischedel2013ontonotes}; die Named-Entity-Annotation
+unterscheidet 18 Typen~\cite{li2018survey}.
 
 MultiNERD deckt zehn Sprachen, die Genres Wikipedia und Wikinews und
 15 Entitätstypen ab~\cite{tedeschi2022multinerd}.
@@ -120,8 +121,8 @@ und wertet nur die gemeinsamen Grobtypen aus
   \renewcommand{\arraystretch}{1.25}
   \caption[Vergleich der verwendeten NER-Datensätze]{Vergleich der verwendeten NER-Datensätze.
   Eigene Zusammenstellung nach \textcite{sang2003conll},
-  \textcite{weischedel2013ontonotes}, \textcite{tedeschi2022multinerd}
-  und \textcite{liu2021crossner}.}
+  \textcite{weischedel2013ontonotes}, \textcite{li2018survey},
+  \textcite{tedeschi2022multinerd} und \textcite{liu2021crossner}.}
   \label{tab:datasets-vergleich}
   \setlength{\tabcolsep}{4pt}
   \begin{tabular}{lllrl}
@@ -239,7 +240,7 @@ Anpassung liegen in den hier berichteten Vergleichen deutlich
 zurück~\cite{tan2023damo,keraghel2024recent}.
 Zugleich lässt sich Wissen aus LLMs über erzeugte Trainingsdaten in
 Encoder übertragen, sodass Modelle mit einem Bruchteil der Parameter mit
-LLMs im Bereich von 7 bis 13~Mrd. Parametern
+LLMs mit 7~Mrd. (NuNER) bzw. 7 bis 13~Mrd. Parametern (GLiNER)
 gleichziehen~\cite{zaratiana2024gliner,bogdanov2024nuner}.
 Diese Gleichstände beruhen jedoch auf Zero- und Few-Shot-Benchmarks, bei
 GLiNER unter anderem auf den domänenspezifischen Typinventaren von
@@ -291,7 +292,9 @@ entspricht.
 \textcite{ravikumar2026lostformatting} trainieren Modelle mit 3 bis
 32~Mrd. Parametern per QLoRA mit sechs Ausgabeformaten und werten für
 NER unter anderem OntoNotes~5.0 mit striktem Mikro-F$_1$ aus.
-Allein das Format verschiebt den F$_1$-Wert teils um mehr als 40\,\%, kein Format
+Allein das Format verschiebt den F$_1$-Wert auf dem biomedizinischen
+Datensatz BC5CDR teils um mehr als 40~Punkte, auf OntoNotes~5.0 deutlich
+weniger; kein Format
 liegt durchgängig vorn, und ein Indexformat prüfen sie nicht.
 Für materialwissenschaftliche Extraktion mit feinjustierten Modellen
 berichten \textcite{dagdelen2024structuredIE},
@@ -302,7 +305,7 @@ allem durch das sequenzielle Decoding langer Ausgaben; Inline-Formate
 verlängern die Ausgaben zusätzlich, weil sie den Eingabetext
 wiederholen. Das von den Autoren vorgeschlagene parallele Decoding
 beschleunigt die Inferenz um den Faktor 1{,}76 bis 10{,}22 bei
-unveränderter Erkennungsleistung.
+vergleichbarer Erkennungsleistung.
 
 Die Ausgabestrategie dieser Arbeit ist die Wortindex-Variante der
 Indexing-Familie mit nummerierten Eingabetokens
@@ -404,16 +407,17 @@ verwendete Indexing-Format.
 
 Über die Einzelarbeiten hinaus zeigt sich erstens, dass das
 Ausgabeformat Erkennungsleistung und Ausgabelänge zugleich bestimmt:
-Formate, die den Eingabetext reproduzieren, sind robust, aber teuer,
-Formate mit Zeichenpositionen
-fehleranfällig~\cite{semin2026spanLabeling,zhan2026generativeNER,lu2024padellm}.
+Formate, die den Eingabetext reproduzieren, sind robust, aber
+teuer~\cite{semin2026spanLabeling,lu2024padellm}, Formate mit
+Zeichenpositionen
+fehleranfällig~\cite{semin2026spanLabeling,zhan2026generativeNER}.
 Zweitens bleiben per Prompting genutzte LLMs ohne Anpassung der Gewichte
 auf etablierten Benchmarks hinter überwachten Encodern zurück, selbst
 wenn wie bei GPT-NER ein feinjustierter Tagger die Demonstrationen
-auswählt.
+auswählt~\cite{wang2025gptner,xie2023zeroshot}.
 Ihre Stärke zeigen sie dort, wo wenige Beispiele vorliegen oder Domänen
 wechseln; das Verfahren CodeIE formuliert seine Prompts dabei als
-Python-Code~\cite{wang2025gptner,xie2023zeroshot,ashok2023promptner,li2023codeie}.
+Python-Code~\cite{wang2025gptner,ashok2023promptner,li2023codeie}.
 Drittens verringern Destillation und Fine-Tuning diesen Abstand, doch die
 Vergleiche mit Encodern stützen sich auf übernommene Werte oder auf
 Zero-Shot-Benchmarks~\cite{zhou2024universalner,sainz2024gollie}.
@@ -434,7 +438,8 @@ QLoRA (Abschnitt~\ref{sec:lora}) an NER anpassen und in derselben Studie
 mit Encodern vergleichen.
 Diese Kombination ist in der gesichteten Literatur noch selten.
 
-Den breitesten Vergleich auf allgemeinen Benchmarks legen
+Den breitesten der gesichteten Vergleiche auf allgemeinen Benchmarks
+legen
 \textcite{zhan2026generativeNER} vor.
 Acht offene LLMs der Familien LLaMA, Qwen, Granite und Gemma mit 3 bis
 9~Mrd. Parametern werden mit LoRA auf CoNLL-2003 und OntoNotes 5.0 sowie
@@ -443,7 +448,7 @@ spezialisierten Modellen wie BERT-MRC gegenübergestellt.
 Im besten Format erreicht LLaMA3.1-8B auf CoNLL-2003 einen F$_1$ von
 93{,}85 gegenüber 93{,}04 für BERT-MRC~\cite[Tab.~3]{zhan2026generativeNER};
 auf GENIA liegt das beste LLM 4{,}02 Punkte hinter dem besten
-spezialisierten Modell.
+spezialisierten Modell~\cite[Abschn.~3.2, Tab.~4]{zhan2026generativeNER}.
 Für den Kostenvergleich trainieren die Autoren LLaMA3.1-8B und BERT-MRC
 selbst auf einer einzelnen L40-GPU, wobei Trainingszeit und
 Spitzenspeicher des LLM moderat höher ausfallen, und berichten dort
@@ -481,7 +486,7 @@ aufgefordert, IOB2-Tags zu erzeugen.
 Im Zero-Shot-Regime erreicht LLaMA-2-7B für den Typ \emph{Rare Disease}
 einen F$_1$ von 0{,}149 und GPT-4 einen von 0{,}576 (Skala 0 bis 1 wie
 in der Quelle).
-Mit LoRA-Fine-Tuning nähert sich das medizinisch vortrainierte
+Mit LoRA-Fine-Tuning nähert sich das medizinisch angepasste
 Llama2-MedTuned-7B laut den Autoren dem feinjustierten
 BioClinicalBERT an, bleibt aber auf allen Typen darunter; vollständiges
 Fine-Tuning könnte den Abstand nach Vermutung der Autoren schließen.
@@ -509,18 +514,21 @@ Die Decoder werden hier also wie Encoder und nicht generativ eingesetzt,
 was die Formatfrage umgeht, aber eine Suche über
 Maskierungskonfigurationen erfordert.
 
-Drei der vier Arbeiten stimmen in einem Punkt überein: Mit Adaptern
-feinjustierte LLMs erreichen auf etablierten Benchmarks das Niveau
-feinjustierter Encoder oder übertreffen es
-leicht~\cite{zhan2026generativeNER,obeidat2025llm,dukic2024lookingright};
+In drei der vier Arbeiten erreichen mit Adaptern feinjustierte LLMs auf
+einzelnen Benchmarks das Niveau feinjustierter Encoder oder übertreffen
+es leicht: auf CoNLL-2003 bei \textcite{zhan2026generativeNER} und, mit
+entfernter Maske, bei \textcite{dukic2024lookingright}, auf vier von
+fünf biomedizinischen Datensätzen bei \textcite{obeidat2025llm}.
+Auf OntoNotes~5.0, ACE2005 und GENIA liegen die LLMs bei
+\textcite{zhan2026generativeNER} zurück;
 \textcite{lu2024llmstruggle} finden im klinischen Setting mit LoRA
-dagegen einen bleibenden Rückstand.
+einen bleibenden Rückstand.
 Generativ arbeiten dabei \textcite{zhan2026generativeNER},
 \textcite{obeidat2025llm} und \textcite{lu2024llmstruggle}, während
 \textcite{dukic2024lookingright} die Decoder mit Klassifikationskopf
 einsetzen; den Mehraufwand bei der Inferenz beziffern allein
 \textcite{obeidat2025llm}, und dort fällt der Leistungsgewinn im
-Verhältnis dazu klein aus.
+Verhältnis dazu auf drei der vier Datensätze klein aus.
 Die Grenzen dieser Vergleiche bündelt
 Abschnitt~\ref{sec:research_gap}.
 
@@ -542,8 +550,8 @@ Richtlinientraining zurück, und auf MultiNERD liegt das 13B-Modell nicht
 hinter dem 34B-Modell~\cite{sainz2024gollie}.
 Zwischen den Modellklassen fallen die Vergleiche uneindeutiger aus:
 GLiNER und NuNER erreichen mit Encodern weit unterhalb einer Milliarde
-Parameter das Niveau von LLMs mit 7 bis 13~Mrd.
-Parametern~\cite{zaratiana2024gliner,bogdanov2024nuner}.
+Parameter das Niveau von LLMs mit 7~Mrd. (NuNER) bzw. 7 bis 13~Mrd.
+Parametern (GLiNER)~\cite{zaratiana2024gliner,bogdanov2024nuner}.
 Dabei teilen nur GLiNER und UniNER die Pile-NER-Trainingsdaten, NuNER
 nutzt GPT-3.5-Annotationen des C4-Korpus, sodass der Größenunterschied
 von Architektur, Trainingsziel und Daten überlagert wird.
@@ -558,7 +566,8 @@ Bei \textcite{keraghel2024recent} liegt DeBERTa-v3-base auf CoNLL-2003
 und NCBI Disease knapp vor DeBERTa-v3-large, auf den meisten anderen
 Datensätzen ist es umgekehrt.
 Zudem beobachten \textcite{dukic2024lookingright}, dass ihre
-Maskenentfernung erst ab einer gewissen Modellgröße wirkt.
+Maskenentfernung bei 68~Mio. Parametern nicht wirkt, bei 7~Mrd. dagegen
+schon.
 Die vorliegende Arbeit betrachtet die Modellgröße daher innerhalb jeder
 Familie getrennt und deskriptiv
 (Abschnitt~\ref{sec:groessenklassen}).
@@ -568,7 +577,7 @@ Familie getrennt und deskriptiv
 
 Die vorangegangenen Abschnitte zeigen, dass direkte Vergleiche zwischen
 Encodern und generativen LLMs für NER existieren und in ihren
-Ergebnissen weitgehend übereinstimmen; die Forschungslücke liegt in
+Ergebnissen in der Tendenz übereinstimmen; die Forschungslücke liegt in
 ihrer Reichweite.
 Die behandelten Arbeiten fasst Tabelle~\ref{tab:related-overview}
 zusammen; sie ordnet auch die vorliegende Arbeit ein.
@@ -583,8 +592,8 @@ zusammen; sie ordnet auch die vorliegende Arbeit ein.
   gruppiert nach den Abschnitten dieses Kapitels. Vergleich Encoder--LLM:
   „ja“ = beide Modellklassen in derselben Studie trainiert bzw. ausgewertet;
   „berichtete Werte“ = aus anderen Publikationen übernommen;
-  „teilweise“ = nur BERT-MRC selbst trainiert. Ressourcen:
-  in der Studie erhobene Trainings- oder Inferenzgrößen. „--“ = kein
+  „teilweise“ = nur ein Teil der Vergleichswerte selbst erzeugt. Ressourcen:
+  in der Studie erhobene oder geschätzte Trainings- oder Inferenzgrößen. „--“ = kein
   Vergleich bzw. keine Messung; Full-FT = vollständiges Fine-Tuning.}
   \label{tab:related-overview}
   \begin{tabular}{@{}%
@@ -611,33 +620,33 @@ zusammen; sie ordnet auch die vorliegende Arbeit ein.
       Fine-Tuning; Prompting mit Beispielentitäten & ja & -- \\
     \textcite{zaratiana2024gliner} & DeBERTa-v3 (50--300 Mio.) &
       Pile-NER; CrossNER, MIT & Vortraining; Zero-Shot &
-      berichtete Werte & -- \\
+      berichtete Werte & Trainingszeit \\
     \textcite{bogdanov2024nuner} & RoBERTa-base; UniNER-7B; GPT-3.5/4 &
       C4-Annotationen; 4 Datensätze & Vortraining; Few-Shot-FT &
       ja & Annotationskosten (unter 500~\$) \\
     \addlinespace[2.5pt]
     \multicolumn{6}{@{}l}{\textit{LLM-basierte Ansätze (Abschnitt~\ref{sec:llm_ner_related})}} \\
     \textcite{semin2026spanLabeling} & Qwen3, Mistral, Llama, Gemma
-      (8--70 Mrd.) & UNER-Benchmark u.\,a. & Prompting & -- &
-      Ausgabetokens \\
+      (8--70 Mrd.) & UNER-Benchmark u.\,a. & Prompting; Constrained Decoding & -- &
+      Ausgabetokens (geschätzt) \\
     \textcite{lu2024padellm} & Llama-2-7B, Baichuan2-7B &
-      CoNLL, ACE, GENIA; chin. Datensätze & Fine-Tuning & -- &
+      CoNLL, ACE, GENIA; chin. Datensätze & Fine-Tuning & berichtete Werte &
       Inferenzlatenz \\
     \textcite{wang2025gptner} & GPT-3 (Retrieval mit Tagger) & CoNLL, OntoNotes, ACE, GENIA &
       Few-Shot-Prompting &
-      berichtete Werte & -- \\
+      teilweise & -- \\
     \textcite{xie2023zeroshot} & GPT-3.5 & 7 Benchmarks (EN, ZH) &
       Zero-Shot-Prompting & berichtete Werte & -- \\
     \textcite{ashok2023promptner} & GPT-4, GPT-3.5, T5 &
       CoNLL, GENIA, FewNERD, CrossNER & Few-Shot-Prompting &
       berichtete Werte & -- \\
     \textcite{li2023codeie} & Codex, GPT-3 & CoNLL, ACE;
-      RE-Datensätze & Few-Shot-Prompting & berichtete Werte (UIE) & -- \\
+      RE-Datensätze & Few-Shot-Prompting & teilweise (UIE) & -- \\
     \textcite{zhou2024universalner} & LLaMA 7B/13B &
       43 Datensätze, 9 Domänen (inkl. MultiNERD-Variante) &
       Destillation; Fine-Tuning & berichtete Werte & -- \\
     \textcite{sainz2024gollie} & Code-LLaMA 7/13/34B &
-      IE-Datensätze; Zero-Shot u.\,a. CrossNER, MultiNERD & QLoRA & -- &
+      IE-Datensätze; Zero-Shot u.\,a. CrossNER, MultiNERD & QLoRA & berichtete Werte &
       Trainingszeit, CO$_2$ je Größe \\
     \textcite{ding2024gner} & Flan-T5 (bis 11 Mrd.), LLaMA-7B &
       Pile-NER; Zero-Shot CrossNER, MIT & Fine-Tuning (Label je Wort) &
@@ -675,12 +684,13 @@ feingranular, besteht aber aus kurzen, kontextarmen Sätzen und stellt
 den Encodern nur ein per Prompting genutztes ChatGPT gegenüber.
 Publizierte MultiNERD-Werte beruhen auf übernommenen Baselines oder
 eigener Aufbereitung: \textcite{zhou2024universalner} übernehmen die
-BERT-Werte aus InstructUIE auf dessen Datensatzvariante,
-\textcite{zaratiana2024gliner} werten GLiNER auf der
-InstructUIE-Aufbereitung mit 10\,000 Testbeispielen aus.
+BERT-Werte aus InstructUIE~\cite{wang2023instructuie} auf dessen
+Datensatzvariante,
+\textcite[Anh., Tab.~6]{zaratiana2024gliner} werten GLiNER, dem Vorgehen
+von InstructUIE folgend, auf 10\,000 Testbeispielen aus.
 Bei \textcite[Anh.~D.2, Tab.~9]{sainz2024gollie} steht der Angabe,
 Standardsplits zu verwenden, ein Testumfang von 32\,908 Beispielen
-gegenüber, etwa das Doppelte des englischen Testsplits; wie sich diese
+gegenüber, genau das Doppelte des englischen Testsplits; wie sich diese
 Testdaten zu den offiziellen Splits verhalten, bleibt offen.
 Eine gemeinsame Auswertung beider Modellfamilien auf den offiziellen
 englischen MultiNERD-Splits mit einer in derselben Pipeline trainierten
@@ -708,8 +718,8 @@ Die zweite Lücke betrifft Ressourcenerfassung und Modellgröße.
 Der Ressourcenbedarf wird in den direkten Vergleichen nur
 ausschnittsweise erfasst: Inferenzzeiten ohne Speicher, Trainingskosten
 ohne Inferenz oder gar keine Messung.
-Zudem betrachten die direkten Vergleiche LLMs einer einzigen
-Größenklasse zwischen 3 und 9~Mrd. Parametern.
+Zudem passen die direkten Vergleiche LLMs einer einzigen
+Größenklasse zwischen 3 und 9~Mrd. Parametern an.
 Größenstaffelungen finden sich nur innerhalb von
 LLM-Familien~\cite{zhou2024universalner,sainz2024gollie}, bei
 GoLLIE mit Trainingsressourcen je
@@ -718,8 +728,8 @@ Encoder-Vergleich mit Inferenzmessung, während
 Encoder-Studien die Größe nur innerhalb ihrer Klasse
 variieren~\cite{keraghel2024recent}.
 Keine der Arbeiten in Tabelle~\ref{tab:related-overview} untersucht eine
-Größenstaffelung auf beiden Seiten mit gemeinsamer Leistungs- und
-Ressourcenerfassung.
+Größenstaffelung selbst trainierter Encoder und LLMs mit gemeinsamer
+Leistungs- und Ressourcenerfassung.
 Die vorliegende Arbeit vergleicht drei Größen einer LLM-Familie zwischen
 0{,}8 und 27~Mrd. Parametern in zwei Regimen mit
 zwei Encoder-Größen derselben Architektur und erfasst für jede
@@ -729,9 +739,9 @@ Damit bearbeitet sie FF2 und stützt die größenbezogenen Empfehlungen
 in FF3.
 
 Eine Einschränkung betrifft eine mögliche Datenkontamination:
-MultiNERD besteht aus Wikipedia- und Wikinews-Artikeln, die mit hoher
-Wahrscheinlichkeit Teil der Vortrainingskorpora der verwendeten LLMs
-sind.
+MultiNERD besteht aus Wikipedia- und
+Wikinews-Artikeln~\cite{tedeschi2022multinerd}, die vermutlich Teil der
+Vortrainingskorpora der verwendeten LLMs sind.
 \textcite{zhan2026generativeNER} weisen auf bekannte Lecks von
 Benchmark-Daten hin und ziehen deshalb CleanCoNLL heran, dessen
 bereinigte Form kaum im Vortraining enthalten sein dürfte.
@@ -742,13 +752,14 @@ Aus der Literatur folgen drei Erwartungen.
 Sie dienen als Lesehilfe, nicht als Hypothesentest;
 Kapitel~\ref{chap:fazit} gleicht sie je Forschungsfrage mit den Befunden
 ab.
-E1 (zu FF1): Ein mit LoRA oder QLoRA angepasstes LLM erreicht das
-Niveau eines vollständig feinjustierten Encoders oder übertrifft es
+E1 (zu FF1): Ein mit LoRA oder QLoRA angepasstes LLM erreicht, wie in
+der Literatur auf einzelnen Benchmarks, das Niveau eines vollständig
+feinjustierten Encoders oder übertrifft es
 leicht~\cite{zhan2026generativeNER,obeidat2025llm}.
 E2 (zu FF2 und FF3): Die Inferenz generativer LLMs ist um ein Vielfaches
 langsamer als die eines Encoders; die Literatur nennt Faktoren von etwa
 40 bis 220~\cite[Tab.~IV]{obeidat2025llm}.
 E3 (zu FF1): Ohne Anpassung der Gewichte bleiben per Prompting genutzte
 LLMs, in den zitierten Vergleichen selbst mit Beispielen im Prompt,
-deutlich hinter feinjustierten Modellen
+in der Regel deutlich hinter feinjustierten Modellen
 zurück~\cite{keraghel2024recent,tan2023damo}.

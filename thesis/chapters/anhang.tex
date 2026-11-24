@@ -327,10 +327,10 @@ Textmodell (\texttt{Qwen3\_5ForCausalLM}) instanziiert;
 Vision-Encoder und MTP-Module werden verworfen.
 Laut den Konfigurationsdateien der verwendeten Revisionen
 (Tabelle~\ref{tab:app-revisionen}) sind alle drei Größen dichte Decoder
-mit hybrider Attention: In jedem Block aus vier Schichten nutzen drei
+mit hybrider Attention~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}: In jedem Block aus vier Schichten nutzen drei
 Schichten lineare Attention in Form von Gated DeltaNet, die vierte
 vollständige Softmax-Attention mit Grouped-Query-Attention und
-Ausgabe-Gating~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}.
+Ausgabe-Gating.
 Die Kennzahlen nennt Tabelle~\ref{tab:app-qwen-architektur}; die Folgen
 der Schichtstruktur für die Adapterplatzierung beschreibt
 Abschnitt~\ref{sec:lora-konfiguration}.

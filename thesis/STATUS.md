@@ -1,4 +1,11 @@
-# Stand der Bachelorarbeit (22.11.2026)
+# Stand der Bachelorarbeit (24.11.2026)
+
+## Quellen- und Zitatprüfung nach Bericht 29 (24.11., Claude Code)
+
+- **Bericht:** `review/29_quellenpruefung_2026-11-24.md` mit vollständiger Matrix `review/29b_aussage_beleg_matrix_2026-11-24.md` (alle 84 Literatureinträge bibliografisch geprüft, alle 298 Zitierbefehle inhaltlich gegen die Quelltexte; Nachtrag mit Umsetzungstabelle).
+- **Umgesetzt:** A1 bis A10, die B-Punkte mit konkretem Änderungsbedarf, C1, C2, C4 und zwei formale Punkte. Inhaltlich berührt: die Sammelaussage zu den direkten Vergleichen in 3.4 und Erwartung E1 (jetzt „auf einzelnen Benchmarks“), Ravikumar et al. (40 Punkte auf BC5CDR), Tam et al. und Semin et al. in 4.4.4 und 5.7.2, GoLLIE/UniversalNER in 5.7.3, acht Zellen und die Legende von Tabelle 3.2, CoNLL-2003 und OntoNotes in 3.1, die Qwen-Sätze in 2.3, 2.5 und A.2.2, der Beleg für die 512 Positionen in 2.4. Keine Messzahl geändert, kein Literatureintrag hinzugekommen oder entfallen (84).
+- **Stand:** 110 physische Seiten, Haupttext S. 1–76, Literatur ab S. 77, Anhang ab S. 86; Build ohne Fehler und Warnungen. Einzige Umbruchänderung: Abschnitt 3.6 beginnt oben auf S. 27 (vorher unten auf S. 26), Tabelle 3.2 steht auf S. 28.
+- **Offen beim Verfasser:** Änderungen gegenlesen und committen; C3 (Qwen-Blog im Browser prüfen), E1 bis E6 des Berichts (Manning und Schütze, Efron und Tibshirani, OpenReview-Links, Abschnittsnummern der Tagungsfassungen); die bewusst nicht umgesetzten Punkte im Nachtrag.
 
 ## Verdichtung nach Bericht 28 (22.11., Claude Code)
 

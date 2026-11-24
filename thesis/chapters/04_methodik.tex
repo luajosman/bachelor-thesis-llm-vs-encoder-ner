@@ -18,8 +18,8 @@ Konfigurationen.
 Die Encoder sagen für jedes Wort ein IOB2-Tag
 vorher~\cite{devlin2019bert,he2021debertav3}.
 Die LLMs erhalten den Satz als nummerierte Tokenliste und erzeugen ein
-JSON-Array von Entitäten, das eine regelbasierte Nachverarbeitung in eine
-IOB2-Sequenz überführt~\cite{dagdelen2024structuredIE,semin2026spanLabeling}.
+JSON-Array von Entitäten~\cite{dagdelen2024structuredIE,semin2026spanLabeling},
+das eine regelbasierte Nachverarbeitung in eine IOB2-Sequenz überführt.
 Erst diese Rückkonvertierung erlaubt es, beide Pipelines auf derselben
 Repräsentation und mit derselben Metrik zu bewerten; bei den LLMs geht
 damit das Ausgabeformat einschließlich seiner Validierung in den
@@ -150,7 +150,7 @@ Abschnitt~\ref{sec:validitaet} fasst diese Abweichungen zusammen.
 Auf der Encoder-Seite werden DeBERTa-v3-base und DeBERTa-v3-large
 eingesetzt.
 DeBERTa-Varianten zählen auf mehreren NER-Benchmarks zu den
-leistungsfähigsten Encodern und dienen häufig als starke Baselines~\cite{keraghel2024recent}.
+leistungsfähigsten Encodern~\cite{keraghel2024recent}.
 Base- und Large-Variante erlauben einen Größenvergleich innerhalb
 derselben Architektur; einschließlich des Klassifikationskopfes umfassen
 sie 183\,855\,391 bzw. 434\,043\,935 Parameter.
@@ -312,8 +312,8 @@ Hin- und Rückkonvertierung.
 
 Die offiziellen Splits werden unverändert und ohne Teilstichproben
 übernommen; die Datenaufteilung ist damit für alle Konfigurationen
-identisch und mit Arbeiten vergleichbar, die dieselben Splits
-verwenden~\cite{tedeschi2022multinerd,babelscape2023multinerdcard}.
+identisch~\cite{tedeschi2022multinerd,babelscape2023multinerdcard} und
+mit Arbeiten vergleichbar, die dieselben Splits verwenden.
 Die Typverteilung ist stark unausgewogen (Tabelle~\ref{tab:datensplits}):
 PER, ORG und LOC stellen 74\,\% der Trainings- und 80\,\% der
 Testentitäten, BIO, INST, MYTH und VEHI jeweils weniger als 40
@@ -726,18 +726,20 @@ Tokenliste zu prüfen (Listing~\ref{lst:prompt-glossar} im Anhang).
 Keines der Profile enthält Demonstrationsbeispiele.
 
 Auf \emph{Constrained Decoding} (Abschnitt~\ref{sec:llms}) wird bewusst
-verzichtet: Es kann die Modellleistung
-beeinträchtigen~\cite{tam2024speakfreely}, während freie Generierung mit
+verzichtet: Formatvorgaben können die Modellleistung beeinträchtigen,
+wie \textcite{tam2024speakfreely} für Schlussfolgerungsaufgaben zeigen,
+während freie Generierung mit
 nachgelagerter Validierung die Formtreue messbar macht und
-Einsatzszenarien entspricht, in denen nur die Textausgabe einer API
-zugänglich ist~\cite{dagdelen2024structuredIE}.
+Einsatzszenarien entspricht, in denen ein Modell nur über eine API
+genutzt wird~\cite{dagdelen2024structuredIE}.
 
 \subsection{LoRA-Konfiguration und Hyperparameter}
 \label{sec:lora-konfiguration}
 
 LoRA wird aus zwei Gründen gewählt.
 Ohne aufgabenspezifisches Fine-Tuning sind LLMs bei NER auf Tokenebene
-nur eingeschränkt konkurrenzfähig~\cite{lu2024llmstruggle}.
+nach der klinischen Studie von \textcite{lu2024llmstruggle} nur
+eingeschränkt konkurrenzfähig.
 Adapter senken zudem den Speicher- und Rechenbedarf gegenüber
 vollständigem Fine-Tuning erheblich~\cite{hu2021lora,han2024parameter},
 ohne in den Vergleichen von
@@ -768,7 +770,7 @@ Adaptiert werden somit die Feed-Forward-Netze aller Schichten und die
 Attention jeder vierten Schicht (Modulzahlen in
 Tabelle~\ref{tab:lora-hyperparams}).
 
-Die Basismodelle werden mit \texttt{bitsandbytes}~\cite{dettmers2022llmint8} im 4-Bit-Format NormalFloat (NF4) geladen;
+Die Basismodelle werden mit \texttt{bitsandbytes}~\cite{dettmers2022llmint8} im 4-Bit-Format NormalFloat (NF4)~\cite{dettmers2023qlora} geladen;
 gerechnet wird in BF16, trainiert mit BF16-Mixed-Precision und Gradient
 Checkpointing.
 Nicht quantisierte Komponenten wie Embeddings und
@@ -776,7 +778,7 @@ Normalisierungsschichten bleiben in höherer Präzision.
 In zwei Punkten weicht die Umsetzung vom QLoRA-Standardrezept~\cite{dettmers2023qlora} ab: Double Quantization war vorgesehen, wurde
 aber wegen eines fehlerhaft benannten Konfigurationsparameters nicht
 aktiviert.
-Nach \textcite[Abschn.~3]{dettmers2023qlora} spart sie im Mittel rund
+Nach \textcite[Abschn.~3 und~4]{dettmers2023qlora} spart sie im Mittel rund
 0,37~Bit je Parameter ohne Leistungseinbuße, beim 27B-Modell also
 höchstens rund 1,2~GiB des gemessenen Inferenzspeichers.
 Zudem wird statt
@@ -1048,8 +1050,9 @@ Sie werden über Kennzahlen der Validierungskette
 \emph{Span-Alignment}~\cite{semin2026spanLabeling} und
 \emph{Konsistenz}.
 Für Encoder entfallen diese Kennzahlen; der Unterschied ist Teil des
-Vergleichs, da LLMs Ausgabeformat und Typinventar erst über Prompt und
-Fine-Tuning erlernen müssen~\cite{dagdelen2024structuredIE,wei2023chatie}.
+Vergleichs, da LLMs Ausgabeformat und Typinventar erst über
+Prompt~\cite{wei2023chatie} und
+Fine-Tuning~\cite{dagdelen2024structuredIE} erlernen müssen.
 
 \begin{table}[ht]
   \centering

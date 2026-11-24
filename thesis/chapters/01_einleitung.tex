@@ -20,8 +20,8 @@ Eine grundlegende Aufgabe ist die Named Entity Recognition (NER):
 Erwähnungen benannter Entitäten werden im Text lokalisiert und
 vorgegebenen Kategorien zugeordnet~\cite{li2018survey}.
 Die Ergebnisse dienen unter anderem als Grundlage für
-Relationsextraktion, den Aufbau von Wissensgraphen und
-Frage-Antwort-Systeme~\cite{jurafsky2024speech,keraghel2024recent}.
+die Informationsextraktion, die Verknüpfung von Texten mit
+Wissensquellen und Frage-Antwort-Systeme~\cite{jurafsky2024speech,keraghel2024recent}.
 
 Welche Kategorien eine Anwendung benötigt, hängt vom Einsatzzweck ab.
 Klassische Benchmarks wie CoNLL-2003 unterscheiden nur Personen,
@@ -51,12 +51,12 @@ annotierten Beispielen an die Aufgabe angepasst~\cite{zhan2026generativeNER}.
 Die beiden Modellklassen unterscheiden sich nicht nur in ihrer
 Arbeitsweise, sondern auch im Ressourcenbedarf.
 Encoder wie DeBERTa-v3 umfassen einige hundert Millionen
-Parameter~\cite{he2021debertav3}, aktuelle LLMs dagegen Milliarden bis
+Parameter~\cite{he2021debertav3,he2021debertav3card,he2021debertav3cardlarge}, aktuelle LLMs dagegen Milliarden bis
 Hunderte Milliarden~\cite{zhao2023survey,qwen2026card397b}.
 Zudem erzeugen LLMs ihre Ausgabe Token für Token, sodass die Inferenzzeit
 mit der Länge der Ausgabe wächst~\cite{lu2024padellm}, während ein Encoder
 die Labels eines Satzes in einem einzigen Vorwärtsdurchlauf
-bestimmt~\cite{devlin2019bert}.
+bestimmt~\cite{devlin2019bert,obeidat2025llm}.
 Auch die Anpassung ist bei LLMs aufwendiger: Beim vollständigen Fine-Tuning müssen
 neben allen Gewichten auch deren Gradienten und die Optimiererzustände im
 Speicher gehalten werden~\cite{hu2021lora}.
@@ -105,8 +105,8 @@ offiziellen englischen Splits mit eigener Encoder-Referenz fehlt.
 Die zweite betrifft Ressourcenerfassung und Modellgröße: Die direkten
 Vergleiche erfassen neben der Erkennungsleistung lediglich Teile des
 Ressourcenbedarfs, entweder die Inferenzzeit ohne den Speicher oder die
-Trainingskosten ohne die Inferenz, und betrachten LLMs einer einzigen
-Größenklasse. Größenstaffelungen gibt es nur innerhalb einzelner
+Trainingskosten ohne die Inferenz, und passen LLMs einer einzigen
+Größenklasse an. Größenstaffelungen gibt es nur innerhalb einzelner
 Modellfamilien und ohne gemeinsamen Encoder-Vergleich.
 
 Die vorliegende Arbeit setzt an diesen Punkten an.
