@@ -1,4 +1,10 @@
-# Stand der Bachelorarbeit (24.11.2026)
+# Stand der Bachelorarbeit (25.11.2026)
+
+## Nachkontrolle von vier Betreuerhinweisen (25.11., Claude Code)
+
+- **Anlass:** gezielte Prüfung der Fassung vom 24.11. gegen vier Kommentare vom 17.11. (hybride Attention im Modellabschnitt, SHA-256-Angabe bei CrossNER, Begründung des LoRA-Rangs, Satzanfänge mit Tabelle/Abbildung in Kapitel 5).
+- **Befund:** Alle vier waren seit dem 21.11. im Kern umgesetzt. Nachgezogen sind drei Stellen: 4.4.5 nennt Rang und Skalierung jetzt im Text (16/16/32, α = 2r) und nur noch „Festlegung dieser Arbeit“, ohne den Halbsatz zur Adapterkapazität; 4.6 verweist bei den Testsplits auf die festgelegte Revision in Anhang A.1; 5.3 beginnt nicht mehr mit „In Abbildung 5.2“.
+- **Stand:** 110 Seiten, alle Überschriften und Labels auf denselben Seiten wie zuvor; Build ohne Fehler und Warnungen. Nicht committet.
 
 ## Quellen- und Zitatprüfung nach Bericht 29 (24.11., Claude Code)
 

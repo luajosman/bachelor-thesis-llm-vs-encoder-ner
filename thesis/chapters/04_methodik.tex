@@ -746,12 +746,12 @@ ohne in den Vergleichen von
 \textcite[Anh.~D, Tab.~11]{zhan2026generativeNER} dahinter
 zurückzubleiben (Abschnitte~\ref{sec:lora}
 und~\ref{sec:peft_ner_related}).
-Rang, Skalierung und die übrigen Hyperparameter nennt
-Tabelle~\ref{tab:lora-hyperparams}; Bias-Terme werden nicht trainiert.
-Der gegenüber den beiden kleineren Modellen verdoppelte Rang des
-27B-Modells ($r = 32$ statt 16) ist eine eigene Festlegung, die dem
-größten Modell mehr Adapterkapazität zuweist; sie ist nicht aus der
-Literatur abgeleitet, und alternative Ränge wurden nicht untersucht.
+Der Rang beträgt $r = 16$ für das 0.8B- und das 4B-Modell und $r = 32$
+für das 27B-Modell, die Skalierung jeweils $\alpha = 2r$; die übrigen
+Hyperparameter nennt Tabelle~\ref{tab:lora-hyperparams}.
+Bias-Terme werden nicht trainiert.
+Die Abstufung des Rangs ist eine Festlegung dieser Arbeit; alternative
+Ränge wurden nicht untersucht.
 
 Die Adapter werden über die Namen von sieben Projektionstypen platziert:
 \texttt{q\_proj}, \texttt{k\_proj}, \texttt{v\_proj} und
@@ -1170,7 +1170,8 @@ Der Versuch ist ein reiner Transfertest: Auf CrossNER findet weder
 Training noch Checkpoint-Auswahl statt.
 
 \paragraph{Daten und Typabbildung.}
-Verwendet werden ausschließlich die Testsplits mit insgesamt
+Verwendet werden ausschließlich die Testsplits der festgelegten Revision
+(Anhang~\ref{app:reproduzierbarkeit}) mit insgesamt
 2\,506 Sätzen (je Domäne in Tabelle~\ref{tab:crossner-erg}).
 Ausgewertet werden nur die gemeinsamen Grobtypen PER, ORG und LOC, denen
 die CrossNER-Typen gemäß Tabelle~\ref{tab:crossner-mapping} zugeordnet
