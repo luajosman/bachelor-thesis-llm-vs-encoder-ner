@@ -71,7 +71,7 @@ Die offiziellen Trainings-, Validierungs- und Testsplits sind damit ein
 die Testreferenz kann Fehler enthalten.
 Zusätzlich messen die Autoren die Annotationsqualität je Typ auf
 1\,000 zufällig gezogenen, manuell geprüften englischen Sätzen mit
-mindestens 20 Instanzen pro Typ~\cite[Tab.~5]{tedeschi2022multinerd}.
+mindestens 20 Instanzen pro Typ~\cite[Abschn.~5.3, Tab.~5]{tedeschi2022multinerd}.
 Danach gelten PER (Person), ORG (Organisation), LOC (Ort), CEL
 (Himmelskörper), DIS (Krankheit), EVE (Ereignis) und MEDIA (Medien,
 Werke) als zuverlässig annotiert, während ANIM (Tier), BIO (biologische
@@ -394,8 +394,8 @@ Zweitens bleiben per Prompting genutzte LLMs ohne Anpassung der Gewichte
 auf etablierten Benchmarks hinter überwachten Encodern
 zurück~\cite{wang2025gptner,xie2023zeroshot}.
 Ihre Stärke zeigen sie dort, wo wenige Beispiele vorliegen oder Domänen
-wechseln; das Verfahren CodeIE formuliert seine Prompts dabei als
-Python-Code~\cite{wang2025gptner,ashok2023promptner,li2023codeie}.
+wechseln~\cite{wang2025gptner,ashok2023promptner}; das Verfahren CodeIE
+formuliert seine Prompts dabei als Python-Code~\cite{li2023codeie}.
 Drittens verringern Destillation und Fine-Tuning diesen Abstand, doch die
 Vergleiche mit Encodern stützen sich auf übernommene Werte oder auf
 Zero-Shot-Benchmarks~\cite{zhou2024universalner,sainz2024gollie}.
