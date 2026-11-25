@@ -235,10 +235,11 @@ Trainiert wird mit der Kreuzentropie zwischen dieser Verteilung und dem
 Referenzlabel, gemittelt über alle Tokens mit Label.
 Da die Positionskodierung von BERT auf 512 Positionen festgelegt
 ist~\cite[Anh.~A.2]{devlin2019bert},
-müssen längere Eingaben gekürzt oder geteilt werden; laut den
-Konfigurationsdateien der verwendeten Revisionen
-(Tabelle~\ref{tab:app-revisionen}) ist auch die Eingabelänge von
-DeBERTa-v3 auf 512 Positionen begrenzt,
+müssen längere Eingaben gekürzt oder geteilt werden; auch für
+DeBERTa-v3 ist die maximale Eingabelänge auf 512 Positionen konfiguriert
+(Parameter \texttt{max\_position\_embeddings} in den
+Konfigurationsdateien der Revisionen in
+Tabelle~\ref{tab:app-revisionen}),
 sodass eine Längenbegrenzung ebenso für die Encoder-Pipeline dieser Arbeit
 gilt (Abschnitt~\ref{sec:datenvorverarbeitung}).
 
@@ -265,7 +266,7 @@ macht~\cite{clark2020electra}.
 Die Base-Variante hat zwölf Schichten mit 86~Mio.
 Parametern im Backbone, die Large-Variante 24 Schichten mit 304~Mio.,
 jeweils zuzüglich der Embedding-Parameter des großen
-Vokabulars~\cite{he2021debertav3,he2021debertav3cardlarge}.
+Vokabulars~\cite{he2021debertav3card,he2021debertav3cardlarge}.
 
 \section{Large Language Models (LLMs)}
 \label{sec:llms}

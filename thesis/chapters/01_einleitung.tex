@@ -78,7 +78,7 @@ Mehrere Arbeiten vergleichen generative LLMs bereits mit Encoder-basierten
 NER-Verfahren.
 Ohne aufgabenspezifische Anpassung liegen LLMs dabei deutlich zurück:
 In der Vergleichsstudie von \textcite{keraghel2024recent} erreicht GPT-4o
-mit Beispielentitäten im Prompt auf CoNLL-2003 einen Makro-F$_1$ von
+mit Beispielen im Prompt auf CoNLL-2003 einen Makro-F$_1$ von
 65{,}17, ein vollständig angepasstes DeBERTa-v3-large dagegen
 90{,}98~\cite[Tab.~5]{keraghel2024recent}.
 Mit Low-Rank Adaptation (LoRA) angepasste LLMs verringern diesen Abstand deutlich und liegen in
@@ -92,7 +92,8 @@ Datensätzen Encoder mit vollständigem Fine-Tuning und mittels QLoRA
 angepasste LLMs mit 7 bis 8~Mrd. Parametern.
 Die LLMs liegen auf vier Datensätzen um 2 bis 8 F$_1$-Punkte vorn,
 benötigen je Testbeispiel aber das 40- bis 220-Fache der Inferenzzeit des
-besten Encoders.
+besten Encoders; den oberen Wert führen die Autoren auf lange Eingaben
+und lange Typbezeichnungen in den Tags zurück.
 
 Abschnitt~\ref{sec:research_gap} bündelt die Grenzen dieser Vergleiche
 zu zwei Lücken.

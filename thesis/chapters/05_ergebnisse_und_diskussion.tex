@@ -174,11 +174,17 @@ Im Zero-Shot-Regime erkennt das 27B-Modell nur PER, LOC und ORG
 brauchbar (F$_1$ über 80 Punkte); die übrigen Typen liegen zwischen 2
 und 56 Punkten (Tabelle~\ref{tab:typen}).
 Bei TIME liegt die Precision bei 1,0 Punkt: Das Modell markiert
-Jahreszahlen, Wochentage und Ausdrücke wie \enquote{today} als TIME,
-während MultiNERD unter diesem Typ Epochen und Zeitabschnitte wie
-\enquote{Middle Ages} oder \enquote{Great Depression} versteht. Von den
+Jahreszahlen, Wochentage und Ausdrücke wie \enquote{today} als TIME.
+Wochentage schließt die Typbeschreibung von MultiNERD aus; Jahre zählen
+nach ihr zwar zu TIME~\cite[Tab.~1]{tedeschi2022multinerd}, sind in den
+Referenzannotationen aber nicht markiert, wie bereits
+\textcite{sainz2024gollie} beobachten. Annotiert sind vor allem Epochen
+und Zeitabschnitte wie \enquote{Middle Ages} oder
+\enquote{Great Depression}. Von den
 5\,354 TIME-Zusätzen enthalten 4\,190 eine Ziffer.
-Der niedrige Wert zeigt vor allem eine abweichende Typdefinition;
+Der niedrige Wert zeigt vor allem, dass das Glossar im Prompt
+(\enquote{Time or date}, Listing~\ref{lst:prompt-glossar}) und die
+Annotationspraxis des Datensatzes auseinanderliegen;
 der Recall von 18,7 (Tabelle~\ref{tab:app-typen-prf}) macht zugleich
 deutlich,
 dass auch die vom Datensatz gemeinten Zeitabschnitte nur selten gefunden
@@ -840,9 +846,11 @@ Konfigurationen klein im Verhältnis zum Abstand zwischen den Regimen
 (Abschnitt~\ref{sec:erg-gesamt}).
 Letzterer ist kein isolierter Anpassungseffekt, passt aber zu den
 Ergebnissen, die
-\textcite{keraghel2024recent} mit GPT-4o und Beispielentitäten im Prompt
-(Makro-F$_1$ 65{,}17 gegenüber 90{,}98 auf CoNLL-2003) und \textcite{tan2023damo}
-mit ChatGPT auf MultiCoNER II (14{,}78 gegenüber 92{,}77) für per
+\textcite{keraghel2024recent} mit GPT-4o und Beispielen im Prompt
+(Makro-F$_1$ 65{,}17 gegenüber 90{,}98 für DeBERTa-v3-large auf
+CoNLL-2003) und \textcite{tan2023damo} mit ChatGPT auf den
+Validierungsdaten von MultiCoNER II (14{,}78 gegenüber 77{,}31 für
+BERT-CRF und 92{,}77 für ihr retrieval-gestütztes System) für per
 Prompting genutzte Modelle berichten.
 Der hier gemessene Zero-Shot-Wert von 69,4 Punkten für das 27B-Modell
 liegt unter dem Zero-Shot-Wert von 76,0, den \textcite{sainz2024gollie}

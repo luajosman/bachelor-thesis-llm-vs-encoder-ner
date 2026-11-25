@@ -175,7 +175,7 @@ Eine breitere Einordnung liefert die Vergleichsstudie von
 und spezialisierten Domänen mit mehreren Modellen auswertet, darunter
 BERT, XLM-RoBERTa-large,
 DeBERTa-v3-base und DeBERTa-v3-large, ein feinjustiertes GLiNER-Modell
-sowie GPT-4o mit Beispielentitäten im Prompt.
+sowie GPT-4o mit Beispielen im Prompt.
 MultiNERD ist nicht enthalten.
 Unter den Transformer-Modellen erweisen sich die DeBERTa-Varianten als die
 effektivsten; nach einem Nemenyi-Test teilen sich DeBERTa-v3-large und
@@ -226,8 +226,9 @@ größeren Trainingsmengen, das Verhältnis zu GPT-4 bezeichnen die Autoren
 selbst als unklar~\cite[Abschn.~6]{bogdanov2024nuner}.
 
 Aus den Arbeiten dieses Abschnitts folgt: Vollständig feinjustierte
-Encoder bleiben im überwachten Setting die Referenz, auch bei
-feingranularen Typinventaren~\cite{tan2023damo,keraghel2024recent}.
+Encoder bleiben im überwachten Setting die Referenz gegenüber per
+Prompting genutzten LLMs, auch bei feingranularen
+Typinventaren~\cite{tan2023damo,keraghel2024recent}.
 Die Gleichstände der Encoder-Generalisten mit deutlich größeren
 LLMs~\cite{zaratiana2024gliner,bogdanov2024nuner} beruhen dagegen auf
 Zero- und Few-Shot-Benchmarks, bei GLiNER unter anderem auf den
@@ -450,10 +451,10 @@ Die LLMs liegen auf vier Datensätzen um 2 bis 8 F$_1$-Punkte vorn, auf
 dem fünften knapp (0{,}5 Punkte) hinter dem besten
 Encoder~\cite[Tab.~III]{obeidat2025llm}.
 Der Vorsprung geht vor allem auf eine höhere Precision zurück.
-Dem stehen Inferenzzeiten gegenüber, die je Testbeispiel das 40- bis
-220-Fache derjenigen des besten Encoders
-betragen~\cite[Tab.~IV]{obeidat2025llm}; die LLMs benötigten zudem zwei
-statt einer H100-GPU.
+Dem stehen je Testbeispiel 40- bis 220-mal längere Inferenzzeiten als
+beim besten Encoder gegenüber~\cite[Abschn.~III, Tab.~IV]{obeidat2025llm};
+den oberen Wert (BioRED) erklären die Autoren mit langen Eingaben, und
+die LLMs liefen auf zwei statt einer H100-GPU.
 
 Dass LLMs für tokenbasierte NER ohne Anpassung kaum geeignet sind, zeigen
 \textcite{lu2024llmstruggle} am klinischen Korpus RareDis-v1 mit fünf
@@ -497,7 +498,8 @@ es leicht: auf CoNLL-2003 bei \textcite{zhan2026generativeNER} und, mit
 entfernter Maske, bei \textcite{dukic2024lookingright}, auf vier von
 fünf biomedizinischen Datensätzen bei \textcite{obeidat2025llm}.
 Auf OntoNotes~5.0, ACE2005 und GENIA liegen die LLMs bei
-\textcite{zhan2026generativeNER} zurück;
+\textcite{zhan2026generativeNER} hinter dem jeweils besten spezialisierten
+Modell zurück (um 0,8, 2,0 und 4,0 Punkte);
 \textcite{lu2024llmstruggle} finden im klinischen Setting mit LoRA
 einen bleibenden Rückstand.
 Generativ arbeiten dabei \textcite{zhan2026generativeNER},
@@ -593,7 +595,7 @@ zusammen; sie ordnet auch die vorliegende Arbeit ein.
       ja (Validierung) & -- \\
     \textcite{keraghel2024recent} & BERT, XLM-R, DeBERTa-v3, GLiNER;
       GPT-4o & 10 Datensätze, allgemein und Domänen &
-      Fine-Tuning; Prompting mit Beispielentitäten & ja & -- \\
+      Fine-Tuning; Prompting mit Beispielen & ja & -- \\
     \textcite{zaratiana2024gliner} & DeBERTa-v3 (50--300 Mio.) &
       Pile-NER; CrossNER, MIT & Vortraining; Zero-Shot &
       berichtete Werte & Trainingszeit \\
@@ -661,8 +663,8 @@ Publizierte MultiNERD-Werte beruhen auf übernommenen Baselines oder
 eigener Aufbereitung: \textcite{zhou2024universalner} übernehmen die
 BERT-Werte aus InstructUIE~\cite{wang2023instructuie} auf dessen
 Datensatzvariante,
-\textcite[Anh., Tab.~6]{zaratiana2024gliner} werten GLiNER, dem Vorgehen
-von InstructUIE folgend, auf 10\,000 Testbeispielen aus.
+\textcite[Anh.~A, Tab.~6]{zaratiana2024gliner} werten GLiNER auf
+10\,000 Testbeispielen aus.
 Bei \textcite[Anh.~D.2, Tab.~9]{sainz2024gollie} steht der Angabe,
 Standardsplits zu verwenden, ein Testumfang von 32\,908 Beispielen
 gegenüber, genau das Doppelte des englischen Testsplits; wie sich diese
@@ -715,8 +717,9 @@ der Literatur auf einzelnen Benchmarks, das Niveau eines vollständig
 feinjustierten Encoders oder übertrifft es
 leicht~\cite{zhan2026generativeNER,obeidat2025llm}.
 E2 (zu FF2 und FF3): Die Inferenz generativer LLMs ist um ein Vielfaches
-langsamer als die eines Encoders; die Literatur nennt Faktoren von etwa
-40 bis 220~\cite[Tab.~IV]{obeidat2025llm}.
+langsamer als die eines Encoders;
+\textcite[Abschn.~III]{obeidat2025llm} berichten Faktoren von 40 bis
+knapp 220 (oberer Wert bei langen Eingaben).
 E3 (zu FF1): Ohne Anpassung der Gewichte bleiben per Prompting genutzte
 LLMs, in den zitierten Vergleichen selbst mit Beispielen im Prompt,
 in der Regel deutlich hinter feinjustierten Modellen
