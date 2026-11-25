@@ -21,8 +21,8 @@ a domain-transfer evaluation on CrossNER.
 - The built PDF (`thesis/main.pdf`) is **not** versioned; it is listed in
   `.gitignore` and is submitted separately.
 - Earlier drafts are not the submitted version: tag
-  `betreuerentwurf-2026-11-08` (draft for the supervisor) and branch
-  `fassung-lang-2026-11-12` (long version before shortening).
+  `betreuerentwurf-2026-11-08` (draft for the supervisor) and commit
+  `4281263` (long version before the shortening of 12 November 2026).
 - Tag `zeroshot-runs-137bffd` marks the code state of the zero-shot runs
   evaluated in the thesis (see below). The commits of all other runs are
   listed in Appendix A.1 of the thesis.
