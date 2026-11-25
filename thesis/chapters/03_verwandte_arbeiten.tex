@@ -32,15 +32,11 @@ Schneeballsuche verfolgt.
 Trefferzahlen wurden nicht protokolliert; die Auswahl beansprucht keine
 systematische Vollständigkeit.
 
-Abschnitt~\ref{sec:datasets_corpora} stellt die Datensätze vor, auf
-denen diese Arbeit und die verwandten Arbeiten evaluieren.
-Die Abschnitte~\ref{sec:encoder_ner_related}
-bis~\ref{sec:model_size_related} behandeln Encoder-basierte Ansätze,
-LLM-basierte Ansätze nach Ausgabeformat und Anpassungsart, direkte
-Vergleiche PEFT-angepasster LLMs mit Encodern und Befunde zur
-Modellgröße; Abschnitt~\ref{sec:research_gap} leitet daraus die
-Forschungslücke ab und
-ordnet sie den Forschungsfragen aus Abschnitt~\ref{sec:problem_ziel} zu.
+Auf die Datensätze (Abschnitt~\ref{sec:datasets_corpora}) folgen Encoder- und
+LLM-basierte Ansätze, ihre direkten Vergleiche und Befunde zur
+Modellgröße (Abschnitte~\ref{sec:encoder_ner_related}
+bis~\ref{sec:model_size_related}); Abschnitt~\ref{sec:research_gap}
+leitet daraus die Forschungslücke ab.
 
 \section{Datensätze und Korpora}
 \label{sec:datasets_corpora}
@@ -111,9 +107,8 @@ enthält.
 Die annotierten Datensätze sind klein: je Domäne 100 bis 200 Sätze zum
 Training und einige hundert zur Validierung und zum Test; als
 Quelldomäne dient CoNLL-2003~\cite{liu2021crossner}.
-Diese Arbeit verwendet ausschließlich die Testsplits als Transfertest
-und wertet nur die gemeinsamen Grobtypen aus
-(Abschnitt~\ref{sec:crossner}).
+Wie diese Arbeit CrossNER einsetzt, beschreibt
+Abschnitt~\ref{sec:crossner}.
 
 \begin{table}[htbp]
   \centering
@@ -131,7 +126,7 @@ und wertet nur die gemeinsamen Grobtypen aus
       & \textbf{Typen} & \textbf{Annotation} \\
     \midrule
     CoNLL-2003    & EN, DE          & Nachrichten             &  4
-      & manuell (IOB1) \\
+      & manuell \\
     OntoNotes 5.0 & EN, ZH, AR      & Nachrichten, Rundfunk,  & 18
       & manuell \\
                   &                 & Gespräche, Web          &
@@ -156,10 +151,7 @@ und wertet nur die gemeinsamen Grobtypen aus
 Encoder mit Klassifikationskopf bilden seit BERT den Standard für
 überwachte NER (Abschnitt~\ref{sec:encoder_ner}) und dienen in dieser
 Arbeit als Vergleichsmaßstab für die LLMs.
-Der Abschnitt stellt zunächst Vergleichsstudien vor, in denen
-feinjustierte Encoder geprompteten LLMs gegenüberstehen, und behandelt
-dann Encoder als Generalisten, die dank LLM-erzeugter Trainingsdaten mit
-deutlich größeren LLMs gleichziehen.
+
 
 \subsection{Encoder in Vergleichsstudien}
 \label{sec:k3-encoder-vergleich}
@@ -235,16 +227,11 @@ selbst als unklar~\cite[Abschn.~6]{bogdanov2024nuner}.
 
 Aus den Arbeiten dieses Abschnitts folgt: Vollständig feinjustierte
 Encoder bleiben im überwachten Setting die Referenz, auch bei
-feingranularen Typinventaren, und per Prompting genutzte LLMs ohne
-Anpassung liegen in den hier berichteten Vergleichen deutlich
-zurück~\cite{tan2023damo,keraghel2024recent}.
-Zugleich lässt sich Wissen aus LLMs über erzeugte Trainingsdaten in
-Encoder übertragen, sodass Modelle mit einem Bruchteil der Parameter mit
-LLMs mit 7~Mrd. (NuNER) bzw. 7 bis 13~Mrd. Parametern (GLiNER)
-gleichziehen~\cite{zaratiana2024gliner,bogdanov2024nuner}.
-Diese Gleichstände beruhen jedoch auf Zero- und Few-Shot-Benchmarks, bei
-GLiNER unter anderem auf den domänenspezifischen Typinventaren von
-CrossNER.
+feingranularen Typinventaren~\cite{tan2023damo,keraghel2024recent}.
+Die Gleichstände der Encoder-Generalisten mit deutlich größeren
+LLMs~\cite{zaratiana2024gliner,bogdanov2024nuner} beruhen dagegen auf
+Zero- und Few-Shot-Benchmarks, bei GLiNER unter anderem auf den
+domänenspezifischen Typinventaren von CrossNER.
 
 \section{LLM-basierte Ansätze für NER}
 \label{sec:llm_ner_related}
@@ -307,11 +294,10 @@ wiederholen. Das von den Autoren vorgeschlagene parallele Decoding
 beschleunigt die Inferenz um den Faktor 1{,}76 bis 10{,}22 bei
 vergleichbarer Erkennungsleistung.
 
-Die Ausgabestrategie dieser Arbeit ist die Wortindex-Variante der
-Indexing-Familie mit nummerierten Eingabetokens
-(Abschnitt~\ref{sec:prompt-design}), die
-\textcite{semin2026spanLabeling} beschreiben, aber nicht evaluieren.
-Ihre übrigen Befunde beruhen zudem auf per
+Die Wortindex-Variante mit nummerierten Eingabetokens ist die
+Ausgabestrategie dieser Arbeit (Abschnitt~\ref{sec:prompt-design}).
+Die Befunde von \textcite{semin2026spanLabeling} zu den übrigen Varianten
+beruhen auf per
 Prompting genutzten, nicht feinjustierten Modellen; ob die Vorteile der
 angereicherten Indizierung auch im QLoRA-Regime und bei 15 Typen tragen,
 ist eine empirische Frage dieser Arbeit.
@@ -341,13 +327,9 @@ PromptNER von \textcite{ashok2023promptner} ergänzt textuelle
 Typdefinitionen und verlangt vom Modell eine Kandidatenliste mit
 Begründungen.
 Mit GPT-4 und wenigen Demonstrationsbeispielen verbessert es die
-besten bisherigen Few-Shot-Ergebnisse auf CoNLL-2003 und FewNERD um rund
-vier, auf GENIA um rund neun F$_1$-Punkte.
+besten bisherigen Few-Shot-Ergebnisse auf CoNLL-2003, FewNERD und GENIA.
 Im Cross-Domain-Setting mit nur zwei Beispielen aus der Zieldomäne
-erreicht es auf drei der fünf CrossNER-Domänen neue Bestwerte, etwa
-84{,}26 auf \emph{Music}, obwohl weniger als 2\,\% der verfügbaren
-Trainingsdaten verwendet werden; in den Domänen \emph{AI} und
-\emph{Science} bleiben die bisherigen Verfahren vorn.
+erreicht es auf drei der fünf CrossNER-Domänen neue Bestwerte.
 
 \subsection{LLMs mit Instruction-Tuning und Anpassung}
 \label{sec:k3-angepasst}
@@ -388,8 +370,7 @@ Auf MultiNERD erreicht das 7B-Modell einen F$_1$ von
 76{,}0~\cite[Tab.~3]{sainz2024gollie},
 wobei acht der 15 Typen in anderer Benennung bereits im Training
 vorkamen~\cite[Anh.~B, Tab.~6]{sainz2024gollie}.
-Wegen eines abweichenden Testumfangs ist der Wert nur eingeschränkt
-vergleichbar (Abschnitt~\ref{sec:research_gap}).
+
 
 GNER von \textcite{ding2024gner} trainiert Flan-T5-Modelle bis 11~Mrd.
 Parameter und LLaMA-7B auf Pile-NER.
@@ -406,15 +387,11 @@ verwendete Indexing-Format.
 \label{sec:k3-zwischenfazit}
 
 Über die Einzelarbeiten hinaus zeigt sich erstens, dass das
-Ausgabeformat Erkennungsleistung und Ausgabelänge zugleich bestimmt:
-Formate, die den Eingabetext reproduzieren, sind robust, aber
-teuer~\cite{semin2026spanLabeling,lu2024padellm}, Formate mit
-Zeichenpositionen
-fehleranfällig~\cite{semin2026spanLabeling,zhan2026generativeNER}.
+Ausgabeformat Erkennungsleistung und Ausgabelänge zugleich bestimmt
+(Abschnitt~\ref{sec:k3-ausgabeformate}).
 Zweitens bleiben per Prompting genutzte LLMs ohne Anpassung der Gewichte
-auf etablierten Benchmarks hinter überwachten Encodern zurück, selbst
-wenn wie bei GPT-NER ein feinjustierter Tagger die Demonstrationen
-auswählt~\cite{wang2025gptner,xie2023zeroshot}.
+auf etablierten Benchmarks hinter überwachten Encodern
+zurück~\cite{wang2025gptner,xie2023zeroshot}.
 Ihre Stärke zeigen sie dort, wo wenige Beispiele vorliegen oder Domänen
 wechseln; das Verfahren CodeIE formuliert seine Prompts dabei als
 Python-Code~\cite{wang2025gptner,ashok2023promptner,li2023codeie}.
@@ -529,8 +506,7 @@ Generativ arbeiten dabei \textcite{zhan2026generativeNER},
 einsetzen; den Mehraufwand bei der Inferenz beziffern allein
 \textcite{obeidat2025llm}, und dort fällt der Leistungsgewinn im
 Verhältnis dazu auf drei der vier Datensätze klein aus.
-Die Grenzen dieser Vergleiche bündelt
-Abschnitt~\ref{sec:research_gap}.
+
 
 \section{Einfluss der Modellgröße in verwandten Arbeiten}
 \label{sec:model_size_related}
@@ -675,8 +651,7 @@ zusammen; sie ordnet auch die vorliegende Arbeit ein.
 
 Die erste Lücke betrifft Datenbasis und Pipeline.
 Die direkten Vergleiche verwenden allgemeine Benchmarks wie CoNLL-2003
-mit vier und OntoNotes mit 18 Typen aus mehreren
-Genres~\cite{weischedel2013ontonotes,li2018survey}
+und OntoNotes (Abschnitt~\ref{sec:datasets_corpora})
 oder Fachkorpora wie die biomedizinischen Datensätze bei
 \textcite{obeidat2025llm}.
 MultiCoNER~II bei \textcite{tan2023damo} ist mit 33 Typen zwar
@@ -695,22 +670,18 @@ Testdaten zu den offiziellen Splits verhalten, bleibt offen.
 Eine gemeinsame Auswertung beider Modellfamilien auf den offiziellen
 englischen MultiNERD-Splits mit einer in derselben Pipeline trainierten
 Encoder-Referenz fehlt damit.
-Die Ausgaben der generativen Formate in den direkten Vergleichen wachsen
-überdies mit der Eingabelänge: \textcite[Abschn.~IV]{obeidat2025llm} erzeugen je
-Eingabetoken ein IOB2-Tag, die Inline-Markierungen bei
-\textcite{zhan2026generativeNER} wiederholen den Satz, was nach den
-Befunden aus Abschnitt~\ref{sec:k3-ausgabeformate} die Latenz erhöht.
-Die vorliegende Arbeit setzt hier an: Sie trainiert und evaluiert
-DeBERTa-v3-base und -large sowie Qwen3.5 in drei Größen auf den
-offiziellen englischen MultiNERD-Splits in einer gemeinsamen Pipeline,
-mit derselben \texttt{seqeval}-Implementierung und derselben
-Silberreferenz.
-Trainingsdauer, Inferenzlatenz und GPU-Spitzenspeicher der Inferenz
-werden einheitlich erfasst
-(Abschnitt~\ref{sec:effizienzmetriken}).
-Mit der Indexing-Ausgabe wird zudem ein Format verwendet, das statt des
-ganzen Satzes nur die Entitäten mit Indizes, Text und Typ ausgibt und
-dessen Formtreue eigens gemessen wird.
+Die generativen Formate der direkten Vergleiche wachsen überdies mit der
+Eingabelänge: je Eingabetoken ein IOB2-Tag bei
+\textcite[Abschn.~IV]{obeidat2025llm}, Inline-Markierungen bei
+\textcite{zhan2026generativeNER}; das erhöht die Latenz
+(Abschnitt~\ref{sec:k3-ausgabeformate}).
+Die vorliegende Arbeit setzt hier an: Sie trainiert und evaluiert beide
+Modellfamilien auf den offiziellen englischen MultiNERD-Splits in einer
+gemeinsamen Pipeline, mit derselben \texttt{seqeval}-Implementierung und
+derselben Silberreferenz.
+Mit der Indexing-Ausgabe verwendet sie zudem ein Format, das statt des
+ganzen Satzes nur die Entitäten ausgibt und dessen Formtreue eigens
+gemessen wird.
 Diese Lücke betrifft vor allem FF1 und FF3
 (Abschnitt~\ref{sec:problem_ziel}).
 
@@ -730,28 +701,15 @@ variieren~\cite{keraghel2024recent}.
 Keine der Arbeiten in Tabelle~\ref{tab:related-overview} untersucht eine
 Größenstaffelung selbst trainierter Encoder und LLMs mit gemeinsamer
 Leistungs- und Ressourcenerfassung.
-Die vorliegende Arbeit vergleicht drei Größen einer LLM-Familie zwischen
-0{,}8 und 27~Mrd. Parametern in zwei Regimen mit
-zwei Encoder-Größen derselben Architektur und erfasst für jede
-Konfiguration Leistung und Ressourcen sowie für die LLM-Ausgaben die
-Formtreue.
-Damit bearbeitet sie FF2 und stützt die größenbezogenen Empfehlungen
-in FF3.
+Die vorliegende Arbeit erfasst deshalb Leistung und Ressourcen für drei
+Größen einer LLM-Familie zwischen 0{,}8 und 27~Mrd. Parametern in zwei
+Regimen und für zwei Encoder-Größen derselben Architektur; damit
+bearbeitet sie FF2 und stützt die größenbezogenen Empfehlungen in FF3.
 
-Eine Einschränkung betrifft eine mögliche Datenkontamination:
-MultiNERD besteht aus Wikipedia- und
-Wikinews-Artikeln~\cite{tedeschi2022multinerd}, die vermutlich Teil der
-Vortrainingskorpora der verwendeten LLMs sind.
-\textcite{zhan2026generativeNER} weisen auf bekannte Lecks von
-Benchmark-Daten hin und ziehen deshalb CleanCoNLL heran, dessen
-bereinigte Form kaum im Vortraining enthalten sein dürfte.
-Was daraus für die Ergebnisse dieser Arbeit folgt, diskutiert
-Abschnitt~\ref{sec:disk-leistung}.
 
 Aus der Literatur folgen drei Erwartungen.
-Sie dienen als Lesehilfe, nicht als Hypothesentest;
-Kapitel~\ref{chap:fazit} gleicht sie je Forschungsfrage mit den Befunden
-ab.
+Sie dienen als Lesehilfe, nicht als Hypothesentest (Abgleich in
+Kapitel~\ref{chap:fazit}).
 E1 (zu FF1): Ein mit LoRA oder QLoRA angepasstes LLM erreicht, wie in
 der Literatur auf einzelnen Benchmarks, das Niveau eines vollständig
 feinjustierten Encoders oder übertrifft es

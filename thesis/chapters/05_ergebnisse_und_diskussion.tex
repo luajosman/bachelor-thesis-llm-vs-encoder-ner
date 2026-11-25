@@ -52,9 +52,7 @@ Nachkommastellen.
 Differenzen und Faktoren sind aus den ungerundeten Werten berechnet und
 stimmen deshalb nicht immer mit einer Rechnung aus den gerundeten
 Tabellenwerten überein.
-Trainierte Konfigurationen erscheinen als
-Mittelwert~$\pm$~Standardabweichung über die drei Seeds, die
-Zero-Shot-Konfigurationen als Einzelwerte ohne Streuungsangabe.
+
 Die Lesart der gepaarten Bootstrap-Intervalle legt
 Abschnitt~\ref{sec:performanzmetriken} fest.
 
@@ -90,9 +88,7 @@ Der Makro-F$_1$ liegt rund zehn bzw. neun Punkte unter dem Mikro-F$_1$,
 was auf die deutlich schwächeren Werte bei den seltenen und verrauschten
 Typen zurückgeht (Abschnitt~\ref{sec:erg-typen}).
 
-Bei beiden Encodern ist die Streuung über die Seeds sehr gering; die
-drei Einzelwerte liegen jeweils innerhalb eines Zehntelpunkts.
-Die Validierungs-F$_1$-Werte ihrer ausgewählten Checkpoints
+Die Validierungs-F$_1$-Werte der ausgewählten Encoder-Checkpoints
 (Tabelle~\ref{tab:app-seeds}) liegen rund drei Punkte unter den
 Testwerten; bei den LLMs, deren Validierung nur 200 Sätze umfasst,
 liegen sie in acht von neun Läufen darüber.
@@ -118,12 +114,11 @@ Nach der Anpassung mit QLoRA beträgt der Abstand zum Zero-Shot-Regime
 87,0 (0.8B), 59,0 (4B) bzw. 25,1 Punkte (27B); er umfasst neben dem
 Training auch Unterschiede in Prompt, Decoding und numerischer Präzision.
 Die Streuung durch das Sampling im Zero-Shot-Regime wurde nicht gemessen.
-Die Werte der generativen Validierung auf 200 Sätzen und die gewählten
-Epochen stehen in Tabelle~\ref{tab:app-seeds}.
-Der Verlauf über die Epochen flacht ab: Bei Seed~42 steigt der
-Validierungs-F$_1$ des 27B-Modells von 94,6 über 95,8 auf 96,1, der des
-0.8B-Modells von 91,6 über 92,1 auf 92,3. Beim 4B-Modell mit Seed~42 liegt die zweite
-Epoche mit 95,5 bereits über der dritten mit 95,3 und wurde gewählt.
+Die Werte der generativen Validierung und die gewählten Epochen stehen
+in Tabelle~\ref{tab:app-seeds}; über die Epochen flacht der
+Validierungs-F$_1$ ab (Seed~42: 27B 94,6, 95,8 und 96,1; 0.8B 91,6, 92,1
+und 92,3), und beim 4B-Modell mit Seed~42 liegt die gewählte zweite
+Epoche mit 95,5 über der dritten mit 95,3.
 
 Der beste Encoder, DeBERTa-v3-large, liegt bei 256 Ausgabetokens
 1,34 Punkte vor dem besten LLM, Qwen3.5-27B im QLoRA-Regime; das
@@ -158,17 +153,14 @@ niedrigere Werte zwischen 58,1 und 79,4 Punkten; im Zero-Shot-Regime
 (27B) liegen sie zwischen 3,2 und 45,0.
 
 Die Modellklassen liegen nicht bei allen Typen in derselben Richtung
-auseinander: In den Punktwerten liegt der Encoder vorn bei ANIM, FOOD,
-PLANT, DIS, EVE, PER und LOC, das LLM bei INST, MYTH und TIME
-(Tabelle~\ref{tab:typen}). Bei MEDIA und ORG sind die Seed-Mittel
-praktisch gleich; bei den seltenen Typen BIO (Encoder vorn) sowie CEL
-und VEHI (LLM vorn) kommt eine ausgeprägte Streuung zwischen den Seeds
-hinzu. Diese Verteilung erklärt, warum Mikro- und Makro-F$_1$ Encoder
-und LLM unterschiedlich ordnen. Der Mikro-Wert wird von LOC, PER und ANIM
-getragen, bei denen der Encoder vorn liegt; der Makro-Wert gewichtet alle
-Typen gleich, also auch die seltenen, bei denen das LLM überwiegend vorn
-liegt oder gleichzieht. Im Makro-F$_1$ liegen beide deshalb nahe
-beieinander. Das
+auseinander (Tabelle~\ref{tab:typen}): In den Punktwerten liegt der
+Encoder bei den häufigen Typen LOC, PER und ANIM sowie bei FOOD, PLANT,
+DIS, EVE und BIO vorn, das LLM bei INST, MYTH, TIME, CEL und VEHI; bei
+MEDIA und ORG sind die Seed-Mittel praktisch gleich.
+Der Mikro-Wert wird von den häufigen Typen getragen, der Makro-Wert
+gewichtet alle Typen gleich, also auch die seltenen, bei denen das LLM
+überwiegend vorn liegt.
+Beide Kennzahlen ordnen Encoder und LLM deshalb unterschiedlich; das
 Bootstrap-Intervall der Makro-Differenz enthält null
 (Tabelle~\ref{tab:ci}).
 Für BIO, INST, MYTH, VEHI und CEL mit 8 bis 41 Referenzentitäten
@@ -178,10 +170,9 @@ Fehler den F$_1$ um zweistellige Beträge verändern. Die
 Standardabweichungen des Makro-F$_1$ (0,25 bis 1,06 Punkte) sind
 entsprechend größer als die des Mikro-F$_1$.
 
-Im Zero-Shot-Regime erkennt das 27B-Modell ohne Training PER, LOC und
-ORG brauchbar, MYTH, CEL, DIS, MEDIA, EVE und ANIM nur mäßig (F$_1$ zwischen 45 und
-56 Punkten) und
-PLANT, FOOD, VEHI, INST, BIO und TIME kaum (Tabelle~\ref{tab:typen}).
+Im Zero-Shot-Regime erkennt das 27B-Modell nur PER, LOC und ORG
+brauchbar (F$_1$ über 80 Punkte); die übrigen Typen liegen zwischen 2
+und 56 Punkten (Tabelle~\ref{tab:typen}).
 Bei TIME liegt die Precision bei 1,0 Punkt: Das Modell markiert
 Jahreszahlen, Wochentage und Ausdrücke wie \enquote{today} als TIME,
 während MultiNERD unter diesem Typ Epochen und Zeitabschnitte wie
@@ -275,9 +266,7 @@ Das sind rund 2,6\,\% aller Referenzentitäten; sie zählen in der
 Auswertung als übersehen.
 Alle übrigen Antworten werden direkt als JSON geparst, und die weiteren
 Fehlerzähler zeigen in Tabelle~\ref{tab:formtreue-erg} gerundet null;
-tatsächlich gab es drei Einzelfälle in je einem Lauf (ein Typ \texttt{GENE} beim
-0.8B-Modell, ein unzulässiger Index und eine Überlappung beim 4B-Modell,
-jeweils Seed~42).
+tatsächlich gab es drei Einzelfälle in je einem Lauf.
 Die verbleibende Fehlerklasse sind Text-Abweichungen, bei denen das Feld
 \texttt{text} nicht zu den indizierten Tokens passt; sie betreffen im
 Seed-Mittel höchstens 45 von rund 25\,000 übernommenen Spans je Lauf.
@@ -285,8 +274,7 @@ Die Zahl der leeren Vorhersagen liegt je Lauf nur wenig über der Zahl
 abgeschnittener Antworten.
 Die wenigen übrigen leeren Sätze enthalten Referenzentitäten, zu denen
 kein Span übernommen wurde.
-Von den acht Testsätzen ohne Referenzentität lässt nur das 27B-Modell
-einige leer (3 bis 4 je Seed).
+
 
 Im Zero-Shot-Regime hängt die Formtreue stark von der Größe ab.
 Das 0.8B-Modell hält weder Syntax noch Typinventar ein: Die meisten
@@ -331,10 +319,10 @@ In der Kontrollstichprobe der parsebaren Antworten
 1\,024 Tokens neu erzeugten Antworten zeichengleich mit der
 gespeicherten; keine erreicht das Limit, und der F$_1$ auf der
 Stichprobe ändert sich je Lauf um höchstens 0,1 Punkte.
-Von den zwölf Abweichungen der Stichprobe entfallen sieben auf das 4B-,
-vier auf das 27B- und eine auf das 0.8B-Modell.
 Auch beim 0.8B-Modell, dessen Kontrollen auf dem GPU-Typ des Hauptlaufs
-liefen, treten in beiden Kontrollen Abweichungen auf; der GPU-Wechsel
+liefen, treten in beiden Kontrollen Abweichungen auf (je Lauf in den
+Tabellen~\ref{tab:app-limit-seeds} und~\ref{tab:app-kontrolle}); der
+GPU-Wechsel
 erklärt sie also nicht allein.
 Als Ursache kommen numerische Effekte in Frage
 (Abschnitt~\ref{sec:llms}); isoliert geprüft wurden sie nicht.
@@ -343,9 +331,8 @@ Antworten nahezu unverändert lässt; einen Neulauf aller 16\,454 Sätze
 ersetzen sie nicht.
 Die Nachinferenz der langen Sätze dauerte je Satz 11,5 (0.8B), 15,4 (4B)
 und 31,6~s (27B), das Drei- bis Sechsfache der mittleren Latenz der
-Hauptläufe. Dieser Anstieg ist erwartbar, da die Generierungsdauer mit
-der Antwortlänge wächst. Wegen der Teilmengenauswahl und des GPU-Wechsels
-lässt sich daraus jedoch kein reiner Effekt der Antwortlänge isolieren.
+Hauptläufe; wegen der Teilmengenauswahl und des GPU-Wechsels lässt sich
+daraus kein reiner Effekt der Antwortlänge isolieren.
 
 \begin{table}[htbp]
   \centering
@@ -370,8 +357,7 @@ lässt sich daraus jedoch kein reiner Effekt der Antwortlänge isolieren.
 Die Erkennungsleistung über die Größenklassen aus
 Abschnitt~\ref{sec:groessenklassen} ist in Abbildung~\ref{fig:groesse}
 getrennt nach Familie und Regime dargestellt; die Werte mit
-Standardabweichungen stehen in Tabelle~\ref{tab:groesse} in
-Anhang~\ref{app:ergebnistabellen}.
+Standardabweichungen stehen in Tabelle~\ref{tab:haupt}.
 
 \begin{figure}[htbp]
   \centering
@@ -424,8 +410,7 @@ Anhang~\ref{app:ergebnistabellen}.
   trainierten mit Fehlerbalken (Standardabweichung über drei Seeds, meist
   kleiner als das Symbol).
   LLM-Werte bei 256 Ausgabetokens.
-  Parameterzahlen nach Tabelle~\ref{tab:experiment-matrix}
-  (DeBERTa-v3: 184 und 434~Mio.; Qwen3.5: 0{,}75, 4{,}21 und 26{,}90~Mrd.).}
+  Parameterzahlen nach Tabelle~\ref{tab:experiment-matrix}.}
   \label{fig:groesse}
 \end{figure}
 
@@ -447,8 +432,7 @@ DeBERTa-v3-base liegt mit 184~Mio. Parametern
 vor Qwen3.5-0.8B im QLoRA-Regime mit dem Vierfachen und vor
 Qwen3.5-27B mit dem 146-Fachen seiner Parameterzahl
 (Abschnitt~\ref{sec:erg-gesamt}).
-Mit zwei Encoder- und drei LLM-Größen bleibt diese Betrachtung
-deskriptiv (Abschnitt~\ref{sec:einfluss-parameteranzahl}).
+
 
 \section{Effizienzanalyse}
 \label{sec:erg-effizienz}
@@ -502,9 +486,7 @@ für die Encoder rund 3 bzw. 5,5 Minuten, für die QLoRA-Modelle 8,6 bis
 Die Encoder verarbeiten einen Testsatz in Millisekunden, die
 QLoRA-Modelle benötigen Sekunden (Tabelle~\ref{tab:effizienz}).
 Der hardwaregleiche Vergleich auf der H100 ergibt für das 0.8B-Modell
-das 210-Fache der Latenz von DeBERTa-v3-base; das 27B-Modell auf der
-H100~NVL benötigt das 335-Fache von DeBERTa-v3-large und das 617-Fache
-von DeBERTa-v3-base.
+das 210-Fache der Latenz von DeBERTa-v3-base.
 Auf dem GPU-Typ der Encoder schätzt die Kontrollstichprobe
 (Abschnitt~\ref{sec:nachinferenz}, Tabelle~\ref{tab:app-kontrolle}) die
 mittlere Latenz bei 1\,024 Tokens auf 1,7~s (0.8B), 2,3~s (4B) und
@@ -522,17 +504,11 @@ Entitäten wächst (Abschnitt~\ref{sec:effizienzmetriken}); bei den
 Encodern beträgt das Verhältnis 1,03 bis 1,04.
 Die Zero-Shot-Läufe sind bei 4B und 27B schneller als die QLoRA-Läufe
 derselben Größe auf derselben GPU (Tabelle~\ref{tab:effizienz}).
-Als Ursachen kommen kürzere Ausgaben sowie der Wegfall der
-Dequantisierung der NF4-Gewichte und des nicht verschmolzenen Adapters in
-Frage (Abschnitt~\ref{sec:llm-pipeline}); getrennt wurden diese Faktoren
-nicht.
-Kürzere Ausgaben können vor allem beim 4B-Modell beitragen, das in
-8\,389 von 16\,454 Fällen (51\,\%) unmittelbar ein leeres Array
-ausgibt; beim 27B-Modell spricht die höhere Zahl begonnener Elemente
-im Zero-Shot- gegenüber dem QLoRA-Regime
-(Tabelle~\ref{tab:formtreue-erg}) dagegen.
-Beim 0.8B-Modell liefen beide Regime auf verschiedenen GPUs, sodass der
-Unterschied nicht einem Faktor zugeordnet werden kann.
+Als Ursachen kommen der Wegfall der Dequantisierung der NF4-Gewichte
+und des nicht verschmolzenen Adapters (Abschnitt~\ref{sec:llm-pipeline})
+sowie beim 4B-Modell kürzere Ausgaben in Frage, denn es gibt in 51\,\%
+der Fälle unmittelbar ein leeres Array aus; getrennt wurden diese
+Faktoren nicht.
 
 \paragraph{GPU-Speicher.}
 Der Spitzenspeicher der Inferenz reicht von 0,7~GiB (DeBERTa-v3-base)
@@ -676,18 +652,14 @@ Die Typfehler konzentrieren sich bei allen trainierten Modellen auf
 dieselben Paare.
 Am häufigsten wird eine ANIM-Referenz als PLANT vorhergesagt (je Lauf 40
 bei DeBERTa-v3-large, 44 bei Qwen3.5-27B), gefolgt von LOC als ORG (19
-bzw. 11), PLANT als ANIM (12 bzw. 9) und ORG als LOC (10 bzw. 8). Dazu
-kommen Verwechslungen zwischen FOOD, PLANT und ANIM, etwa
+bzw. 11); dazu kommen Verwechslungen zwischen FOOD, PLANT und ANIM, etwa
 \enquote{perch} als FOOD statt ANIM.
-Grenzfehler betreffen überwiegend ANIM (34 bzw. 35 je Lauf), DIS (29
-bzw. 33), PLANT (27 bzw. 27), FOOD (20 bzw. 14) und beim LLM auch LOC
-(18). Die Modelle schließen Modifikatoren ein, die die Referenz
-ausschließt, oder umgekehrt (\enquote{wild burro} gegenüber
-\enquote{burro}, \enquote{Bupropion-induced psychosis} gegenüber
-\enquote{psychosis}).
-Auch die Zusätze stammen überwiegend aus ANIM (348 bzw. 355), PLANT (240
-bzw. 248), DIS (127 bzw. 131) und FOOD (125 bzw. 138).
-In der Stichprobe der häufigsten Zusätze finden sich Spans wie
+Grenzfehler und Zusätze betreffen bei beiden Modellen überwiegend ANIM,
+PLANT, DIS und FOOD (Zusätze: 348 bzw. 355 bei ANIM, 240 bzw. 248 bei
+PLANT).
+Bei Grenzfehlern schließen die Modelle Modifikatoren ein, die die
+Referenz ausschließt, oder umgekehrt (\enquote{wild burro} gegenüber
+\enquote{burro}); unter den häufigsten Zusätzen finden sich Spans wie
 \enquote{desert cottontail} oder \enquote{palm wine}, die nach den
 Richtlinien des Datensatzes Entitäten wären, in der Silberreferenz aber
 fehlen.
@@ -697,12 +669,8 @@ zufällig gezogen.
 
 Das Zero-Shot-Profil des 27B-Modells weicht in allen Klassen ab
 (Tabelle~\ref{tab:fehlertypen}).
-Die Grenzfehler betreffen vor allem LOC (628) und PER (364), etwa wenn
-Titel oder Attribute in den Span einbezogen werden; die häufigsten
-Typfehler sind ORG als LOC (113), TIME als EVE (89) und ANIM als BIO
-(88).
-Von den Zusätzen entfallen 5\,354 auf TIME (Abschnitt~\ref{sec:erg-typen})
-und je 250 bis 490 auf ANIM, BIO, FOOD, EVE und PLANT.
+Von den 8\,048 Zusätzen entfallen 5\,354 auf TIME
+(Abschnitt~\ref{sec:erg-typen}).
 
 \section{Transfer auf CrossNER}
 \label{sec:erg-crossner}
@@ -738,13 +706,9 @@ Anhang~\ref{app:ergebnistabellen}).
 Die Profile unterscheiden sich darin, worauf der Verlust entfällt: Der Encoder
 verliert Precision und Recall gleichmäßig, das LLM behält eine hohe
 Precision, verliert aber vor allem Recall.
-Für den Encoder sind Künstliche Intelligenz und Naturwissenschaften die
-schwersten Domänen und Politik die leichteste; für das LLM ist Musik mit
-dem niedrigsten Recall die schwerste und Literatur die leichteste.
+
 Der Ausschluss der 21 mit MultiNERD-Trainingssätzen übereinstimmenden
-Sätze verändert die gepoolten Werte um 0,2 bzw. 0,4 Punkte; die Werte der
-einzelnen Seeds und je Grobtyp stehen in den Tabellen~\ref{tab:app-crossner-seeds}
-und~\ref{tab:app-crossner-typen}.
+Sätze verändert die gepoolten Werte um 0,2 bzw. 0,4 Punkte.
 
 Der Recall-Verlust des LLM hängt mit dem Ausgabelimit zusammen.
 CrossNER-Sätze sind mit im Mittel 38 Tokens und 3,2 Referenzentitäten
@@ -753,11 +717,9 @@ der Grobtypen fast doppelt so lang wie MultiNERD-Testsätze (21 Tokens,
 greift. 250 der 2\,506 Antworten (10,0\,\%) waren nicht parsebar, alle
 davon ohne schließende Klammer, gegenüber 0,4\,\% auf MultiNERD.
 Auf CrossNER betrugen Latenz je Satz und GPU-Spitzenspeicher für
-DeBERTa-v3-large 25,7~ms und 1,7~GiB; die Latenz ist das 1,6-Fache
-seiner MultiNERD-Latenz auf demselben GPU-Typ.
-Für Qwen3.5-27B waren es 14\,691~ms (Median 13\,763~ms) und 18,6~GiB; die
-Latenz ist das 2,7-Fache seiner MultiNERD-Latenz, die allerdings auf der
-H100~NVL gemessen wurde.
+DeBERTa-v3-large 25,7~ms und 1,7~GiB, für Qwen3.5-27B 14\,691~ms und
+18,6~GiB; mit den MultiNERD-Werten sind sie wegen der längeren Sätze
+und, beim LLM, des anderen GPU-Typs nur eingeschränkt vergleichbar.
 
 Die Sensitivitätsanalyse mit 1\,024 Ausgabetokens
 (Abschnitt~\ref{sec:crossner}, Tabelle~\ref{tab:limit}) bestätigt diese
@@ -920,9 +882,10 @@ Ob das Annotations- oder gemeinsame Modellfehler sind, wurde nicht
 manuell geprüft.
 
 \paragraph{Datenkontamination.}
-MultiNERD besteht aus Wikipedia- und Wikinews-Artikeln, die mit hoher
+MultiNERD besteht aus Wikipedia- und
+Wikinews-Artikeln~\cite{tedeschi2022multinerd}, die mit hoher
 Wahrscheinlichkeit auch in den Vortrainingskorpora der Modelle enthalten
-sind (Abschnitt~\ref{sec:research_gap}); belegen oder ausschließen
+sind; belegen oder ausschließen
 lässt sich das nicht, denn die Modellkarten von Qwen3.5 nennen keine
 Vortrainingsdaten~\cite{qwen2026card27b}.
 Drei Überlegungen grenzen die Wirkung ein.
@@ -933,7 +896,9 @@ Zweitens lernen im QLoRA-Regime alle Modelle das Typinventar ohnehin aus
 den Trainingsdaten, und die Unsicherheit betrifft die vortrainierten
 Encoder ebenso.
 Drittens ändern sich die Ergebnisse von
-\textcite{zhan2026generativeNER} kaum, wenn Typbezeichnungen durch
+\textcite{zhan2026generativeNER}, die wegen bekannter Lecks von
+Benchmark-Daten zusätzlich das bereinigte CleanCoNLL heranziehen, kaum,
+wenn Typbezeichnungen durch
 bedeutungslose Symbole ersetzt werden; das spricht gegen eine
 Memorisierung von Entität-Typ-Paaren, ist aber nur für CoNLL-2003 und
 CleanCoNLL gezeigt.
@@ -991,16 +956,12 @@ Dieses Verfahren beschränkt die Ausgabe auf gültige Spans der Eingabe und
 Zero-Shot-Modellen hier misslingt.
 Das Format ändert nichts daran, dass die gemessene LLM-Inferenz um
 Größenordnungen langsamer ist als die der Encoder
-(Abschnitt~\ref{sec:erg-effizienz}). Die Ausgabelänge wird von der Zahl
-der Entitäten, vom Spantext im Feld \texttt{text} und von der
-Serialisierung bestimmt.
+(Abschnitt~\ref{sec:erg-effizienz}). 
 Die Faktoren von 40 bis 220 für IOB2-Ausgaben~\cite[Tab.~IV]{obeidat2025llm} dienen bei anderen Modellen, Hardware und
 Datensätzen nur der Einordnung.
-Bei Batchgröße~1 hängt die Latenz vermutlich von der Zahl sequenzieller
-Decoding-Schritte und von der Dequantisierung der NF4-Gewichte ab, die
-beide bei jeder Entität anfallen, unabhängig davon, wie kompakt sie
-kodiert ist;
-ihr jeweiliger Anteil wurde nicht getrennt gemessen.
+Welchen Anteil die Zahl sequenzieller Decoding-Schritte und die
+Dequantisierung der NF4-Gewichte an der Latenz haben, wurde nicht
+getrennt gemessen.
 
 \subsection{Modellgröße}
 \label{sec:disk-groesse}
@@ -1052,9 +1013,7 @@ Gründen auf diese Befunde nicht übertragbar.
 FF3 fragt nach dem Verhältnis von Erkennungsleistung und Ressourcenbedarf
 unter Speicher- und Latenzbeschränkungen.
 Bei 256 Ausgabetokens bilden die beiden Encoder die Pareto-Front
-(Abschnitt~\ref{sec:erg-effizienz}, Abbildung~\ref{fig:tradeoff});
-hardwaregleich benötigt Qwen3.5-0.8B etwa das 210-Fache der Latenz von
-DeBERTa-v3-base.
+(Abschnitt~\ref{sec:erg-effizienz}, Abbildung~\ref{fig:tradeoff}).
 Die Nachinferenz am Ausgabelimit
 verändert den Qualitätsvergleich, weil das
 27B-Modell mit vollständigen Antworten im Punktwert knapp vor
@@ -1092,8 +1051,7 @@ Ob dieser Qualitätsgewinn den Aufwand rechtfertigt, hängt von der
 Zielanwendung ab. Die höheren Punktwerte des LLM bei einzelnen seltenen
 MultiNERD-Typen bleiben wegen ihres geringen Supports deskriptive
 Hinweise; eine gleichwertige Makro-Leistung wurde nicht nachgewiesen.
-Ob sich das Typinventar eines LLM per Prompt ändern lässt, wurde nicht
-untersucht (Prompt unverändert, CrossNER-Typen per Tabelle abgebildet).
+
 
 Für die Umkehr auf CrossNER kommen neben dem Ausgabelimit weitere
 Erklärungen in Betracht: Vortrainingswissen des LLM über die
@@ -1111,9 +1069,7 @@ Vortrainingswissen und die manuelle Annotation von CrossNER lassen sich
 davon nicht trennen (Abschnitte~\ref{sec:disk-leistung}
 und~\ref{sec:limitationen}).
 
-Ob sich das 27B-Modell, das im Zero-Shot-Regime den höchsten F$_1$
-erzielt, für eine Anwendung ohne Trainingsdaten eignet und welche Prompt-
-und Decoding-Wahl optimal wäre, wurde nicht geprüft.
+
 Alle Empfehlungen gelten für einzelne Sätze bei Batchgröße~1 und die
 genannten GPU-Typen; der mit Batching oder anderen Inferenzsystemen
 erreichbare Durchsatz und vollständige Anwendungslatenzen bleiben offen.
@@ -1141,7 +1097,7 @@ beruhen.
 Eine Schwelle praktischer Relevanz wurde nicht vorab festgelegt; zur
 Einordnung dienen die Seed-Streuung und der Abstand zwischen den beiden
 Encodern
-(Tabelle~\ref{tab:groesse}).
+(Tabellen~\ref{tab:haupt} und~\ref{tab:ci}).
 Was die Intervalle nicht erfassen, fasst
 Abschnitt~\ref{sec:limitationen} zusammen.
 

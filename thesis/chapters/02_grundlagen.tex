@@ -24,18 +24,7 @@ Informationen und die Erzeugung von Text.
 Named Entity Recognition gehört zur zweiten Gruppe und wird in
 Abschnitt~\ref{sec:ner} eingeführt.
 
-Lange Zeit beruhten NLP-Systeme auf von Hand entworfenen Merkmalen
-wie Wortformen, Wortarten oder Einträgen in Namenslisten, die ein
-statistisches Modell gewichtete~\cite{manning1999foundations}.
-\emph{Representation Learning} lernt die Repräsentationen stattdessen
-aus den Daten, als dichte reellwertige Vektoren
-(\emph{distributed representations}), über deren Dimensionen sich die
-Information verteilt~\cite{bengio2013representation}.
-
-Den ersten Schritt bildeten Wortvektoren, die aus großen Textmengen so
-gelernt werden, dass Wörter mit ähnlichen Kontexten im Vektorraum nahe beieinanderliegen~\cite{goldberg2016primer}; ein solcher Vektor ist
-jedoch für jedes Wort fest, unabhängig vom Satz, in dem es steht.
-Kontextualisierte Repräsentationen heben diese Einschränkung auf: Ein
+Heutige Systeme beruhen auf kontextualisierten Repräsentationen: Ein
 neuronales Netz liest die gesamte Eingabesequenz und berechnet für jedes
 Token einen Vektor, der von den umgebenden Tokens
 abhängt~\cite{devlin2019bert}.
@@ -90,26 +79,19 @@ unterscheiden mehr als ein Dutzend Typen
 In der Praxis wird NER häufig als Sequenzlabeling formuliert: Jedes Token
 erhält genau ein Label, das zugleich die Segmentierung in Spans und deren
 Typ kodiert~\cite{li2018survey}.
-Das am weitesten verbreitete Schema geht auf \textcite{ramshaw1995text} zurück, die
-für das Chunking das Tagset $\{\mathrm{I}, \mathrm{O}, \mathrm{B}\}$
-einführten.
-Darin markiert I Tokens innerhalb eines Chunks und O Tokens außerhalb;
-B kennzeichnet das erste Token eines Chunks nur dann, wenn unmittelbar
-davor ein anderer Chunk endet.
-Die Bezeichnungen IOB1 für dieses ursprüngliche Schema und IOB2 für die
-Variante, bei der jeder Chunk mit einem B-Tag beginnt, prägen
-\textcite{tjong1999representing} in einem Vergleich mehrerer Varianten
-dieser Kodierung; IOB2 wird häufig kurz als BIO-Schema bezeichnet.
+Das Tagset $\{\mathrm{I}, \mathrm{O}, \mathrm{B}\}$ geht auf
+\textcite{ramshaw1995text} zurück.
+In der verbreiteten Variante IOB2, häufig kurz BIO-Schema genannt,
+beginnt jede Entität mit einem B-Tag, I markiert ihre weiteren Tokens
+und O alle Tokens außerhalb~\cite{tjong1999representing}.
 Für NER wird der Typ an das Tag angehängt, etwa \texttt{B-PER} und
 \texttt{I-PER}.
 Die Kodierung setzt voraus, dass sich Entitäten weder überlappen noch
 ineinander verschachtelt sind; CoNLL-2003 trifft genau diese
 Annahme~\cite{sang2003conll}, und auch die in dieser Arbeit verwendeten
 Datensätze enthalten nur flache Annotationen.
-IOB2 und IOB1 stellt Tabelle~\ref{tab:bio-beispiel} an einem Satz
-gegenüber.
-Die Daten des CoNLL-2003-Benchmarks liegen im IOB1-Schema vor~\cite{sang2003conll}; diese Arbeit verwendet IOB2, das jeden
-Entitätsbeginn explizit markiert, in der Encoder-Pipeline
+Ein Beispiel zeigt Tabelle~\ref{tab:bio-beispiel}.
+Diese Arbeit verwendet IOB2 in der Encoder-Pipeline
 (Abschnitt~\ref{sec:encoder-pipeline}) ebenso wie in der Auswertung
 (Abschnitt~\ref{sec:evaluation}).
 
@@ -117,10 +99,7 @@ Entitätsbeginn explizit markiert, in der Encoder-Pipeline
   \centering
   \small
   \renewcommand{\arraystretch}{1.3}
-  \caption[IOB2- und IOB1-Kodierung desselben Satzes]{IOB2- und IOB1-Kodierung desselben Satzes.
-  In IOB2 beginnt jede Entität mit \texttt{B-}; in IOB1 erhält eine
-  Entität nur dann ein \texttt{B-}Tag, wenn sie unmittelbar auf eine
-  Entität desselben Typs folgt; das kommt in diesem Satz nicht vor.}
+  \caption[IOB2-Kodierung eines Satzes]{IOB2-Kodierung eines Satzes.}
   \label{tab:bio-beispiel}
   \begin{tabular}{lccccc}
     \toprule
@@ -128,8 +107,7 @@ Entitätsbeginn explizit markiert, in der Encoder-Pipeline
     \midrule
     \textbf{IOB2} & \texttt{B-PER} & \texttt{I-PER}
                   & \texttt{O} & \texttt{B-LOC} & \texttt{O} \\
-    \textbf{IOB1} & \texttt{I-PER} & \texttt{I-PER}
-                  & \texttt{O} & \texttt{I-LOC} & \texttt{O} \\
+    
     \bottomrule
   \end{tabular}
 \end{table}
@@ -139,8 +117,8 @@ Formulierung verbreitet; sie modellieren die bedingte
 Wahrscheinlichkeit der gesamten Labelfolge bei gegebener Eingabe, sodass
 Übergänge zwischen benachbarten Labels mitgelernt werden und unzulässige
 Folgen unwahrscheinlich werden~\cite{lafferty2001crf}.
-Neuronale Sequenzmodelle wie das BiLSTM-CRF ersetzten die von Hand
-entworfenen Merkmale durch gelernte
+Neuronale Sequenzmodelle wie das BiLSTM-CRF ersetzten von Hand
+entworfene Merkmale durch gelernte
 Repräsentationen~\cite{lample2016neural,ma2016end}.
 
 \section{Transformer-Architektur}
@@ -229,12 +207,8 @@ Da ein Vokabular aus ganzen Wörtern seltene Wörter nicht abdecken kann,
 arbeiten alle hier behandelten Modelle mit \emph{Subwort-Einheiten}:
 Häufige Wörter bleiben ganz, seltene werden in mehrere Teilstücke
 zerlegt.
-Verbreitete Verfahren sind WordPiece~\cite{schuster2012japanese}, die
-Byte-Paar-Kodierung auf Byte-Ebene von RoBERTa~\cite{liu2019roberta} und
-SentencePiece~\cite{kudo2018sentencepiece}, das neben der
-Byte-Paar-Kodierung ein Unigram-Sprachmodell~\cite{kudo2018subword}
-umsetzt; DeBERTa-v3
-verwendet ein SentencePiece-Vokabular mit
+DeBERTa-v3 verwendet ein
+SentencePiece-Vokabular~\cite{kudo2018sentencepiece} mit
 128\,000 Einheiten~\cite{he2021debertav3}.
 Für NER hat die Zerlegung eine praktische Folge: Die Labels liegen je
 Wort vor, die Modelleingabe besteht aber aus Subwörtern.
@@ -245,11 +219,9 @@ nicht in den Verlust ein.
 Die Encoder-Pipeline dieser Arbeit folgt diesem Vorgehen
 (Abschnitt~\ref{sec:datenvorverarbeitung}).
 
-\textcite{devlin2019bert} trainieren BERT mit zwei Aufgaben auf nicht
-annotiertem Text: Beim \emph{Masked Language Modeling} (MLM) wird ein
-Teil der Tokens maskiert und aus dem beidseitigen Kontext
-rekonstruiert, bei der \emph{Next Sentence Prediction} (NSP) sagt das
-Modell vorher, ob zwei Segmente aufeinander folgen.
+\textcite{devlin2019bert} trainieren BERT auf nicht annotiertem Text vor allem mit
+\emph{Masked Language Modeling} (MLM): Ein Teil der Tokens wird maskiert
+und aus dem beidseitigen Kontext rekonstruiert.
 Für eine Zielaufgabe wird das vortrainierte Modell um eine
 aufgabenspezifische Ausgabeschicht ergänzt und vollständig feinjustiert,
 das heißt, alle Encoder-Gewichte und die neue Schicht werden gemeinsam
@@ -274,16 +246,12 @@ DeBERTa verändert zwei Komponenten des
 Encoders~\cite{he2020deberta}.
 Erstens trennt die \emph{Disentangled Attention} Inhalt und Position:
 Jedes Token wird durch einen Inhaltsvektor und einen Vektor für seine
-relative Position zu den anderen Tokens repräsentiert, und der
-Relevanzwert zweier Tokens setzt sich aus einem Inhalt-zu-Inhalt-Term,
-einem Inhalt-zu-Position-Term und einem Position-zu-Inhalt-Term
-zusammen; ein Position-zu-Position-Term entfällt.
-Die Attention kann so getrennt lernen, welche Inhalte und welche
-Abstände zusammengehören.
+relative Position zu den anderen Tokens repräsentiert, sodass die
+Attention getrennt lernen kann, welche Inhalte und welche Abstände
+zusammengehören.
 Zweitens bezieht der \emph{Enhanced Mask Decoder} die absoluten
-Positionen erst nach den Transformer-Schichten und unmittelbar vor der
-Vorhersage der maskierten Tokens ein, da etwa die syntaktische Rolle eines
-Wortes von seiner absoluten Position im Satz abhängt.
+Positionen erst unmittelbar vor der Vorhersage der maskierten Tokens
+ein.
 DeBERTa-v3 behält diese Architektur bei und ersetzt das
 Vortrainingsziel~\cite{he2021debertav3}.
 Statt MLM verwendet es \emph{Replaced Token Detection} nach ELECTRA: Ein
@@ -293,9 +261,7 @@ jedes Token zu entscheiden, ob es ersetzt wurde.
 Das Trainingssignal entsteht so an allen Positionen statt nur an den
 maskierten, was das Vortraining dateneffizienter
 macht~\cite{clark2020electra}.
-DeBERTa-v3 wurde mit weitgehend denselben Einstellungen wie DeBERTa und
-auf denselben 160~GB Daten wie DeBERTa-v2
-vortrainiert~\cite[Abschn.~4.1]{he2021debertav3}.
+
 Die Base-Variante hat zwölf Schichten mit 86~Mio.
 Parametern im Backbone, die Large-Variante 24 Schichten mit 304~Mio.,
 jeweils zuzüglich der Embedding-Parameter des großen
@@ -364,11 +330,7 @@ Einige Fähigkeiten treten dabei erst ab einer gewissen Modellgröße auf;
 \textcite{wei2022emergent} bezeichnen sie als emergent.
 
 Viele LLMs werden nur mit frei herunterladbaren Gewichten und einer
-Lizenz veröffentlicht. Die Open-Source-AI-Definition verlangt zusätzlich
-Angaben zu den Trainingsdaten und den vollständigen
-Code~\cite{osi2024osaid}; solche Modelle gelten deshalb nicht als Open
-Source, sondern als Modelle mit \emph{offenen Gewichten}
-(\emph{open weights}).
+Lizenz veröffentlicht (\emph{offene Gewichte}, \emph{open weights}).
 Zu dieser Gruppe gehört die Qwen-Familie von Alibaba mit den Generationen
 Qwen2.5, Qwen3 und Qwen3.5~\cite{qwen2024qwen25,qwen2025qwen3}; zur im
 Februar 2026 vorgestellten Generation
@@ -574,8 +536,7 @@ ergänzen ihn (Abschnitt~\ref{sec:performanzmetriken}).
 Für seltene Typen mit geringem Support, also wenigen
 Referenzentitäten, sind typbezogene Werte allerdings mit großer Unsicherheit
 behaftet, da wenige Fehler den Wert stark verändern.
-Gibt ein System für einen Typ keine Vorhersage ab, ist die Precision
-nicht definiert und wird in der Praxis als null gewertet.
+
 \textcite{hripcsak2005agreement} zeigen zudem, dass das F-Maß beim
 Vergleich zweier Annotationen der positiven spezifischen Übereinstimmung
 entspricht.

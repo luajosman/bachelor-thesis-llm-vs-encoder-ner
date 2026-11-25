@@ -1,729 +1,123 @@
 # Encoder vs. LLMs for Named Entity Recognition
 
-Bachelor thesis repository comparing encoder token classification with
-decoder-only LLM structured extraction for Named Entity Recognition (NER).
+Code, configurations, evaluation scripts and LaTeX sources of the Bachelor
+thesis
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.4%2B-red)
-![Transformers](https://img.shields.io/badge/Transformers-4.48%2B-yellow)
-![PEFT](https://img.shields.io/badge/PEFT-LoRA%2FQLoRA-purple)
-![Dataset](https://img.shields.io/badge/Dataset-MultiNERD%20English-green)
-![License](https://img.shields.io/badge/License-MIT-lightgrey)
+> **Fine-Tuning für Named Entity Recognition: Ein Vergleich von BERT-basierten
+> Modellen und LLMs mit LoRA**
+> Luaj Osman, Technische Universität Berlin, Fakultät IV, Fachgebiet Quality &
+> Usability, in cooperation with DFKI, 26 November 2026.
 
-## Project Overview
+The thesis (in German) compares fine-tuned DeBERTa-v3 encoders (token
+classification) with Qwen3.5 decoder-only LLMs (0.8B, 4B, 27B; zero-shot and
+QLoRA fine-tuned, JSON span extraction) on the English part of MultiNERD, with
+a domain-transfer evaluation on CrossNER.
 
-This project supports the Bachelor thesis **"Comparison of Encoder-Based Models
-and Large Language Models with Fine-Tuning for Named Entity Recognition."** It
-compares supervised DeBERTa token-classification models with Qwen3.5
-decoder-only LLMs that perform structured NER extraction. The benchmark is the
-English subset of `Babelscape/multinerd`, so all models are evaluated on the
-same task and language setting. The LLM side includes both zero-shot evaluation
-and LoRA/QLoRA fine-tuning.
+## Submitted version
 
-## Research Question
+- The submitted thesis is the PDF built from the LaTeX sources in `thesis/`
+  (`thesis/main.tex`), 104 pages, dated 26 November 2026 on the title page.
+- The built PDF (`thesis/main.pdf`) is **not** versioned; it is listed in
+  `.gitignore` and is submitted separately.
+- Earlier drafts are not the submitted version: tag
+  `betreuerentwurf-2026-11-08` (draft for the supervisor) and branch
+  `fassung-lang-2026-11-12` (long version before shortening).
+- Tag `zeroshot-runs-137bffd` marks the code state of the zero-shot runs
+  evaluated in the thesis (see below). The commits of all other runs are
+  listed in Appendix A.1 of the thesis.
 
-How do fine-tuned encoder models compare with decoder-only LLMs, both zero-shot
-and LoRA-fine-tuned, for English NER in terms of entity-level quality,
-computational efficiency, structured-output robustness, and implementation
-complexity?
+## Repository layout
 
-## Experimental Scope
+| Path | Content |
+| --- | --- |
+| `thesis/main.tex`, `chapters/`, `frontmatter/`, `figures/`, `references.bib` | LaTeX sources of the thesis |
+| `thesis/generated/` | Table bodies (`tab-*.tex`), figure data (`fig-*.dat`) and all reported figures (`summary.json`), written by the aggregation script; not edited by hand |
+| `thesis/scripts/aggregate_results.py` | Aggregation of the run artifacts into `thesis/generated/`, with tests in `test_aggregate_results.py` |
+| `thesis/scripts/check/` | Consistency checks for the manuscript (numbers, page layout, wording, text overlap with sources) |
+| `ba-ner/src/` | Experiment code: data loading (`data/`), DeBERTa (`encoder/`), Qwen zero-shot and QLoRA (`decoder/`), metrics and evaluations (`evaluate/`) |
+| `ba-ner/configs/` | One YAML configuration per run, plus `seed_study_manifest.yaml` and `crossner_overlap_exclusions.yaml` |
+| `ba-ner/scripts/` | Orchestration (`run_seed_matrix.py`, `run_crossner.py`) and statistics helpers; `scripts/cluster/` holds the SLURM job and submit scripts |
+| `ba-ner/tests/` | Tests of the experiment code |
+| `ba-ner/docs/` | Cluster job guide and seed-study provenance audit |
+| `ba-ner/results/` | Local copy of the run artifacts (only `.gitkeep` is versioned) |
+| `sync_from_cluster.sh` | Fetches cluster commits and small result files (YAML/JSON/CSV) into `ba-ner/results/` |
+| `.claude/agents/` | Claude Code agent definitions used for AI-assisted revision (AI use is declared in the thesis) |
 
-The implemented experiment registry in `ba-ner/src/config.py` defines exactly
-eight runs.
+## Configurations, run artifacts and evaluation
 
-| Model family | Hugging Face model ID | Implemented mode |
-| --- | --- | --- |
-| DeBERTa-v3-base | `microsoft/deberta-v3-base` | fine-tuned encoder token classification |
-| DeBERTa-v3-large | `microsoft/deberta-v3-large` | fine-tuned encoder token classification |
-| Qwen3.5-0.8B | `Qwen/Qwen3.5-0.8B` | zero-shot decoder inference; LoRA/QLoRA fine-tuning |
-| Qwen3.5-4B | `Qwen/Qwen3.5-4B` | zero-shot decoder inference; LoRA/QLoRA fine-tuning |
-| Qwen3.5-27B | `Qwen/Qwen3.5-27B` | zero-shot decoder inference; LoRA/QLoRA fine-tuning |
+**Configurations** (`ba-ner/configs/`): the runs of the main study use the
+`*_canonical.yaml` files for seed 42 and `*_seed123.yaml` / `*_seed456.yaml`
+for the other seeds; the 27B model uses `qwen35_27b_3ep*.yaml`. Zero-shot runs
+use `*_zeroshot.yaml`. Files without a suffix (e.g. `deberta_base.yaml`,
+`qwen35_27b.yaml`) belong to the historical seed-42 runs (exploratory
+pre-runs, roles in `seed_study_manifest.yaml`) that are not part of the
+reported seed means. Appendix A.1 of the thesis maps every run to its
+configuration file, output directory and commit.
 
-There are no zero-shot encoder experiments in the active study design.
+**Run artifacts** (predictions, metrics, run metadata, adapters; about 2 GB
+without model weights) are not in Git. They were produced on the DFKI cluster
+below `/netscratch/losman/ba-ner/results` and are available to the examiners
+on request. A local copy is expected in `ba-ner/results/` with the
+subdirectories `multinerd/`, `crossner/`, `crossner_output_limit_1024/`,
+`multinerd_output_limit_1024/`, `multinerd_control_1024/` and the SLURM export
+`slurm_accounting_2026-08.csv`.
 
-## Core Architecture
+**Evaluation**: `thesis/scripts/aggregate_results.py` reads these artifacts
+and `ba-ner/configs/crossner_overlap_exclusions.yaml`, recomputes the strict
+entity-level scores, stops if they differ from the stored values, and writes
+`thesis/generated/`. The bootstrap uses a fixed seed, so the output is
+byte-reproducible.
 
-The encoder pipeline uses MultiNERD word-level tokens and BIO labels, aligns
-labels to tokenizer subwords, and trains Hugging Face token-classification
-models. Continuation subwords and special tokens are assigned `-100` so they are
-ignored by the loss and evaluation.
+**Zero-shot note**: the evaluated zero-shot runs (tag `zeroshot-runs-137bffd`)
+decoded with sampling and the glossary prompt; the current code decodes
+greedily. The thesis reports this deviation in Appendix A.1.
 
-The decoder pipeline presents each example as a numbered token list and asks
-the LLM to generate a machine-readable JSON array of entity spans. Outputs are
-parsed, validated, converted back to BIO tags, and evaluated with the same
-strict entity-level metric code as the encoders.
+## Commands
 
-LoRA/QLoRA fine-tuning is implemented through PEFT and TRL. The Qwen base
-weights remain frozen while adapter parameters are trained; the best adapter is
-selected using generative validation F1.
+The commands below are taken from the project files (`.latexmkrc`, script
+headers and argument parsers). **They were not run when this README was
+written.**
 
-## Dataset and Representation
+Build the thesis (pdflatex + biber; auxiliary files go to `thesis/build/`, the
+PDF to `thesis/main.pdf`):
 
-The repository intentionally supports one dataset setup:
-
-- Dataset: `Babelscape/multinerd`
-- Language: English only, filtered with `lang == "en"`
-- Splits: `train`, `validation`, `test`
-- Entity types: `PER`, `ORG`, `LOC`, `ANIM`, `BIO`, `CEL`, `DIS`, `EVE`,
-  `FOOD`, `INST`, `MEDIA`, `MYTH`, `PLANT`, `TIME`, `VEHI`
-
-Encoder models consume BIO labels directly. Decoder models use a token-offset
-JSON schema:
-
-```json
-[
-  {
-    "start_token": 0,
-    "end_token": 2,
-    "text": "Barack Obama",
-    "type": "PER"
-  }
-]
+```bash
+cd thesis && latexmk -pdf main.tex
+# without a local TeX installation:
+cd thesis && docker run --rm -v "$PWD":/work -w /work texlive/texlive:latest latexmk -pdf main.tex
 ```
 
-`start_token` is inclusive and `end_token` is exclusive. Both indices refer to
-the numbered MultiNERD token list shown in the prompt, not to character
-offsets. The `text` field is retained for readability and validation, but BIO
-reconstruction uses the token offsets as the source of truth. If no entity is
-present, the expected decoder output is exactly `[]`.
+Rebuild the tables and figures from the run artifacts (needs PyYAML and NumPy
+and the artifacts in `ba-ner/results/`; overwrites `thesis/generated/`), and
+test the aggregation:
 
-### LLM Output Format Rationale
-
-The LLM pipeline is generative, but the final evaluation requires entity spans
-that can be mapped back to the original MultiNERD token sequence without
-ambiguity. For that reason, each decoder prompt presents the sentence as a
-numbered token list:
-
-```text
-Tokens:
-0: Barack
-1: Obama
-2: visited
-3: Berlin
-4: .
+```bash
+python3 thesis/scripts/aggregate_results.py
+python3 -m unittest discover -s thesis/scripts -p 'test_*.py'
 ```
 
-For this input, the expected LLM output is:
-
-```json
-[
-  {
-    "start_token": 0,
-    "end_token": 2,
-    "text": "Barack Obama",
-    "type": "PER"
-  },
-  {
-    "start_token": 3,
-    "end_token": 4,
-    "text": "Berlin",
-    "type": "LOC"
-  }
-]
-```
-
-The fields have the following meaning:
-
-- `start_token`: inclusive start index in the numbered token list.
-- `end_token`: exclusive end index in the numbered token list.
-- `text`: human-readable entity span, used for consistency checks.
-- `type`: one of the allowed MultiNERD entity types.
-
-This representation was chosen instead of a flatter format such as
-`{"entity": "Berlin", "type": "LOC"}` because the entity text alone is not
-always enough to identify the intended span. If the same surface form appears
-multiple times in one sentence, string matching cannot reliably determine which
-occurrence the model predicted. Token offsets make the prediction explicit:
-the span points directly to `tokens[start_token:end_token]`.
-
-The `text` field is therefore not the primary alignment source. It is kept so
-the JSON remains readable and so the parser can detect inconsistent outputs,
-for example offsets that point to `Barack Obama` while the generated `text`
-claims only `Obama`. The actual BIO reconstruction is deterministic:
-
-```text
-start_token = 0, end_token = 2, type = PER  ->  B-PER I-PER
-start_token = 3, end_token = 4, type = LOC  ->  B-LOC
-```
-
-For the example above, the resulting BIO sequence is:
-
-```text
-B-PER I-PER O B-LOC O
-```
-
-This design avoids ambiguous string matching, makes repeated entities
-distinguishable, reduces punctuation and tokenization alignment errors, and
-makes malformed LLM outputs measurable through parser diagnostics. It also
-keeps the comparison with encoder models methodologically clean: both model
-families are ultimately evaluated as BIO tag sequences with the same strict
-entity-level `seqeval` metrics.
-
-## Evaluation Strategy
-
-The primary comparison uses strict entity-level metrics through `seqeval`:
-
-- Precision
-- Recall
-- F1-score
-
-Encoder predictions are evaluated directly from BIO tags. Decoder predictions
-are validated as JSON spans and then converted deterministically to BIO tags.
-This keeps the final metric contract shared across model families.
-
-Decoder-specific robustness diagnostics include:
-
-- parse failure rate
-- wrong top-level schema
-- invalid list items or missing fields
-- unknown entity types
-- invalid token offsets
-- text/token mismatches
-- overlapping spans
-
-Efficiency-related outputs include training runtime where applicable, mean and
-p95 inference latency, peak VRAM usage, and total/trainable parameter counts.
-
-## Repository Structure
-
-```text
-ba-ner/
-  configs/              # historical matrix plus canonical seed-study configs/manifest
-  scripts/              # local orchestration scripts
-  scripts/cluster/      # SLURM preflight, jobs, and dependency submission
-  src/config.py         # experiment registry and config validation
-  src/data/             # MultiNERD English loading and preprocessing
-  src/encoder/          # DeBERTa training and inference
-  src/decoder/          # Qwen zero-shot, LoRA/QLoRA, parsing, inference
-  src/evaluate/         # shared metrics, comparison, error analysis, efficiency
-  tests/                # focused regression tests
-  results/              # generated experiment artifacts
-```
-
-## Setup
-
-Python `>=3.10` is required. From the repository root:
+Set up and test the experiment code:
 
 ```bash
 cd ba-ner
-python -m venv .venv
-source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-For Qwen and QLoRA runs, use a CUDA environment compatible with `torch`,
-`bitsandbytes`, and the selected model size.
-
-## Running Experiments
-
-Run the full local orchestration pipeline:
-
-```bash
-cd ba-ner
-python scripts/run_all.py
-```
-
-Useful subsets:
-
-```bash
-python scripts/run_all.py --encoder-only
-python scripts/run_all.py --decoder-only
-python scripts/run_all.py --zeroshot-only
-python scripts/run_all.py --finetuned-only
-python scripts/run_all.py --model qwen35_4b_zs
-python scripts/run_all.py --eval-only
-```
-
-Encoder training and inference:
-
-```bash
-python -m src.encoder.train configs/deberta_base.yaml
-python -m src.encoder.inference \
-  --model results/multinerd/deberta-v3-base/best_model \
-  --config configs/deberta_base.yaml
-```
-
-LLM zero-shot inference:
-
-```bash
-python -m src.decoder.inference \
-  --zeroshot \
-  --config configs/qwen35_4b_zeroshot.yaml
-```
-
-LLM LoRA/QLoRA fine-tuning and inference:
-
-```bash
-python -m src.decoder.train configs/qwen35_4b.yaml
-python -m src.decoder.inference \
-  --adapter results/multinerd/qwen35-4b-qlora/best_lora_adapter \
-  --config configs/qwen35_4b.yaml
-```
-
-Aggregate comparison and qualitative error analysis:
-
-```bash
-python -m src.evaluate.compare_all
-python -m src.evaluate.error_analysis \
-  --encoder-preds results/multinerd/deberta-v3-large/test_predictions.json \
-  --decoder-preds results/multinerd/qwen35-27b-qlora/test_predictions.json
-```
-
-## Canonical Multi-Seed Study
-
-Training variance is measured with seeds `42`, `123`, and `456` for five
-fine-tuned model configurations. Every group is trained as a fresh managed
-cohort with seeds 42, 123, and 456, giving exactly fifteen new training runs.
-This uniform design avoids mixing legacy Seed-42 results with newly managed
-runs. All five earlier Seed-42 outputs remain read-only historical evidence and
-are excluded from the primary seed aggregates.
-
-The original Qwen3.5-0.8B seed-42 run is preserved at
-`results/multinerd/qwen35-08b-qlora` as read-only historical evidence. Its
-initial worktree is not fully recoverable, so it is excluded from the primary
-seed aggregate. The fresh managed cohort writes to
-`results/multinerd/qwen35-08b-qlora-canonical{,-seed123,-seed456}` and starts
-all three runs from the pinned base model without reusing the historical path.
-
-The original Qwen3.5-27B seed-42 run used two epochs and is preserved at
-`results/multinerd/qwen35-27b-qlora` as a read-only historical/exploratory
-run. It is never continued into the canonical setup and is excluded from the
-primary 27B seed aggregate. Its cosine schedule already reached its configured
-endpoint; adding an epoch from that checkpoint would change or restart the
-scheduler trajectory and would therefore be a separate continued-training
-ablation. The canonical replacement starts from the unchanged base model with
-new QLoRA adapters, optimizer, scheduler, and RNG state at
-`results/multinerd/qwen35-27b-qlora-3ep`.
-The read-only inventory was refreshed on 2026-08-07: training job `3219771`
-and inference job `3226684` are both completed.
-
-Within each canonical group, only the seed and operational identity/path fields
-may differ. `configs/seed_study_manifest.yaml` records canonical and historical
-roles, legacy paths, reference provenance, and SLURM resources. Recursive
-validation blocks missing, extra, type, list, or value differences outside the
-allowlist. Each run records:
-
-- `scientific_config_hash`: SHA-256 of the fully resolved scientific/technical
-  config plus immutable model/dataset revisions, preprocessing/evaluation code,
-  prompt, parser, thinking/decoding policy, and checkpoint-selection contract.
-  Only seed and operational identity are removed; the hash must match within a
-  seed group.
-- `full_run_config_hash`: SHA-256 of the complete resolved run config; it must
-  be unique per run.
-
-New run directories contain source/resolved configs, run metadata, environment
-versions, an atomic `status.json`, a guarded run lock, training/evaluation
-artifacts, predictions, and both hashes. Existing result directories are not
-migrated or modified. Cross-seed and cross-variant resumes are blocked. A
-resume is possible only for an interrupted instance of the exact same run with
-matching model, seed, epoch count, output path, and both hashes.
-
-Decoder model selection uses the highest generative validation F1 and test
-inference accepts only `best_lora_adapter`; encoders use the best validation-F1
-`best_model`. The test split is not used for checkpoint selection. For the
-canonical decoder setup: “Models were trained for up to three epochs, with the
-checkpoint achieving the highest generative validation F1 selected for test
-evaluation.” DeBERTa retains its existing reference epoch limits (five for base
-and four for large).
-
-The three zero-shot Qwen experiments are not repeated. The evaluated runs
-(commit `137bffd`, tag `zeroshot-runs-137bffd`) decoded with sampling
-(temperature 1.0, top-k 20, top-p 1.0, min-p 0, seed 42) and the glossary
-prompt profile; the current `main` uses greedy decoding instead. Seed count and
-standard deviation are reported as `not_applicable`, not as an artificial zero.
-
-### Validation and orchestration commands
-
-Run from `ba-ner/` with the project environment active:
-
-```bash
-# Full local preflight (includes pytest)
-python scripts/run_seed_matrix.py --preflight
-
-# Complete fifteen-run dry run
-python scripts/run_seed_matrix.py --dry-run
-
-# Subset dry runs
-python scripts/run_seed_matrix.py --encoder-only --dry-run
-python scripts/run_seed_matrix.py --decoder-only --dry-run
-python scripts/run_seed_matrix.py --model qwen35_27b_3ep --dry-run
-
-# Submit all fifteen train -> inference -> evaluation pipelines.
-# This first waits for a successful CUDA compute-node preflight.
-python scripts/run_seed_matrix.py --submit
-
-# Submit seed/model subsets
-python scripts/run_seed_matrix.py --seeds 123 --submit
-python scripts/run_seed_matrix.py --seeds 456 --submit
-python scripts/run_seed_matrix.py --model qwen35_27b_3ep --seeds 42 --submit
-python scripts/run_seed_matrix.py --model qwen35_27b_3ep --seeds 42 123 456 --submit
-
-# Status and non-mutating live monitor
-python scripts/run_seed_matrix.py --status
-python scripts/live_monitor.py --refresh 10
-python scripts/live_monitor.py --model qwen35-27b --all
-python scripts/live_monitor.py --canonical
-python scripts/live_monitor.py --variant 3ep --seed 42
-
-# Re-run downstream phases without training
-python scripts/run_seed_matrix.py --inference-only --submit
-python scripts/run_seed_matrix.py --evaluation-only --submit
-
-# Aggregate one group or every group (sample standard deviation, ddof=1)
-python scripts/run_seed_matrix.py --aggregate-only --group deberta-v3-base
-python scripts/run_seed_matrix.py --aggregate-only
-
-# Explicit recovery of failed runs only; hashes and checkpoint ownership are
-# revalidated before any same-run resume/restart is allowed.
-python scripts/run_seed_matrix.py --resume-failed --submit
-```
-
-For subset submissions, the orchestrator passes the exact selected config paths
-to the CUDA compute-node preflight. Provenance gates from unselected groups do
-not block a verified subset, and the selection cannot expand into an unintended
-model-by-seed cross product.
-
-Completed and currently running runs are skipped by default. A failed or
-unknown existing path is never deleted or silently reused. Inference depends on
-successful training, evaluation depends on successful inference, and the final
-aggregation uses SLURM `afterany` across selected evaluation jobs. This allows
-an explicitly incomplete aggregate to report dependency-cancelled or failed
-runs instead of silently producing no report.
-
-Aggregation writes `seed_summary.yaml`, `seed_summary.csv`,
-`seed_metrics.json`, and `missing_or_failed_runs.yaml` per group below
-`results/seed_studies/multinerd/<group>/aggregate/`, plus wide and long-format
-cross-model tables. It reports mean, sample standard deviation (`ddof=1`), min,
-max, successful/expected counts, and explicit missing/failed seeds. With fewer
-than two successful runs, standard deviation is `null` rather than zero. The
-five historical Seed-42 results remain visible in separate historical sections
-but are never part of the primary means.
-
-A fixed seed improves reproducibility but does not guarantee bitwise-identical
-results across GPU models, CUDA kernels, library versions, or other
-nondeterministic hardware paths. Run metadata records the actual environment so
-remaining differences can be reported.
-
-### Frozen canonical execution
-
-The historical provenance gaps no longer block the study because none of the
-legacy outputs is used in a canonical aggregate. The new fifteen-run cohort is
-fully managed from Seed 42 onward. `--submit` additionally requires a clean,
-committed worktree. The orchestrator exports the exact Git commit to every
-SLURM job; the compute preflight and every downstream phase reject a changed
-HEAD or dirty worktree before executing scientific code. Local preflight also
-requires at least 500 GiB free in the configured scratch filesystem.
-
-Consequently, commit the complete study definition first, leave the worktree
-clean, and only then run `python scripts/run_seed_matrix.py --submit`. The
-evidence inventory and design decision are recorded in
-[the seed-study provenance audit](ba-ner/docs/seed-study-provenance.md).
-
-## GPU Cluster
-
-### CrossNER domain-transfer extension
-
-The inference-only extension evaluates the frozen canonical DeBERTa-v3-large
-and Qwen3.5-27B QLoRA checkpoints for seeds 42, 123, and 456 on all five
-CrossNER test domains. No training or target-domain checkpoint selection is
-performed. Qwen retains its original 15-type MultiNERD prompt and greedy,
-non-thinking, 4-bit inference setup; both families are scored on PER/ORG/LOC.
-
-CrossNER person, politician, scientist, writer, musicalartist, and researcher
-map to PER; organisation, politicalparty, university, and band map to ORG;
-location and country map to LOC. Other native labels and other MultiNERD
-prediction types map to O. A PER/ORG/LOC prediction on an excluded gold entity
-counts as a false positive. Original tokens, native BIO tags, full model
-predictions, and decoder outputs remain available in the saved artifacts.
-
-The official test files are pinned to CrossNER revision
-`2e7ba2a7798c961e3f29fbc51252c5a8d40224bf`, verified by SHA-256, and contain
-2,506 examples in total. Preflight verifies all six checkpoint owners, their
-original scientific contracts, cached base-model revisions, and complete
-encoder word coverage. Source runs are read-only and results have a separate
-evaluation contract. Resume rejects changed weights, data, mapping, or code.
-
-Run from `ba-ner/`, with the environment active:
-
-```bash
-export BA_NER_RESULTS_ROOT=/netscratch/losman/ba-ner/results
-python scripts/run_crossner.py --preflight
-python scripts/run_crossner.py --dry-run
-
-# Commit the tested implementation and keep the checkout clean before submit.
-# One small GPU smoke job per family; outputs are isolated in crossner/smoke/.
-python scripts/run_crossner.py --submit --seeds 42 --smoke-limit 2
-
-# Six inference jobs, one model load per checkpoint across all five domains.
-python scripts/run_crossner.py --submit
-python scripts/run_crossner.py --status
-python scripts/run_crossner.py --submit --resume-failed
-python scripts/run_crossner.py --aggregate-only
-```
-
-`--model`, `--seeds`, `--domains`, `--source-results-root`, `--output-root`,
-and `--cache-dir` allow explicit subsets and paths. The default output is
-`<source-results-root>/crossner/`; completed domains and active jobs are skipped.
-The retired H100-Trails partition is replaced by H100 with its current 24-hour
-limit; the manifest's GPU count and memory allocation are retained.
-
-The dependent CPU aggregation uses `afterany` so failed jobs produce an
-explicitly incomplete report. `aggregate/summary.{csv,yaml,md}` contains
-per-domain seed means and sample standard deviations (`ddof=1`), pooled micro
-F1, and the equally weighted domain mean. `seed_metrics.csv` and
-`per_entity_metrics.csv` retain individual results. The MultiNERD baseline is
-recomputed from the same checkpoint's saved predictions on PER/ORG/LOC;
-the paired F1 difference is CrossNER minus MultiNERD. Values inside machine
-readable artifacts are fractions; Markdown tables show percentages and
-percentage-point differences. Smoke runs are excluded from primary aggregates.
-These results describe transfer of the three shared classes between datasets.
-
-### CrossNER output-limit sensitivity evaluation
-
-The additional, post-hoc evaluation fixes Qwen's output limit at 1,024 tokens
-instead of 256. It reuses the same frozen QLoRA checkpoints, all three seeds,
-all five domains, and the original prompt, parser, label mapping, and greedy
-inference settings. It performs no training. The original CrossNER evaluator
-and its scientific code hashes remain unchanged.
-
-Run from `ba-ner/` with the project environment active:
-
-```bash
-export BA_NER_RESULTS_ROOT=/netscratch/losman/ba-ner/results
-python scripts/run_crossner.py --max-new-tokens 1024 --preflight
-python scripts/run_crossner.py --max-new-tokens 1024 --dry-run
-
-# Commit the tested implementation and keep the checkout clean before submit.
-# These prefixes contain known unparseable outputs in the 256-token baseline.
-python scripts/run_crossner.py --max-new-tokens 1024 --submit \
-  --seeds 42 --domains music politics --smoke-limit 25
-
-# After checking the smoke results, submit three inference jobs and a dependent
-# CPU aggregation: fifteen complete domain evaluations, with no training jobs.
-python scripts/run_crossner.py --max-new-tokens 1024 --submit
-python scripts/run_crossner.py --max-new-tokens 1024 --status
-python scripts/run_crossner.py --max-new-tokens 1024 --submit --resume-failed
-python scripts/run_crossner.py --max-new-tokens 1024 --aggregate-only
-```
-
-The default results root is
-`<source-results-root>/crossner_output_limit_1024/`; smoke results use its
-`smoke/` subdirectory. Without `--max-new-tokens`, the existing 256-token
-commands, model selection, and result paths are retained. A higher limit selects
-only Qwen by default and rejects an explicit encoder selection. Separate
-contracts, checkpoints, locks, job names, and submission ledgers prevent
-mixing baseline and additional results. Resume verifies the exact evaluation
-contract, including the output limit and code hashes.
-
-All 2,506 examples are inferred. The additional comparison reports
-`aggregate/comparison.{yaml,csv,md}` pair Qwen-256, Qwen-1024, and the existing
-DeBERTa results by seed, domain, sample ID, original tokens, and gold labels.
-They report both the full population and the same 2,485 examples after removing
-the 21 known exact source-training overlaps. The fixed exclusion list and its
-provenance are versioned in `configs/crossner_overlap_exclusions.yaml`.
-Unparseable outputs remain in both populations. The limit is chosen before the
-run and is not selected by the resulting test F1.
-
-Each new prediction records the actual generated token count, whether the
-limit was reached, the inferred stop reason, and strict JSON completeness.
-The comparison includes precision, recall, F1, parse failures, latency and
-CUDA memory; pooled metrics are computed per seed before mean and sample
-standard deviation (`ddof=1`). `delta_f1_vs_256` is the paired limit effect;
-the existing `delta_f1` still means CrossNER minus MultiNERD. A complete
-comparison requires all fifteen new evaluations and valid baseline artifacts.
-
-The optional `crossner_output_limit` block in the monitor configuration adds a
-separate section with seed/job status, current domain, verified progress, ETA,
-and full/filtered comparisons. It discovers new and resumed jobs on scheduler
-refreshes. Existing tables, styling, and refresh intervals are retained. After
-updating the implementation, restart an already running monitor to load it:
-
-```bash
-bash scripts/cluster/stop_training_monitor.sh
-bash scripts/cluster/start_training_monitor.sh
-```
-
-The new runs retain one H100, 160 GB host memory, and a 24-hour limit per seed.
-Longer outputs can increase runtime. Interrupted runs resume from verified
-per-example checkpoints with `--resume-failed`; smoke results never contribute
-to complete comparison reports.
-
-### MultiNERD output-limit re-generation (1,024 tokens)
-
-The canonical Qwen3.5 QLoRA test predictions were generated with a 256-token
-output limit. Every stored parse failure in the nine canonical runs (0.8B, 4B
-and 27B for seeds 42, 123 and 456; 62 to 72 sentences per run, holding 2.5 % to
-2.7 % of the gold entities) is a JSON array that was cut off at that limit.
-This post-hoc, inference-only evaluation re-generates exactly those sentences
-with the same frozen adapter, pinned base-model revision, prompt, parser and
-greedy non-thinking 4-bit settings at `max_new_tokens=1024`, keeps every other
-stored answer untouched, and scores the merged 16,454-sentence test set again
-with the original metric code. It performs no training; the canonical
-artifacts, the hashed scientific code and the CrossNER evaluators are unchanged.
-
-Selection rule: `parse_status == failed` in the stored `test_predictions.json`.
-Untouched sentences keep their stored answers under the assumption that greedy
-decoding with an EOS stop does not depend on the limit once the answer ended
-before 256 tokens. The assumption is checked rather than trusted: every
-re-generated sentence records `stored_prefix_match` (its first 256 generated
-tokens decode to the stored 256-token answer), each run records whether the
-package versions and GPU match the source run (`environment`), and a smoke run
-can re-generate stored `ok` sentences as a control sample (`--control-limit`,
-written to `control_predictions.json`, never merged).
-
-Run from `ba-ner/` with the project environment active and a clean, committed
-checkout:
-
-```bash
-export BA_NER_RESULTS_ROOT=/netscratch/losman/ba-ner/results
-export HF_HOME=/netscratch/losman/ba-ner/hf-cache HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1
-python -m pytest tests/test_multinerd_output_limit.py
-
-# 1. CPU preflight: source contracts, selections, cached base models, locks;
-#    --verify-dataset also aligns every stored sentence with the pinned dataset.
-python -m src.evaluate.multinerd_output_limit --preflight --verify-dataset \
-  --source-results-root "$BA_NER_RESULTS_ROOT" \
-  --output-root "$BA_NER_RESULTS_ROOT/multinerd_output_limit_1024"
-
-# 2. GPU smoke: two sentences of the 27B seed-42 run plus five control sentences
-#    -> multinerd_output_limit_1024/smoke/qwen35-27b-qlora-3ep/
-scripts/cluster/submit_multinerd_output_limit.sh --smoke-limit 2 --control-limit 5 \
-  configs/qwen35_27b_3ep.yaml
-
-# 3. Nine GPU jobs, one model load each (160G for 27B, 64G for 0.8B and 4B).
-scripts/cluster/submit_multinerd_output_limit.sh configs/qwen35_27b_3ep.yaml \
-  configs/qwen35_27b_3ep_seed123.yaml configs/qwen35_27b_3ep_seed456.yaml
-scripts/cluster/submit_multinerd_output_limit.sh configs/qwen35_08b_canonical.yaml \
-  configs/qwen35_08b_seed123.yaml configs/qwen35_08b_seed456.yaml \
-  configs/qwen35_4b_canonical.yaml configs/qwen35_4b_seed123.yaml \
-  configs/qwen35_4b_seed456.yaml
-squeue -u "$USER"; grep -h "MNOL_RESULT\|SKIP_COMPLETED" logs/mnol-*.out
-# Interrupted job: scripts/cluster/submit_multinerd_output_limit.sh --resume-failed <config>
-
-# 4. CPU aggregation: re-verifies every artifact; exit code 1 if a run is missing.
-python -m src.evaluate.multinerd_output_limit --aggregate \
-  --source-results-root "$BA_NER_RESULTS_ROOT" \
-  --output-root "$BA_NER_RESULTS_ROOT/multinerd_output_limit_1024"
-```
-
-Each job verifies the source run exactly as the CrossNER evaluators do
-(configuration, scientific contract, adapter and tokenizer hashes, frozen
-inference settings), recomputes the stored 256-token metrics and refuses to
-continue if they differ, aligns the stored sentences with the pinned MultiNERD
-revision before loading the model, and writes a regeneration contract
-(selection, limits, adapter identity, code hashes). Interrupted jobs resume
-from a per-sentence checkpoint; a completed folder is skipped only with an
-identical contract and is never overwritten. A `--requeue` restart of the same
-SLURM job recovers its own lock automatically.
-
-Outputs below `<source-results-root>/multinerd_output_limit_1024/` (smoke runs
-in `smoke/`): `test_predictions.json` keeps the stored record order with
-`regenerated: false` for untouched sentences and, for re-generated ones, the
-new answer plus `generated_token_count`, `token_limit_reached`, `stop_reason`,
-`json_complete`, `latency_ms`, `stored_prefix_match` and the previous answer
-under `baseline_256`. `inference_metrics.yaml` mirrors the canonical metrics
-file (merged `f1`, `precision`, `recall`, parse diagnostics, 15-type
-`per_entity`, `macro_f1`, `vram_peak_mb`) and adds `baseline_256`,
-`delta_vs_256`, a `regeneration` block (subset metrics before and after, stop
-reasons, token and latency distributions of the re-generated sentences only,
-prefix-match counts) and `environment`. There are no full-set latency figures:
-the canonical runs did not store per-sentence latencies, and the re-generation
-latencies cover long, hard sentences only. `aggregate/comparison.{yaml,csv,md}`
-report mean and sample standard deviation (`ddof=1`) over the three seeds for
-the 256-token baseline and the 1,024-token result, Δ in percentage points,
-parse failures remaining at 1,024 tokens, limit hits and per-entity F1.
-
-The repository includes SLURM scripts for running the matrix on a GPU cluster.
-They support either a project-local `.venv` or a Conda environment named
-`ba-ner`.
-
-```bash
-cd ba-ner
-conda create -n ba-ner python=3.11 -y
-conda activate ba-ner
-pip install -r requirements.txt
-```
-
-Preflight validates imports, configs, CLI entry points, CUDA visibility, and
-tests without loading datasets or models:
-
-```bash
-mkdir -p logs
-sbatch scripts/cluster/preflight.sh
-```
-
-Submit the full eight-experiment matrix with train-to-inference dependencies:
-
-```bash
-mkdir -p logs
-scripts/cluster/submit_all.sh
-```
-
-Resource defaults can be adjusted through environment variables before calling
-`submit_all.sh`.
-
-For day-to-day commands, job monitoring, log inspection, cancellation, and
-troubleshooting, see [Cluster job guide](ba-ner/docs/cluster-jobs.md).
-
-## Outputs and Reproducibility
-
-Experiment artifacts are written below:
-
-```text
-results/multinerd/<experiment_name>/
-  results.yaml              # training summary, where applicable
-  inference_metrics.yaml    # final test metrics
-  test_predictions.json     # per-sample predictions
-  best_model/               # encoder checkpoints
-  best_lora_adapter/        # decoder LoRA adapters
-results/multinerd_output_limit_1024/<experiment_name>/
-  contract.json             # regeneration contract: selection, limits, adapter identity, code hashes
-  test_predictions.json     # merged test set; regenerated: true/false per sentence
-  inference_metrics.yaml    # merged metrics, baseline_256, delta_vs_256, regeneration, environment
-  status.json
-results/multinerd_output_limit_1024/aggregate/
-  comparison.{yaml,csv,md}  # verified seed means and sample standard deviations
-```
-
-The codebase uses config-validated runs and fixed seeds where supported.
-The trained LLM study uses greedy decoding; the historical zero-shot runs
-evaluated in the thesis use sampling and the glossary prompt from commit
-`137bffd`, as described above. Result metadata records the experiment name,
-model ID, dataset, language, regime, seed, metrics, git state, Python/platform
-details, package versions, CUDA visibility, and GPU names.
-
-The repository provides scripts and configs for the final study. Completed
-experimental results are only present after running the relevant training and
-inference jobs.
-
-## Tests
-
-Run the regression tests from `ba-ner/`:
-
-```bash
 python -m pytest
 ```
 
-The tests cover config validation, the MultiNERD dataset contract, decoder
-prompt formatting, token-offset JSON parsing, BIO conversion, result
-aggregation, and reproducibility metadata collection.
+Experiment entry points (submitting requires SLURM and a clean, committed
+checkout; see `ba-ner/docs/cluster-jobs.md`):
 
-`tests/test_multinerd_output_limit.py` covers the MultiNERD output-limit
-re-generation on CPU with toy source trees and a fake predictor: run and
-failure selection, merging, metric recomputation against the stored 256-token
-metrics, checkpoint resume and idempotent skips, output-path safety, dataset
-alignment, greedy generation settings with the stored-prefix comparison, lock
-recovery, preflight, aggregation (`ddof=1`) and CLI validation.
+| Study | Entry point |
+| --- | --- |
+| Main study (5 fine-tuned models × 3 seeds) | `python scripts/run_seed_matrix.py --preflight \| --dry-run \| --submit \| --status \| --aggregate-only` |
+| CrossNER transfer (256 / 1,024 output tokens) | `python scripts/run_crossner.py [--max-new-tokens 1024] --preflight \| --dry-run \| --submit \| --status \| --aggregate-only` |
+| MultiNERD re-generation of truncated answers | `python -m src.evaluate.multinerd_output_limit --preflight \| --aggregate` and `scripts/cluster/submit_multinerd_output_limit.sh` |
+| Control sample with 1,024 tokens | `scripts/cluster/submit_multinerd_control_sample.sh` |
 
-## Author and Thesis Context
+All paths are relative to `ba-ner/`. The previous, detailed README with the
+full option lists is available with `git show aaaca2b:README.md`.
 
-Author: **Luaj Osman**
+## License
 
-Bachelor thesis project: **Comparison of Encoder-Based Models and Large
-Language Models with Fine-Tuning for Named Entity Recognition**
-
-## License and Academic Use
-
-This repository is released under the MIT License. It is intended for academic
-research and reproducible experimentation in the context of the Bachelor thesis.
+MIT License (see `LICENSE`). Datasets and models are subject to their own
+licenses (MultiNERD, CrossNER, DeBERTa-v3, Qwen3.5).

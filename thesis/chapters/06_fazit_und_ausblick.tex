@@ -125,23 +125,18 @@ Rangfolge um.
 \paragraph{Entwicklungs- und Testtrennung.}
 Der MultiNERD-Testsplit war vor der Hauptstudie bereits ausgewertet worden
 (Tabelle~\ref{tab:datennutzung}).
-Erstens blieben die Hyperparameter der trainierten Konfigurationen nach
-Vorläufen mit bekannten Testwerten unverändert; die 27B-Epochenzahl wurde
-an die übrigen QLoRA-Konfigurationen angeglichen.
-Da die Testwerte der Vorläufe bekannt waren, lässt sich ein Einfluss auf
-die Festlegung der Hauptstudie nicht ausschließen; sein Ausmaß ist mit
-den vorhandenen Daten nicht bestimmbar.
-Zweitens wurden Zero-Shot-Prompt und Decoding nach der Testleistung eines
+Die Hyperparameter der trainierten Konfigurationen blieben nach
+Vorläufen mit bekannten Testwerten bis auf die 27B-Epochenzahl
+unverändert; ein Einfluss auf die Festlegung der Hauptstudie lässt sich
+nicht ausschließen und mit den vorhandenen Daten nicht beziffern.
+Zero-Shot-Prompt und Decoding wurden nach der Testleistung eines
 0.8B-Vorlaufs gewählt und für 4B und 27B ohne eigene Testauswahl
 übernommen; die Zero-Shot-Werte können daher optimistisch verzerrt sein
 und beschreiben nur genau diese Bedingungen.
-Die Inferenzpräzision BF16 der Zero-Shot-Läufe wurde nach
-Durchsatzmessungen auf einer Testteilmenge gewählt, nicht nach der
-Erkennungsleistung.
 Die Checkpoint-Auswahl nutzte allein Validierungsdaten, bei den LLMs
 nur die ersten 200 Sätze (Abschnitt~\ref{sec:llm-pipeline}); ob eine
-größere oder zufällig
-gezogene Stichprobe dieselben Epochen gewählt hätte, bleibt offen.
+größere oder zufällig gezogene Stichprobe dieselben Epochen gewählt
+hätte, bleibt offen.
 Die Sensitivitätsanalysen liefen post hoc auf dem bekannten Testsplit;
 neue Seeds stellen keine Unabhängigkeit her.
 Betroffen sind FF1, besonders im Zero-Shot-Regime, und die Empfehlungen in

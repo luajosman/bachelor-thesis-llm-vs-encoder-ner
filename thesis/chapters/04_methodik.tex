@@ -27,14 +27,13 @@ F$_1$-Wert ein.
 Neben der Erkennungsleistung werden Trainingsdauer, Inferenzlatenz,
 Speicherbedarf und die Formtreue der LLM-Ausgaben gemessen.
 
-Abschnitt~\ref{sec:methodischer-ansatz} legt Vergleichsregime,
-Experimentmatrix und Variablen fest; es folgen die Auswahl der Modelle
-und Datensätze (Abschnitte~\ref{sec:modellauswahl}
-und~\ref{sec:datensaetze}), der Versuchsaufbau
-(Abschnitt~\ref{sec:versuchsaufbau}), das Evaluationskonzept
-(Abschnitt~\ref{sec:evaluationskonzept}), der CrossNER-Ergänzungsversuch
-(Abschnitt~\ref{sec:crossner}) und die bekannten Abweichungen vom
-idealisierten Versuchsdesign (Abschnitt~\ref{sec:validitaet}).
+Auf Vergleichsregime, Modelle und Datensätze
+(Abschnitte~\ref{sec:methodischer-ansatz} bis~\ref{sec:datensaetze})
+folgen Versuchsaufbau und Evaluationskonzept
+(Abschnitte~\ref{sec:versuchsaufbau} und~\ref{sec:evaluationskonzept}),
+der CrossNER-Ergänzungsversuch (Abschnitt~\ref{sec:crossner}) und die
+bekannten Abweichungen vom idealisierten Versuchsdesign
+(Abschnitt~\ref{sec:validitaet}).
 
 \section{Methodischer Ansatz}
 \label{sec:methodischer-ansatz}
@@ -43,8 +42,7 @@ Die Arbeit verfolgt einen empirisch-vergleichenden Ansatz: Statt neue
 Architekturen oder Trainingsverfahren zu entwickeln, stellt sie
 etablierte NER-Verfahren unter möglichst einheitlichen Bedingungen
 gegenüber.
-Damit die Ergebnisse vergleichbar sind, bleiben Datensatz,
-Datenaufteilung und Evaluationsprotokoll für alle Konfigurationen gleich.
+
 
 \paragraph{Drei Vergleichsregime.}
 \begin{enumerate}
@@ -241,7 +239,8 @@ veröffentlicht und auf nichtkommerzielle Forschung beschränkt~\cite{babelscape
 
 Alle Splits von MultiNERD sind automatisch annotiert
 (Abschnitt~\ref{sec:datasets_corpora}); auch die Referenz des Testsplits
-ist somit eine Silberreferenz.
+ist somit eine Silberreferenz, und absolute Werte messen die
+Übereinstimmung mit ihr.
 Die von den Autoren manuell geprüfte Stichprobe wird nicht verwendet.
 Sie ist in den veröffentlichten Daten, soweit ersichtlich, nicht
 enthalten, und aus welchem
@@ -257,8 +256,7 @@ Verlustfunktion, Anpassungsumfang (vollständiges Fine-Tuning gegenüber
 Adaptern) und Checkpoint-Auswahl unterscheiden sich jedoch.
 Die gemeinsame Silberreferenz garantiert auch nicht, dass sich ihre
 Fehler auf beide Modellfamilien gleich auswirken.
-Absolute Werte messen zudem die Übereinstimmung mit einer automatisch
-erzeugten Referenz.
+
 
 \subsection{Datenvorverarbeitung}
 \label{sec:datenvorverarbeitung}
@@ -475,11 +473,7 @@ Softwareversionen (Anhang~\ref{app:software}).
         \midrule
         DeBERTa-v3-large, Qwen3.5-27B & CrossNER-Inferenz & NVIDIA H100 (80\,GB HBM3) \\
     \addlinespace
-        Qwen3.5-27B             & CrossNER (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
-    \addlinespace
-        Qwen3.5, alle Größen    & Nachinferenz (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
-    \addlinespace
-        Qwen3.5, alle Größen    & Kontrollstichprobe (1\,024) & NVIDIA H100 (80\,GB HBM3) \\
+        Qwen3.5 (QLoRA)         & Läufe mit 1\,024 Tokens & NVIDIA H100 (80\,GB HBM3) \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -591,8 +585,7 @@ Die Einstellung folgt den Empfehlungen der
 Qwen-Modellkarte~\cite{qwen2026card27b} für den Non-Thinking-Modus nur
 teilweise: Temperatur, top-$k$ und min-$p$ entsprechen einem der dort
 für Reasoning-Aufgaben genannten Profile, top-$p$ ist dagegen nicht
-beschränkt, und die empfohlene Presence-Penalty wird nicht verwendet
-(Anhang~\ref{app:sampling}).
+beschränkt, und die empfohlene Presence-Penalty wird nicht verwendet.
 Diese Einstellungen wurden nach einem explorativen Vorlauf mit
 Qwen3.5-0.8B festgelegt, in dem Greedy-Decoding für nahezu jeden Satz ein
 leeres Array erzeugte (strikter F$_1$-Wert 0,5 Punkte; 16\,052 von 16\,454
@@ -604,8 +597,7 @@ Decoding-Einstellung und Prompt-Änderung wurden damit gleichzeitig
 eingeführt; ihre Einzelbeiträge sind nicht trennbar, und die Übertragung
 der Sampling-Einstellung auf das 4B- und das 27B-Modell wurde nicht
 eigens geprüft (Abschnitt~\ref{sec:limitationen}).
-Die Einstellungen dieser beiden Modelle wurden also nicht anhand ihrer
-eigenen Testergebnisse gewählt.
+
 Die Ergebnisse sind je eine Stichprobe aus der Ausgabeverteilung der
 unangepassten Checkpoints unter genau diesen Prompt- und
 Decoding-Bedingungen; ein isolierter Effekt der Anpassung ist wegen der
@@ -647,9 +639,8 @@ Epoche wählten, ist ein Untertraining nicht auszuschließen
 Die Beschränkung auf 200 Sätze hält die generative Validierung je Epoche
 im Bereich von Minuten (27B-Modell: rund 18 Minuten gegenüber rund
 25 Stunden für den vollständigen Split), macht die Auswahl aber von einem
-kleinen, nicht zufällig gezogenen Ausschnitt abhängig.
-Ob eine größere oder zufällige Stichprobe dieselben Checkpoints gewählt
-hätte, wurde nicht geprüft (Abschnitt~\ref{sec:limitationen}).
+kleinen, nicht zufällig gezogenen Ausschnitt abhängig
+(Abschnitt~\ref{sec:limitationen}).
 Für die Testinferenz wird der Adapter ohne Verschmelzung (Merge) auf das
 4-Bit-quantisierte Basismodell aufgesetzt; die Ausgaben entstehen per
 Greedy-Decoding.
@@ -691,7 +682,7 @@ ermöglicht die Konsistenzprüfung (Abschnitt~\ref{sec:postprocessing}).
   keepspaces=true, frame=single, captionpos=b, float=htbp,
   caption={Nutzernachricht, Beginn der Assistentenantwort mit leerem
   Denkblock und Zielantwort (letzte Zeile) für einen Satz des Testsplits;
-  ohne Systemnachricht (vollständig in Listing~\ref{lst:prompt-task}).},
+  ohne Systemnachricht (Listing~\ref{lst:prompt-task}).},
   label={lst:beispiel}]
 <|im_start|>user
 Tokens:
@@ -829,8 +820,9 @@ regelbasierten Kette in IOB2-Sequenzen überführt:
 \begin{enumerate}
     \item \textbf{Bereinigung und Parsing:} Die Antwort wird von
     umgebendem Leerraum und Denkblöcken befreit und als JSON-Array
-    geparst, bei Bedarf über zwei Rückfallstrategien
-    (Anhang~\ref{app:parser}).
+    geparst; scheitert das, wird der Inhalt des ersten
+    Markdown-Codeblocks und zuletzt der erste per regulärem Ausdruck
+    gefundene Abschnitt in eckigen Klammern geparst.
     Liefert keine Strategie ein JSON-Array, gilt die Antwort als nicht
     parsebar und wird wie eine leere Vorhersage behandelt: Der Satz
     erhält eine reine \texttt{O}-Sequenz, und alle seine
@@ -881,10 +873,8 @@ noch syntaktisch fehlerhaftes JSON.
 \label{sec:performanzmetriken}
 
 Zentrale Metriken sind strikte Precision, Recall und F$_1$ auf
-Entitätsebene nach IOB2-Schema~\cite{manning2008introduction,sang2003conll,tjong1999representing}.
-Eine Entität gilt nur als korrekt erkannt, wenn Spangrenzen und Typ exakt
-mit der Referenz übereinstimmen (strikter Modus,
-Abschnitt~\ref{sec:evaluation}).
+Entitätsebene nach IOB2-Schema~\cite{manning2008introduction,sang2003conll,tjong1999representing}
+(strikter Modus, Abschnitt~\ref{sec:evaluation}).
 Berechnet werden die Werte mit
 \texttt{seqeval}~\cite{nakayama2018seqeval} im strikten Modus, der für
 generative Modelle, deren Ausgaben erst in Tagfolgen überführt werden,
@@ -938,9 +928,7 @@ Größenschritte innerhalb der Familien); die Vergleiche der nachträglichen Sen
 Die Intervalle sind nicht für Mehrfachvergleiche korrigiert. Sie beseitigen auch
 keine mögliche Verzerrung durch die frühere Testnutzung.
 Für die Fehleranalyse werden Precision, Recall, F$_1$ und Support zusätzlich
-je Entitätstyp berechnet; sie sind für die Trainingsläufe der Hauptstudie
-gespeichert und für alle Konfigurationen aus den Testvorhersagen
-reproduzierbar.
+je Entitätstyp berechnet.
 
 Ergänzend wird der makrogemittelte F$_1$-Wert über alle 15 Typen
 berichtet (Abschnitt~\ref{sec:evaluation}); er reagiert stark auf die
@@ -1015,14 +1003,14 @@ Berichtet werden Gesamtzahl und Zahl der trainierbaren Parameter
 Adaptertraining die Zahl der aktualisierten Parameter
 senkt~\cite{hu2021lora,dettmers2023qlora}; Inferenzspeicher, Latenz und
 Trainingsdauer werden deshalb gesondert gemessen.
-Für die QLoRA-Modelle nennt Tabelle~\ref{tab:lora-hyperparams} Basismodell und Adapter getrennt,
-da eine einfache Summierung der Tensorelemente die in 4~Bit gepackten
-Gewichte nur zur Hälfte erfasst.
+
 
 \paragraph{Vergleichbarkeit.}
 Da die Konfigurationen auf unterschiedlichen GPU-Typen liefen
 (Tabelle~\ref{tab:hardware}), enthalten Unterschiede in der Laufzeit
-auch Hardwareeffekte (Beispiel in Anhang~\ref{app:hardwareeffekt}).
+auch Hardwareeffekte: Im explorativen Vorlauf erreichte DeBERTa-v3-base
+auf einer A100 eine mittlere Latenz von 17,6~ms je Satz, in der
+Hauptstudie auf der H100 dagegen 8,9~ms.
 Zero-Shot- und QLoRA-Inferenz unterscheiden sich zudem in Präzision und
 Decoding.
 Effizienzvergleiche werden daher vorrangig innerhalb gleicher Hardware-
@@ -1044,15 +1032,11 @@ jeweiliger GPU-Typ), keine Anforderungen einer konkreten Anwendung.
 Während Encoder per Konstruktion genau ein Label pro Wort aus dem festen
 Inventar liefern, können LLMs syntaktisch oder inhaltlich unzulässige
 Ausgaben erzeugen.
-Sie werden über Kennzahlen der Validierungskette
-(Abschnitt~\ref{sec:postprocessing}) in vier Fehlerklassen erfasst
-(Tabelle~\ref{tab:formtreue}): \emph{JSON-Validität}~\cite{dagdelen2024structuredIE}, \emph{Schema-Treue},
-\emph{Span-Alignment}~\cite{semin2026spanLabeling} und
-\emph{Konsistenz}.
+Sie werden über die Kennzahlen der Validierungskette
+(Abschnitt~\ref{sec:postprocessing}) erfasst, die
+Tabelle~\ref{tab:formtreue} definiert.
 Für Encoder entfallen diese Kennzahlen; der Unterschied ist Teil des
-Vergleichs, da LLMs Ausgabeformat und Typinventar erst über
-Prompt~\cite{wei2023chatie} und
-Fine-Tuning~\cite{dagdelen2024structuredIE} erlernen müssen.
+Vergleichs.
 
 \begin{table}[ht]
   \centering
@@ -1063,37 +1047,34 @@ Fine-Tuning~\cite{dagdelen2024structuredIE} erlernen müssen.
   übrigen Werte sind absolute Häufigkeiten über den Testsplit.}
   \label{tab:formtreue}
   \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.3cm}%
-      >{\raggedright\arraybackslash}X%
-      >{\raggedright\arraybackslash}p{2.4cm}@{}}
+      >{\raggedright\arraybackslash}X@{}}
     \toprule
-    \textbf{Kennzahl} & \textbf{Definition} & \textbf{Fehlerklasse} \\
+    \textbf{Kennzahl} & \textbf{Definition} \\
     \midrule
     Parse-Fehlerrate & Anteil der Antworten, aus denen keine Strategie ein
-      JSON-Array gewinnt & JSON-Validität \\
+      JSON-Array gewinnt \\
     \addlinespace
     Parse-Strategien & Antworten, die direkt, nach Entfernen eines
       Markdown-Codeblocks bzw.\ per Extraktion aus umgebendem Text geparst
-      wurden & JSON-Validität \\
+      wurden \\
     \addlinespace
     Falsche Struktur & gültiges JSON, das kein Array ist (je
-      Parse-Versuch) & Schema-Treue \\
+      Parse-Versuch) \\
     \addlinespace
-    Nicht-Objekte & Array-Elemente, die kein JSON-Objekt sind &
-      Schema-Treue \\
+    Nicht-Objekte & Array-Elemente, die kein JSON-Objekt sind \\
     \addlinespace
-    Fehlende Felder & fehlendes oder leeres Pflichtfeld & Schema-Treue \\
+    Fehlende Felder & fehlendes oder leeres Pflichtfeld \\
     \addlinespace
     Unzulässige Indizes & nicht ganzzahlig oder Verletzung von
-      $0 \leq s < e \leq n$ & Span-Alignment \\
+      $0 \leq s < e \leq n$ \\
     \addlinespace
-    Unbekannte Typen & Typ außerhalb des 15-Typen-Inventars &
-      Schema-Treue \\
+    Unbekannte Typen & Typ außerhalb des 15-Typen-Inventars \\
     \addlinespace
     Text-Abweichungen & \texttt{text} passt nicht zu den indizierten
-      Tokens & Span-Alignment \\
+      Tokens \\
     \addlinespace
     Überlappungen & wegen Überlappung mit einem übernommenen Span
-      verworfen & Konsistenz \\
+      verworfen \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -1253,8 +1234,11 @@ wiederholt die Aggregation ohne die 21 Sätze.
 
 \paragraph{Ausgabelimit.}
 Den Anlass für einen vollständigen Neulauf mit 1\,024 Ausgabetokens gab
-eine Vorstudie auf einer nicht repräsentativen Stichprobe
-(Anhang~\ref{app:vorstudie}).
+eine Vorstudie mit dem 27B-Modell (Seed~42) auf den jeweils ersten
+25 Testsätzen der Domänen Musik und Politik, in denen bei 256 Tokens
+besonders viele Antworten nicht parsebar waren; die Stichprobe ist also
+weder zufällig noch repräsentativ (Codestand in
+Tabelle~\ref{tab:app-revisionen}).
 Der Neulauf des 27B-Modells umfasst alle drei Seeds und alle 2\,506
 Sätze der fünf Domänen; Prompt, Parser, Typabbildung und Greedy-Decoding
 blieben unverändert, nur das Limit wurde angehoben.

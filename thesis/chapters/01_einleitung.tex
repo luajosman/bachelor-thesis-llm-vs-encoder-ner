@@ -57,14 +57,13 @@ Zudem erzeugen LLMs ihre Ausgabe Token für Token, sodass die Inferenzzeit
 mit der Länge der Ausgabe wächst~\cite{lu2024padellm}, während ein Encoder
 die Labels eines Satzes in einem einzigen Vorwärtsdurchlauf
 bestimmt~\cite{devlin2019bert,obeidat2025llm}.
-Auch die Anpassung ist bei LLMs aufwendiger: Beim vollständigen Fine-Tuning müssen
-neben allen Gewichten auch deren Gradienten und die Optimiererzustände im
-Speicher gehalten werden~\cite{hu2021lora}.
-Parameter-Efficient Fine-Tuning (PEFT) umfasst Verfahren, die stattdessen
-nur eine kleine Zahl zusätzlicher oder ausgewählter vorhandener Parameter
-trainieren~\cite{han2024parameter};
+Auch die Anpassung ist bei LLMs aufwendiger, weil vollständiges
+Fine-Tuning an Speichergrenzen stößt~\cite{hu2021lora}.
+Verfahren des Parameter-Efficient Fine-Tuning (PEFT) trainieren deshalb
+nur eine kleine Zahl von Parametern~\cite{han2024parameter};
 mit Quantized Low-Rank Adaptation (QLoRA) lassen sich so auch Modelle mit Dutzenden Milliarden Parametern
-auf einer einzelnen GPU anpassen~\cite{dettmers2023qlora}.
+auf einer einzelnen GPU anpassen~\cite{dettmers2023qlora}
+(Abschnitt~\ref{sec:lora}).
 Für die praktische Modellwahl stellt sich damit die Frage, wann der
 zusätzliche Aufwand eines LLM durch eine bessere Erkennungsleistung
 gerechtfertigt ist und wann ein kompakter Encoder effizienter ist.
@@ -153,10 +152,8 @@ ausgewertet; zusammen mit den drei Zero-Shot-Konfigurationen ergeben sich
 18 Testevaluationen auf MultiNERD.
 Für die LLMs wird ein JSON-Ausgabeformat mit Wortindizes verwendet:
 Die Eingabetokens werden durchnummeriert, und das Modell gibt die
-Entitäten über diese Wortindizes aus~\cite[Tab.~9]{ramponi2025fallacy}.
-Die Einordnung als Indexing-Variante folgt
-\textcite{semin2026spanLabeling}; JSON-Schema und Nachverarbeitung sind
-eigene Umsetzungen dieser Arbeit.
+Entitäten über diese Wortindizes aus~\cite[Tab.~9]{ramponi2025fallacy}
+(Einordnung und eigene Anteile in Abschnitt~\ref{sec:prompt-design}).
 Da die LLM-Pipeline ohne Constrained Decoding arbeitet, lässt sich die
 Formtreue der generierten Ausgaben gesondert untersuchen.
 

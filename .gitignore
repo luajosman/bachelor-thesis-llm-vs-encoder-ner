@@ -253,6 +253,20 @@ thesis/*.synctex.gz
 thesis/literatur/
 thesis/main_betreuerentwurf_*.pdf
 thesis/main_long*.pdf
+# LaTeX-Hilfsdateien, falls ohne .latexmkrc direkt in thesis/ gebaut wird
+thesis/*.aux
+thesis/*.bbl
+thesis/*.bcf
+thesis/*.blg
+thesis/*.lof
+thesis/*.lot
+thesis/*.out
+thesis/*.toc
+thesis/*.run.xml
+
+# Editor-Sicherungs- und Swap-Dateien
+*~
+*.swp
 
 # Lokale Claude-Code-Einstellungen
 .claude/settings.local.json

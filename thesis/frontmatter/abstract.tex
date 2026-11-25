@@ -39,10 +39,11 @@ Da sich die Regime zudem über das Training hinaus in Prompt, Decoding und
 numerischer Präzision unterscheiden, ist kein isolierter
 Fine-Tuning-Effekt bestimmbar.
 
-Für die Praxis heißt das: Auf MultiNERD ist unter jeder Latenz- und
-Speichergrenze ein Encoder die beste gemessene Wahl.
-Das LLM ist nur im Transfer auf CrossNER und erst ab rund 13~s je Satz
-vorzuziehen.
+Auf MultiNERD erzielt bei jedem Latenz- und Speicherbudget, das eine
+getestete Konfiguration zulässt, ein Encoder den höchsten Mikro-F$_1$.
+Auf CrossNER benötigt das LLM rund 13~s je Satz und 18,6~GiB
+Inferenzspeicher; ob der Qualitätsgewinn das rechtfertigt, hängt von der
+Anwendung ab.
 Der Qualitätsvergleich hängt jedoch wesentlich von Ausgabelimit,
 Datensatz und der Typabbildung auf PER, ORG und LOC ab.
 Die Arbeit zeigt damit zweierlei: den Ressourcenunterschied der konkreten

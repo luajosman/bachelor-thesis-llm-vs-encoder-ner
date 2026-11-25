@@ -48,8 +48,7 @@ Die Ausgabeverzeichnisse enthalten folgende Artefakte:
     Trainingsergebnisse (\texttt{results.yaml}), Trainingsverlauf
     (\texttt{training\_\allowbreak history.json}), ausgewählter Checkpoint
     (\texttt{best\_\allowbreak model} bzw.
-    \texttt{best\_\allowbreak lora\_\allowbreak adapter}; Adapter 12,8, 42,5
-    bzw. 637,6~MB), aufgelöste Konfiguration
+    \texttt{best\_\allowbreak lora\_\allowbreak adapter}), aufgelöste Konfiguration
     (\texttt{config\_\allowbreak resolved.yaml}), Festlegung der
     wissenschaftlichen Laufparameter mit Code- und Revisions-Hashes
     (\texttt{scientific\_\allowbreak contract.yaml}), Paketversionen
@@ -126,28 +125,20 @@ vor der Auswertung über SHA-256-Prüfsummen verifiziert.
 Die Trainings- und Inferenzläufe der Hauptstudie liefen im August 2026
 auf dem DFKI-Cluster (Partitionen und Hauptspeicher in
 Tabelle~\ref{tab:app-einstellungen}); ihre Slurm-Abrechnung liegt als
-\texttt{results/slurm\_accounting\_2026-08.csv} vor, die 27B-Läufe
-umfassen die Jobs 3254977, 3254980 und 3254983 (wiederholt eingereiht)
-sowie 3267440, 3267443 und 3267446.
+\texttt{results/slurm\_accounting\_2026-08.csv} vor.
 Die vom Trainer protokollierte Trainingsdauer ohne Laden und Export
 liegt bei den ununterbrochenen Läufen unter der Slurm-Abrechnung: bei
 den Encodern um 30 bis 49~s, bei den 0.8B- und 4B-Läufen um 32 bis
 141~s (Maximum beim 4B-Modell mit Seed~42).
 Die drei Zero-Shot-Läufe entstanden am 1.~August 2026 aus einem Commit
-ohne lokale Änderungen (27B auf einer H100~NVL, 0.8B und 4B auf einer
-A100), der Greedy-Kontrolllauf am 29.~Juli 2026 auf einer A100 aus einer
-Arbeitskopie mit lokalen Änderungen (Tabelle~\ref{tab:app-laeufe}); die
-Job-IDs dieser Läufe sind in den Laufartefakten nicht protokolliert.
-Die CrossNER-Evaluationen mit 256 Tokens liefen im Oktober 2026.
-Die Nachinferenz mit 1\,024 Tokens lief am 28.~Oktober 2026 (Jobs
-3673515 bis 3673523, H100~HBM3, Commit \texttt{ff91342}), der
-vollständige CrossNER-Neulauf mit 1\,024 Tokens vom 28.\ bis
-29.~Oktober 2026 (Jobs 3673475 bis 3673477, Aggregation 3673478); ein
-erster Versuch (Jobs 3672273 bis 3672276) brach wegen eines
-abweichenden Codestands vor der Inferenz ab.
-Die Kontrollstichprobe mit 1\,024 Tokens lief am 9.\ und
-10.~November 2026 (Jobs 3724608 bis 3724616, H100~HBM3, Commit
-\texttt{1638272}).
+ohne lokale Änderungen, der Greedy-Kontrolllauf am 29.~Juli 2026 auf
+einer A100 aus einer Arbeitskopie mit lokalen Änderungen
+(Tabelle~\ref{tab:app-laeufe}).
+Die CrossNER-Evaluationen mit 256 Tokens liefen im Oktober 2026, die
+Nachinferenz und der vollständige CrossNER-Neulauf mit 1\,024 Tokens am
+28.\ und 29.~Oktober 2026 und die Kontrollstichprobe am 9.\ und
+10.~November 2026 (GPU-Typen in Tabelle~\ref{tab:hardware}, Commits in
+Tabelle~\ref{tab:app-laeufe}).
 
 \paragraph{Explorative Vorläufe.}
 Die explorativen Vorläufe (Abschnitt~\ref{sec:datenaufteilung}; je ein
@@ -244,7 +235,7 @@ nur mittelbar betreffen oder die Ausführung auf dem Cluster beschreiben.
 \paragraph{Zero-Shot-Prompt.}
 Die Systemnachricht des Glossar-Profils zeigt
 Listing~\ref{lst:prompt-glossar}; Nutzernachricht und Chat-Template
-entsprechen Listing~\ref{lst:prompt-task}.
+entsprechen Listing~\ref{lst:beispiel}.
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true,
   breakatwhitespace=true, columns=fullflexible, keepspaces=true,
@@ -267,43 +258,22 @@ Token indices must refer exactly to the numbered token list shown by the user. C
 Dieser Abschnitt ergänzt Kapitel~\ref{chap:methodik} um Durchführungsdetails,
 die für das Versuchsdesign nachrangig, für die Nachvollziehbarkeit der Läufe
 aber relevant sind.
-Er behandelt die explorativen Vorläufe und den Abbruch des
-Thinking-Vorlaufs, Architekturkennzahlen der Qwen3.5-Modelle,
-Pipeline-Module und Softwareversionen, den Prompt des QLoRA-Regimes, die
-Sampling-Einstellung des Zero-Shot-Regimes, die
-je Lauf protokollierten Felder, die Adapterdateien, den Trainingsverlauf
-der 27B-Läufe, einen Hardwareeffekt bei der Encoder-Inferenz, die
-Rückfallstrategien des Parsers, die Vorstudie zum Ausgabelimit und die
-Kontrollstichprobe.
+
 
 \subsection{Vorläufe und Thinking-Abbruch}
 \label{app:vorlaeufe}
 
-Der Hauptstudie gingen explorative Vorläufe der fünf trainierten
-Konfigurationen mit Seed~42 voraus (Tabelle~\ref{tab:app-vorlaeufe}), die
-unter anderem der Stabilisierung der Pipeline dienten.
-Da für mehrere Vorläufe der exakte Quellcodestand nicht rekonstruierbar
-ist (Arbeitskopien mit lokalen, nicht erhaltenen Änderungen bei
-DeBERTa-v3-base und Qwen3.5-27B), wurden alle trainierten
-Konfigurationen für die Hauptstudie aus versionierten Codeständen ohne
-lokale Änderungen neu trainiert; die Vorläufe gehen nicht in die
-Auswertung ein (Abschnitt~\ref{sec:datenaufteilung}).
+Für mehrere der explorativen Vorläufe (Tabelle~\ref{tab:app-vorlaeufe})
+ist der exakte Quellcodestand nicht rekonstruierbar (Arbeitskopien mit
+lokalen, nicht erhaltenen Änderungen bei DeBERTa-v3-base und
+Qwen3.5-27B); alle trainierten Konfigurationen wurden deshalb für die
+Hauptstudie aus versionierten Codeständen ohne lokale Änderungen neu
+trainiert.
 % Quelle: summary.json, Schlüssel vorlaeufe[*].gpu (GPU der Testinferenz), .train_runtime_h,
 % .steps, .seconds_per_step (Reihenfolge base, large, 0.8B, 4B, 27B); Trainings-GPU aus
 % results.yaml der Vorläufe (run_metadata.cuda.devices); 0.8B: Slurm-Jobs 3219769 (03:52:07,
 % abgebrochen) und 3220278 (08:15:39, fortgesetzt).
-Trainiert wurden die Vorläufe von DeBERTa-v3-base, DeBERTa-v3-large und
-Qwen3.5-0.8B auf einer H100, der von Qwen3.5-4B auf einer A100 und der
-von Qwen3.5-27B auf einer H100~NVL; die Testinferenz lief außer beim
-27B-Modell auf einer A100 (Tabelle~\ref{tab:app-vorlaeufe}).
-Die vom Trainer protokollierte Trainingsdauer betrug 0,41~h
-(DeBERTa-v3-base), 1,12~h (DeBERTa-v3-large), 8,25~h (Qwen3.5-0.8B; nur
-der nach einem Abbruch fortgesetzte Teil, beide Slurm-Zuteilungen
-zusammen 12,1~h), 58,0~h (Qwen3.5-4B) und 70,8~h (Qwen3.5-27B, zwei
-Epochen, 16\,410 Schritte).
-Beim 27B-Vorlauf entspricht das 15,5~s je Optimierungsschritt gegenüber
-rund 38~s in den drei gleichzeitig auf einem Knoten ausgeführten
-Hauptläufen (Abschnitt~\ref{sec:effizienzmetriken}).
+
 
 % Quelle: summary.json, Schlüssel vorlauf_thinking_4b (run, epochs[*].dev_f1,
 % epochs[*].parse_failure_rate: 0,71 und 0,825).
@@ -318,13 +288,8 @@ ausschließlich auf Validierungsdaten (Tabelle~\ref{tab:datennutzung}).
 \subsection{Architekturkennzahlen der Qwen3.5-Modelle}
 \label{app:qwen-architektur}
 
-Die Checkpoints sind multimodal angelegt und enthalten neben dem
-Textmodell einen Vision-Encoder sowie Module für Multi-Token-Prediction
-(MTP).
-Beide LLM-Regime laden die Modelle jedoch über
-\texttt{AutoModelForCausalLM}, das für Qwen3.5 ausschließlich das
-Textmodell (\texttt{Qwen3\_5ForCausalLM}) instanziiert;
-Vision-Encoder und MTP-Module werden verworfen.
+Geladen wird nur das Textmodell (\texttt{Qwen3\_5ForCausalLM},
+Abschnitt~\ref{sec:llm-auswahl}).
 Laut den Konfigurationsdateien der verwendeten Revisionen
 (Tabelle~\ref{tab:app-revisionen}) sind alle drei Größen dichte Decoder
 mit hybrider Attention~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}: In jedem Block aus vier Schichten nutzen drei
@@ -359,19 +324,9 @@ verwendeten Sequenzlängen nicht.
     \end{tabular}
 \end{table}
 
-\subsection{Pipeline-Module und Softwareversionen}
+\subsection{Softwareversionen und Antwortlängen}
 \label{app:software}
 
-Beide Pipelines nutzen gemeinsame Module für das Laden der Datensätze,
-die Metrikberechnung und die Protokollierung der Metadaten.
-Gesteuert werden sie über Konfigurationsdateien im YAML-Format, die beim
-Start gegen ein zentrales Experimentregister (Modell, Regime, Datensatz,
-Ausgabeverzeichnis) validiert werden; Training, Testinferenz und
-Evaluation laufen als getrennte Slurm-Jobs.
-Für die Trainingsläufe der Hauptstudie überwacht zusätzlich eine
-Laufverwaltung Status und Phasen, verhindert konkurrierende Ausführungen
-desselben Laufs und stellt über Prüfsummen von Konfiguration und Code
-sicher, dass alle Seeds einer Konfiguration denselben Stand verwenden.
 
 Beim Laden des Datensatzes werden Splits, Spalten und Splitgrößen
 geprüft (Abschnitt~\ref{sec:datenvorverarbeitung}); eine zeilenweise
@@ -401,48 +356,24 @@ bzw. 103 von 16\,410 Referenzantworten 256 Tokens; das Maximum beträgt
 \subsection{Prompt des QLoRA-Regimes}
 \label{app:prompt}
 
-Den gerenderten Prompt des Standardprofils für einen Satz des
-Testsplits zeigt Listing~\ref{lst:prompt-task}: eine Systemnachricht mit
-Aufgabe, Typinventar und Formatvorgaben sowie eine Nutzernachricht mit
-der nullbasiert nummerierten Tokenliste, ohne Demonstrationsbeispiele
-(Abschnitt~\ref{sec:prompt-design}).
+Die gerenderte Systemnachricht des Standardprofils zeigt
+Listing~\ref{lst:prompt-task}; Nutzernachricht, Beginn der
+Assistentenantwort und Zielantwort stehen in
+Listing~\ref{lst:beispiel}.
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true,
   breakatwhitespace=true, columns=fullflexible, keepspaces=true,
   frame=single, captionpos=b, float=htbp,
   postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
-  caption={Gerenderter Prompt des Standardprofils für einen Satz des
-  Testsplits (Chat-Template von Qwen3.5, Thinking deaktiviert);
-  automatische Zeilenumbrüche sind durch einen Pfeil markiert.},
+  caption={Gerenderte Systemnachricht des Standardprofils
+  (Chat-Template von Qwen3.5); automatische Zeilenumbrüche sind durch
+  einen Pfeil markiert.},
   label={lst:prompt-task}]
 <|im_start|>system
 You are a Named Entity Recognition (NER) system. Extract all named entities from the numbered token list.
 Return ONLY a JSON array. Do not use Markdown code blocks and do not add explanations.
 Each entity object must have exactly these fields: "start_token" (integer, inclusive), "end_token" (integer, exclusive), "text" (the exact text covered by the token span), and "type" (one of: PER, ORG, LOC, ANIM, BIO, CEL, DIS, EVE, FOOD, INST, MEDIA, MYTH, PLANT, TIME, VEHI).
 Token indices must refer exactly to the numbered token list shown by the user. If no entities are present, return exactly [].<|im_end|>
-<|im_start|>user
-Tokens:
-0: His
-1: family
-2: moved
-3: to
-4: Covington
-5: during
-6: his
-7: term
-8: .<|im_end|>
-<|im_start|>assistant
-<think>
-
-</think>
-\end{lstlisting}
-
-\noindent Die zugehörige Zielantwort, die im Training den Inhalt der
-Assistentennachricht bildet, lautet:
-
-\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, columns=fullflexible,
-  keepspaces=true, frame=single]
-[{"start_token": 4, "end_token": 5, "text": "Covington", "type": "LOC"}]
 \end{lstlisting}
 
 \noindent Trainiert wird im Single-Turn-Format
@@ -450,44 +381,23 @@ Assistentennachricht bildet, lautet:
 zugunsten eines einfachen, klar evaluierbaren Setups nicht
 verwendet~\cite{wei2023chatie}, ebenso wenig Sequence Packing.
 
-\subsection{Sampling-Einstellung des Zero-Shot-Regimes}
-\label{app:sampling}
-
-Für den Non-Thinking-Modus empfiehlt die Qwen-Modellkarte bei
-allgemeinen Aufgaben Temperatur 0,7 und top-$p$ 0,8 mit top-$k = 20$,
-min-$p = 0$ und einer Presence-Penalty von 1,5~\cite{qwen2026card27b}.
-Für Reasoning-Aufgaben nennt sie zwei Wertesätze, jeweils mit
-Temperatur 1,0 und min-$p = 0$: im Abschnitt \enquote{Quickstart}
-top-$p$ 0,95, top-$k = 20$ und eine Presence-Penalty von 1,5, im
-Abschnitt \enquote{Best Practices} top-$p$ 1,0, top-$k = 40$ und eine
-Presence-Penalty von 2,0.
-Die im Zero-Shot-Regime gewählte Einstellung
-(Abschnitt~\ref{sec:llm-pipeline}) übernimmt Temperatur und min-$p$
-der Reasoning-Profile sowie top-$k = 20$, verwendet aber unbeschränktes
-top-$p$ und keine Presence-Penalty.
 
 \subsection{Protokollfelder je Lauf}
 \label{app:protokoll}
 
-Der Umfang der Reproduzierbarkeitsangaben unterscheidet sich zwischen
-Trainings- und Zero-Shot-Läufen.
-Die Trainingsläufe der Hauptstudie laden Datensatz, Modelle und Tokenizer
-über feste Revisions-Hashes (Tabelle~\ref{tab:app-revisionen}), setzen
-ihren Seed für Python, NumPy und PyTorch einschließlich CUDA und
-übergeben ihn zusätzlich als Seed für Training und Datenreihenfolge an
-den Trainer.
-Protokolliert werden Git-Commit und Zustand der Arbeitskopie,
-Paketversionen, CUDA-, cuDNN- (9.20) und Treiberversion (595.58.03),
-GPU-Bezeichnung und Slurm-Job-Informationen; die Laufverwaltung ergänzt
-Prüfsummen von Konfiguration und Code, Fingerprints der Datensplits, eine
-Phasenhistorie und die Checkpoint-Auswahl.
-Die Zero-Shot-Läufe luden Modelle und Datensatz dagegen ohne explizite
-Revisionsangabe; ihre Metadaten umfassen Git-Commit und GPU-Bezeichnung,
-aber unter anderem keine Treiber- und cuDNN-Versionen und keine Angaben
-der Laufverwaltung.
-Eine bitgenaue Reproduzierbarkeit wird für keinen der Läufe beansprucht:
-Deterministische Algorithmen werden nicht erzwungen, und Ergebnisse
-können bei abweichender Hard- oder Software variieren.
+Über die Angaben in Abschnitt~\ref{sec:rechenumgebung} hinaus laden die
+Trainingsläufe der Hauptstudie auch den Tokenizer über einen festen
+Revisions-Hash, setzen ihren Seed auch für CUDA und übergeben ihn als
+Seed für Training und Datenreihenfolge an den Trainer.
+Protokolliert werden zusätzlich der Zustand der Arbeitskopie sowie
+CUDA-, cuDNN- (9.20) und Treiberversion (595.58.03); die Laufverwaltung
+ergänzt Prüfsummen von Konfiguration und Code, Fingerprints der
+Datensplits, eine Phasenhistorie und die Checkpoint-Auswahl.
+Den Metadaten der Zero-Shot-Läufe fehlen unter anderem Treiber- und
+cuDNN-Versionen und die Angaben der Laufverwaltung.
+Bitgenaue Reproduzierbarkeit wird nicht beansprucht, weil
+deterministische Algorithmen nicht erzwungen werden und Ergebnisse bei
+abweichender Hard- oder Software variieren können.
 Die Zero-Shot-Ausgaben entstehen zudem durch Sampling.
 Weil der Zustand des Zufallszahlengenerators bei einer Wiederaufnahme
 nicht wiederhergestellt wird, setzt ihre exakte Wiederholung auch eine
@@ -496,22 +406,17 @@ ununterbrochene Ausführung voraus.
 \subsection{Adapterdateien}
 \label{app:adapter}
 
-Die Adapter werden mit BF16-Mixed-Precision trainiert; die gespeicherten
-Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor (12,8 bzw. 42,5~MB),
-die der 27B-Läufe nach der Wiederaufnahme aus Checkpoints
-(Abschnitt~\ref{sec:effizienzmetriken}) in FP32 (637,6~MB).
-% Rechnung: 6,39 M x 2 Byte = 12,8 MB; 21,23 M x 2 Byte = 42,5 MB;
-% 159,38 M x 4 Byte = 637,5 MB (Dateigröße 637,6 MB einschließlich Kopf).
-Die Dateigrößen entsprechen den rund 6,39, 21,23 bzw. 159,38~Mio.
-Adapterparametern aus Tabelle~\ref{tab:lora-hyperparams} bei 2 (BF16)
-bzw. 4 Byte (FP32) je Parameter.
+Die gespeicherten Adapter der 0.8B- und 4B-Läufe liegen in BF16 vor
+(12,8 bzw. 42,5~MB), die der 27B-Läufe nach der Wiederaufnahme aus
+Checkpoints (Abschnitt~\ref{sec:effizienzmetriken}) in FP32 (637,6~MB);
+die Dateigrößen entsprechen den Adapterparametern aus
+Tabelle~\ref{tab:lora-hyperparams} bei 2 bzw. 4 Byte je Parameter.
 
 \subsection{Trainingsverlauf der 27B-Läufe}
 \label{app:training-27b}
 
-Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
-Tagen und wurden vom Scheduler dreimal neu eingereiht; jeder Lauf
-bestand damit aus vier Zuteilungen (Start am 7., 12., 15. und
+Jeder der drei 27B-Läufe bestand aus vier Zuteilungen
+(Abschnitt~\ref{sec:effizienzmetriken}; Start am 7., 12., 15. und
 18.~August 2026, Abschluss am 20.~August).
 % Quelle: summary.json, Schlüssel training_time_27b (resume_steps,
 % steps_logged, last_allocation_h, seconds_per_step, estimate_h, sacct_h,
@@ -526,9 +431,9 @@ Schritt 20\,000 (Seeds 42 und 123) bzw. 19\,500 (Seed~456) von
     \toprule
     \textbf{Kennzahl} & \textbf{Seed 42} & \textbf{Seed 123} & \textbf{Seed 456} \\
     \midrule
-    Zuteilungen & 4 & 4 & 4 \\
+    
     Wiederaufnahme der letzten Zuteilung (Schritt) & 20\,000 & 20\,000 & 19\,500 \\
-    Protokollierte Schritte der letzten Zuteilung & 4\,615 & 4\,615 & 5\,115 \\
+    
     Dauer der letzten Zuteilung (h) & 49,3 & 48,4 & 53,8 \\
     Schrittrate der letzten Zuteilung (s/Schritt) & 38,4 & 37,8 & 37,8 \\
     Hochrechnung auf 24\,615 Schritte (h) & 262,5 & 258,3 & 258,6 \\
@@ -538,10 +443,7 @@ Schritt 20\,000 (Seeds 42 und 123) bzw. 19\,500 (Seed~456) von
   \end{tabular}
 \end{center}
 
-Die Trainingsdauer in Kapitel~\ref{chap:ergebnisse} ist die Summe der
-vier Zuteilungen laut \texttt{sacct}; sie schließt das erneute Laden von
-Modell und Daten je Zuteilung ein und ist mit der Dauer der übrigen
-Läufe nur näherungsweise vergleichbar.
+
 Die Hochrechnung der Schrittrate der letzten Zuteilung auf alle Schritte
 liegt 2,5 bis 10,9~h unter der Summe laut \texttt{sacct} und bestätigt
 deren Größenordnung.
@@ -549,44 +451,6 @@ Die drei Läufe liefen gleichzeitig auf demselben Knoten; der explorative
 Vorlauf mit zwei Epochen lief allein auf dem Knoten und benötigte
 15,5~s je Schritt.
 
-\subsection{Hardwareeffekt bei der Encoder-Inferenz}
-\label{app:hardwareeffekt}
-
-Wie groß der Einfluss des GPU-Typs auf die Laufzeit
-(Abschnitt~\ref{sec:effizienzmetriken}) sein kann, zeigt die
-Encoder-Inferenz.
-Im explorativen Vorlauf erreichte DeBERTa-v3-base auf einer A100 eine
-mittlere Latenz von 17,6~ms je Satz, in der Hauptstudie auf einer H100
-dagegen 8,9~ms (Mittel der drei Läufe).
-
-\subsection{Rückfallstrategien des Parsers}
-\label{app:parser}
-
-Vor dem Parsing werden umgebender Leerraum und eventuelle Denkblöcke
-zwischen \texttt{<think>} und \texttt{</think>} entfernt.
-Die Antwort wird zunächst vollständig als JSON interpretiert, bei Bedarf
-danach der Inhalt des ersten Markdown-Codeblocks und zuletzt der erste
-per regulärem Ausdruck gefundene Abschnitt in eckigen Klammern.
-Liefert keine Strategie ein JSON-Array, gilt die Antwort als nicht
-parsebar; die erfolgreiche Strategie wird protokolliert und in
-Tabelle~\ref{tab:formtreue} als Kennzahl \enquote{Parse-Strategien} geführt.
-Die anschließende Validierung der Array-Elemente beschreibt
-Abschnitt~\ref{sec:postprocessing}.
-
-\subsection{Vorstudie zum Ausgabelimit}
-\label{app:vorstudie}
-
-In einer Vorstudie wurde die Inferenz des 27B-Modells (Seed~42) mit
-einem Limit von 1\,024 Ausgabetokens auf den jeweils ersten 25 Sätzen der
-Testsplits von Musik und Politik wiederholt und auf denselben Sätzen mit
-dem Hauptlauf verglichen (Codestand in Tabelle~\ref{tab:app-revisionen}).
-Die beiden Domänen wurden gewählt, weil dort bei 256 Tokens besonders
-viele Antworten nicht parsebar waren; die Stichprobe ist also weder
-zufällig noch repräsentativ.
-Auf dieser Grundlage wurde die Inferenz des 27B-Modells mit 1\,024
-Ausgabetokens für alle drei Seeds auf allen 2\,506 Sätzen der fünf
-Domänen wiederholt (Abschnitt~\ref{sec:crossner}); die Ergebnisse
-berichtet Abschnitt~\ref{sec:erg-crossner}.
 
 \subsection{Kontrollstichprobe zum Ausgabelimit}
 \label{app:kontrollstichprobe}
@@ -597,12 +461,8 @@ gemischt; je Lauf bilden die ersten 1\,000 Sätze dieser Reihenfolge,
 deren gespeicherte Antwort parsebar war, die Stichprobe.
 Da sich die nicht parsebaren Antworten zwischen den Läufen
 unterscheiden, sind die Stichproben nicht in jedem Lauf dieselben.
-Gemessen wurde je Satz bei Batchgröße~1 nach einem nicht gewerteten
-Aufwärmdurchlauf.
-Die mittlere Latenz über den gesamten Testsplit bei 1\,024 Tokens wird
-geschätzt, indem die mittlere Latenz der Stichprobe auf alle Sätze mit
-parsebarer gespeicherter Antwort übertragen und die gemessene Dauer der
-Nachinferenz der übrigen Sätze hinzugerechnet wird.
+Gemessen wurde nach dem Protokoll aus
+Abschnitt~\ref{sec:effizienzmetriken}.
 Die Ergebnisse je Lauf nennt Tabelle~\ref{tab:app-kontrolle}.
 
 \FloatBarrier
@@ -613,25 +473,9 @@ Die Ergebnisse je Lauf nennt Tabelle~\ref{tab:app-kontrolle}.
 % (thesis/generated/); die Beispiele in tab:app-beispiele stammen aus den
 % Testvorhersagen der genannten Läufe (Listenindex in test_predictions.json).
 
-Die Testwerte der einzelnen Seeds, aus denen die Mittelwerte in
-Tabelle~\ref{tab:haupt} gebildet wurden, nennt Tabelle~\ref{tab:app-seeds}
-zusammen mit dem Validierungs-F$_1$ und der Epoche des jeweils gewählten
-Checkpoints.
-Die Nachinferenz mit 1\,024 Tokens (Tabelle~\ref{tab:limit-multinerd})
-ergänzt Tabelle~\ref{tab:app-limit-seeds} um die Werte je Seed; die
-Ergebnisse der Kontrollstichprobe je Lauf nennt
-Tabelle~\ref{tab:app-kontrolle}.
-Die Werte zu den Abbildungen~\ref{fig:typen} und~\ref{fig:groesse}
-enthalten die Tabellen~\ref{tab:typen} und~\ref{tab:groesse}; Precision
-und Recall zu den Typwerten stehen in
-Tabelle~\ref{tab:app-typen-prf}.
-Um die Werte der einzelnen Seeds und um die Grobtypen je Domäne
-ergänzen die Tabellen~\ref{tab:app-crossner-seeds}
-und~\ref{tab:app-crossner-typen} die Tabelle~\ref{tab:crossner-erg};
-die Bootstrap-Intervalle des Modellvergleichs je Domäne und gepoolt
-nennt Tabelle~\ref{tab:crossner-ci}.
-Beispiele typischer Fehler je Fehlerklasse aus
-Abschnitt~\ref{sec:erg-fehlertypen} zeigt Tabelle~\ref{tab:app-beispiele}.
+Die folgenden Tabellen ergänzen die Ergebnisse aus
+Kapitel~\ref{chap:ergebnisse} um Werte je Seed, Entitätstyp und
+CrossNER-Domäne sowie um Beispiele typischer Fehler.
 
 \begin{table}[ht]
   \centering
@@ -700,43 +544,6 @@ Abschnitt~\ref{sec:erg-fehlertypen} zeigt Tabelle~\ref{tab:app-beispiele}.
   \input{generated/tab-app-typen-prf}
 \end{table}
 
-\begin{table}[ht]
-  \centering
-  \small
-  \caption[Mikro-F$_1$ nach Größenklasse und Regime]{Mikro-F$_1$ (in Punkten) nach Größenklasse und Regime.
-  S/M/L bezeichnen die relative Größe innerhalb der Familie
-  (Tabelle~\ref{tab:experiment-matrix}); $\Delta$ ist die Differenz zur
-  nächstkleineren Klasse.
-  Trainierte Konfigurationen als Mittelwert~$\pm$~Standardabweichung über
-  drei Seeds.}
-  \label{tab:groesse}
-  \setlength{\tabcolsep}{3pt}
-  \input{generated/tab-groesse}
-\end{table}
-
-\begin{table}[ht]
-  \centering
-  \footnotesize
-  \caption[CrossNER-Transfertest: F$_1$ je Domäne und Seed]{CrossNER-Transfertest
-  mit 256 Ausgabetokens: F$_1$ (strikt, nur PER, ORG und LOC, in Punkten)
-  je Domäne und Seed für DeBERTa-v3-large und Qwen3.5-27B (QLoRA).
-  Gepoolt: Mikrowert über alle 2\,506 Sätze; Domänenmittel: ungewichtetes
-  Mittel der fünf Domänen.}
-  \label{tab:app-crossner-seeds}
-  \setlength{\tabcolsep}{4pt}
-  \input{generated/tab-app-crossner-seeds}
-\end{table}
-
-\begin{table}[ht]
-  \centering
-  \footnotesize
-  \caption[CrossNER-Transfertest: F$_1$ je Grobtyp und Domäne]{CrossNER-Transfertest
-  mit 256 Ausgabetokens: F$_1$ je Grobtyp und Domäne (strikt, in Punkten,
-  Mittel über drei Seeds) mit Support je Typ.}
-  \label{tab:app-crossner-typen}
-  \setlength{\tabcolsep}{3pt}
-  \input{generated/tab-app-crossner-typen}
-\end{table}
 
 \begin{table}[ht]
   \centering
