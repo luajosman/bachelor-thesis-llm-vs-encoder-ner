@@ -373,7 +373,7 @@ zuvor beste Zero-Shot-System InstructUIE in jeder
 Domäne~\cite[Tab.~3]{sainz2024gollie}.
 Auf MultiNERD erreicht das 7B-Modell einen F$_1$ von
 76{,}0~\cite[Tab.~3]{sainz2024gollie},
-wobei acht der 15 Typen in anderer Benennung bereits im Training
+wobei acht der 15 Typen in gleicher oder ähnlicher Benennung bereits im Training
 vorkamen~\cite[Anh.~B, Tab.~6]{sainz2024gollie}.
 
 
@@ -402,9 +402,9 @@ zurück~\cite{wang2025gptner,xie2023zeroshot}.
 Ihre Stärke zeigen sie dort, wo wenige Beispiele vorliegen oder die Domäne
 wechselt~\cite{wang2025gptner,ashok2023promptner}; das Verfahren CodeIE
 formuliert seine Prompts dabei als Python-Code~\cite{li2023codeie}.
-Drittens verringern Destillation und Fine-Tuning diesen Abstand, doch die
-Vergleiche mit Encodern stützen sich auf übernommene Werte oder auf
-Zero-Shot-Benchmarks~\cite{zhou2024universalner,sainz2024gollie}.
+Drittens verringern Destillation und Fine-Tuning diesen Abstand, doch
+Vergleiche mit Encodern fehlen oder stützen sich auf übernommene Werte
+oder Zero-Shot-Benchmarks~\cite{zhou2024universalner,sainz2024gollie}.
 Für den CrossNER-Versuch dieser Arbeit
 (Abschnitt~\ref{sec:crossner}), einen reinen Transfertest ohne
 Zielbeispiele auf den Grobtypen PER, ORG und LOC, liefern PromptNER und
@@ -501,7 +501,7 @@ Maskierungskonfigurationen erfordert.
 
 In drei der vier Arbeiten erreichen mit Adaptern feinjustierte LLMs auf
 einzelnen Benchmarks das Niveau feinjustierter Encoder oder übertreffen
-es leicht: auf CoNLL-2003 bei \textcite{zhan2026generativeNER} und, mit
+es, meist leicht: auf CoNLL-2003 bei \textcite{zhan2026generativeNER} und, mit
 entfernter Maske, bei \textcite{dukic2024lookingright}, auf vier von
 fünf biomedizinischen Datensätzen bei \textcite{obeidat2025llm}.
 Auf OntoNotes~5.0, ACE2005 und GENIA liegen die LLMs bei
@@ -543,7 +543,7 @@ von Architektur, Trainingsziel und Daten überlagert wird.
 Bei \textcite{obeidat2025llm} ist die Zahl trainierbarer Parameter über
 den LoRA-Rang an die Encoder angeglichen (rund 341 bzw. 353~Mio.
 Adapterparameter gegenüber 336 bis 435~Mio.), und dennoch liegen die
-LLMs vorn.
+LLMs meist vorn.
 Dieser Vorsprung dürfte eher auf die Kapazität des eingefrorenen
 Basismodells als auf die Zahl angepasster Parameter zurückgehen.
 Bei Encodern selbst ist die größere Variante nicht durchgehend besser:
@@ -620,7 +620,7 @@ zusammen; sie ordnet auch die vorliegende Arbeit ein.
     \textcite{wang2025gptner} & GPT-3 (Retrieval mit Tagger) & CoNLL, OntoNotes, ACE, GENIA &
       Few-Shot-Prompting &
       teilweise & -- \\
-    \textcite{xie2023zeroshot} & GPT-3.5 & 7 Benchmarks (EN, ZH) &
+    \textcite{xie2023zeroshot} & GPT-3.5, GPT-3, Llama-2-13B & 7 Benchmarks (EN, ZH) &
       Zero-Shot-Prompting & berichtete Werte & -- \\
     \textcite{ashok2023promptner} & GPT-4, GPT-3.5, T5 &
       CoNLL, GENIA, FewNERD, CrossNER & Few-Shot-Prompting &
@@ -631,7 +631,7 @@ zusammen; sie ordnet auch die vorliegende Arbeit ein.
       43 Datensätze, 9 Domänen (inkl. MultiNERD-Variante) &
       Destillation; Fine-Tuning & berichtete Werte & -- \\
     \textcite{sainz2024gollie} & Code-LLaMA 7/13/34B &
-      IE-Datensätze; Zero-Shot u.\,a. CrossNER, MultiNERD & QLoRA & berichtete Werte &
+      IE-Datensätze; Zero-Shot u.\,a. CrossNER, MultiNERD & QLoRA & berichtete Werte (SoTA) &
       Trainingszeit, CO$_2$ je Größe \\
     \textcite{ding2024gner} & Flan-T5 (bis 11 Mrd.), LLaMA-7B &
       Pile-NER; Zero-Shot CrossNER, MIT & Fine-Tuning (Label je Wort) &
@@ -682,7 +682,7 @@ Encoder-Referenz fehlt damit.
 Bei den generativen Formaten der direkten Vergleiche wächst die Ausgabe
 überdies mit der Eingabelänge: je Eingabetoken ein BIO-Tag bei
 \textcite[Abschn.~IV]{obeidat2025llm}, Inline-Markierungen bei
-\textcite{zhan2026generativeNER}; das erhöht die Latenz
+\textcite{zhan2026generativeNER}; das verlängert die Generierung
 (Abschnitt~\ref{sec:k3-ausgabeformate}).
 Die vorliegende Arbeit setzt hier an: Sie trainiert und evaluiert beide
 Modellfamilien auf den offiziellen englischen MultiNERD-Splits in einer

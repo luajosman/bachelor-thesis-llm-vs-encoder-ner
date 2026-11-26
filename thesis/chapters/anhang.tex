@@ -290,9 +290,10 @@ ausschließlich auf Validierungsdaten (Tabelle~\ref{tab:datennutzung}).
 
 Geladen wird nur das Textmodell (\texttt{Qwen3\_5ForCausalLM},
 Abschnitt~\ref{sec:llm-auswahl}).
-Laut den Konfigurationsdateien der verwendeten Revisionen
-(Tabelle~\ref{tab:app-revisionen}) sind alle drei Größen dichte Decoder
-(ohne Mixture-of-Experts-Schichten) mit hybrider Attention~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}: In jedem Block aus vier Schichten nutzen drei
+Laut Modellkarten~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}
+und Konfigurationsdateien (Revisionen in
+Tabelle~\ref{tab:app-revisionen}) sind alle drei Größen dichte Decoder
+(ohne Mixture-of-Experts-Schichten) mit hybrider Attention: In jedem Block aus vier Schichten nutzen drei
 Schichten lineare Attention in Form von Gated DeltaNet, die vierte
 vollständige Softmax-Attention mit Grouped-Query-Attention und
 Ausgabe-Gating.
