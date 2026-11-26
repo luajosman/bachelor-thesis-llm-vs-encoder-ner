@@ -21,7 +21,7 @@ Die LLMs erhalten den Satz als nummerierte Tokenliste und erzeugen ein
 JSON-Array von Entitäten~\cite{dagdelen2024structuredIE,semin2026spanLabeling},
 das eine regelbasierte Nachverarbeitung in eine IOB2-Sequenz überführt.
 Erst diese Rückkonvertierung erlaubt es, beide Pipelines auf derselben
-Repräsentation und mit derselben Metrik zu bewerten; bei den LLMs geht
+Repräsentation und mit derselben Metrik zu bewerten. Bei den LLMs geht
 damit das Ausgabeformat einschließlich seiner Validierung in den
 F$_1$-Wert ein.
 Neben der Erkennungsleistung werden Trainingsdauer, Inferenzlatenz,
@@ -75,7 +75,7 @@ Vergleichs.
 Aus den Regimen ergeben sich acht Konfigurationen
 (Tabelle~\ref{tab:experiment-matrix}).
 Die fünf trainierten Konfigurationen werden mit den Seeds 42, 123 und 456
-jeweils unabhängig trainiert und evaluiert (15 Trainingsläufe); die drei
+jeweils unabhängig trainiert und evaluiert (15 Trainingsläufe). Die drei
 Zero-Shot-Konfigurationen werden je einmal mit Seed~42 ausgewertet.
 Die Hauptauswertung umfasst damit 18 Testevaluationen.
 
@@ -150,7 +150,7 @@ eingesetzt.
 DeBERTa-Varianten zählen auf mehreren NER-Benchmarks zu den
 leistungsfähigsten Encodern~\cite{keraghel2024recent}.
 Base- und Large-Variante erlauben einen Größenvergleich innerhalb
-derselben Architektur; einschließlich des Klassifikationskopfes umfassen
+derselben Architektur. Einschließlich des Klassifikationskopfes umfassen
 sie 183\,855\,391 bzw. 434\,043\,935 Parameter.
 Beide Modelle stehen laut ihren Modellkarten unter der MIT-Lizenz~\cite{he2021debertav3card,he2021debertav3cardlarge} und sind über die
 \emph{Transformers}-Bibliothek verfügbar~\cite{wolf2020transformers}.
@@ -205,7 +205,7 @@ Mit zwei Encoder- und drei LLM-Größen lassen sich Größenunterschiede
 deshalb zwar gegen die Variabilität zwischen den Seeds abgrenzen,
 Skalierungsgesetze im Sinne angepasster
 Potenzgesetze~\cite{kaplan2020scaling,hoffmann2022training}
-(Abschnitt~\ref{sec:model_size}) aber nicht bestimmen; beobachtete
+(Abschnitt~\ref{sec:model_size}) aber nicht bestimmen. Beobachtete
 Unterschiede sind als Unterschiede zwischen Konfigurationen zu lesen.
 
 \section{Auswahl und Aufbereitung der Datensätze}
@@ -226,11 +226,11 @@ Abschnitt~\ref{sec:disk-leistung}.
 Drittens stellt Babelscape im Datensatz-Repository, dessen Revision
 Tabelle~\ref{tab:app-revisionen} nennt, feste \texttt{train}-,
 \texttt{validation}- und \texttt{test}-Splits
-bereit~\cite{tedeschi2022multinerd,babelscape2023multinerdcard}; sie
+bereit~\cite{tedeschi2022multinerd,babelscape2023multinerdcard}. Sie
 heißen im Folgenden offizielle Splits und bieten künftigen Arbeiten
 einen festen Bezugspunkt.
 Veröffentlichte MultiNERD-Werte beruhen dagegen auf eigener Aufbereitung
-oder abweichendem Testumfang; Werte auf den offiziellen Splits sind
+oder abweichendem Testumfang. Werte auf den offiziellen Splits sind
 nicht auffindbar (Abschnitte~\ref{sec:datasets_corpora}
 und~\ref{sec:research_gap}).
 Viertens ist der englische Teil mit rund 164\,000 Sätzen groß genug für
@@ -240,7 +240,7 @@ Der Datensatz ist laut Datensatzkarte unter CC~BY-NC-SA~4.0
 veröffentlicht und auf nichtkommerzielle Forschung beschränkt~\cite{babelscape2023multinerdcard}.
 
 Alle Splits von MultiNERD sind automatisch annotiert
-(Abschnitt~\ref{sec:datasets_corpora}); auch die Referenz des Testsplits
+(Abschnitt~\ref{sec:datasets_corpora}). Auch die Referenz des Testsplits
 ist somit eine Silberreferenz, und absolute Werte messen die
 Übereinstimmung mit ihr.
 Die von den Autoren manuell geprüfte Stichprobe wird nicht verwendet.
@@ -280,10 +280,10 @@ Tabelle~\ref{tab:datensplits} auf Labelnamen abgebildet.
 Die wortweise vorliegenden Sätze werden mit dem Tokenizer von DeBERTa-v3
 in Subwörter zerlegt.
 Ein Satz mit mehr als 256 Subwort-Tokens einschließlich der Sondertokens
-wird am Ende abgeschnitten; die abgeschnittenen Wörter erhalten weder
+wird am Ende abgeschnitten. Die abgeschnittenen Wörter erhalten weder
 Label noch Vorhersage und entfallen aus Verlust und Evaluation.
 Im Testsplit betrifft dies keinen Satz, sodass alle 347\,025 Testwörter
-evaluiert werden; für Trainings- und Validierungssplit wurde die Zahl
+evaluiert werden. Für Trainings- und Validierungssplit wurde die Zahl
 der gekürzten Sätze nicht protokolliert.
 Beim Label-Alignment erhält das erste Subwort jedes Wortes dessen
 Label~\cite{devlin2019bert};
@@ -362,7 +362,7 @@ ausschließlich der Checkpoint-Auswahl innerhalb eines Laufs
 (Abschnitte~\ref{sec:encoder-pipeline} und~\ref{sec:llm-pipeline}); ein
 systematischer Hyperparameter-Suchlauf findet nicht statt.
 Der \texttt{test}-Split wird in der Hauptstudie je Lauf genau einmal
-vollständig inferiert; ein separater Evaluationsschritt berechnet die
+vollständig inferiert. Ein separater Evaluationsschritt berechnet die
 Metriken aus den gespeicherten Vorhersagen.
 
 Eine Einschränkung: Der Testsplit wurde bereits in den explorativen
@@ -379,7 +379,7 @@ Bei den Zero-Shot-Konfigurationen beruhen dagegen Decoding und
 Prompt-Erweiterung auf Beobachtungen eines Vorlaufs auf dem Testsplit
 (Abschnitt~\ref{sec:llm-pipeline}).
 Die Zero-Shot-Ergebnisse werden deshalb als explorativ berichtet. Solche
-Auswahlentscheidungen können zu einer optimistischen Verzerrung führen~\cite{cawley2010selectionbias}; deren Umfang lässt sich mit den vorhandenen Daten
+Auswahlentscheidungen können zu einer optimistischen Verzerrung führen~\cite{cawley2010selectionbias}. Deren Umfang lässt sich mit den vorhandenen Daten
 nicht beziffern.
 
 \begin{table}[ht]
@@ -515,8 +515,8 @@ Abschnitt~\ref{sec:performanzmetriken}) und ein Checkpoint gespeichert;
 für die Testevaluation wird der Checkpoint mit dem höchsten
 Validierungs-F$_1$ geladen.
 Die konfigurierte Early-Stopping-Patience entspricht der maximalen
-Epochenzahl, sodass alle sechs Läufe die volle Epochenzahl durchliefen;
-die je Lauf gewählte Epoche nennt Tabelle~\ref{tab:app-seeds}.
+Epochenzahl, sodass alle sechs Läufe die volle Epochenzahl durchliefen.
+Die je Lauf gewählte Epoche nennt Tabelle~\ref{tab:app-seeds}.
 In der Testinferenz wird jeder Satz einzeln verarbeitet und die Klasse
 per argmax bestimmt.
 
@@ -561,7 +561,7 @@ verarbeitet.
 
 Drei Längengrenzen sind zu unterscheiden.
 In der Inferenz darf das Modell je Satz höchstens 256 neue Tokens
-erzeugen (\emph{Ausgabelimit}); mit diesem Limit entstehen alle Werte
+erzeugen (\emph{Ausgabelimit}). Mit diesem Limit entstehen alle Werte
 der Hauptauswertung.
 Im QLoRA-Training ist die gesamte Sequenz aus Prompt und Zielantwort auf
 1\,024 Tokens begrenzt.
@@ -578,7 +578,7 @@ dies die Sätze mit den meisten Entitäten trifft, wirkt sich das Limit
 dennoch spürbar aus (Abschnitt~\ref{sec:erg-formtreue}).
 
 \paragraph{Zero-Shot-Regime.}
-Die Checkpoints werden unverändert in BF16 verwendet; alle drei Größen
+Die Checkpoints werden unverändert in BF16 verwendet. Alle drei Größen
 erhalten denselben Prompt (Glossar-Profil,
 Abschnitt~\ref{sec:prompt-design}) und dieselben Decoding-Parameter.
 Abweichend vom QLoRA-Regime wird mit Sampling decodiert (Temperatur 1,0,
@@ -596,7 +596,7 @@ Zugleich wurde der Prompt um ausgeschriebene Typbezeichnungen und eine
 Definition benannter Entitäten erweitert, da die Abkürzungen des
 Inventars ohne Training nicht selbsterklärend sind.
 Decoding-Einstellung und Prompt-Änderung wurden damit gleichzeitig
-eingeführt; ihre Einzelbeiträge sind nicht trennbar, und die Übertragung
+eingeführt. Ihre Einzelbeiträge sind nicht trennbar, und die Übertragung
 der Sampling-Einstellung auf das 4B- und das 27B-Modell wurde nicht
 eigens geprüft (Abschnitt~\ref{sec:limitationen}).
 
@@ -617,7 +617,7 @@ Assistentenantwort beschränkt (Option \texttt{assistant\_only\_loss},
 Standardwert \texttt{False}~\cite{vonwerra2026trldocs}); ein Teil des
 Lernsignals entfällt damit auf die Reproduktion des konstanten Prompts.
 Trainingssequenzen werden auf 1\,024 Tokens begrenzt und bei Überlänge
-am Ende gekürzt, was auch die Zielantwort abschneiden kann; dies betrifft
+am Ende gekürzt, was auch die Zielantwort abschneiden kann. Dies betrifft
 48 der 131\,280 Trainings- und 11 der 16\,410 Validierungsbeispiele.
 
 Zur Checkpoint-Auswahl erzeugt das Modell nach jeder Epoche per Greedy-Decoding
@@ -626,7 +626,7 @@ Die Vorhersagen werden wie in der Testinferenz validiert und mit dem
 strikten F$_1$-Wert bewertet; der zusätzlich auf dem vollständigen Validierungssplit protokollierte
 Verlust dient nur der Überwachung.
 Verwendet wird der Adapter der Epoche mit dem höchsten Wert, bei
-Gleichstand der frühere; in acht der neun Läufe war dies die dritte, in
+Gleichstand der frühere. In acht der neun Läufe war dies die dritte, in
 einem Lauf (4B, Seed~42) die zweite Epoche.
 Die 200 Sätze weichen in den Typanteilen um höchstens 3,1 Prozentpunkte
 vom Split ab, enthalten aber keine BIO- und INST-Entitäten
@@ -644,7 +644,7 @@ im Bereich von Minuten (27B-Modell: rund 18 Minuten gegenüber rund
 kleinen, nicht zufällig gezogenen Ausschnitt abhängig
 (Abschnitt~\ref{sec:limitationen}).
 Für die Testinferenz wird der Adapter ohne Verschmelzung (Merge) auf das
-4-Bit-quantisierte Basismodell aufgesetzt; die Ausgaben entstehen per
+4-Bit-quantisierte Basismodell aufgesetzt. Die Ausgaben entstehen per
 Greedy-Decoding.
 
 \subsection{Prompt-Design und Ausgabeformat}
@@ -667,7 +667,7 @@ Das Format gehört zur \emph{Indexing}-Familie nach
 \textcite[Abschn.~3.2]{semin2026spanLabeling} in der angereicherten
 Variante auf Wortebene (Abschnitt~\ref{sec:k3-ausgabeformate}): Die
 nummerierten Eingabetokens und die Wortindizes in der Ausgabe folgen
-\textcite[Tab.~9]{ramponi2025fallacy}; JSON-Schema und Nachverarbeitung
+\textcite[Tab.~9]{ramponi2025fallacy}. JSON-Schema und Nachverarbeitung
 sind eigene Umsetzungen.
 Für dieses Format sprechen drei Gründe.
 Erstens ist zu erwarten, dass die explizit in der Eingabe stehenden
@@ -740,10 +740,10 @@ ohne in den Vergleichen von
 zurückzubleiben (Abschnitte~\ref{sec:lora}
 und~\ref{sec:peft_ner_related}).
 Der Rang beträgt $r = 16$ für das 0.8B- und das 4B-Modell und $r = 32$
-für das 27B-Modell, die Skalierung jeweils $\alpha = 2r$; die übrigen
+für das 27B-Modell, die Skalierung jeweils $\alpha = 2r$. Die übrigen
 Hyperparameter nennt Tabelle~\ref{tab:lora-hyperparams}.
 Bias-Terme werden nicht trainiert.
-Die Abstufung des Rangs ist eine Festlegung dieser Arbeit; alternative
+Die Abstufung des Rangs ist eine Festlegung dieser Arbeit. Alternative
 Ränge wurden nicht untersucht.
 
 Die Adapter werden über die Namen von sieben Projektionstypen platziert:
@@ -905,7 +905,7 @@ Aus den 16\,454 Testsätzen werden 2\,000 Stichproben mit Zurücklegen
 gezogen (Startwert~42); für jede Stichprobe werden Mikro- und Makro-F$_1$ aller Läufe
 sowie die Differenzen zwischen Konfigurationen neu berechnet.
 Pro Stichprobe werden die Laufwerte über die drei festen Seeds
-gemittelt; berichtet werden 95-\%-Perzentilintervalle (2,5- und
+gemittelt. Berichtet werden 95-\%-Perzentilintervalle (2,5- und
 97,5-Perzentil) dieser Mittelwerte und ihrer Differenzen.
 Bei Zero-Shot geht der jeweilige Einzellauf ein und wird gegen jeden der
 drei Seeds der Vergleichskonfiguration gepaart.
@@ -933,7 +933,7 @@ Für die Fehleranalyse werden Precision, Recall, F$_1$ und Support zusätzlich
 je Entitätstyp berechnet.
 
 Ergänzend wird der makrogemittelte F$_1$-Wert über alle 15 Typen
-berichtet (Abschnitt~\ref{sec:evaluation}); er reagiert stark auf die
+berichtet (Abschnitt~\ref{sec:evaluation}). Er reagiert stark auf die
 seltenen Typen.
 Für den Vergleich der Fehlerprofile wird jede Referenzentität genau einer
 Klasse zugeordnet: korrekt erkannt (Grenzen und Typ stimmen überein),
@@ -952,7 +952,7 @@ wird in allen Fällen strikt.
 
 \paragraph{Trainingsdauer.}
 Berichtet wird für alle Konfigurationen die Wall-Clock-Dauer der
-Slurm-Trainingsjobs laut Abrechnung (\texttt{sacct}); sie umfasst Laden
+Slurm-Trainingsjobs laut Abrechnung (\texttt{sacct}). Sie umfasst Laden
 von Modell und Daten, Training, Validierung nach jeder Epoche (bei den
 LLMs inklusive generativer Validierung), Speichern von Checkpoints und
 Export.
@@ -960,7 +960,7 @@ Die vom Trainer zusätzlich protokollierte Dauer ohne Laden und Export
 liegt bei den ununterbrochenen Läufen um Sekunden bis höchstens gut zwei
 Minuten darunter (Anhang~\ref{app:reproduzierbarkeit}).
 Die drei 27B-Läufe überschritten das Zeitlimit der Partition von drei
-Tagen und wurden vom Scheduler dreimal neu eingereiht; ihre
+Tagen und wurden vom Scheduler dreimal neu eingereiht. Ihre
 Trainingsdauer ist die Summe der vier Zuteilungen einschließlich des
 erneuten Ladens und mit der Dauer der übrigen Läufe nur näherungsweise
 vergleichbar.
@@ -973,7 +973,7 @@ Trainingsbedarf der Modellkonfiguration wird daraus nicht abgeleitet.
 
 \paragraph{Inferenzlatenz und Durchsatz.}
 Gemessen wird je Testsatz bei Batchgröße~1 die Dauer des Modellaufrufs
-(Vorwärtsdurchlauf bzw. Generierung); die GPU wird vor und nach jedem
+(Vorwärtsdurchlauf bzw. Generierung). Die GPU wird vor und nach jedem
 Aufruf synchronisiert.
 Der Messung geht ein nicht gewerteter Aufwärmdurchlauf voraus.
 Nicht enthalten sind Laden, Tokenisierung, Datentransfer, Detokenisierung,
@@ -1129,7 +1129,7 @@ mit 1\,024 Tokens neu generiert und zeichenweise mit der gespeicherten
 Antwort verglichen
 (\emph{Kontrollstichprobe}, Anhang~\ref{app:kontrollstichprobe}).
 Nachinferenz und Kontrollstichprobe liefen auf der H100
-(Tabelle~\ref{tab:hardware}); die Kontrollstichprobe liefert so
+(Tabelle~\ref{tab:hardware}). Die Kontrollstichprobe liefert so
 zugleich Latenzen auf dem GPU-Typ der Encoder.
 Die zusammengeführten Vorhersagen werden mit derselben strikten Metrik über
 alle 16\,454 Sätze ausgewertet und je Seed den Werten bei 256 Tokens
@@ -1198,7 +1198,7 @@ Das LLM erhält unverändert das Standardprofil mit allen 15 Typen und
 erzeugt seine Ausgaben per Greedy-Decoding, ohne Thinking, mit
 4-Bit-Basismodell und höchstens 256 Ausgabetokens.
 Alle CrossNER-Evaluationen liefen auf der H100
-(Tabelle~\ref{tab:hardware}); die Latenzwerte von Qwen3.5-27B sind
+(Tabelle~\ref{tab:hardware}). Die Latenzwerte von Qwen3.5-27B sind
 daher nur eingeschränkt mit denen auf MultiNERD vergleichbar.
 
 \paragraph{Auswertung.}
@@ -1231,7 +1231,7 @@ Naturwissenschaften: 12) stimmen in ihrer vollständigen Tokenfolge exakt
 mit Trainingssätzen von MultiNERD überein; Überschneidungen mit
 Validierungs- oder Testsplit bestehen nicht, auf Beinahe-Duplikate wurde
 nicht geprüft.
-Die Hauptauswertung umfasst alle 2\,506 Sätze; eine Sensitivitätsanalyse
+Die Hauptauswertung umfasst alle 2\,506 Sätze. Eine Sensitivitätsanalyse
 wiederholt die Aggregation ohne die 21 Sätze.
 
 \paragraph{Ausgabelimit.}
@@ -1242,7 +1242,7 @@ besonders viele Antworten nicht parsebar waren; die Stichprobe ist also
 weder zufällig noch repräsentativ (Codestand in
 Tabelle~\ref{tab:app-revisionen}).
 Der Neulauf des 27B-Modells umfasst alle drei Seeds und alle 2\,506
-Sätze der fünf Domänen; Prompt, Parser, Typabbildung und Greedy-Decoding
+Sätze der fünf Domänen. Prompt, Parser, Typabbildung und Greedy-Decoding
 blieben unverändert, nur das Limit wurde angehoben.
 Die Auswertung stellt beide Limits auf denselben Sätzen je Seed gepaart
 gegenüber und wiederholt die Sensitivitätsanalyse ohne die
