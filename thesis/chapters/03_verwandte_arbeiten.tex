@@ -380,11 +380,11 @@ Parameter und LLaMA-7B auf Pile-NER.
 Die Modelle lernen, jedes Eingabewort mit seinem Label zu wiederholen,
 also auch Nicht-Entitäten als negative Instanzen mitzuführen.
 Im Zero-Shot-Regime auf den CrossNER- und MIT-Datensätzen berichten die
-Autoren einen Gewinn von 9 F$_1$-Punkten gegenüber dem besten
-LLM-Ansatz GoLLIE, gegenüber dem Encoder GLiNER-L von rund 6
-Punkten~\cite[Tab.~2]{ding2024gner}; sie messen Inferenzdurchsatz und
-GPU-Stunden des Trainings, führen GLiNER-L aber nur mit übernommenen
-Werten mit.
+Autoren mit dem größten Modell einen Gewinn von rund 9 F$_1$-Punkten
+gegenüber dem besten LLM-Ansatz GoLLIE, gegenüber dem Encoder GLiNER-L
+von rund 6 Punkten~\cite[Tab.~2]{ding2024gner}; sie messen
+Inferenzdurchsatz und GPU-Stunden des Trainings, führen GLiNER-L aber
+laut Tab.~2 nur mit übernommenen Werten mit.
 Das Label-je-Wort-Format gehört zur Tagging-Familie, anders als das hier
 verwendete Indexing-Format.
 
@@ -456,9 +456,10 @@ dem fünften knapp (0{,}5 Punkte) hinter dem besten
 Encoder~\cite[Tab.~III]{obeidat2025llm}.
 Der Vorsprung geht vor allem auf eine höhere Precision zurück.
 Dem stehen je Testbeispiel 40- bis 220-mal längere Inferenzzeiten als
-beim besten Encoder gegenüber~\cite[Abschn.~III, Tab.~IV]{obeidat2025llm};
-den oberen Wert (BioRED) erklären die Autoren mit langen Eingaben, und
-die LLMs liefen auf zwei statt einer H100-GPU.
+beim besten Encoder gegenüber~\cite[Abschn.~III--IV, Tab.~IV]{obeidat2025llm};
+den oberen Wert (BioRED) erklären die Autoren mit langen Eingaben und
+langen Typbezeichnungen in den Tags, und die LLMs liefen auf zwei statt
+einer H100-GPU.
 
 Dass LLMs für tokenbasierte NER ohne Anpassung kaum geeignet sind, zeigen
 \textcite{lu2024llmstruggle} am klinischen Korpus RareDis-v1 mit fünf
@@ -713,6 +714,9 @@ Regimen und für zwei Encoder-Größen derselben Architektur; damit
 bearbeitet sie FF2 und stützt die größenbezogenen Empfehlungen in FF3.
 
 
+% Absatz eine Zeile enger setzen, damit Kapitel 3 auf Seite 28 endet
+% (der Zusatz III--IV bei Obeidat et al. verlängert ihn sonst um eine Zeile).
+\looseness=-1
 Aus der Literatur folgen drei Erwartungen.
 Sie dienen als Lesehilfe, nicht als Hypothesentest (Abgleich in
 Kapitel~\ref{chap:fazit}).
@@ -722,7 +726,7 @@ feinjustierten Encoders oder übertrifft es
 leicht~\cite{zhan2026generativeNER,obeidat2025llm}.
 E2 (zu FF2 und FF3): Die Inferenz generativer LLMs ist um ein Vielfaches
 langsamer als die eines Encoders;
-\textcite[Abschn.~III]{obeidat2025llm} berichten Faktoren von 40 bis
+\textcite[Abschn.~III--IV]{obeidat2025llm} berichten Faktoren von 40 bis
 knapp 220 (oberer Wert bei langen Eingaben).
 E3 (zu FF1): Ohne Anpassung der Gewichte bleiben per Prompting genutzte
 LLMs, in den zitierten Vergleichen selbst mit Beispielen im Prompt,

@@ -127,9 +127,9 @@ Abhängige Variablen sind
 (3)~die Zahl gesamter und trainierbarer Parameter sowie
 (4)~Kennzahlen zur Formtreue der LLM-Ausgaben.
 
-Konstant sind die Datenbasis (der englische Teil von MultiNERD mit
-seinen offiziellen
-Splits~\cite{tedeschi2022multinerd,babelscape2023multinerdcard}), das
+Konstant sind die Datenbasis (der englische Teil von
+MultiNERD~\cite{tedeschi2022multinerd} mit den offiziellen
+Splits~\cite{babelscape2023multinerdcard}), das
 Evaluationsprotokoll mit derselben Metrikimplementierung für beide
 Pipelines (Abschnitt~\ref{sec:performanzmetriken}) und die Versionen der
 zentralen Bibliotheken (Abschnitt~\ref{sec:rechenumgebung}).
@@ -224,9 +224,9 @@ zwei Textgenres~\cite{tedeschi2022multinerd}; dass solche Texte
 vermutlich auch im Vortraining der Modelle vorkamen, diskutiert
 Abschnitt~\ref{sec:disk-leistung}.
 Drittens stellt Babelscape im Datensatz-Repository, dessen Revision
-Tabelle~\ref{tab:app-revisionen} nennt, feste \texttt{train}-,
-\texttt{validation}- und \texttt{test}-Splits
-bereit~\cite{tedeschi2022multinerd,babelscape2023multinerdcard}. Sie
+Tabelle~\ref{tab:app-revisionen} nennt, feste Splits bereit, je Sprache
+eine Datei in den Verzeichnissen \texttt{train}, \texttt{val} und
+\texttt{test}~\cite{babelscape2023multinerdcard}. Sie
 heißen im Folgenden offizielle Splits und bieten künftigen Arbeiten
 einen festen Bezugspunkt.
 Veröffentlichte MultiNERD-Werte beruhen dagegen auf eigener Aufbereitung
@@ -310,10 +310,10 @@ Hin- und Rückkonvertierung.
 \subsection{Datenaufteilung}
 \label{sec:datenaufteilung}
 
-Die offiziellen Splits werden unverändert und ohne Teilstichproben
-übernommen; die Datenaufteilung ist damit für alle Konfigurationen
-identisch~\cite{tedeschi2022multinerd,babelscape2023multinerdcard} und
-mit Arbeiten vergleichbar, die dieselben Splits verwenden.
+Die offiziellen Splits~\cite{babelscape2023multinerdcard} werden
+unverändert und ohne Teilstichproben übernommen; die Datenaufteilung ist
+damit für alle Konfigurationen identisch und mit Arbeiten vergleichbar,
+die dieselben Splits verwenden.
 Die Typverteilung ist stark unausgewogen (Tabelle~\ref{tab:datensplits}):
 PER, ORG und LOC stellen 74\,\% der Trainings- und 80\,\% der
 Testentitäten, BIO, INST, MYTH und VEHI jeweils weniger als 40
@@ -664,8 +664,8 @@ Index~4 und wird deshalb durch \texttt{start\_token}~=~4 und
 \texttt{end\_token}~=~5 beschrieben.
 
 Das Format gehört zur \emph{Indexing}-Familie nach
-\textcite[Abschn.~3.2]{semin2026spanLabeling} in der angereicherten
-Variante auf Wortebene (Abschnitt~\ref{sec:k3-ausgabeformate}): Die
+\textcite[Abschn.~3.2]{semin2026spanLabeling} in der Variante mit
+nummerierten Wörtern (Abschnitt~\ref{sec:k3-ausgabeformate}): Die
 nummerierten Eingabetokens und die Wortindizes in der Ausgabe folgen
 \textcite[Tab.~9]{ramponi2025fallacy}. JSON-Schema und Nachverarbeitung
 sind eigene Umsetzungen.
