@@ -17,8 +17,8 @@ der Inferenz; hinzu kommt ein Transfertest auf CrossNER.
 
 DeBERTa-v3-large erreicht einen Mikro-F$_1$ von 95,8 Punkten,
 Qwen3.5-27B im QLoRA-Regime zunächst 94,5.
-Doch das Limit von 256 Ausgabetokens schneidet lange Antworten ab, die
-als leere Vorhersagen zählen.
+Doch das Limit von 256 Ausgabetokens schneidet lange Antworten ab;
+abgeschnittene zählen als leere Vorhersagen.
 Die selektive Nachinferenz mit 1\,024 Tokens hebt das LLM auf 95,6 und
 verringert den Abstand von 1,34 auf 0,18 Punkte (gepaartes
 95-\%-Bootstrap-Intervall: 0,02 bis 0,33).
@@ -34,7 +34,8 @@ Die Encoder benötigen auf MultiNERD 9 bis 17~ms je Satz und 0,7 bis
 Auf gleicher Hardware ergibt sich für Qwen3.5-0.8B gegenüber
 DeBERTa-v3-base ein Latenzfaktor von etwa 210.
 Die Zero-Shot-Konfigurationen erreichen 6,2 bis 69,4 F$_1$-Punkte.
-Prompt und Decoding dieser Läufe wurden nach Testbeobachtungen gewählt.
+Prompt und Decoding dieser Läufe wurden nach Beobachtungen auf dem
+Testsplit gewählt.
 Da sich die Regime zudem über das Training hinaus in Prompt, Decoding und
 numerischer Präzision unterscheiden, ist kein isolierter
 Fine-Tuning-Effekt bestimmbar.

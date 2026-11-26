@@ -105,8 +105,8 @@ offiziellen englischen Splits mit eigener Encoder-Referenz fehlt.
 Die zweite betrifft Ressourcenerfassung und Modellgröße: Die direkten
 Vergleiche erfassen neben der Erkennungsleistung lediglich Teile des
 Ressourcenbedarfs, entweder die Inferenzzeit ohne den Speicher oder die
-Trainingskosten ohne die Inferenz, und passen LLMs einer einzigen
-Größenklasse an. Größenstaffelungen gibt es nur innerhalb einzelner
+Trainingskosten ohne die Inferenz, und beschränken sich auf LLMs einer
+einzigen Größenklasse. Größenstaffelungen gibt es nur innerhalb einzelner
 Modellfamilien und ohne gemeinsamen Encoder-Vergleich.
 
 Die vorliegende Arbeit setzt an diesen Punkten an.
@@ -141,8 +141,8 @@ Darauf aufbauend fragt die dritte Forschungsfrage (FF3), welche
 Konfigurationen unter den gemessenen Bedingungen bei gegebenen Speicher-
 und Latenzbeschränkungen das günstigste Verhältnis von
 Erkennungsleistung und Ressourcenbedarf bieten.
-Daraus soll hervorgehen, unter welchen Umständen der Einsatz eines LLM
-den Mehraufwand gegenüber einem Encoder rechtfertigt.
+Daraus soll hervorgehen, unter welchen Umständen der Mehraufwand eines
+LLM gegenüber einem Encoder gerechtfertigt ist.
 
 Der Beitrag der Arbeit liegt in der gemeinsamen Untersuchung dieser
 Fragen anhand von acht Konfigurationen mit rund 184~Mio. bis 27~Mrd.
@@ -169,12 +169,12 @@ mit Bestwerten der Literatur.
 Gepaarte Bootstrap-Konfidenzintervalle über die Testsätze und zwei
 Sensitivitätsanalysen zum Ausgabelimit der LLM-Inferenz ergänzen die
 Auswertung; sie zeigen, wie unsicher die Unterschiede sind und wie stark
-das begrenzte Ausgabelimit die Ergebnisse beeinflusst.
+das Ausgabelimit die Ergebnisse beeinflusst.
 
 \section{Abgrenzung der Arbeit}
 \label{sec:abgrenzung}
 
-Der angemeldete Titel der Arbeit nennt BERT-basierte Modelle und LoRA;
+Der angemeldete Titel der Arbeit nennt Encoder-basierte Modelle und LoRA;
 im Folgenden werden die Verfahren präziser bezeichnet,
 und das Zero-Shot-Regime kommt als Bezugspunkt hinzu.
 Auf der Encoder-Seite werden DeBERTa-v3-base und DeBERTa-v3-large

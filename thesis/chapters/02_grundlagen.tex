@@ -28,7 +28,7 @@ Heutige Systeme beruhen auf kontextualisierten Repräsentationen: Ein
 neuronales Netz liest die gesamte Eingabesequenz und berechnet für jedes
 Token einen Vektor, der von den umgebenden Tokens
 abhängt~\cite{devlin2019bert}.
-Daraus ist das heute dominierende Vorgehen in zwei Schritten
+Daraus ist das heute vorherrschende zweistufige Vorgehen
 entstanden: Ein Modell wird zunächst auf großen, nicht annotierten
 Textkorpora vortrainiert und anschließend an eine konkrete Aufgabe
 angepasst, sei es durch Fine-Tuning seiner Gewichte oder durch
@@ -175,11 +175,11 @@ Texterzeugung Token für Token~\cite{brown2020language}.
 Encoder-Decoder-Modelle behalten den Aufbau des Originals bei.
 Für NER folgt daraus der zentrale Unterschied der beiden verglichenen
 Modellklassen: Ein Encoder liefert für jedes Token eine
-beidseitig kontextualisierte Repräsentation, aus der ein Label
-klassifiziert werden kann.
+beidseitig kontextualisierte Repräsentation, aus der sich ein Label
+vorhersagen lässt.
 Ein Decoder verarbeitet die Sequenz kausal und gibt in der hier
 verwendeten Pipeline die Entitäten als Text aus. Da der ganze
-Eingabesatz im Prompt liegt, kann er dabei dennoch auch den Kontext
+Eingabesatz im Prompt steht, kann der Decoder dennoch auch den Kontext
 rechts von einer Entität nutzen.
 
 Die Kosten der Self-Attention wachsen quadratisch mit der
@@ -191,8 +191,8 @@ diesen Zwischenspeicher~\cite{ainslie2023gqa}.
 Lineare Attention-Verfahren wie Gated DeltaNet ersetzen die
 Relevanzmatrix durch einen Zustand fester Größe, sodass der Aufwand nur
 linear mit der Sequenzlänge wächst~\cite{yang2025gated}.
-Die in dieser Arbeit verwendeten LLMs wechseln lineare Schichten mit
-einzelnen Schichten voller Attention ab~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}; diese
+In den hier verwendeten LLMs wechseln sich Schichten mit linearer
+Attention und einzelne Schichten mit vollständiger Attention ab~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}; diese
 hybride Attention ist für die Platzierung der Adapter relevant
 (Abschnitt~\ref{sec:lora-konfiguration}).
 
@@ -225,7 +225,7 @@ und aus dem beidseitigen Kontext rekonstruiert.
 Für eine Zielaufgabe wird das vortrainierte Modell um eine
 aufgabenspezifische Ausgabeschicht ergänzt und vollständig feinjustiert,
 das heißt, alle Encoder-Gewichte und die neue Schicht werden gemeinsam
-mit dem Verlust der Zielaufgabe optimiert.
+anhand des Verlusts der Zielaufgabe optimiert.
 Für NER ist diese Ausgabeschicht eine lineare Klassifikationsschicht, die
 aus der Repräsentation $h_i$ jedes Tokens Werte $W h_i + b$ für alle
 Labels des Tagsets berechnet; eine Softmax-Funktion macht daraus eine
@@ -316,9 +316,9 @@ Anweisungen nicht zuverlässig befolgt.
 Fine-Tuning auf von Menschen geschriebenen Antworten
 (\emph{Supervised Fine-Tuning}, SFT).
 Nachtrainierte Modelle verarbeiten Eingaben in einem Dialogformat aus
-Nachrichten mit Rollen wie System, Nutzer und Assistent, das ein
-\emph{Chat-Template} mit speziellen Steuertokens in eine Tokenfolge
-überführt~\cite{qwen2025qwen3,qwen2026card27b}.
+Nachrichten mit Rollen wie System, Nutzer und Assistent; ein
+\emph{Chat-Template} überführt dieses Format mit speziellen Steuertokens
+in eine Tokenfolge~\cite{qwen2025qwen3,qwen2026card27b}.
 Qwen-Modelle ab Qwen3 können vor der eigentlichen Antwort einen
 abgegrenzten Block mit Zwischenüberlegungen erzeugen; dieser
 \emph{Thinking-Modus} lässt sich ein- und
@@ -337,12 +337,12 @@ Einige Fähigkeiten treten dabei erst ab einer gewissen Modellgröße auf;
 Viele LLMs werden nur mit frei herunterladbaren Gewichten und einer
 Lizenz veröffentlicht (\emph{offene Gewichte}, \emph{open weights}).
 Zu dieser Gruppe gehört die Qwen-Familie von Alibaba mit den Generationen
-Qwen2.5, Qwen3 und Qwen3.5~\cite{qwen2024qwen25,qwen2025qwen3}; zur im
-Februar 2026 vorgestellten Generation
-Qwen3.5~\cite{qwen2026qwen35blog} gehören die hier verwendeten Modelle
-Qwen3.5-27B, Qwen3.5-4B und Qwen3.5-0.8B, deren Modellkarten im
-Schichtaufbau Feed-Forward-Netze und keine
-Mixture-of-Experts-Schichten ausweisen~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b}
+Qwen2.5, Qwen3 und Qwen3.5~\cite{qwen2024qwen25,qwen2025qwen3}.
+Die hier verwendeten Modelle Qwen3.5-27B, Qwen3.5-4B und Qwen3.5-0.8B
+gehören zur Generation Qwen3.5, die im Februar 2026 vorgestellt
+wurde~\cite{qwen2026qwen35blog}.
+Ihre Modellkarten weisen im Schichtaufbau Feed-Forward-Netze und keine
+Mixture-of-Experts-Schichten aus~\cite{qwen2026card27b,qwen2026card4b,qwen2026card08b}
 (Abschnitt~\ref{sec:llm-auswahl}).
 
 Für NER ergibt sich aus der generativen Arbeitsweise eine andere
@@ -369,14 +369,14 @@ Vollständiges Fine-Tuning passt alle Gewichte eines vortrainierten
 Modells an.
 Bei LLMs stößt das an Speichergrenzen, weil während des Trainings zu
 jedem Parameter auch sein Gradient und die Zustände des Optimierers
-gehalten werden müssen; Adam speichert je Parameter zwei zusätzliche Größen.
-\emph{Parameter-Efficient Fine-Tuning} (PEFT) hält die vortrainierten
-Gewichte eingefroren und trainiert nur eine kleine Zahl zusätzlicher
+im Speicher gehalten werden müssen; Adam speichert je Parameter zwei zusätzliche Größen.
+\emph{Parameter-Efficient Fine-Tuning} (PEFT) friert die vortrainierten
+Gewichte ein und trainiert nur eine kleine Zahl zusätzlicher
 oder ausgewählter Parameter~\cite{han2024parameter}.
 
 LoRA (\emph{Low-Rank Adaptation}) trainiert dazu eine
-niedrigdimensionale Darstellung der
-Gewichtsänderung~\cite{hu2021lora}.
+Darstellung der Gewichtsänderung mit niedrigem
+Rang~\cite{hu2021lora}.
 Für eine vortrainierte Gewichtsmatrix $W_0 \in \mathbb{R}^{d \times k}$
 wird die Änderung $\Delta W$ durch das Produkt zweier kleiner Matrizen
 dargestellt, sodass sich für eine Eingabe $x$ die Ausgabe
@@ -405,7 +405,7 @@ alternativ bleibt der Adapter getrennt und wird bei der Inferenz
 mitberechnet.
 \textcite{hu2021lora} adaptieren in ihren Experimenten die Query- und
 Value-Projektionen der Attention; \textcite{dettmers2023qlora} setzen
-Adapter auf alle linearen Schichten
+Adapter auf alle Linearschichten
 (Abschnitt~\ref{sec:lora-konfiguration}).
 Auf RoBERTa, DeBERTa, GPT-2 und GPT-3 erreicht LoRA bei einem Bruchteil
 der trainierbaren Parameter eine Qualität, die der des vollständigen
@@ -455,7 +455,7 @@ Adapter.
 Mit diesem Verfahren lässt sich ein Modell mit 65~Mrd. Parametern auf
 einer einzelnen GPU mit 48~GB feinjustieren; auf den von
 \textcite{dettmers2023qlora} geprüften Benchmarks erreicht QLoRA die
-Aufgabenleistung des 16-Bit-Fine-Tunings (volles Fine-Tuning bei GLUE
+Leistung des 16-Bit-Fine-Tunings (vollständiges Fine-Tuning bei GLUE
 und Super-NaturalInstructions, LoRA bei MMLU).
 In dieser Arbeit werden die Encoder vollständig feinjustiert und die
 LLMs mit QLoRA angepasst; welche der genannten Komponenten dabei aktiv
@@ -474,7 +474,7 @@ Rechenaufwands~\cite{kaplan2020scaling}.
 Die Gesetze beschreiben allerdings den Verlust des Vortrainings von
 Modellen, die eigens für die Untersuchung trainiert wurden; über
 Kennzahlen einer nachgelagerten Aufgabe wie den F$_1$-Score bei NER
-sagen sie nichts unmittelbar aus.
+sagen sie unmittelbar nichts aus.
 Empirische Befunde zum Größeneinfluss bei NER fasst
 Abschnitt~\ref{sec:model_size_related} zusammen; die Folgen für den
 Größenvergleich dieser Arbeit nennt

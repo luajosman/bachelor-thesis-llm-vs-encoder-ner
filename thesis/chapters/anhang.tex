@@ -260,7 +260,7 @@ die für das Versuchsdesign nachrangig, für die Nachvollziehbarkeit der Läufe
 aber relevant sind.
 
 
-\subsection{Vorläufe und Thinking-Abbruch}
+\subsection{Vorläufe und abgebrochener Thinking-Lauf}
 \label{app:vorlaeufe}
 
 Für mehrere der explorativen Vorläufe (Tabelle~\ref{tab:app-vorlaeufe})
@@ -292,7 +292,7 @@ Geladen wird nur das Textmodell (\texttt{Qwen3\_5ForCausalLM},
 Abschnitt~\ref{sec:llm-auswahl}).
 Laut den Konfigurationsdateien der verwendeten Revisionen
 (Tabelle~\ref{tab:app-revisionen}) sind alle drei Größen dichte Decoder
-mit hybrider Attention~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}: In jedem Block aus vier Schichten nutzen drei
+(ohne Mixture-of-Experts-Schichten) mit hybrider Attention~\cite{qwen2026card08b,qwen2026card4b,qwen2026card27b}: In jedem Block aus vier Schichten nutzen drei
 Schichten lineare Attention in Form von Gated DeltaNet, die vierte
 vollständige Softmax-Attention mit Grouped-Query-Attention und
 Ausgabe-Gating.
@@ -456,7 +456,7 @@ Vorlauf mit zwei Epochen lief allein auf dem Knoten und benötigte
 \label{app:kontrollstichprobe}
 
 Für die Kontrollstichprobe (Abschnitt~\ref{sec:nachinferenz}) wurden die
-Indizes aller 16\,454 Testsätze mit fester Zufallssaat (20261108)
+Indizes aller 16\,454 Testsätze mit festem Seed (20261108)
 gemischt; je Lauf bilden die ersten 1\,000 Sätze dieser Reihenfolge,
 deren gespeicherte Antwort parsebar war, die Stichprobe.
 Da sich die nicht parsebaren Antworten zwischen den Läufen
