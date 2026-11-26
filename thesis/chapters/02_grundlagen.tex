@@ -253,8 +253,8 @@ zusammengehören.
 Zweitens bezieht der \emph{Enhanced Mask Decoder} die absoluten
 Positionen erst unmittelbar vor der Vorhersage der maskierten Tokens
 ein.
-DeBERTa-v3 behält diese Architektur bei und ersetzt das
-Vortrainingsziel~\cite{he2021debertav3}.
+DeBERTa-v3 behält diese Architektur bei und ändert das Vortraining in
+zwei Punkten~\cite{he2021debertav3}.
 Statt MLM verwendet es \emph{Replaced Token Detection} nach ELECTRA: Ein
 kleines Generatormodell ersetzt einige Tokens durch plausible
 Alternativen, und das eigentliche Modell lernt als Diskriminator, für
@@ -262,6 +262,10 @@ jedes Token zu entscheiden, ob es ersetzt wurde.
 Das Trainingssignal entsteht so an allen Positionen statt nur an den
 maskierten, was das Vortraining dateneffizienter
 macht~\cite{clark2020electra}.
+Zudem teilen Generator und Diskriminator beim \emph{Gradient-Disentangled
+Embedding Sharing} ihre Token-Embeddings, ohne dass die Gradienten des
+Diskriminators in die gemeinsamen Embeddings
+zurückfließen~\cite{he2021debertav3}.
 
 Die Base-Variante hat zwölf Schichten mit 86~Mio.
 Parametern im Backbone, die Large-Variante 24 Schichten mit 304~Mio.,

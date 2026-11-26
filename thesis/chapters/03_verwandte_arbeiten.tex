@@ -378,9 +378,11 @@ Parameter und LLaMA-7B auf Pile-NER.
 Die Modelle lernen, jedes Eingabewort mit seinem Label zu wiederholen,
 also auch Nicht-Entitäten als negative Instanzen mitzuführen.
 Im Zero-Shot-Regime auf den CrossNER- und MIT-Datensätzen berichten die
-Autoren einen Gewinn von 9 F$_1$-Punkten gegenüber dem bisherigen Stand
-der Technik; sie messen Inferenzdurchsatz und GPU-Stunden des
-Trainings, führen aber keinen Encoder in derselben Pipeline mit.
+Autoren einen Gewinn von 9 F$_1$-Punkten gegenüber dem besten
+LLM-Ansatz GoLLIE, gegenüber dem Encoder GLiNER-L von rund 6
+Punkten~\cite[Tab.~2]{ding2024gner}; sie messen Inferenzdurchsatz und
+GPU-Stunden des Trainings, führen GLiNER-L aber nur mit übernommenen
+Werten mit.
 Das Label-je-Wort-Format gehört zur Tagging-Familie, anders als das hier
 verwendete Indexing-Format.
 

@@ -3,8 +3,8 @@
 Code, configurations, evaluation scripts and LaTeX sources of the Bachelor
 thesis
 
-> **Fine-Tuning für Named Entity Recognition: Ein Vergleich von BERT-basierten
-> Modellen und LLMs mit LoRA**
+> **Ein empirischer Vergleich zwischen Encoder-basierten Modellen und
+> LoRA-finetuned LLMs für Named Entity Recognition**
 > Luaj Osman, Technische Universität Berlin, Fakultät IV, Fachgebiet Quality &
 > Usability, in cooperation with DFKI, 26 November 2026.
 

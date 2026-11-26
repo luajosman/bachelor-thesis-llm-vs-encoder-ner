@@ -26,12 +26,11 @@
     % --- 2. Block ---
     \node[
         anchor=north,
-        align=center,
-        text width=15.5cm
-    ] (block2) at ([yshift=-1.4cm]block1.south) {%
-        \bfseries\fontsize{21}{25}\selectfont
-        \\[0.5cm]Fine-Tuning für Named Entity Recognition:\\[0.1cm]
-        Ein Vergleich von BERT-basierten \\[0.5cm] Modellen und LLMs mit LoRA 
+        inner sep=0pt
+    ] (block2) at ([yshift=-2.2cm]block1.south) {%
+        \parbox{17cm}{\centering\bfseries\fontsize{15}{22}\selectfont
+        Ein empirischer Vergleich zwischen Encoder-basierten Modellen\\
+        und LoRA-finetuned LLMs für Named Entity Recognition\par}%
     };
 
     % --- 3. Block ---
