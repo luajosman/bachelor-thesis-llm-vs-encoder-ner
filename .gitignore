@@ -272,3 +272,6 @@ thesis/*.run.xml
 .claude/
 CLAUDE.md
 AGENTS.md
+
+# Persönliches Hilfsskript für den Abgleich mit dem Cluster (nicht Teil des Repositorys)
+sync_from_cluster.sh

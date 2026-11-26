@@ -41,7 +41,6 @@ a domain-transfer evaluation on CrossNER.
 | `ba-ner/tests/` | Tests of the experiment code |
 | `ba-ner/docs/` | Cluster job guide and seed-study provenance audit |
 | `ba-ner/results/` | Local copy of the run artifacts (only `.gitkeep` is versioned) |
-| `sync_from_cluster.sh` | Fetches cluster commits and small result files (YAML/JSON/CSV) into `ba-ner/results/` |
 
 ## Configurations, run artifacts and evaluation
 
@@ -75,8 +74,12 @@ greedily. The thesis reports this deviation in Appendix A.1.
 ## Commands
 
 The commands below are taken from the project files (`.latexmkrc`, script
-headers and argument parsers). **They were not run when this README was
-written.**
+headers and argument parsers). The thesis build (Docker variant), the
+aggregation and its tests were run on a clean export of tag
+`abgabe-2026-11-26` on 26 November 2026: the build gives 103 pages, and the
+aggregation reproduces `thesis/generated/` byte for byte. Of the
+experiment-code tests, 206 passed; four test modules that import `torch` or
+`matplotlib` were not run in that environment.
 
 Build the thesis (pdflatex + biber; auxiliary files go to `thesis/build/`, the
 PDF to `thesis/main.pdf`):
@@ -104,6 +107,10 @@ pip install -r requirements.txt
 python -m pytest
 ```
 
+`requirements.txt` gives minimum versions. `requirements-main-study.txt` pins
+the package versions recorded by the 15 training runs of the main study
+(Python 3.12.3).
+
 Experiment entry points (submitting requires SLURM and a clean, committed
 checkout; see `ba-ner/docs/cluster-jobs.md`):
 
@@ -119,5 +126,9 @@ full option lists is available with `git show aaaca2b:README.md`.
 
 ## License
 
-MIT License (see `LICENSE`). Datasets and models are subject to their own
-licenses (MultiNERD, CrossNER, DeBERTa-v3, Qwen3.5).
+The MIT License (see `LICENSE`) applies to the code, configurations and
+scripts. It does not cover the LaTeX text of the thesis (`thesis/main.tex`,
+`chapters/`, `frontmatter/`, `figures/`, `references.bib`) or the logos in
+`thesis/frontmatter/logos/`, which belong to TU Berlin and DFKI. Datasets and
+models are subject to their own licenses (MultiNERD, CrossNER, DeBERTa-v3,
+Qwen3.5).
