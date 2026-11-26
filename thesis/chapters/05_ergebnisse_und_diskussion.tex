@@ -178,8 +178,8 @@ Jahreszahlen, Wochentage und Ausdrücke wie \enquote{today} als TIME.
 Wochentage schließt die Typbeschreibung von MultiNERD aus; Jahre zählen
 nach ihr zwar zu TIME~\cite[Tab.~1]{tedeschi2022multinerd}, sind in den
 Referenzannotationen aber nicht markiert, wie bereits
-\textcite{sainz2024gollie} beobachten. Annotiert sind vor allem Epochen
-und Zeitabschnitte wie \enquote{Middle Ages} oder
+\textcite{sainz2024gollie} beobachten. Annotiert sind im Testsplit vor
+allem Epochen und Zeitabschnitte wie \enquote{Middle Ages} oder
 \enquote{Great Depression}. Von den
 5\,354 TIME-Zusätzen enthalten 4\,190 eine Ziffer.
 Der niedrige Wert zeigt vor allem, dass das Glossar im Prompt
@@ -1014,8 +1014,9 @@ Replikation bleibt das eine Vermutung.
 Über die Familien hinweg erklärt die Parameterzahl allein die Leistung
 nicht (Abschnitt~\ref{sec:erg-groesse}):
 Architektur, Vortrainingsdaten und Anpassungsverfahren überlagern den
-Größenunterschied, wie \textcite{zaratiana2024gliner} und
-\textcite{bogdanov2024nuner} für Encoder-Generalisten nahelegen.
+Größenunterschied. Dazu passen die Befunde von
+\textcite{zaratiana2024gliner} und \textcite{bogdanov2024nuner} zu
+Encoder-Generalisten.
 Die Skalierungsgesetze aus Abschnitt~\ref{sec:model_size} sind aus den
 dort und in Abschnitt~\ref{sec:einfluss-parameteranzahl} genannten
 Gründen auf diese Befunde nicht übertragbar.
@@ -1053,9 +1054,8 @@ nach der Punktschätzung vor dem 0.8B- und dem 4B-Modell, auch mit 1\,024 Tokens
 Wo das 27B-Modell zulässig ist, ist es auch DeBERTa-v3-large, das selbst
 mit 1\,024 Tokens vor ihm liegt.
 Zero-Shot-Konfigurationen sind unter keiner Grenze die beste Wahl.
-Zu einer ähnlichen Empfehlung kommen \textcite{obeidat2025llm}: Wo
-kleine Leistungsunterschiede hinnehmbar sind, bleiben Encoder nach ihrer
-Einschätzung die bessere Wahl.
+Ähnlich empfehlen \textcite[Abschn.~III]{obeidat2025llm} Encoder für
+Domänen, in denen es auf kleine Leistungsunterschiede nicht ankommt.
 Eine pauschale Qualitätsempfehlung über Datensätze hinweg ergibt sich
 dagegen nicht. Auf CrossNER ist Qwen3.5-27B mit 1\,024 Ausgabetokens ab
 rund 12,9~s je Satz und 18,6~GiB die beste gemessene Wahl: 2,1 Punkte vor

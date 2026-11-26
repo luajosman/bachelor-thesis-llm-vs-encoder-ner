@@ -15,8 +15,9 @@ Decoder-LLMs (Qwen3.5-0.8B, -4B und -27B) auf dem englischen Teil von
 MultiNERD: die Encoder nach vollständigem Fine-Tuning, die LLMs ohne
 Anpassung (Zero-Shot) und nach QLoRA-Training, zusammen acht
 Konfigurationen.
-Die Encoder sagen für jedes Wort ein IOB2-Tag
-vorher~\cite{devlin2019bert,he2021debertav3}.
+Die Encoder weisen jedem Wort per
+Token-Klassifikation~\cite{devlin2019bert,he2021debertav3} ein IOB2-Tag
+zu (Abschnitt~\ref{sec:ner}).
 Die LLMs erhalten den Satz als nummerierte Tokenliste und erzeugen ein
 JSON-Array von Entitäten~\cite{dagdelen2024structuredIE,semin2026spanLabeling},
 das eine regelbasierte Nachverarbeitung in eine IOB2-Sequenz überführt.

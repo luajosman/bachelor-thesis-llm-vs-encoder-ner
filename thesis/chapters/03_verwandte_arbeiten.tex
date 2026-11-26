@@ -258,12 +258,12 @@ Die Autoren vergleichen die Strategien an vier per Prompting genutzten
 offenen Modellen zwischen 8 und 70~Mrd. Parametern, unter anderem auf
 dem mehrsprachigen UNER-Benchmark (dem Datensatz Universal NER von
 \textcite{mayhew2024uner}, nicht dem gleichnamigen Modell von
-\textcite{zhou2024universalner}). Tagging erweist sich dabei als die
-robusteste, aber auch tokenintensivste Strategie.
-Matching ist konkurrenzfähig und tokeneffizient; Indexing mit
-Zeichenindizes ist nur dann konkurrenzfähig, wenn die Eingabe selbst mit
-Zeichenindizes angereichert wird, weil die Modelle Zeichenpositionen
-sonst nur indirekt schätzen können.
+\textcite{zhou2024universalner}). Am robustesten ist danach Tagging,
+das aber die meisten Ausgabetokens braucht; Matching kommt mit weniger
+Tokens auf ähnliche Werte. Indexing mit Zeichenindizes hält nur mit, wenn
+die Eingabe selbst Zeichenindizes enthält, weil die Modelle die
+Positionen sonst schätzen
+müssen~\cite[Abschn.~3.4 und~6]{semin2026spanLabeling}.
 Eine auf \textcite[Tab.~9]{ramponi2025fallacy} zurückgehende
 Indexing-Variante mit nummerierten Wörtern statt Zeichenpositionen wird
 beschrieben, aber nicht evaluiert.
@@ -275,9 +275,9 @@ Die Inline-Formate, die Entitäten im reproduzierten Satz markieren,
 erreichen über alle Modelle die besten Mittelwerte, auf den flachen
 Datensätzen rund 92 F$_1$-Punkte, während JSON mit Zeichenoffsets dort
 im Mittel auf rund 54 Punkte fällt.
-Die Autoren führen dies darauf zurück, dass das Berechnen von
-Zeichenpositionen schlecht zur generativen Arbeitsweise der Modelle
-passt.
+Als Grund nennen die Autoren, dass exakte Zeichenoffsets einem Modell
+schwerfallen, das Text
+erzeugt~\cite[Abschn.~3.2]{zhan2026generativeNER}.
 \textcite{ravikumar2026lostformatting} trainieren Modelle mit 3 bis
 32~Mrd. Parametern per QLoRA mit sechs Ausgabeformaten und werten für
 NER unter anderem OntoNotes~5.0 mit striktem Mikro-F$_1$ aus.
@@ -537,10 +537,11 @@ hinter dem 34B-Modell~\cite{sainz2024gollie}.
 Zwischen den Modellklassen fallen die Vergleiche uneindeutiger aus:
 GLiNER und NuNER erreichen mit Encodern weit unterhalb einer Milliarde
 Parameter das Niveau von LLMs mit 7~Mrd. (NuNER) bzw. 7 bis 13~Mrd.
-Parametern (GLiNER)~\cite{zaratiana2024gliner,bogdanov2024nuner}.
-Dabei teilen nur GLiNER und UniNER die Pile-NER-Trainingsdaten, NuNER
-nutzt GPT-3.5-Annotationen des C4-Korpus, sodass der Größenunterschied
-von Architektur, Trainingsziel und Daten überlagert wird.
+Parametern (GLiNER); dabei teilen nur GLiNER und UniNER die
+Pile-NER-Trainingsdaten, NuNER nutzt GPT-3.5-Annotationen des
+C4-Korpus~\cite{zaratiana2024gliner,bogdanov2024nuner}.
+Der Größenunterschied lässt sich deshalb nicht von Architektur,
+Trainingsziel und Daten trennen.
 Bei \textcite{obeidat2025llm} ist die Zahl trainierbarer Parameter über
 den LoRA-Rang an die Encoder angeglichen (rund 341 bzw. 353~Mio.
 Adapterparameter gegenüber 336 bis 435~Mio.), und dennoch liegen die
