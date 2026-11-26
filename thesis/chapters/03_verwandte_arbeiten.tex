@@ -449,7 +449,7 @@ Für fünf biomedizinische Datensätze vergleichen sie vollständig feinjustiert
 DeBERTa-v3-large; \cite[Abschn.~II-B]{obeidat2025llm}) mit
 Mistral-7B-Instruct und Llama-3.1-8B-Instruct, die mit QLoRA und
 4-Bit-Quantisierung angepasst werden.
-Beide Modellklassen geben IOB2-Tags aus und werden strikt auf
+Beide Modellklassen geben BIO-Tags aus und werden strikt auf
 Entitätsebene bewertet.
 Die LLMs liegen auf vier Datensätzen um 2 bis 8 F$_1$-Punkte vorn, auf
 dem fünften knapp (0{,}5 Punkte) hinter dem besten
@@ -464,7 +464,7 @@ Dass LLMs für tokenbasierte NER ohne Anpassung kaum geeignet sind, zeigen
 \textcite{lu2024llmstruggle} am klinischen Korpus RareDis-v1 mit fünf
 Typen zu seltenen Krankheiten.
 Lokale LLMs mit 7~Mrd. Parametern sowie GPT-3.5 und GPT-4 werden
-aufgefordert, IOB2-Tags zu erzeugen.
+aufgefordert, BIO-Tags zu erzeugen.
 Im Zero-Shot-Regime erreicht LLaMA-2-7B für den Typ \emph{Rare Disease}
 einen F$_1$ von 0{,}149 und GPT-4 einen von 0{,}576 (Skala 0 bis 1 wie
 in der Quelle).
@@ -475,7 +475,7 @@ Fine-Tuning könnte den Abstand nach Vermutung der Autoren schließen.
 Als Gründe nennen sie drei Punkte: Tokenbasierte NER ist auf
 Repräsentationen einzelner Tokens angewiesen, das Vortrainingsziel der
 Decoder ist darauf nicht ausgerichtet, und die Modelle haben die
-IOB2-Symbole zuvor nicht gesehen.
+BIO-Symbole zuvor nicht gesehen.
 Die Vermutung zum vollständigen Fine-Tuning relativieren
 \textcite[Anh.~D, Tab.~11]{zhan2026generativeNER}:
 In ihren Vergleichen auf CoNLL-2003 und GENIA liegt LoRA um 0{,}14 bis
@@ -677,7 +677,7 @@ Eine gemeinsame Auswertung beider Modellfamilien auf den offiziellen
 englischen MultiNERD-Splits mit einer in derselben Pipeline trainierten
 Encoder-Referenz fehlt damit.
 Die generativen Formate der direkten Vergleiche wachsen überdies mit der
-Eingabelänge: je Eingabetoken ein IOB2-Tag bei
+Eingabelänge: je Eingabetoken ein BIO-Tag bei
 \textcite[Abschn.~IV]{obeidat2025llm}, Inline-Markierungen bei
 \textcite{zhan2026generativeNER}; das erhöht die Latenz
 (Abschnitt~\ref{sec:k3-ausgabeformate}).
