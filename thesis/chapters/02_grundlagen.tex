@@ -47,7 +47,7 @@ Kategorie zuzuordnen~\cite{li2018survey}.
 Formal erhält ein NER-System eine Tokenfolge $t_1, \dots, t_n$ und gibt
 eine Menge von Tripeln $(I_s, I_e, \tau)$ zurück, wobei $I_s$ und $I_e$
 den Start- und Endindex einer Erwähnung und $\tau$ ihren Typ
-bezeichnen (eigene Formalisierung nach \textcite{li2018survey}).
+bezeichnen; die Formalisierung folgt \textcite{li2018survey}.
 Eine Erwähnung ist damit ein zusammenhängender Abschnitt der Tokenfolge,
 ein \emph{Span}; korrekt ist eine Vorhersage nur, wenn Grenzen und Typ
 stimmen.
@@ -183,11 +183,11 @@ Eingabesatz im Prompt liegt, kann er dabei dennoch auch den Kontext
 rechts von einer Entität nutzen.
 
 Die Kosten der Self-Attention wachsen quadratisch mit der
-Sequenzlänge~\cite{vaswani2017attention}; bei der Texterzeugung werden
-zudem die Keys und Values aller bisherigen Tokens zwischengespeichert.
-Grouped-Query-Attention lässt mehrere Query-Köpfe denselben Key- und
-Value-Kopf nutzen und verkleinert so den
-Zwischenspeicher~\cite{ainslie2023gqa}.
+Sequenzlänge~\cite{vaswani2017attention}.
+Bei der Texterzeugung werden zudem die Keys und Values aller bisherigen
+Tokens zwischengespeichert; Grouped-Query-Attention lässt mehrere
+Query-Köpfe denselben Key- und Value-Kopf nutzen und verkleinert so
+diesen Zwischenspeicher~\cite{ainslie2023gqa}.
 Lineare Attention-Verfahren wie Gated DeltaNet ersetzen die
 Relevanzmatrix durch einen Zustand fester Größe, sodass der Aufwand nur
 linear mit der Sequenzlänge wächst~\cite{yang2025gated}.
