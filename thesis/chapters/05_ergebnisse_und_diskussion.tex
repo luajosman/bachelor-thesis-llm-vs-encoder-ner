@@ -92,7 +92,7 @@ Die Validierungs-F$_1$-Werte der ausgewählten Encoder-Checkpoints
 (Tabelle~\ref{tab:app-seeds}) liegen rund drei Punkte unter den
 Testwerten. Bei den LLMs, deren Validierung nur 200 Sätze umfasst,
 liegen sie in acht von neun Läufen darüber.
-Eine mögliche, nicht isoliert geprüfte Erklärung ist die
+Für die Encoder ist eine mögliche, nicht isoliert geprüfte Erklärung die
 unterschiedliche Typverteilung der Splits: Der Anteil von LOC, einem der
 am besten erkannten und im Mikro-Wert entsprechend stark gewichteten
 Typen, beträgt im Validierungssplit 30,1\,\%, im Testsplit 46,9\,\%
@@ -130,7 +130,7 @@ Auch die kleinere Encoder-Variante liegt vor allen LLM-Konfigurationen
 Die beiden Modellklassen unterscheiden sich im Profil aus Precision und
 Recall: Bei den Encodern liegt der Recall über der Precision, bei den
 QLoRA-Modellen ist es umgekehrt (Tabelle~\ref{tab:haupt}).
-Die Precision-Punktwerte von bestem Encoder und bestem LLM liegen nahe
+Die Precision-Werte von bestem Encoder und bestem LLM liegen nahe
 beieinander. Der Vorsprung des Encoders stammt fast vollständig aus dem
 Recall.
 
@@ -153,10 +153,10 @@ niedrigere Werte zwischen 58,1 und 79,4 Punkten; im Zero-Shot-Regime
 (27B) liegen sie zwischen 3,2 und 45,0.
 
 Welche Modellklasse vorn liegt, hängt vom Typ ab
-(Tabelle~\ref{tab:typen}): In den Punktwerten liegt der
+(Tabelle~\ref{tab:typen}): Im Seed-Mittel liegt der
 Encoder bei den häufigen Typen LOC, PER und ANIM sowie bei FOOD, PLANT,
 DIS, EVE und BIO vorn, das LLM bei INST, MYTH, TIME, CEL und VEHI; bei
-MEDIA und ORG sind die Seed-Mittel praktisch gleich.
+MEDIA und ORG sind die Werte praktisch gleich.
 Der Mikro-Wert wird von den häufigen Typen getragen, der Makro-Wert
 gewichtet alle Typen gleich, also auch die seltenen, bei denen das LLM
 überwiegend vorn liegt.
@@ -279,7 +279,7 @@ Seed-Mittel höchstens 45 von rund 25\,000 übernommenen Spans je Lauf.
 Die Zahl der leeren Vorhersagen liegt je Lauf nur wenig über der Zahl
 abgeschnittener Antworten.
 Die wenigen übrigen Sätze mit leerer Vorhersage enthalten
-Referenzentitäten, zu denen
+fast immer Referenzentitäten, zu denen
 kein Span übernommen wurde.
 
 
@@ -803,11 +803,12 @@ Auf CrossNER kehrt sich die Rangfolge mit 1\,024 Tokens um.
   \input{generated/tab-synthese}
 \end{table}
 
-Das Ergebnis weicht von \textcite{obeidat2025llm} ab, die auf vier von
-fünf biomedizinischen Datensätzen einen Vorsprung des LLM von 2 bis 8
-Punkten berichten, der dort vor allem aus der Precision stammt~\cite[Tab.~III]{obeidat2025llm}, während hier die Precision-Punktwerte
+Auf MultiNERD weichen beide Ergebnisse von \textcite{obeidat2025llm} ab,
+die auf vier von fünf biomedizinischen Datensätzen einen Vorsprung des
+LLM von 2 bis 8 Punkten berichten.
+Dieser Vorsprung geht dort vor allem auf die Precision zurück~\cite[Tab.~III]{obeidat2025llm}, während hier die Precision-Werte
 nahe beieinanderliegen.
-Es liegt nahe am Befund von \textcite{zhan2026generativeNER}, dass
+Die Ergebnisse liegen nahe am Befund von \textcite{zhan2026generativeNER}, dass
 LoRA-angepasste LLMs und spezialisierte Modelle auf flachen Datensätzen
 nur knapp auseinanderliegen (auf CoNLL-2003 mit dem besten LLM knapp
 vorn, auf OntoNotes~5.0 knapp dahinter), und an der
@@ -869,6 +870,8 @@ Fehlermuster, nach dem der Encoder (dort BERT-MRC) vor allem Entitäten
 vergibt, zeigt sich hier nicht: Das LLM übersieht
 mehr Entitäten, vergibt aber nicht häufiger falsche Typen
 (Abschnitt~\ref{sec:erg-fehlertypen}).
+% Absatz eine Zeile enger setzen, damit Kapitel 6 auf Seite 70 beginnt.
+\looseness=-1
 Da alle Werte dieser Arbeit die Übereinstimmung mit einer
 Silberreferenz messen (Abschnitt~\ref{sec:datenauswahl}), bleibt offen,
 ob die Unterschiede bei den verrauschten Typen ANIM, BIO, FOOD und PLANT
@@ -876,8 +879,8 @@ Modellfehler oder Annotationsfehler abbilden
 (Abschnitt~\ref{sec:limitationen}).
 Die Fehleranalyse stützt diesen Vorbehalt nur an illustrativen
 Beispielen (Abschnitt~\ref{sec:erg-fehlertypen}); ein Teil der betrachteten
-Typfehler folgt Referenzentscheidungen wie der Annotation einer Band als
-PER.
+Typfehler geht auf Referenzentscheidungen zurück, etwa auf die
+Annotation einer Band als PER.
 % Quelle: ba-ner/scripts/check_sample.py (population.json); Seed 42, strikte Spans nach IOB2,
 % 27B mit den zusammengeführten 1024-Token-Vorhersagen.
 Auf Span-Ebene (Seed~42) gibt es 319 Referenzspans, die nur
@@ -1026,7 +1029,7 @@ Bei 256 Ausgabetokens bilden die beiden Encoder die Pareto-Front
 (Abschnitt~\ref{sec:erg-effizienz}, Abbildung~\ref{fig:tradeoff}).
 Die Nachinferenz am Ausgabelimit
 verändert den Qualitätsvergleich, weil das
-27B-Modell mit vollständigen Antworten im Punktwert knapp vor
+27B-Modell mit vollständigen Antworten nach der Punktschätzung knapp vor
 DeBERTa-v3-base liegt (Abschnitt~\ref{sec:disk-leistung}). Die
 Qualitätswerte der Nachinferenz werden nicht mit den
 Ressourcenwerten des Laufs mit 256 Ausgabetokens zu einer neuen Pareto-Aussage
@@ -1046,20 +1049,21 @@ Die Speicherschwellen der trainierten Konfigurationen liegen bei 0,7 (DeBERTa-v3
 Auf MultiNERD ist damit unter jeder Kombination von Grenzen, die
 überhaupt eine Konfiguration zulässt, ein Encoder die beste gemessene
 Wahl. DeBERTa-v3-base ist überall zulässig, wo ein LLM es ist, und liegt
-im Punktwert vor dem 0.8B- und dem 4B-Modell, auch mit 1\,024 Tokens.
+nach der Punktschätzung vor dem 0.8B- und dem 4B-Modell, auch mit 1\,024 Tokens.
 Wo das 27B-Modell zulässig ist, ist es auch DeBERTa-v3-large, das selbst
 mit 1\,024 Tokens vor ihm liegt.
 Zero-Shot-Konfigurationen sind unter keiner Grenze die beste Wahl.
-Die Empfehlung eines Encoders trotz kleiner Qualitätsunterschiede
-diskutieren auch \textcite{obeidat2025llm}.
+Zu einer ähnlichen Empfehlung kommen \textcite{obeidat2025llm}: Wo
+kleine Leistungsunterschiede hinnehmbar sind, bleiben Encoder nach ihrer
+Einschätzung die bessere Wahl.
 Eine pauschale Qualitätsempfehlung über Datensätze hinweg ergibt sich
 dagegen nicht. Auf CrossNER ist Qwen3.5-27B mit 1\,024 Ausgabetokens ab
 rund 12,9~s je Satz und 18,6~GiB die beste gemessene Wahl: 2,1 Punkte vor
 DeBERTa-v3-large (Intervall ohne null, Tabelle~\ref{tab:synthese}) bei
 rund dem 500-Fachen von dessen Latenz (25,7~ms, gleicher GPU-Typ).
 Ob dieser Qualitätsgewinn den Aufwand rechtfertigt, hängt von der
-Zielanwendung ab. Die höheren Punktwerte des LLM bei einzelnen seltenen
-MultiNERD-Typen bleiben wegen ihres geringen Supports deskriptive
+Zielanwendung ab. Die höheren Werte des LLM bei einzelnen seltenen
+MultiNERD-Typen bleiben wegen des geringen Supports dieser Typen deskriptive
 Hinweise; eine gleichwertige Makro-Leistung wurde nicht nachgewiesen.
 
 
@@ -1075,8 +1079,8 @@ Von den falsch positiven Spans liegen beim LLM 53\,\%, beim Encoder
 Domäne 33 bis 79\,\%); ohne sie würde der Abstand von 2,1 auf 0,5
 Punkte schrumpfen, sofern man auch Teilspans solcher Entitäten nicht als Fehler
 wertet.
-Vortrainingswissen und die manuelle Annotation von CrossNER lassen sich
-davon nicht trennen (Abschnitte~\ref{sec:disk-leistung}
+Der Einfluss von Vortrainingswissen und manueller Annotation lässt sich
+vom Effekt der Typabbildung nicht trennen (Abschnitte~\ref{sec:disk-leistung}
 und~\ref{sec:limitationen}).
 
 

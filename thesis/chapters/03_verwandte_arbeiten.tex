@@ -400,8 +400,9 @@ Zweitens bleiben per Prompting genutzte LLMs ohne Anpassung der Gewichte
 auf etablierten Benchmarks hinter überwachten Encodern
 zurück~\cite{wang2025gptner,xie2023zeroshot}.
 Ihre Stärke zeigen sie dort, wo wenige Beispiele vorliegen oder die Domäne
-wechselt~\cite{wang2025gptner,ashok2023promptner}; das Verfahren CodeIE
-formuliert seine Prompts dabei als Python-Code~\cite{li2023codeie}.
+wechselt~\cite{wang2025gptner,ashok2023promptner}; für den Few-Shot-Fall
+formuliert das Verfahren CodeIE seine Prompts als
+Python-Code~\cite{li2023codeie}.
 Drittens verringern Destillation und Fine-Tuning diesen Abstand, doch
 Vergleiche mit Encodern fehlen oder stützen sich auf übernommene Werte
 oder Zero-Shot-Benchmarks~\cite{zhou2024universalner,sainz2024gollie}.
@@ -652,7 +653,7 @@ zusammen; sie ordnet auch die vorliegende Arbeit ein.
     \midrule
     Diese Arbeit & DeBERTa-v3-base/-large; Qwen3.5-0.8B/\allowbreak-4B/\allowbreak-27B &
       MultiNERD (EN, 15 Typen); CrossNER-Transfer &
-      Full-FT; Zero-Shot; QLoRA & ja (gemeinsame Pipeline) &
+      Full-FT; Zero-Shot; QLoRA & ja (gleiche Auswertung) &
       Trainingsdauer, Latenz, GPU-Speicher \\
     \bottomrule
   \end{tabular}
@@ -677,7 +678,7 @@ Standardsplits zu verwenden, ein Testumfang von 32\,908 Beispielen
 gegenüber, genau das Doppelte des englischen Testsplits; wie sich diese
 Testdaten zu den offiziellen Splits verhalten, bleibt offen.
 Eine gemeinsame Auswertung beider Modellfamilien auf den offiziellen
-englischen MultiNERD-Splits mit einer in derselben Pipeline trainierten
+englischen MultiNERD-Splits mit einer selbst trainierten
 Encoder-Referenz fehlt damit.
 Bei den generativen Formaten der direkten Vergleiche wächst die Ausgabe
 überdies mit der Eingabelänge: je Eingabetoken ein BIO-Tag bei
@@ -685,8 +686,8 @@ Bei den generativen Formaten der direkten Vergleiche wächst die Ausgabe
 \textcite{zhan2026generativeNER}; das verlängert die Generierung
 (Abschnitt~\ref{sec:k3-ausgabeformate}).
 Die vorliegende Arbeit setzt hier an: Sie trainiert und evaluiert beide
-Modellfamilien auf den offiziellen englischen MultiNERD-Splits in einer
-gemeinsamen Pipeline, mit derselben \texttt{seqeval}-Implementierung und
+Modellfamilien auf den offiziellen englischen MultiNERD-Splits nach einem
+gemeinsamen Evaluationsprotokoll, mit derselben \texttt{seqeval}-Implementierung und
 derselben Silberreferenz.
 Mit der Indexing-Ausgabe verwendet sie zudem ein Format, das statt des
 ganzen Satzes nur die Entitäten ausgibt und dessen Formtreue eigens

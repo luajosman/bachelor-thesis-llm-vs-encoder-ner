@@ -8,8 +8,8 @@
 \label{chap:fazit}
 
 Diese Arbeit hat DeBERTa-v3-base und -large mit vollständigem Fine-Tuning
-sowie Qwen3.5-0.8B, -4B und -27B im Zero-Shot- und im QLoRA-Regime in
-einer gemeinsamen Pipeline auf dem englischen MultiNERD-Testsplit
+sowie Qwen3.5-0.8B, -4B und -27B im Zero-Shot- und im QLoRA-Regime nach
+einem gemeinsamen Evaluationsprotokoll auf dem englischen MultiNERD-Testsplit
 verglichen.
 Die folgenden Abschnitte beantworten die Forschungsfragen aus
 Abschnitt~\ref{sec:problem_ziel} mit Abgleich der Erwartungen E1 bis E3,
@@ -32,7 +32,7 @@ nachträglich allein dessen abgeschnittene Antworten
 (Abschnitt~\ref{sec:disk-leistung}).
 Erwartung E1 ist auf MultiNERD nur bei ausreichendem Ausgabelimit und
 nur teilweise bestätigt: Qwen3.5-27B, das größte der drei mit QLoRA
-angepassten LLMs, liegt dann im Punktwert
+angepassten LLMs, liegt dann nach der Punktschätzung
 knapp vor DeBERTa-v3-base, ohne dass sich eine Rangfolge nachweisen
 lässt ([$-$0,02; 0,30]), und bleibt knapp hinter DeBERTa-v3-large.
 Das Intervall des explorativen Vergleichs mit DeBERTa-v3-large liegt nur
@@ -108,8 +108,8 @@ Eine allgemeine Überlegenheit einer Modellklasse folgt daraus nicht.
 
 \paragraph{Beitrag.}
 Der Beitrag der Arbeit liegt erstens in einem Vergleich beider
-Modellklassen auf den offiziellen englischen MultiNERD-Splits in einer
-gemeinsamen Pipeline, mit Größenstaffelung auf beiden Seiten und
+Modellklassen auf den offiziellen englischen MultiNERD-Splits nach einem
+gemeinsamen Evaluationsprotokoll, mit Größenstaffelung auf beiden Seiten und
 gemeinsamer Ressourcenmessung.
 Zweitens zeigt sie, dass die QLoRA-Modelle das Wortindex-Format nahezu
 vollständig einhalten: Mit 1\,024 Ausgabetokens sind alle
@@ -131,7 +131,7 @@ Vorläufen mit bekannten Testwerten bis auf die 27B-Epochenzahl
 unverändert; ein Einfluss der bekannten Testwerte auf die Festlegungen
 für die Hauptstudie lässt sich nicht ausschließen und mit den vorhandenen Daten nicht beziffern.
 Zero-Shot-Prompt und Decoding wurden nach der Testleistung eines
-0.8B-Vorlaufs gewählt und für 4B und 27B ohne eigene Testauswahl
+0.8B-Vorlaufs gewählt und für 4B und 27B ohne eigene Prüfung
 übernommen; die Zero-Shot-Werte können daher optimistisch verzerrt sein
 und beschreiben nur genau diese Bedingungen.
 Die Checkpoint-Auswahl nutzte allein Validierungsdaten, bei den LLMs
@@ -139,7 +139,8 @@ nur die ersten 200 Sätze (Abschnitt~\ref{sec:llm-pipeline}); ob eine
 größere oder zufällig gezogene Stichprobe dieselben Epochen gewählt
 hätte, bleibt offen.
 Die Sensitivitätsanalysen liefen post hoc auf dem bekannten Testsplit;
-neue Seeds stellen keine Unabhängigkeit her.
+auch die drei Seeds der Hauptstudie stellen dessen Unabhängigkeit nicht
+wieder her.
 Betroffen sind FF1, besonders im Zero-Shot-Regime, und die Empfehlungen in
 FF3.
 

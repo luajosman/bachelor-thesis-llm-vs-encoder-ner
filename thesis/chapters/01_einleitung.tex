@@ -66,7 +66,7 @@ auf einer einzelnen GPU anpassen~\cite{dettmers2023qlora}
 (Abschnitt~\ref{sec:lora}).
 Für die praktische Modellwahl stellt sich damit die Frage, wann der
 zusätzliche Aufwand eines LLM durch eine bessere Erkennungsleistung
-gerechtfertigt ist und wann ein kompakter Encoder effizienter ist.
+gerechtfertigt ist und wann ein kompakter Encoder die bessere Wahl ist.
 Dieser Frage geht die vorliegende Arbeit nach, die am Deutschen
 Forschungszentrum für Künstliche Intelligenz (DFKI) in der
 Forschungsgruppe Speech and Language Technology (SLT) entstand.
@@ -146,8 +146,8 @@ LLM gegenüber einem Encoder gerechtfertigt ist.
 
 Der Beitrag der Arbeit liegt in der gemeinsamen Untersuchung dieser
 Fragen anhand von acht Konfigurationen mit rund 184~Mio. bis 27~Mrd.
-Parametern, darunter eine in derselben Pipeline trainierte
-Encoder-Referenz.
+Parametern, darunter eine selbst trainierte und mit demselben Protokoll
+ausgewertete Encoder-Referenz.
 Die fünf trainierten Konfigurationen werden mit je drei Seeds
 ausgewertet; zusammen mit den drei Zero-Shot-Konfigurationen ergeben sich
 18 Testevaluationen auf MultiNERD.

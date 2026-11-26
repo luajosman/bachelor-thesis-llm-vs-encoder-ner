@@ -299,7 +299,7 @@ einer Effizienzfrage macht (Abschnitt~\ref{sec:llm_ner_related}).
 Wie das Token ausgewählt wird, legt das \emph{Decoding} fest.
 Greedy-Decoding wählt stets das wahrscheinlichste Token und ist als
 Auswahlregel deterministisch; Gleitkommaarithmetik und Batching können
-hardwareseitig Abweichungen verursachen.
+dennoch zu abweichenden Ausgaben führen, auch auf derselben Hardware.
 Beim Sampling wird ein Token zufällig aus der Verteilung gezogen; eine
 Temperatur skaliert die Verteilung, Top-$k$ beschränkt die Auswahl auf
 die $k$ wahrscheinlichsten Tokens, und Top-$p$ (\emph{Nucleus Sampling})
@@ -334,7 +334,7 @@ Few-Shot.
 Einige Fähigkeiten treten dabei erst ab einer gewissen Modellgröße auf;
 \textcite{wei2022emergent} bezeichnen sie als emergent.
 
-Viele LLMs werden nur mit frei herunterladbaren Gewichten und einer
+Viele LLMs werden mit frei herunterladbaren Gewichten unter einer
 Lizenz veröffentlicht (\emph{offene Gewichte}, \emph{open weights}).
 Zu dieser Gruppe gehört die Qwen-Familie von Alibaba mit den Generationen
 Qwen2.5, Qwen3 und Qwen3.5~\cite{qwen2024qwen25,qwen2025qwen3}.
