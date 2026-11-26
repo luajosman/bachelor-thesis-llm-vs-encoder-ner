@@ -92,6 +92,11 @@
 
 \usepackage[noforwardlinks]{acronym}
 \usepackage[nobottomtitles*]{titlesec}
+% Inhaltsverzeichnis: kleinerer Abstand vor Kapiteleinträgen (Standard 1em),
+% damit das Verzeichnis auf zwei Seiten passt
+\makeatletter
+\patchcmd{\l@chapter}{\vskip 1.0em \@plus\p@}{\vskip 0.5em \@plus\p@}{}{\PackageWarning{main}{l@chapter nicht gepatcht}}
+\makeatother
 % Unterkapitel laufen im Seitenfluss weiter; nur Kapitel beginnen auf einer
 % neuen Seite. Eine Überschrift rückt erst dann auf die nächste Seite, wenn
 % unter ihr weniger als etwa vier Textzeilen Platz hätten. titlesec misst den
@@ -242,6 +247,7 @@
 \input{chapters/02_grundlagen}
 \input{chapters/03_verwandte_arbeiten}
 \addtocontents{toc}{\protect\newpage}  % Kapitel 4 im Inhaltsverzeichnis auf neuer Seite
+\addtocontents{toc}{\protect\enlargethispage{\baselineskip}}  % Anhang passt noch auf die zweite Seite
 \input{chapters/04_methodik}
 \input{chapters/05_ergebnisse_und_diskussion}
 \input{chapters/06_fazit_und_ausblick}
@@ -258,6 +264,7 @@
 % Anhang
 % =========================
 \appendix
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}  % Anhang im Inhaltsverzeichnis nur bis A.x
 \input{chapters/anhang}
 
 \end{document}
