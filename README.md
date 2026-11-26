@@ -16,7 +16,7 @@ a domain-transfer evaluation on CrossNER.
 ## Submitted version
 
 - The submitted thesis is the PDF built from the LaTeX sources in `thesis/`
-  (`thesis/main.tex`) at Git tag **`abgabe-2026-11-26`**, 104 pages, dated
+  (`thesis/main.tex`) at Git tag **`abgabe-2026-11-26`**, 103 pages, dated
   26 November 2026 on the title page.
 - The built PDF (`thesis/main.pdf`) is **not** versioned; it is listed in
   `.gitignore` and is submitted separately.
