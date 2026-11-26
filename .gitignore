@@ -268,5 +268,7 @@ thesis/*.run.xml
 *~
 *.swp
 
-# Lokale Claude-Code-Einstellungen
-.claude/settings.local.json
+# Lokale Arbeitsdateien der KI-Werkzeuge (nicht Teil des Repositorys)
+.claude/
+CLAUDE.md
+AGENTS.md

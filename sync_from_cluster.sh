@@ -133,4 +133,4 @@ rsync -avm --include='*/' --include='*.yaml' --include='*.json' --include='*.csv
 echo "Angekommen: $(find ba-ner/results -name '*.yaml' | wc -l | tr -d ' ') YAML-, $(find ba-ner/results -name '*.json' | wc -l | tr -d ' ') JSON-Dateien"
 echo "Laufordner:"
 find ba-ner/results -mindepth 2 -maxdepth 2 -type d | sort | head -60
-echo "Fertig. Nächster Schritt: Claude Code in diesem Ordner starten und thesis/STATUS.md lesen lassen."
+echo "Fertig."

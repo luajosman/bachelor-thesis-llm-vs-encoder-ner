@@ -42,7 +42,6 @@ a domain-transfer evaluation on CrossNER.
 | `ba-ner/docs/` | Cluster job guide and seed-study provenance audit |
 | `ba-ner/results/` | Local copy of the run artifacts (only `.gitkeep` is versioned) |
 | `sync_from_cluster.sh` | Fetches cluster commits and small result files (YAML/JSON/CSV) into `ba-ner/results/` |
-| `.claude/agents/` | Claude Code agent definitions used for AI-assisted revision (AI use is declared in the thesis) |
 
 ## Configurations, run artifacts and evaluation
 
